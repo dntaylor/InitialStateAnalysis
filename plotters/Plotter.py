@@ -66,6 +66,8 @@ class Plotter(PlotterBase):
                ymax        double           maximum of yaxis
                overflow    bool             plot overflow bin
                underflow   bool             plot underflow bin
+               nostack     bool             do not stack mc histograms
+               normalize   bool             normalize histograms to 1
                blinder     list (double)    range to blind (2 elements)
                logy        bool             set logy plot
                logx        bool             set logx plot
@@ -86,6 +88,8 @@ class Plotter(PlotterBase):
         ymax = kwargs.pop('xmax', None)
         overflow = kwargs.pop('overflow',False)
         underflow = kwargs.pop('underflow',False)
+        nostack = kwargs.pop('nostack',False)
+        normalize = kwargs.pop('normalize',False)
         blinder = kwargs.pop('blinder', [])
         logy = kwargs.pop('logy', 1)
         logx = kwargs.pop('logx', 0)
@@ -146,14 +150,14 @@ class Plotter(PlotterBase):
 
         # hack to show both mc and data on same plot
         if plotdata:
-            data = self.getData(variables, binning, cut, overflow=overflow, underflow=underflow)
+            data = self.getData(variables, binning, cut, overflow=overflow, underflow=underflow, normalize=normalize)
             datamax = data.GetMaximum()
         
 
         # plot monte carlo
-        stack = self.getMCStack(variables,binning,cut,overflow=overflow,underflow=underflow)
+        stack = self.getMCStack(variables,binning,cut,overflow=overflow,underflow=underflow,nostack=nostack,normalize=normalize)
         stack.SetTitle("")
-        stack.Draw("hist")
+        stack.Draw("hist nostack") if nostack else stack.Draw("hist")
         stack.GetXaxis().SetTitle(xaxis)
         stack.GetYaxis().SetTitle(yaxis)
         stack.GetYaxis().SetTitleOffset(1)
@@ -163,19 +167,20 @@ class Plotter(PlotterBase):
         if ymax: stack.SetMaximum(ymax)
         else:
             newymax = max(datamax,stack.GetMaximum()) if plotdata else stack.GetMaximum()
-            stack.SetMaximum(1.25*newymax)
+            if not nostack and not plotdata: stack.SetMaximum(1.25*newymax)
         if plotratio:
             stack.GetHistogram().GetXaxis().SetLabelOffset(999)
 
         # add errors
-        staterr = self.get_stat_err(stack.GetStack().Last())
-        staterr.Draw("e2 same")
+        if not nostack:
+            staterr = self.get_stat_err(stack.GetStack().Last())
+            staterr.Draw("e2 same")
 
         # plot signal
         if plotsig:
             sigLabels = {}
             for signal in self.signal:
-                sighist = self.getHist(signal,variables,binning,cut,overflow=overflow,underflow=underflow)
+                sighist = self.getHist(signal,variables,binning,cut,overflow=overflow,underflow=underflow,normalzie=normalize)
                 sighist.Scale(signalscale)
                 sighist.SetFillStyle(0)
                 sighist.SetLineWidth(2)
@@ -186,7 +191,7 @@ class Plotter(PlotterBase):
 
         # plot data
         if plotdata:
-            data = self.getData(variables, binning, cut, overflow=overflow, underflow=underflow)
+            data = self.getData(variables, binning, cut, overflow=overflow, underflow=underflow, normalize=normalize)
             data.SetMarkerStyle(20)
             data.SetMarkerSize(1.0)
             data.SetLineColor(ROOT.EColor.kBlack)

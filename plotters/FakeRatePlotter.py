@@ -17,6 +17,7 @@ class FakeRatePlotter(PlotterBase):
 
     def getFakeRate(self,passSelection, failSelection, ptBins, etaBins, ptVar, etaVar, savename):
         '''Get 2d histogram of fakerates'''
+        dataDriven = False # until we get data
         fakeHist = ROOT.TH2F(savename,'',len(ptBins)-1,array('d',ptBins),len(etaBins)-1,array('d',etaBins))
         for p in range(len(ptBins)-1):
             for e in range(len(etaBins)-1):
@@ -26,11 +27,24 @@ class FakeRatePlotter(PlotterBase):
                 denomCut = '%s & %s' % (kinCut, failSelection)
                 num = 0
                 denom = 0
-                for sample in self.backgrounds:
-                    num += self.getNumEntries(numCut, sample)
-                    denom += self.getNumEntries(denomCut, sample)
-                fakerate = float(num)/denom
-                fakeHist.Fill(ptBins[p],etaBins[e],fakerate)
+                numErr2 = 0
+                denomErr2 = 0
+                samples = self.data if dataDriven else self.backgrounds
+                for sample in samples:
+                    n, nErr = self.getNumEntries(numCut, sample, doError=True)
+                    d, dErr = self.getNumEntries(denomCut, sample, doError=True)
+                    num += n
+                    numErr2 += nErr ** 2
+                    denom += d
+                    denomErr2 += dErr ** 2
+                if denom and num:
+                    fakerate = float(num)/denom
+                    err = fakerate * (numErr2/(num**2) + denomErr2/(denom**2)) ** 0.5
+                else:
+                    fakerate = 0
+                    err = 0
+                fakeHist.SetBinContent(p+1,e+1,fakerate)
+                fakeHist.SetBinError(p+1,e+1,err)
         return fakeHist
 
     def plotFakeRate(self, passSelection, failSelection, savename, **kwargs):
@@ -52,8 +66,8 @@ class FakeRatePlotter(PlotterBase):
         isprelim = kwargs.pop('isprelim', 1)
         ptBins = kwargs.pop('ptBins', [10,15,20,25,30,35,40,50])
         etaBins = kwargs.pop('etaBins', [0,1,1.479,2,2.5])
-        ptVar = kwargs.pop('ptVar','f1.Pt1')
-        etaVar = kwargs.pop('etaVar','f1.Eta1')
+        ptVar = kwargs.pop('ptVar','w1.Pt1')
+        etaVar = kwargs.pop('etaVar','w1.Eta1')
         xaxis = kwargs.pop('xaxis','p_{T} (GeV)')
         yaxis = kwargs.pop('yaxis','#eta')
         for key, value in kwargs.iteritems():

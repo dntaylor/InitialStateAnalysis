@@ -12,6 +12,7 @@ def sync(analysis,channel,period,**kwargs):
     '''Print sync information to file.'''
     runTau = kwargs.pop('runTau',False)
     blind = kwargs.pop('blind',True)
+    doBjetVeto = kwargs.pop('doBjetVeto',False)
     cut = kwargs.pop('cut','select.passTight')
 
     # WZ only for now
@@ -19,8 +20,11 @@ def sync(analysis,channel,period,**kwargs):
 
     fs = ['eee','eem','mme','mmm']
 
+    print ''
     print 'Selection to be used:'
     print cut
+    if doBjetVeto:
+        print 'Bjet veto to be applied: finalstate.bjetVeto30==0'
     print ''
 
     # sync on WZ sample
@@ -39,14 +43,17 @@ def sync(analysis,channel,period,**kwargs):
     plotter.initializeBackgroundSamples([sigMap[period][x] for x in channelBackground[channel]])
     plotter.setIntLumi(15000)
     print 'WZ event counts'
+    tempCut = cut
+    if doBjetVeto: tempCut += ' & finalstate.bjetVeto30==0'
     for chan in fs:
-        num = plotter.getNumEntries('%s&channel=="%s"' %(cut,chan), sigMap[period]['WZ'], doUnweighted=True)
+        num = plotter.getNumEntries('%s&channel=="%s"' %(tempCut,chan), sigMap[period]['WZ'], doUnweighted=True)
         print '%s: %i' % (chan, num)
     print ''
 
     # cut flow
     cutflow = {
         'pre' : cut,
+        'bjet' : 'finalstate.bjetVeto30==0',
         'zpt' : '(z1.Pt1>20.&z1.Pt2>10.)',
         'zmass' : 'fabs(z1.mass-%f)<20.' % ZMASS,
         'wpt' : 'w1.Pt1>20.',
@@ -54,6 +61,7 @@ def sync(analysis,channel,period,**kwargs):
         'm3l' : 'finalstate.Mass>100.'
     }
     cutflows = ['pre','zpt','zmass','wpt','met','m3l']
+    if doBjetVeto: cutflows = ['pre','bjet','zpt','zmass','wpt','met','m3l']
     print 'Cutflows'
     for chan in fs:
         print '%8s |         WZ |         BG |        S/B' % chan
@@ -129,6 +137,7 @@ def parse_command_line(argv):
     parser.add_argument('period', type=int, choices=[7,8,13], help='Energy (TeV)')
     parser.add_argument('-rt','--runTau',action='store_true',help='Run Tau finalStates (not implemented)')
     parser.add_argument('-ub','--unblind',action='store_false',help='Unblind signal channel')
+    parser.add_argument('-db','--doBjetVeto',action='store_true',help='Add a bjet veto')
     parser.add_argument('-c','--cut',type=str,default='select.passTight',help='Cut to be applied to plots (default = "select.passTight").')
     args = parser.parse_args(argv)
 
@@ -156,7 +165,7 @@ def main(argv=None):
     # e: medium CBID and iso<0.15
     # m: isTightMuon and iso<0.12
 
-    sync(args.analysis,args.channel,args.period,runTau=args.runTau,blind=args.unblind,cut=args.cut)
+    sync(args.analysis,args.channel,args.period,runTau=args.runTau,blind=args.unblind,cut=args.cut,doBjetVeto=args.doBjetVeto)
 
     return 0
 

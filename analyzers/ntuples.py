@@ -193,8 +193,8 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
                     #                strToProcess += "Float_t dR%i_%s_%i;" % (objCount,k,oCount)
                     # manually add the W Z deltaRs for now
                     if key == 'w1':
-                        strForBranch += "dR1_z1_1:dR1_z1_2:"
-                        strToProcess += "Float_t dR1_z1_1; Float_t dR1_z1_2;"
+                        strForBranch += "dR1_z1_1:dR1_z1_2:mll_z1_1:mll_z1_2:"
+                        strToProcess += "Float_t dR1_z1_1; Float_t dR1_z1_2; Float_t mll_z1_1; Float_t mll_z1_2;"
             # do the alt IDs
             objCount = 0
             for obj in val:

@@ -27,14 +27,14 @@ class AnalyzerWZ(AnalyzerBase):
     '''
 
     def __init__(self, sample_location, out_file, period):
-        self.channel = 'WZ'
+        if not hasattr(self,'channel'): self.channel = 'WZ'
         self.final_states = ['eee','eem','emm','mmm']
         self.initial_states = ['z1','w1'] # in order of leptons returned in choose_objects
         self.object_definitions = {
             'w1': ['em','n'],
             'z1': ['em','em'],
         }
-        self.cutflow_labels = ['Trigger','Fiducial','ID','3l Mass','Z Selection','W Selection']
+        self.cutflow_labels = ['Trigger','Fiducial','ID','Z Selection','W Selection']
         self.alternateIds, self.alternateIdMap = self.defineAlternateIds()
         self.doVBF = True
         super(AnalyzerWZ, self).__init__(sample_location, out_file, period)
@@ -46,6 +46,7 @@ class AnalyzerWZ(AnalyzerBase):
         '''
         Select leptons that best fit the WZ selection.
         The first two leptons are the Z and the third is the W.
+        Z are then ordered in pt.
         We select combinatorics by closest to zmass.
         '''
         cands = []
@@ -57,8 +58,10 @@ class AnalyzerWZ(AnalyzerBase):
             mass = getattr(rtrow, "%s_%s_Mass" % (l[0], l[1]))
             massdiff = abs(ZMASS-mass)
 
+            ordList = [l[1], l[0], l[2]] if getattr(rtrow,'%sPt' % l[0]) < getattr(rtrow,'%sPt' % l[1]) else l
+
             if OS1 and l[0][0]==l[1][0]:
-                cands.append((massdiff, list(l)))
+                cands.append((massdiff, list(ordList)))
 
         if not len(cands): return 0
 
@@ -78,8 +81,8 @@ class AnalyzerWZ(AnalyzerBase):
         return (rtrow.eVetoWZ + rtrow.muVetoWZ == 0)
 
     def defineAlternateIds(self):
-        elecIds = ['Veto', 'Loose', 'Medium', 'Tight', 'Trig', 'NonTrig', 'ZZLoose', 'ZZTight']
-        muonIds = ['Loose', 'Tight', 'ZZLoose', 'ZZTight']
+        elecIds = ['Loose', 'Medium', 'Tight']
+        muonIds = ['Loose', 'Tight']
         elecIsos = [0.5, 0.2, 0.15]
         muonIsos = [0.4, 0.2, 0.12]
         idList = []
@@ -134,7 +137,6 @@ class AnalyzerWZ(AnalyzerBase):
         cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.ID_tight)
-        cuts.add(self.mass3l)
         cuts.add(self.zSelection)
         cuts.add(self.wSelection)
         return cuts
@@ -171,13 +173,15 @@ class AnalyzerWZ(AnalyzerBase):
                 'e':0.4,
                 'm':0.4
             }
-        if type in self.alternateIds:
-            kwargs = self.alternateIdMap[type]
+        if hasattr(self,'alternateIds'):
+            if type in self.alternateIds:
+                kwargs = self.alternateIdMap[type]
         return kwargs
 
     def trigger(self, rtrow):
-        triggers = ["mu17ele8isoPass", "mu8ele17isoPass",
-                    "doubleETightPass", "doubleMuPass", "doubleMuTrkPass"]
+        if self.period == '8':
+            triggers = ["mu17ele8isoPass", "mu8ele17isoPass",
+                        "doubleETightPass", "doubleMuPass", "doubleMuTrkPass"]
 
         if self.period == '13':
             triggers = ['muEPass', 'doubleMuPass', 'doubleEPass']
@@ -241,6 +245,41 @@ class AnalyzerWZ(AnalyzerBase):
             if dr < 0.1: return False
         return True
 
+class AnalyzerTT(AnalyzerWZ):
+    def __init__(self, sample_location, out_file, period):
+        self.channel = 'TT'
+        super(AnalyzerTT, self).__init__(sample_location, out_file, period)
+
+    def choose_objects(self, rtrow):
+        cands = []
+        for l in permutations(self.objects):
+            if lep_order(l[0], l[1]):
+                continue
+
+            OS1 = getattr(rtrow, "%s_%s_SS" % (l[0], l[1])) < 0.5 # select opposite sign
+            mass = getattr(rtrow, "%s_%s_Mass" % (l[0], l[1]))
+            massdiff = abs(ZMASS-mass)
+
+            ordList = [l[1], l[0], l[2]] if getattr(rtrow,'%sPt' % l[0]) < getattr(rtrow,'%sPt' % l[1]) else l
+
+            if OS1 and l[0][0]!=l[1][0]:
+                o02 = ordered(l[0],l[2])
+                o12 = ordered(l[1],l[2])
+                os02 = getattr(rtrow, "%s_%s_SS" % (o02[0], o02[1])) < 0.5 
+                os12 = getattr(rtrow, "%s_%s_SS" % (o12[0], o12[1])) < 0.5 
+                # reject ossf pairs
+                if not ((os02 and l[0][0]==l[2][0]) or (os12 and l[1][0]==l[2][0])):
+                    cands.append((massdiff, list(ordList)))
+
+        if not len(cands): return 0
+
+        # Sort by mass difference
+        cands.sort(key=lambda x: x[0])
+        massdiff, leps = cands[0]
+
+        return ([massdiff], leps)
+
+
 ##########################
 ###### Command line ######
 ##########################
@@ -262,6 +301,7 @@ def main(argv=None):
     args = parse_command_line(argv)
 
     if args.analyzer == 'WZ': analyzer = AnalyzerWZ(args.in_sample,args.out_file,args.period)
+    if args.analyzer == 'TT': analyzer = AnalyzerTT(args.in_sample,args.out_file,args.period)
     with analyzer as thisAnalyzer:
         thisAnalyzer.analyze()
 

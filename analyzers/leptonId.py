@@ -96,7 +96,7 @@ def _elec_zz_tight(rtrow, l, period):
 def _elec_mva_nontriggering_zz(rtrow, l, period):
     pt = getattr(rtrow, "%sPt" % l)
     eta = abs(getattr(rtrow, "%sSCEta" % l))
-    mva = getattr(rtrow, "%sMVANonTrigID" % l)
+    mva = getattr(rtrow, "%sMVANonTrigID" % l) if period == '13' else getattr(rtrow, "%sMVANonTrig" % l)
 
     if 5.0 < pt < 10.0:
         return (eta < 0.8 and mva > -0.202) or (0.8 < eta < 1.479 and mva > -0.444) or (1.479 < eta and mva > 0.264)
@@ -108,7 +108,7 @@ def _elec_mva_nontriggering_zz(rtrow, l, period):
 def _elec_mva_nontriggering(rtrow, l, period):
     pt = getattr(rtrow, "%sPt" % l)
     eta = abs(getattr(rtrow, "%sSCEta" % l))
-    mva = getattr(rtrow, "%sMVANonTrigID" % l)
+    mva = getattr(rtrow, "%sMVANonTrigID" % l) if period == '13' else getattr(rtrow, "%sMVANonTrig" % l)
 
     if 5.0 < pt < 10.0:
         return (eta < 0.8 and mva > 0.47) or (0.8 < eta < 1.479 and mva > 0.004) or (1.479 < eta and mva > 0.295)
@@ -122,7 +122,7 @@ def _elec_mva_nontriggering(rtrow, l, period):
 def _elec_mva_triggering(rtrow, l, period):
     pt = getattr(rtrow, "%sPt" % l)
     eta = abs(getattr(rtrow, "%sSCEta" % l))
-    mva = getattr(rtrow, "%sMVATrigID" % l)
+    mva = getattr(rtrow, "%sMVATrigID" % l) if period == '13' else getattr(rtrow, "%sMVATrig" % l)
 
     if 10.0 < pt < 20.0:
         return (eta < 0.8 and mva > 0.00) or (0.8 < eta < 1.479 and mva > 0.10) or (1.479 < eta and mva > 0.62)
@@ -132,3 +132,79 @@ def _elec_mva_triggering(rtrow, l, period):
 
     else:
         return False
+
+########################
+### Old WZ 8 TeV IDs ###
+########################
+
+def elec_WZ_loose(rtrow, l, period):
+    pt = getattr(rtrow, "%sPt" % l)
+    eta = abs(getattr(rtrow, "%sEta" % l))
+    sceta = abs(getattr(rtrow, "%sSCEta" % l))
+    sieie = getattr(rtrow, "%sSigmaIEtaIEta" % l)
+    dphi = getattr(rtrow, "%sdeltaPhiSuperClusterTrackAtVtx" %l)
+    deta = getattr(rtrow, "%sdeltaEtaSuperClusterTrackAtVtx" %l)
+    hoe = getattr(rtrow, "%sHadronicOverEM" %l)
+    eiso = getattr(rtrow, "%sEcalIsoDR03" %l)
+    hiso = getattr(rtrow, "%sHcalIsoDR03" %l)
+    tiso = getattr(rtrow, "%sTrkIsoDR03" %l)
+    conv = getattr(rtrow, "%sHasConversion" %l)
+    misshits = getattr(rtrow, "%sMissingHits" %l)
+
+    passid = True
+    if pt < 10: passid = False
+    if eta > 2.5: passid = False
+    if sceta < 1.479:
+        if sieie > 0.01: passid = False
+        if dphi > 0.15: passid = False
+        if deta > 0.007: passid = False
+        if hoe > 0.12: passid = False
+        if max(eiso-1,0)/pt > 0.2: passid = False
+    if sceta >= 1.479:
+        if sieie > 0.03: passid = False
+        if dphi > 0.1: passid = False
+        if deta > 0.009: passid = False
+        if hoe > 0.1: passid = False
+        if eiso/pt > 0.2: passid = False
+    if tiso/pt > 0.2: passid = False
+    if hiso/pt > 0.2: passid = False
+    if conv: passid = False
+    if misshits: passid = False
+
+    return passid
+
+def elec_WZ_tight(rtrow, l, period):
+    d0 = getattr(rtrow, "%sPVDXY" %l)
+    dz = getattr(rtrow, "%sPVDZ" %l)
+    mva = _elec_mva_triggering(rtrow, l, period)
+    reliso = getattr(rtrow, "%sRelPFIsoRho" %l)
+
+    wzloose = elec_WZ_loose(rtrow, l, period)
+
+    return reliso < 0.15 and d0 < 0.02 and dz < 0.1 and wzloose and mva
+
+def muon_WZ_loose(rtrow, l, period):
+    pt = getattr(rtrow, "%sPt" % l)
+    eta = abs(getattr(rtrow, "%sEta" % l))
+    d0 = getattr(rtrow, "%sPVDXY" %l)
+    dz = getattr(rtrow, "%sPVDZ" %l)
+    tightid = getattr(rtrow, '%sPFIDTight' %l)
+    reliso = getattr(rtrow, "%sRelPFIsoDBDefault" %l)
+
+    passid = True
+    if pt < 10: passid = False
+    if eta > 2.4: passid = False
+    if not tightid: passid = False
+    if reliso > 0.2: passid = False
+
+    return passid
+
+def muon_WZ_tight(rtrow, l, period):
+    loose = muon_WZ_loose(rtrow, l, period)
+    reliso = getattr(rtrow, "%sRelPFIsoDBDefault" %l)
+
+    passid = loose
+    if reliso > 0.12: passid = False
+
+    return passid
+

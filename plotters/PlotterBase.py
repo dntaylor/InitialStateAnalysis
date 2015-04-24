@@ -262,6 +262,7 @@ class PlotterBase(object):
 
     def getHist(self, sample, variables, binning, cut, noFormat=False, **kwargs):
         '''Return a histogram of a given variable from the given dataset with a cut'''
+        normalize = kwargs.pop('normalize',False)
         hists = ROOT.TList()
         for v in range(len(variables)):
             if sample in self.sampleMergeDict:
@@ -287,6 +288,9 @@ class PlotterBase(object):
         hist.Reset()
         hist.Merge(hists)
         hist = self.getOverflowUnderflow(hist,**kwargs)
+        if normalize:
+            integral = hist.Integral()
+            if integral: hist.Scale(1.0/integral)
         # set styles
         if not noFormat: hist.SetTitle(self.dataStyles[sample]['name'])
         if sample in self.data: return hist
@@ -309,10 +313,14 @@ class PlotterBase(object):
 
     def getMCStack(self, variables, binning, cut, **kwargs):
         '''Return a stack of MC histograms'''
+        nostack = kwargs.pop('nostack',False)
         mcstack = ROOT.THStack('hs%s' % variables[0],'mc stack')
         for sample in self.backgrounds:
             hist = self.getHist(sample, variables, binning, cut, **kwargs)
             if not hist: continue
+            if nostack:
+                hist.SetFillStyle(0)
+                hist.SetLineWidth(2)
             mcstack.Add(hist)
         return mcstack
 

@@ -61,11 +61,12 @@ def defineCutFlowMap(region,channels,mass):
         'mass' : None
     }
     regionMap['WZ'][0] = {
+        'bveto' : 'finalstate.bjetVeto30==0',
+        #'bveto' : '1',
         'zpt' : '(z1.Pt1>20.&z1.Pt2>10.)',
         'zmass' : 'fabs(z1.mass-%f)<20.' % ZMASS,
         'wpt' : 'w1.Pt1>20.',
         'met' : 'w1.met>30.',
-        'm3l' : 'finalstate.Mass>100.'
     }
     # define cutmap to be returned
     cutMap = { 'cuts' : [], 'labels': [], 'labels_simple': [], 'preselection': [] }
@@ -92,14 +93,12 @@ def defineCutFlowMap(region,channels,mass):
                  'zveto' : '',
                  'dphi' : '',
                  'mass' : '' }
-    elif region == 'WZ':
-        cutMap['labels'] = ['Preselection (ID)','Z lepton p_{T}','Z window','W lepton p_{T}',\
-                            'E_{T}^{miss}','M_{3l}']
-        cutMap['labels_simple'] = ['Presel (ID)','Z lep pt', 'Z window', 'W lep pt',\
-                                   'MET', 'mass3l']
+    elif region == 'WZ' or region == 'TT':
+        cutMap['labels'] = ['Preselection (ID)', 'b-jet Veto', 'Z lepton p_{T}', 'Z window', 'W lepton p_{T}', 'E_{T}^{miss}']
+        cutMap['labels_simple'] = ['Presel (ID)', 'bjet veto', 'Z lep pt', 'Z window', 'W lep pt', 'MET']
         cutMap['preselection'] = ['All events','Three lepton','Trigger','Fiducial','4th lepton veto']
-        cutMap['cuts'] = ['1', regionMap['WZ'][0]['zpt'], regionMap['WZ'][0]['zmass'], regionMap['WZ'][0]['wpt'],\
-                          regionMap['WZ'][0]['met'], regionMap['WZ'][0]['m3l']]
+        cutMap['cuts'] = ['1', regionMap['WZ'][0]['bveto'], regionMap['WZ'][0]['zpt'], regionMap['WZ'][0]['zmass'],\
+                          regionMap['WZ'][0]['wpt'], regionMap['WZ'][0]['met']]
     else:
         cutMap['cuts'] = '1'
         cutMap['labels'] = ['%s Full Selection' %region]
@@ -273,22 +272,8 @@ def getChannelStringsCuts(region,channels):
     channelsWZ = [['ee','e'],['ee','m'],['mm','e'],['mm','m']]
     channelStringsWZ = ['(ee)e','(ee)#mu','(#mu#mu)e','(#mu#mu)#mu']
     channelCutsWZ = ['z1Flv=="%s"&&w1Flv=="%s"' %(x[0],x[1]) for x in channelsWZ]
-    channelsZ = ['ee','mm']
-    channelStringsZ = ['ee','#mu#mu']
-    channelCutsZ = ['z1Flv=="%s"' %x for x in channelsZ]
-    channelsTTW = [['eee','eem'],['eme','emm'],['mme','mmm']]
-    channelStringsTTW = ['ee','e#mu','#mu#mu']
-    channelCutsTTW = ['(channel=="%s"||channel=="%s")' %(x[0],x[1]) for x in channelsTTW]
-    channelStringsTT = ['ee', 'e#mu', '#mu#mu']
-    channelCutsTT = ['ttFlv=="ee"', '(ttFlv=="em"||ttFlv=="me")',  'ttFlv=="mm"']
     plotChannelCuts = channelCuts
-    if region in ['WZ','TTZ']: plotChannelCuts = channelCutsWZ
-    if region in ['Z']: plotChannelCuts = channelCutsZ
-    if region in ['TTW']: plotChannelCuts = channelCutsTTW
-    if region in ['TT']: plotChannelCuts = channelCutsTT
+    if region in ['WZ']: plotChannelCuts = channelCutsWZ
     plotChannelStrings = channelStrings
-    if region in ['WZ','TTZ']: plotChannelStrings = channelStringsWZ
-    if region in ['Z']: plotChannelStrings = channelStringsZ
-    if region in ['TTW']: plotChannelStrings = channelStringsTTW
-    if region in ['TT']: plotChannelStrings = channelStringsTT
+    if region in ['WZ']: plotChannelStrings = channelStringsWZ
     return plotChannelStrings, plotChannelCuts
