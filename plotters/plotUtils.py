@@ -61,10 +61,9 @@ def defineCutFlowMap(region,channels,mass):
         'mass' : None
     }
     regionMap['WZ'][0] = {
-        'bveto' : 'finalstate.bjetVeto30==0',
-        #'bveto' : '1',
         'zpt' : '(z1.Pt1>20.&z1.Pt2>10.)',
         'zmass' : 'fabs(z1.mass-%f)<20.' % ZMASS,
+        'bveto' : 'finalstate.bjetVeto30Medium==0',
         'wpt' : 'w1.Pt1>20.',
         'met' : 'w1.met>30.',
     }
@@ -94,10 +93,10 @@ def defineCutFlowMap(region,channels,mass):
                  'dphi' : '',
                  'mass' : '' }
     elif region == 'WZ' or region == 'TT':
-        cutMap['labels'] = ['Preselection (ID)', 'b-jet Veto', 'Z lepton p_{T}', 'Z window', 'W lepton p_{T}', 'E_{T}^{miss}']
-        cutMap['labels_simple'] = ['Presel (ID)', 'bjet veto', 'Z lep pt', 'Z window', 'W lep pt', 'MET']
+        cutMap['labels'] = ['Preselection (ID)', 'Z lepton p_{T}', 'Z window', 'b-jet Veto', 'W lepton p_{T}', 'E_{T}^{miss}']
+        cutMap['labels_simple'] = ['Presel (ID)', 'Z lep pt', 'Z window', 'bjet Veto', 'W lep pt', 'MET']
         cutMap['preselection'] = ['All events','Three lepton','Trigger','Fiducial','4th lepton veto']
-        cutMap['cuts'] = ['1', regionMap['WZ'][0]['bveto'], regionMap['WZ'][0]['zpt'], regionMap['WZ'][0]['zmass'],\
+        cutMap['cuts'] = ['1', regionMap['WZ'][0]['zpt'], regionMap['WZ'][0]['zmass'], regionMap['WZ'][0]['bveto'],\
                           regionMap['WZ'][0]['wpt'], regionMap['WZ'][0]['met']]
     else:
         cutMap['cuts'] = '1'

@@ -90,13 +90,17 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
     fsStrToProcess += "Int_t   jetVeto20;\
        Int_t   jetVeto30;\
        Int_t   jetVeto40;\
-       Int_t   bjetVeto20;\
-       Int_t   bjetVeto30;\
+       Int_t   bjetVeto20Loose;\
+       Int_t   bjetVeto30Loose;\
+       Int_t   bjetVeto20Medium;\
+       Int_t   bjetVeto30Medium;\
+       Int_t   bjetVeto20Tight;\
+       Int_t   bjetVeto30Tight;\
        Int_t   muonVeto5;\
        Int_t   muonVeto10Loose;\
        Int_t   muonVeto15;\
        Int_t   elecVeto10;"
-    fsStrForBranch += "jetVeto20/I:jetVeto30:jetVeto40:bjetVeto20:bjetVeto30:muonVeto5:muonVeto10Loose:muonVeto15:elecVeto10:"
+    fsStrForBranch += "jetVeto20/I:jetVeto30:jetVeto40:bjetVeto20Loose:bjetVeto30Loose:bjetVeto20Medium:bjetVeto30Medium:bjetVeto20Tight:bjetVeto30Tight:muonVeto5:muonVeto10Loose:muonVeto15:elecVeto10:"
 
     if doVBF:
         fsStrToProcess += "Int_t   centralJetVeto20;\

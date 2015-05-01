@@ -44,7 +44,7 @@ def sync(analysis,channel,period,**kwargs):
     plotter.setIntLumi(15000)
     print 'WZ event counts'
     tempCut = cut
-    if doBjetVeto: tempCut += ' & finalstate.bjetVeto30==0'
+    if doBjetVeto: tempCut += ' & finalstate.bjetVeto30Medium==0'
     for chan in fs:
         num = plotter.getNumEntries('%s&channel=="%s"' %(tempCut,chan), sigMap[period]['WZ'], doUnweighted=True)
         print '%s: %i' % (chan, num)
@@ -53,15 +53,15 @@ def sync(analysis,channel,period,**kwargs):
     # cut flow
     cutflow = {
         'pre' : cut,
-        'bjet' : 'finalstate.bjetVeto30==0',
+        'bjet' : 'finalstate.bjetVeto30Medium==0',
         'zpt' : '(z1.Pt1>20.&z1.Pt2>10.)',
         'zmass' : 'fabs(z1.mass-%f)<20.' % ZMASS,
         'wpt' : 'w1.Pt1>20.',
         'met' : 'w1.met>30.',
         'm3l' : 'finalstate.Mass>100.'
     }
-    cutflows = ['pre','zpt','zmass','wpt','met','m3l']
-    if doBjetVeto: cutflows = ['pre','bjet','zpt','zmass','wpt','met','m3l']
+    cutflows = ['pre','zpt','zmass','wpt','met']
+    if doBjetVeto: cutflows = ['pre','zpt','zmass','bjet','wpt','met']
     print 'Cutflows'
     for chan in fs:
         print '%8s |         WZ |         BG |        S/B' % chan
