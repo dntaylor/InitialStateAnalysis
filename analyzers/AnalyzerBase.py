@@ -80,6 +80,7 @@ class AnalyzerBase(object):
     '''
     def __init__(self, sample_location, out_file, period):
         self.sample_name = os.path.basename(sample_location)
+        self.isData = ('data' in self.sample_name)
         self.file_names = os.listdir(sample_location)
         self.out_file = out_file
         self.sample_location = sample_location
@@ -244,8 +245,8 @@ class AnalyzerBase(object):
         '''
         return []
 
-    @staticmethod
-    def good_to_store(rtrow, cand1, cand2):
+    #@staticmethod
+    def good_to_store(self, rtrow, cand1, cand2):
         '''
         Iterate through minimizing variables.
         '''
@@ -297,17 +298,18 @@ class AnalyzerBase(object):
 
         ntupleRow["finalstate.mass"] = float(rtrow.Mass)
         ntupleRow["finalstate.sT"] = float(sum([getattr(rtrow, "%sPt" % x) for x in objects]))
-        ntupleRow["finalstate.met"] = float(rtrow.pfMetEt)
-        ntupleRow["finalstate.metPhi"] = float(rtrow.pfMetPhi)
+        metVar = 'pfMet' if self.period=='13' else 'type1_pfMet'
+        ntupleRow["finalstate.met"] = float(getattr(rtrow, '%sEt' %metVar))
+        ntupleRow["finalstate.metPhi"] = float(getattr(rtrow,'%sPhi' %metVar))
         ntupleRow["finalstate.jetVeto20"] = int(rtrow.jetVeto20)
         ntupleRow["finalstate.jetVeto30"] = int(rtrow.jetVeto30)
         ntupleRow["finalstate.jetVeto40"] = int(rtrow.jetVeto40)
-        ntupleRow["finalstate.bjetVeto20Loose"] = int(rtrow.bjetCISVVeto20Loose)
-        ntupleRow["finalstate.bjetVeto30Loose"] = int(rtrow.bjetCISVVeto30Loose)
-        ntupleRow["finalstate.bjetVeto20Medium"] = int(rtrow.bjetCISVVeto20Medium)
-        ntupleRow["finalstate.bjetVeto30Medium"] = int(rtrow.bjetCISVVeto30Medium)
-        ntupleRow["finalstate.bjetVeto20Tight"] = int(rtrow.bjetCISVVeto20Tight)
-        ntupleRow["finalstate.bjetVeto30Tight"] = int(rtrow.bjetCISVVeto30Tight)
+        ntupleRow["finalstate.bjetVeto20Loose"] = int(rtrow.bjetCISVVeto20Loose) if self.period=='13' else -1
+        ntupleRow["finalstate.bjetVeto30Loose"] = int(rtrow.bjetCISVVeto30Loose) if self.period=='13' else -1
+        ntupleRow["finalstate.bjetVeto20Medium"] = int(rtrow.bjetCISVVeto20Medium) if self.period=='13' else int(rtrow.bjetCSVVeto)
+        ntupleRow["finalstate.bjetVeto30Medium"] = int(rtrow.bjetCISVVeto30Medium) if self.period=='13' else int(rtrow.bjetCSVVeto30)
+        ntupleRow["finalstate.bjetVeto20Tight"] = int(rtrow.bjetCISVVeto20Tight) if self.period=='13' else -1
+        ntupleRow["finalstate.bjetVeto30Tight"] = int(rtrow.bjetCISVVeto30Tight) if self.period=='13' else -1
         ntupleRow["finalstate.muonVeto5"] = int(rtrow.muVetoPt5IsoIdVtx)
         ntupleRow["finalstate.muonVeto10Loose"] = int(rtrow.muGlbIsoVetoPt10)
         ntupleRow["finalstate.muonVeto15"] = int(rtrow.muVetoPt15IsoIdVtx)
@@ -322,8 +324,9 @@ class AnalyzerBase(object):
             ntupleRow["finalstate.centralJetVeto20"] = float(rtrow.vbfJetVeto20)
             ntupleRow["finalstate.centralJetVeto30"] = float(rtrow.vbfJetVeto30)
 
-        def store_state(rtrow,ntupleRow,state,theObjects):
+        def store_state(rtrow,ntupleRow,state,theObjects,period):
             objStart = 0
+            metVar = 'pfMet' if period=='13' else 'type1_pfMet'
             for i in state:
                 numObjects = len([ x for x in self.object_definitions[i] if x != 'n']) if theObjects else 0
                 finalObjects = theObjects[objStart:objStart+numObjects]
@@ -336,7 +339,7 @@ class AnalyzerBase(object):
                     ntupleRow["%sFlv.Flv" %i] = finalObjects[0][0] if theObjects else 'a'
                 elif 'n' == self.object_definitions[i][1]:
                     ntupleRow["%s.mass" %i] = float(getattr(rtrow, "%sMtToPFMET" % finalObjects[0])) if theObjects else float(-9)
-                    ntupleRow["%s.sT" %i] = float(getattr(rtrow, "%sPt" % finalObjects[0]) + rtrow.pfMetEt) if theObjects else float(-9)
+                    ntupleRow["%s.sT" %i] = float(getattr(rtrow, "%sPt" % finalObjects[0]) + getattr(rtrow, '%sEt' %metVar)) if theObjects else float(-9)
                     ntupleRow["%s.dPhi" %i] = float(getattr(rtrow, "%sToMETDPhi" % finalObjects[0])) if theObjects else float(-9)
                     ntupleRow["%sFlv.Flv" %i] = finalObjects[0][0] if theObjects else 'a'
                 else:
@@ -349,8 +352,8 @@ class AnalyzerBase(object):
                 objCount = 0
                 for obj in self.object_definitions[i]:
                     if obj=='n':
-                        ntupleRow["%s.met" %i] = float(rtrow.pfMetEt) if theObjects else float(-9)
-                        ntupleRow["%s.metPhi" %i] = float(rtrow.pfMetPhi) if theObjects else float(-9)
+                        ntupleRow["%s.met" %i] = float(getattr(rtrow,'%sEt' %metVar)) if theObjects else float(-9)
+                        ntupleRow["%s.metPhi" %i] = float(getattr(rtrow, '%sPhi' %metVar)) if theObjects else float(-9)
                     else:
                         objCount += 1
                         ntupleRow["%s.Pt%i" % (i,objCount)] = float(getattr(rtrow, "%sPt" % orderedFinalObjects[objCount-1])) if theObjects else float(-9)
@@ -377,12 +380,12 @@ class AnalyzerBase(object):
 
 
         # initial state objects
-        store_state(rtrow,ntupleRow,self.initial_states,objects)
+        store_state(rtrow,ntupleRow,self.initial_states,objects,self.period)
 
         # alternative state objects
         if hasattr(self,'other_states'):
             for state in self.other_states:
-                store_state(rtrow,ntupleRow,state,self.choose_alternative_objects(rtrow,state))
+                store_state(rtrow,ntupleRow,state,self.choose_alternative_objects(rtrow,state),self.period)
                 
 
         # final state objects

@@ -40,6 +40,10 @@ def elec_id(rtrow, l, period, idType):
         if not _elec_zz_loose(rtrow,l,period): return False
     if idType=='ZZTight':
         if not _elec_zz_tight(rtrow,l,period): return False
+    if idType=='WZLoose':
+        if not elec_WZ_loose(rtrow,l,period): return False
+    if idType=='WZTight':
+        if not elec_WZ_tight(rtrow,l,period): return False
     return True
 
 def muon_id(rtrow, l, period, idType):
@@ -51,6 +55,10 @@ def muon_id(rtrow, l, period, idType):
         if not _muon_zz_loose(rtrow,l,period): return False
     if idType=='ZZTight':
         if not _muon_zz_tight(rtrow,l,period): return False
+    if idType=='WZLoose':
+        if not muon_WZ_loose(rtrow,l,period): return False
+    if idType=='WZTight':
+        if not muon_WZ_tight(rtrow,l,period): return False
     return True
 
 def tau_id(rtrow, l, period, idType):

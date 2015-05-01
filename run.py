@@ -37,10 +37,12 @@ def get_sample_names(analysis,period,samples):
     '''Get unix sample names'''
     ntupleDict = {
         '7': {
+            'WZ'   : 'N/A',
             'Hpp3l': 'N/A',
             'Hpp4l': 'N/A', 
         },
         '8': {
+            'WZ'   : '2015-04-19-8TeV', 
             'Hpp3l': '2014-12-04-8TeV',
             'Hpp4l': 'N/A', 
         },

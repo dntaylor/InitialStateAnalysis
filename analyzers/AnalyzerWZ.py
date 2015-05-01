@@ -28,6 +28,7 @@ class AnalyzerWZ(AnalyzerBase):
 
     def __init__(self, sample_location, out_file, period):
         if not hasattr(self,'channel'): self.channel = 'WZ'
+        self.period = period
         self.final_states = ['eee','eem','emm','mmm']
         self.initial_states = ['z1','w1'] # in order of leptons returned in choose_objects
         self.object_definitions = {
@@ -35,8 +36,8 @@ class AnalyzerWZ(AnalyzerBase):
             'z1': ['em','em'],
         }
         self.cutflow_labels = ['Trigger','Fiducial','ID','Z Selection','W Selection']
-        self.alternateIds, self.alternateIdMap = self.defineAlternateIds()
-        self.doVBF = True
+        self.alternateIds, self.alternateIdMap = self.defineAlternateIds(period)
+        self.doVBF = (period=='13')
         super(AnalyzerWZ, self).__init__(sample_location, out_file, period)
 
     ###############################
@@ -73,14 +74,17 @@ class AnalyzerWZ(AnalyzerBase):
 
     # overide good_to_store
     # will store via veto
-    @staticmethod
-    def good_to_store(rtrow, cand1, cand2):
+    #@staticmethod
+    def good_to_store(self,rtrow, cand1, cand2):
         '''
         Veto on 4th lepton
         '''
-        return (rtrow.eVetoWZ + rtrow.muVetoWZ == 0)
+        return (rtrow.eVetoWZ + rtrow.muVetoWZ == 0) if self.period=='13' else\
+               (rtrow.eVetoMVAIsoVtx + rtrow.muVetoPt5IsoIdVtx == 0)
 
-    def defineAlternateIds(self):
+    def defineAlternateIds(self,period):
+        if period=='8':
+            return [], {}
         elecIds = ['Loose', 'Medium', 'Tight']
         muonIds = ['Loose', 'Tight']
         elecIsos = [0.5, 0.2, 0.15]
@@ -123,10 +127,10 @@ class AnalyzerWZ(AnalyzerBase):
     ###########################
     def preselection(self,rtrow):
         cuts = CutSequence()
-        cuts.add(self.trigger)
+        if self.isData or self.period=='13': cuts.add(self.trigger)
         cuts.add(self.fiducial)
-        cuts.add(self.passAnyId)
-        #cuts.add(self.ID_loose)
+        if self.period=='13': cuts.add(self.passAnyId)
+        if self.period=='8': cuts.add(self.ID_loose)
         #cuts.add(self.mass3l)
         #cuts.add(self.zSelection)
         #cuts.add(self.wSelection)
@@ -134,9 +138,10 @@ class AnalyzerWZ(AnalyzerBase):
 
     def selection(self,rtrow):
         cuts = CutSequence()
-        cuts.add(self.trigger)
+        if self.isData or self.period=='13': cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.ID_tight)
+        if self.period=='8': cuts.add(self.mass3l)
         cuts.add(self.zSelection)
         cuts.add(self.wSelection)
         return cuts
@@ -153,6 +158,9 @@ class AnalyzerWZ(AnalyzerBase):
                 'e':0.15,
                 'm':0.12
             }
+            if self.period=='8':
+                kwargs['idDef']['e'] = 'WZTight'
+                kwargs['idDef']['m'] = 'WZTight'
         if type=='Loose':
             kwargs['idDef'] = {
                 'e':'Loose',
@@ -163,6 +171,9 @@ class AnalyzerWZ(AnalyzerBase):
                 'e':0.2,
                 'm':0.2
             }
+            if self.period=='8':
+                kwargs['idDef']['e'] = 'WZLoose'
+                kwargs['idDef']['m'] = 'WZLoose'
         if type=='Veto':
             kwargs['idDef'] = {
                 'e':'Veto',
