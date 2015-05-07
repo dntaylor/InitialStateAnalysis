@@ -247,7 +247,7 @@ class PlotterBase(object):
             drawString = "%s>>h%s%s()" % (variable, sample, variable)
         if not cut: cut = '1'
         if 'data' not in sample and self.sqrts != 13: # TODO: dont forget to remove when we have data!
-            tree.Draw(drawString,'(event.pu_weight*event.lep_scale)*('+cut+')','goff')
+            tree.Draw(drawString,'(event.pu_weight*event.lep_scale*event.trig_scale)*('+cut+')','goff')
         else:
             tree.Draw(drawString,cut,'goff')
         if not ROOT.gDirectory.Get("h%s%s" %(sample, variable)):

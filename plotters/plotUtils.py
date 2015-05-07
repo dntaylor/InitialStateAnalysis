@@ -255,7 +255,8 @@ def getIntLumiMap():
     intLumiMap = {
         7 : 4900,
         8 : 19700,
-        13: 15000
+        #13: 15000
+        13: 1000
     }
     return intLumiMap
 

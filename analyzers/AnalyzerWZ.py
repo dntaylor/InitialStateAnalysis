@@ -249,17 +249,20 @@ class AnalyzerWZ(AnalyzerBase):
     def wSelection(self,rtrow):
         leps = self.objects
         if getattr(rtrow, '%sPt' %leps[2])<20.: return False
-        if rtrow.pfMetEt < 30.: return False
+        if self.period=='8':
+            if rtrow.type1_pfMetEt < 30.: return False
+        else:
+            if rtrow.pfMetEt < 30.: return False
         for l in leps[:2]:
             o = ordered(l,leps[2])
             dr = getattr(rtrow, '%s_%s_DR' % (o[0],o[1]))
             if dr < 0.1: return False
         return True
 
-class AnalyzerTT(AnalyzerWZ):
+class AnalyzerWZ_TT(AnalyzerWZ):
     def __init__(self, sample_location, out_file, period):
+        super(AnalyzerWZ_TT, self).__init__(sample_location, out_file, period)
         self.channel = 'TT'
-        super(AnalyzerTT, self).__init__(sample_location, out_file, period)
 
     def choose_objects(self, rtrow):
         cands = []
@@ -312,7 +315,7 @@ def main(argv=None):
     args = parse_command_line(argv)
 
     if args.analyzer == 'WZ': analyzer = AnalyzerWZ(args.in_sample,args.out_file,args.period)
-    if args.analyzer == 'TT': analyzer = AnalyzerTT(args.in_sample,args.out_file,args.period)
+    if args.analyzer == 'TT': analyzer = AnalyzerWZ_TT(args.in_sample,args.out_file,args.period)
     with analyzer as thisAnalyzer:
         thisAnalyzer.analyze()
 

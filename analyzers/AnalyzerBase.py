@@ -30,8 +30,8 @@ from itertools import permutations, combinations
 import argparse
 import datetime
 
-#from scale_factors import LeptonScaleFactors
-#from pu_weights import PileupWeights
+from scale_factors import LeptonScaleFactors, TriggerScaleFactors
+from pu_weights import PileupWeights
 import leptonId as lepId
 from ntuples import *
 
@@ -94,8 +94,9 @@ class AnalyzerBase(object):
         self.finish()
 
     def begin(self):
-        #self.lepscaler = LeptonScaleFactors()
-        #self.pu_weights = PileupWeights()
+        self.lepscaler = LeptonScaleFactors()
+        self.trigscaler = TriggerScaleFactors()
+        self.pu_weights = PileupWeights()
 
         self.file = rt.TFile(self.out_file, 'recreate')
         
@@ -287,10 +288,9 @@ class AnalyzerBase(object):
         ntupleRow["event.lumi"] = int(rtrow.lumi)
         ntupleRow["event.run"] = int(rtrow.run)
         ntupleRow["event.nvtx"] = int(rtrow.nvtx)
-        #ntupleRow["event.lep_scale"] = float(self.lepscaler.scale_factor(rtrow, *objects, tight=True))
-        #ntupleRow["event.pu_weight"] = float(self.pu_weights.weight(rtrow))
-        ntupleRow["event.lep_scale"] = float(1.)
-        ntupleRow["event.pu_weight"] = float(1.)
+        ntupleRow["event.lep_scale"] = float(self.lepscaler.scale_factor(rtrow, *objects)[0]) if self.period=='8' else float(1.)
+        ntupleRow["event.trig_scale"] = float(self.trigscaler.scale_factor(rtrow, *objects)) if self.period=='8' else float(1.)
+        ntupleRow["event.pu_weight"] = float(self.pu_weights.weight(rtrow)) if self.period=='8' else float(1.)
 
         channelString = ''
         for x in objects: channelString += x[0]
@@ -343,7 +343,7 @@ class AnalyzerBase(object):
                     ntupleRow["%s.dPhi" %i] = float(getattr(rtrow, "%sToMETDPhi" % finalObjects[0])) if theObjects else float(-9)
                     ntupleRow["%sFlv.Flv" %i] = finalObjects[0][0] if theObjects else 'a'
                 else:
-                    finalObjOrdered = ordered(finalObjects[0], finalObjects[1])
+                    finalObjOrdered = ordered(finalObjects[0], finalObjects[1]) if theObjects else []
                     ntupleRow["%s.mass" %i] = float(getattr(rtrow, "%s_%s_Mass" % (finalObjOrdered[0], finalObjOrdered[1]))) if theObjects else float(-9)
                     ntupleRow["%s.sT" %i]   = float(sum([getattr(rtrow, "%sPt" % x) for x in finalObjects])) if theObjects else float(-9)
                     ntupleRow["%s.dPhi" %i] = float(getattr(rtrow, "%s_%s_DPhi" % (finalObjOrdered[0], finalObjOrdered[1]))) if theObjects else float(-9)
@@ -359,20 +359,23 @@ class AnalyzerBase(object):
                         ntupleRow["%s.Pt%i" % (i,objCount)] = float(getattr(rtrow, "%sPt" % orderedFinalObjects[objCount-1])) if theObjects else float(-9)
                         ntupleRow["%s.Eta%i" % (i,objCount)] = float(getattr(rtrow, "%sEta" % orderedFinalObjects[objCount-1])) if theObjects else float(-9)
                         ntupleRow["%s.Phi%i" % (i,objCount)] = float(getattr(rtrow, "%sPhi" % orderedFinalObjects[objCount-1])) if theObjects else float(-9)
-                        if orderedFinalObjects[objCount-1][0]=='e': isoVar = 'RelPFIsoRho'
-                        if orderedFinalObjects[objCount-1][0]=='m': isoVar = 'RelPFIsoDBDefault'
-                        isoVal = float(getattr(rtrow, "%s%s" % (orderedFinalObjects[objCount-1], isoVar))) if orderedFinalObjects[objCount-1][0] in 'em' and theObjects else float(-9.)
+                        if theObjects:
+                            if orderedFinalObjects[objCount-1][0]=='e': isoVar = 'RelPFIsoRho'
+                            if orderedFinalObjects[objCount-1][0]=='m': isoVar = 'RelPFIsoDBDefault'
+                            isoVal = float(getattr(rtrow, "%s%s" % (orderedFinalObjects[objCount-1], isoVar))) if orderedFinalObjects[objCount-1][0] in 'em' and theObjects else float(-9.)
+                        else:
+                            isoVal = float(-9)
                         ntupleRow["%s.Iso%i" % (i,objCount)] = isoVal
                         ntupleRow["%s.Chg%i" % (i,objCount)] = float(getattr(rtrow, "%sCharge" % orderedFinalObjects[objCount-1])) if theObjects else float(-9)
                         ntupleRow["%s.PassTight%i" % (i,objCount)] = float(self.ID(rtrow,orderedFinalObjects[objCount-1],**self.getIdArgs('Tight'))) if theObjects else float(-9)
                         # manually add w z deltaRs
                         if i=='w1':
-                            oZ1 = ordered(theObjects[0],theObjects[2])
-                            oZ2 = ordered(theObjects[1],theObjects[2])
-                            ntupleRow["w1.dR1_z1_1"] = float(getattr(rtrow,"%s_%s_DR" % (oZ1[0],oZ1[1])))
-                            ntupleRow["w1.dR1_z1_2"] = float(getattr(rtrow,"%s_%s_DR" % (oZ2[0],oZ2[1])))
-                            ntupleRow["w1.mll_z1_1"] = float(getattr(rtrow,"%s_%s_Mass" % (oZ1[0],oZ1[1])))
-                            ntupleRow["w1.mll_z1_2"] = float(getattr(rtrow,"%s_%s_Mass" % (oZ2[0],oZ2[1])))
+                            oZ1 = ordered(theObjects[0],theObjects[2]) if theObjects else []
+                            oZ2 = ordered(theObjects[1],theObjects[2]) if theObjects else []
+                            ntupleRow["w1.dR1_z1_1"] = float(getattr(rtrow,"%s_%s_DR" % (oZ1[0],oZ1[1]))) if theObjects else float(-9)
+                            ntupleRow["w1.dR1_z1_2"] = float(getattr(rtrow,"%s_%s_DR" % (oZ2[0],oZ2[1]))) if theObjects else float(-9)
+                            ntupleRow["w1.mll_z1_1"] = float(getattr(rtrow,"%s_%s_Mass" % (oZ1[0],oZ1[1]))) if theObjects else float(-9)
+                            ntupleRow["w1.mll_z1_2"] = float(getattr(rtrow,"%s_%s_Mass" % (oZ2[0],oZ2[1]))) if theObjects else float(-9)
                         # do alternate IDs
                         for altId in self.alternateIds:
                             ntupleRow["%s.pass_%s_%i"%(i,altId,objCount)] = int(self.ID(rtrow,orderedFinalObjects[objCount-1],**self.alternateIdMap[altId]) if theObjects else float(-9))

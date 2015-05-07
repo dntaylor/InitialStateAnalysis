@@ -57,10 +57,11 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
        Int_t   lumi;\
        Int_t   nvtx;\
        Float_t lep_scale;\
+       Float_t trig_scale;\
        Float_t pu_weight;\
     };");
     eventStruct = rt.structEvent_t()
-    structureDict['event'] = [eventStruct, eventStruct,'evt/I:run:lumi:nvtx:lep_scale/F:pu_weight']
+    structureDict['event'] = [eventStruct, eventStruct,'evt/I:run:lumi:nvtx:lep_scale/F:trig_scale:pu_weight']
     structOrder += ['event']
 
     rt.gROOT.ProcessLine(

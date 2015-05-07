@@ -15,21 +15,28 @@ import errno
 from multiprocessing import Pool
 
 from utilities.utilities import *
-from analyzers.AnalyzerWZ import AnalyzerWZ, AnalyzerTT
-from analyzers.AnalyzerHpp3l import AnalyzerHpp3l, AnalyzerFakeRate
+from analyzers.AnalyzerWZ import AnalyzerWZ, AnalyzerWZ_TT
+from analyzers.AnalyzerHpp3l import AnalyzerHpp3l, AnalyzerHpp3l_WZ, AnalyzerHpp3l_FakeRate
 from analyzers.AnalyzerHpp4l import AnalyzerHpp4l
 
 def run_analyzer(args):
     '''Run the analysis'''
     analysis, channel, location, outfile, period = args
     analyzerMap = {
-        'WZ'      : AnalyzerWZ,
-        'TT'      : AnalyzerTT,
-        'Hpp3l'   : AnalyzerHpp3l,
-        'Hpp4l'   : AnalyzerHpp4l,
-        'FakeRate': AnalyzerFakeRate,
+        'WZ'      : {
+                    'WZ'      : AnalyzerWZ,
+                    'TT'      : AnalyzerWZ_TT,
+                    },
+        'Hpp3l'   : {
+                    'Hpp3l'   : AnalyzerHpp3l,
+                    'WZ'      : AnalyzerHpp3l_WZ,
+                    'FakeRate': AnalyzerHpp3l_FakeRate,
+                    },
+        'Hpp4l'   : {
+                    'Hpp4l'   : AnalyzerHpp4l,
+                    },
     }
-    theAnalyzer = analyzerMap[channel]
+    theAnalyzer = analyzerMap[analysis][channel]
     with theAnalyzer(location,outfile,period) as analyzer:
         analyzer.analyze()
 
@@ -43,7 +50,7 @@ def get_sample_names(analysis,period,samples):
         },
         '8': {
             'WZ'   : '2015-04-19-8TeV', 
-            'Hpp3l': '2014-12-04-8TeV',
+            'Hpp3l': '2015-04-19-8TeV',
             'Hpp4l': 'N/A', 
         },
         '13': {
@@ -53,7 +60,6 @@ def get_sample_names(analysis,period,samples):
         },
     }
     root_dir = '/hdfs/store/user/dntaylor/data/%s' % ntupleDict[period][analysis]
-    #root_dir = 'root://cmsxrootd.fnal.gov//store/user/dntaylor/data/%s' % ntupleDict[period][analysis]
 
     sample_names = [os.path.basename(fname)
                     for string in samples
