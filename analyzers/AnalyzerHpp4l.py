@@ -26,9 +26,9 @@ class AnalyzerHpp4l(AnalyzerBase):
         QCD suppression: M(ll) > 12
     '''
 
-    def __init__(self, sample_location, out_file, period, **kwargs):
+    def __init__(self, sample_name, file_list, out_file, period, **kwargs):
         runTau = kwargs.pop('runTau',False)
-        runTau = True
+        #runTau = True
         self.channel = 'Hpp4l'
         self.final_states = ['eeee','eeem','eemm','emmm','mmmm'] # no tau
         if runTau: self.final_states = ['eeee','eeem','eeet','eemm','eemt','eett','emmm','emmt','emtt','ettt',\
@@ -47,7 +47,7 @@ class AnalyzerHpp4l(AnalyzerBase):
             self.object_definitions['z1'] = ['emt', 'emt']
             self.object_definitions['z2'] = ['emt', 'emt']
         self.cutflow_labels = ['Trigger','Fiducial','Trigger Threshold','ID','QCD Suppression']
-        super(AnalyzerHpp4l, self).__init__(sample_location, out_file, period)
+        super(AnalyzerHpp4l, self).__init__(sample_name, file_list, out_file, period)
 
     ###############################
     ### Define Object selection ###
@@ -209,10 +209,10 @@ class AnalyzerHpp4l(AnalyzerBase):
 def parse_command_line(argv):
     parser = argparse.ArgumentParser()
     parser.add_argument('analyzer', type=str)
-    parser.add_argument('in_sample', type=str)
+    parser.add_argument('sample_name', type=str)
+    parser.add_argument('file_list', type=str)
     parser.add_argument('out_file', type=str)
     parser.add_argument('period', type=str)
-
     args = parser.parse_args(argv)
     return args
 
@@ -223,7 +223,7 @@ def main(argv=None):
 
     args = parse_command_line(argv)
 
-    if args.analyzer == 'Hpp4l': analyzer = AnalyzerHpp4l(args.in_sample,args.out_file,args.period)
+    if args.analyzer == 'Hpp4l': analyzer = AnalyzerHpp4l(args.sample_name,args.file_list,args.out_file,args.period)
     with analyzer as thisAnalyzer:
         thisAnalyzer.analyze()
 

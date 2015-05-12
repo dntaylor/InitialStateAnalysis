@@ -48,6 +48,7 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
     plotMethod('z1.mass',[7,80.5,101.5],savedir+'z1Mass_wideBin',yaxis='Events/3.0 GeV',xaxis='M(l^{+}l^{-}) (Z1) (GeV)',legendpos=43,logy=0,cut=myCut,**kwargs)
     plotMethod('z1.mass',[80,0,240],savedir+'z1Mass_fullWindow',yaxis='Events/3.0 GeV',xaxis='M(l^{+}l^{-}) (Z1) (GeV)',legendpos=43,logy=0,cut=myCut,**kwargs)
     plotMethod('z1.mass',[80,0,240],savedir+'z1Mass_fullWindow_log',yaxis='Events/3.0 GeV',xaxis='M(l^{+}l^{-}) (Z1) (GeV)',legendpos=43,logy=1,cut=myCut,**kwargs)
+    plotMethod('z1.Pt',[40,0,400],savedir+'z1Pt',yaxis='Events/10.0 GeV',xaxis='p_{T}^{Z1} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
     plotMethod('z1.Pt1',[40,0,200],savedir+'z1LeadingLeptonPt',yaxis='Events/5.0 GeV',xaxis='p_{T}^{Z1 Leading Lepton} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
     plotMethod('z1.Pt2',[40,0,200],savedir+'z1SubleadingLeptonPt',yaxis='Events/5.0 GeV',xaxis='p_{T}^{Z1 Subleading Lepton} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
     plotMethod('z1.Iso1',[50,0,0.5],savedir+'z1LeadingIso',yaxis='Events',xaxis='Iso/p_{T} (Z1 Leading Lepton)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
@@ -58,11 +59,13 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
         plotMethod('z2.mass',[7,80.5,101.5],savedir+'z2Mass_wideBin',yaxis='Events/3.0 GeV',xaxis='M(l^{+}l^{-}) (Z2) (GeV)',legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod('z2.mass',[80,0,240],savedir+'z2Mass_fullWindow',yaxis='Events/3.0 GeV',xaxis='M(l^{+}l^{-}) (Z2) (GeV)',legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod('z2.mass',[80,0,240],savedir+'z2Mass_fullWindow_log',yaxis='Events/3.0 GeV',xaxis='M(l^{+}l^{-}) (Z2) (GeV)',legendpos=43,logy=1,cut=myCut,**kwargs)
+        plotMethod('z2.Pt',[40,0,400],savedir+'z2Pt',yaxis='Events/10.0 GeV',xaxis='p_{T}^{Z2} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('z2.Pt1',[40,0,200],savedir+'z2LeadingLeptonPt',yaxis='Events/5.0 GeV',xaxis='p_{T}^{Z2 Leading Lepton} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('z2.Pt2',[40,0,200],savedir+'z2SubleadingLeptonPt',yaxis='Events/5.0 GeV',xaxis='p_{T}^{Z2 Subleading Lepton} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('z2.Iso1',[50,0,0.5],savedir+'z2LeadingIso',yaxis='Events',xaxis='Iso/p_{T} (Z2 Leading Lepton)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('z2.Iso2',[50,0,0.5],savedir+'z2SubleadingIso',yaxis='Events',xaxis='Iso/p_{T} (Z2 Subleading Lepton)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
     if nl==3:
+        plotMethod('w1.Pt',[40,0,400],savedir+'w1Pt',yaxis='Events/10.0 GeV',xaxis='p_{T}^{W} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('w1.Pt1',[40,0,200],savedir+'w1LeptonPt',yaxis='Events/5.0 GeV',xaxis='p_{T}^{W Lepton} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('w1.Iso1',[50,0,0.5],savedir+'w1Iso',yaxis='Events',xaxis='Iso/p_{T} (W Lepton)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('w1.mass',[40,0,200],savedir+'w1Mass',yaxis='Events/5.0 GeV',xaxis='M_{T}^{W} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
@@ -202,6 +205,12 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
             print 'MKPLOTS:%s:%s:%iTeV: Plotting cut flow selections %s' % (analysis, channel, runPeriod, cutFlowMap[channel]['labels_simple'][i])
             thisCut = '&&'.join(cutFlowMap[channel]['cuts'][:i+1])
             plotDistributions(plotMethod,'%s&%s'%(myCut,thisCut),nl,isControl,savedir='cutflow/%s'%cutFlowMap[channel]['labels_simple'][i],analysis=analysis,nostack=nostack,normalize=normalize)
+            if plotFinalStates:
+                print "MKPLOTS:%s:%s:%iTeV: Plotting individual finalStates" % (analysis, channel, runPeriod)
+                for c in fsToPlot:
+                    print "MKPLOTS:%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c)
+                    plotDistributions(plotMethod,'%s&channel=="%s"&%s'%(myCut,c,thisCut),nl,isControl,savedir='cutflow/%s/%s' %(cutFlowMap[channel]['labels_simple'][i],c),analysis=analysis,nostack=nostack,normalize=normalize)
+
 
     # plot cut flows on same plot
     plotter = CutFlowPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_cutflow',mergeDict=mergeDict)

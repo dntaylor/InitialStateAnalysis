@@ -26,7 +26,7 @@ class AnalyzerWZ(AnalyzerBase):
         W selection: met > 30. lepton pt > 20.
     '''
 
-    def __init__(self, sample_location, out_file, period):
+    def __init__(self, sample_name, file_list, out_file, period, **kwargs):
         if not hasattr(self,'channel'): self.channel = 'WZ'
         self.period = period
         self.final_states = ['eee','eem','emm','mmm']
@@ -38,7 +38,7 @@ class AnalyzerWZ(AnalyzerBase):
         self.cutflow_labels = ['Trigger','Fiducial','ID','Z Selection','W Selection']
         self.alternateIds, self.alternateIdMap = self.defineAlternateIds(period)
         self.doVBF = (period=='13')
-        super(AnalyzerWZ, self).__init__(sample_location, out_file, period)
+        super(AnalyzerWZ, self).__init__(sample_name, file_list, out_file, period)
 
     ###############################
     ### Define Object selection ###
@@ -80,7 +80,7 @@ class AnalyzerWZ(AnalyzerBase):
         Veto on 4th lepton
         '''
         return (rtrow.eVetoWZ + rtrow.muVetoWZ == 0) if self.period=='13' else\
-               (rtrow.eVetoMVAIsoVtx + rtrow.muVetoPt5IsoIdVtx == 0)
+               (rtrow.elecVetoWZTight + rtrow.muonVetoWZTight == 0)
 
     def defineAlternateIds(self,period):
         if period=='8':
@@ -127,10 +127,11 @@ class AnalyzerWZ(AnalyzerBase):
     ###########################
     def preselection(self,rtrow):
         cuts = CutSequence()
-        if self.isData or self.period=='13': cuts.add(self.trigger)
+        #if self.isData or self.period=='13': cuts.add(self.trigger)
+        cuts.add(self.trigger)
         cuts.add(self.fiducial)
         if self.period=='13': cuts.add(self.passAnyId)
-        if self.period=='8': cuts.add(self.ID_loose)
+        if self.period=='8': cuts.add(self.ID_tight)
         #cuts.add(self.mass3l)
         #cuts.add(self.zSelection)
         #cuts.add(self.wSelection)
@@ -195,7 +196,7 @@ class AnalyzerWZ(AnalyzerBase):
                         "doubleETightPass", "doubleMuPass", "doubleMuTrkPass"]
 
         if self.period == '13':
-            triggers = ['muEPass', 'doubleMuPass', 'doubleEPass']
+            triggers = ['muEPass', 'doubleMuPass', 'doubleEPass', 'eMuPass']
 
         for t in triggers:
             if getattr(rtrow,t)>0:
@@ -300,7 +301,8 @@ class AnalyzerWZ_TT(AnalyzerWZ):
 def parse_command_line(argv):
     parser = argparse.ArgumentParser()
     parser.add_argument('analyzer', type=str)
-    parser.add_argument('in_sample', type=str)
+    parser.add_argument('sample_name', type=str)
+    parser.add_argument('file_list', type=str)
     parser.add_argument('out_file', type=str)
     parser.add_argument('period', type=str)
 
@@ -314,8 +316,8 @@ def main(argv=None):
 
     args = parse_command_line(argv)
 
-    if args.analyzer == 'WZ': analyzer = AnalyzerWZ(args.in_sample,args.out_file,args.period)
-    if args.analyzer == 'TT': analyzer = AnalyzerWZ_TT(args.in_sample,args.out_file,args.period)
+    if args.analyzer == 'WZ': analyzer = AnalyzerWZ(args.sample_name,args.file_list,args.out_file,args.period)
+    if args.analyzer == 'TT': analyzer = AnalyzerWZ_TT(args.sample_name,args.file_list,args.out_file,args.period)
     with analyzer as thisAnalyzer:
         thisAnalyzer.analyze()
 

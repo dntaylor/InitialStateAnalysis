@@ -26,7 +26,7 @@ class AnalyzerHpp3l(AnalyzerBase):
         QCD suppression: M(ll) > 12
     '''
 
-    def __init__(self, sample_location, out_file, period, **kwargs):
+    def __init__(self, sample_name, file_list, out_file, period, **kwargs):
         runTau = kwargs.pop('runTau',False)
         #runTau=True
         self.channel = 'Hpp3l'
@@ -46,7 +46,7 @@ class AnalyzerHpp3l(AnalyzerBase):
             self.object_definitions['z1'] = ['emt', 'emt']
             self.object_definitions['w1'] = ['emt', 'n']
         self.cutflow_labels = ['Trigger','Fiducial','Trigger Threshold','ID','QCD Suppression']
-        super(AnalyzerHpp3l, self).__init__(sample_location, out_file, period)
+        super(AnalyzerHpp3l, self).__init__(sample_name, file_list, out_file, period)
 
     ###############################
     ### Define Object selection ###
@@ -205,8 +205,8 @@ class AnalyzerHpp3l_WZ(AnalyzerHpp3l):
     '''
     WZ control region for Hpp3l
     '''
-    def __init__(self, sample_location, out_file, period, **kwargs):
-        super(AnalyzerHpp3l_WZ, self).__init__(sample_location, out_file, period, **kwargs)
+    def __init__(self, sample_name, file_list, out_file, period, **kwargs):
+        super(AnalyzerHpp3l_WZ, self).__init__(sample_name, file_list, out_file, period, **kwargs)
         self.channel = 'WZ'
         self.cutflow_labels = ['Trigger','Fiducial','Trigger Threshold','ID','Mass 3l','Z selection','W selection']
 
@@ -267,8 +267,8 @@ class AnalyzerHpp3l_FakeRate(AnalyzerHpp3l):
     '''
     A class to produce ntuples to calculate the fakerate for the leptons.
     '''
-    def __init__(self, sample_location, out_file, period, **kwargs):
-        super(AnalyzerHpp3l_FakeRate, self).__init__(sample_location, out_file, period, **kwargs)
+    def __init__(self, sample_name, file_list, out_file, period, **kwargs):
+        super(AnalyzerHpp3l_FakeRate, self).__init__(sample_name, file_list, out_file, period, **kwargs)
         self.channel = 'FakeRate'
         self.final_states = ['emm','mmm','mmt'] 
         self.initial_states = ['z1','f1']
@@ -355,10 +355,10 @@ class AnalyzerHpp3l_FakeRate(AnalyzerHpp3l):
 def parse_command_line(argv):
     parser = argparse.ArgumentParser()
     parser.add_argument('analyzer', type=str)
-    parser.add_argument('in_sample', type=str)
+    parser.add_argument('sample_name', type=str)
+    parser.add_argument('file_list', type=str)
     parser.add_argument('out_file', type=str)
     parser.add_argument('period', type=str)
-
     args = parser.parse_args(argv)
     return args
 
@@ -369,9 +369,9 @@ def main(argv=None):
 
     args = parse_command_line(argv)
 
-    if args.analyzer=='Hpp3l': analyzer = AnalyzerHpp3l(args.in_sample,args.out_file,args.period)
-    if args.analyzer=='WZ': analyzer = AnalyzerHpp3l_WZ(args.in_sample,args.out_file,args.period)
-    if args.analyzer=='FakeRate': analyzer = AnalyzerHpp3l_FakeRate(args.in_sample,args.out_file,args.period)
+    if args.analyzer=='Hpp3l': analyzer = AnalyzerHpp3l(args.sample_name,args.file_list,args.out_file,args.period)
+    if args.analyzer=='WZ': analyzer = AnalyzerHpp3l_WZ(args.sample_name,args.file_list,args.out_file,args.period)
+    if args.analyzer=='FakeRate': analyzer = AnalyzerHpp3l_FakeRate(args.sample_name,args.file_list,args.out_file,args.period)
     with analyzer as thisAnalyzer:
         thisAnalyzer.analyze()
 

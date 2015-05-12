@@ -11,6 +11,7 @@ import glob
 import pwd
 import argparse
 import errno
+import signal
 
 from multiprocessing import Pool
 
@@ -21,7 +22,7 @@ from analyzers.AnalyzerHpp4l import AnalyzerHpp4l
 
 def run_analyzer(args):
     '''Run the analysis'''
-    analysis, channel, location, outfile, period = args
+    analysis, channel, sample_name, filelist, outfile, period = args
     analyzerMap = {
         'WZ'      : {
                     'WZ'      : AnalyzerWZ,
@@ -37,7 +38,7 @@ def run_analyzer(args):
                     },
     }
     theAnalyzer = analyzerMap[analysis][channel]
-    with theAnalyzer(location,outfile,period) as analyzer:
+    with theAnalyzer(sample_name,filelist,outfile,period) as analyzer:
         analyzer.analyze()
 
 def get_sample_names(analysis,period,samples):
@@ -49,8 +50,8 @@ def get_sample_names(analysis,period,samples):
             'Hpp4l': 'N/A', 
         },
         '8': {
-            'WZ'   : '2015-04-19-8TeV', 
-            'Hpp3l': '2015-04-19-8TeV',
+            'WZ'   : '2015-05-10-8TeV', 
+            'Hpp3l': '2015-05-10-8TeV',
             'Hpp4l': 'N/A', 
         },
         '13': {
@@ -75,64 +76,70 @@ def run_ntuples(analysis, channel, period, samples):
 
     p = Pool(8)
 
-    p.map(run_analyzer, [(analysis, channel, "%s/%s" % (root_dir, name), "%s/%s.root" % (ntup_dir, name), period) for name in sample_names])
+    filelists = {}
+    for sample in sample_names:
+        sampledir = '%s/%s' % (root_dir, sample)
+        filelists[sample] = ['%s/%s' % (sampledir, x) for x in os.listdir(sampledir)]
 
+    try:
+        p.map_async(run_analyzer, [(analysis, channel, name, filelists[name], "%s/%s.root" % (ntup_dir, name), period) for name in sample_names]).get(999999)
+    except KeyboardInterrupt:
+        p.terminate()
+        print 'Analyzer cancelled'
+        sys.exit(1)
+   
     return 0
 
-def submitJob(jobName,runArgs):
+def submitFwkliteJob(sampledir,args):
     '''
-    Submit a job
-    jobName: jobname for executable
-    runArgs: [analysis, channel, period, sample]
+    Submit a job using farmoutAnalysisJobs --fwklite
     '''
-    userDir = '/nfs_scratch/%s' % pwd.getpwuid(os.getuid())[0]
-    submitDir = '%s/%s' % (userDir,jobName)
-    if os.path.exists(submitDir):
-        print "Submit directory exists, use a different JOBNAME."
-        return 0
-    python_mkdir(submitDir)
+    jobName = args.jobName
+    analysis = args.analysis
+    channel = args.channel
+    period = args.period
+    sample_name = os.path.basename(sampledir)
 
-    # copy code
-    os.system('tar -zcf %s/userCode.tar.gz analyzers utilities run.py' % submitDir)
+    sample_dir = '/nfs_scratch/%s/%s/%s' % (pwd.getpwuid(os.getuid())[0], jobName, sample_name)
 
-    # copy submit script
-    submitInfile = open('utilities/condor.submit')
-    submitOutfile = open('%s/condor.submit' % submitDir, 'w')
+    # create submit dir
+    submit_dir = '%s/submit' % (sample_dir)
+    if os.path.exists(submit_dir):
+        print 'Submission directory exists for %s %s.' % (jobName, sample_name)
+        return
 
-    scriptName = '_'.join(runArgs)
-    submitReplacements = {
-        'EXECUTABLE' : scriptName,
-    }
+    # create dag dir
+    dag_dir = '%s/dags/dag' % (sample_dir)
+    os.system('mkdir -p %s' % (os.path.dirname(dag_dir)))
+    os.system('mkdir -p %s' % (dag_dir+'inputs'))
 
-    for line in submitInfile:
-        for src, target in submitReplacements.iteritems():
-            line = line.replace(src, target)
-        submitOutfile.write(line)
+    # output dir
+    output_dir = 'srm://cmssrm.hep.wisc.edu:8443/srm/v2/server?SFN=/hdfs/store/user/%s/%s/%s/'\
+                 % (pwd.getpwuid(os.getuid())[0], jobName, sample_name)
 
-    submitInfile.close()
-    submitOutfile.close()
+    # create file list
+    filelist = ['%s/%s' % (sampledir, x) for x in os.listdir(sampledir)]
+    input_name = '%s/%s.txt' % (dag_dir+'inputs', sample_name)
+    with open(input_name,'w') as file:
+        for f in filelist:
+            file.write('%s\n' % f.replace('/hdfs','',1))
 
-    # copy executable
-    executable = '%s/%s.sh' % (submitDir,scriptName)
-    infile = open('utilities/doJob.sh')
-    outfile = open(executable, 'w')
+    # create bash script
+    bash_name = '%s/%s_%s_%s_%s.sh' % (dag_dir+'inputs', analysis, channel, period, sample_name)
+    bashScript = '#!/bin/bash\npython $CMSSW_BASE/src/InitialStateAnalysis/analyzers/Analyzer%s.py %s %s $INPUT $OUTPUT %s\n' % (analysis, channel, sample_name, period)
+    with open(bash_name,'w') as file:
+        file.write(bashScript)
+    os.system('chmod +x %s' % bash_name)
 
-    replacements = {
-        'OPTIONS' : ' '.join(runArgs),
-    }
+    # create farmout command
+    farmoutString = 'farmoutAnalysisJobs --infer-cmssw-path --fwklite --input-file-list=%s' % (input_name)
+    farmoutString += ' --submit-dir=%s --output-dag-file=%s --output-dir=%s' % (submit_dir, dag_dir, output_dir)
+    farmoutString += ' --extra-usercode-files=src/InitialStateAnalysis/analyzers --input-files-per-job=20 %s %s' % (jobName, bash_name)
 
-    for line in infile:
-        for src, target in replacements.iteritems():
-            line = line.replace(src, target)
-        outfile.write(line)
+    print 'Submitting %s' % sample_name
+    os.system(farmoutString)
 
-    infile.close()
-    outfile.close()
-
-    os.system('chmod +x %s' % executable)
-
-    # submit job
-    os.system('cd %s; condor_submit condor.submit' % submitDir)
+    return
 
 def parse_command_line(argv):
     parser = argparse.ArgumentParser(description="Run the desired analyzer on "
@@ -161,10 +168,8 @@ def main(argv=None):
         if args.submit:
             root_dir, sample_names = get_sample_names(args.analysis, args.period, args.sample_names)
             for sample in sample_names:
-                print sample
-                runArgs = [args.analysis, args.channel, args.period, sample]
-                jobName = '%s/%s' % (args.jobName, sample)
-                submitJob(jobName,runArgs)
+                sampledir = '%s/%s' % (root_dir, sample)
+                submitFwkliteJob(sampledir,args)
         else:
             run_ntuples(args.analysis, args.channel, args.period, args.sample_names)
 

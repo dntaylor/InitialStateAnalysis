@@ -161,9 +161,10 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
             val = object_definitions[key]
             strForBranch = ""
             strToProcess = "struct struct%s_t {" % key.upper()
-            strForBranch += "mass/F:sT:dPhi:"
+            strForBranch += "mass/F:Pt:sT:dPhi:"
             strToProcess += "\
                 Float_t mass;\
+                Float_t Pt;\
                 Float_t sT;\
                 Float_t dPhi;"
             if 'n' not in val:

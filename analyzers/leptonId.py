@@ -194,8 +194,8 @@ def elec_WZ_tight(rtrow, l, period):
 def muon_WZ_loose(rtrow, l, period):
     pt = getattr(rtrow, "%sPt" % l)
     eta = abs(getattr(rtrow, "%sEta" % l))
-    d0 = getattr(rtrow, "%sPVDXY" %l)
-    dz = getattr(rtrow, "%sPVDZ" %l)
+    #d0 = getattr(rtrow, "%sPVDXY" %l)
+    #dz = getattr(rtrow, "%sPVDZ" %l)
     tightid = getattr(rtrow, '%sPFIDTight' %l)
     reliso = getattr(rtrow, "%sRelPFIsoDBDefault" %l)
 

@@ -73,8 +73,8 @@ xsecs[8] = {
     'HPlusPlusHMinusHTo3L_M-600_8TeV-calchep-pythia6': 0.17286 * FB,
     'HPlusPlusHMinusHTo3L_M-700_8TeV-calchep-pythia6': 0.05762 * FB,
 
-    'DYJetsToLL_M-10To50filter_8TeV-madgraph':          915.0 * PB,
-    'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball': 3503.71 * PB,
+    'DYJetsToLL_M-10To50filter_8TeV-madgraph':          860.5 * PB,
+    'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball': 3532.8 * PB,
 
     'Z1jets_M50':     Z_XSEC * 0.190169492,
     'Z2jets_M50_S10': Z_XSEC * 0.061355932,

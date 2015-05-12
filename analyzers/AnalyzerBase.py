@@ -78,12 +78,17 @@ class AnalyzerBase(object):
     The basic analyzer class. Inheritor classes must define
         TODO
     '''
-    def __init__(self, sample_location, out_file, period):
-        self.sample_name = os.path.basename(sample_location)
+    def __init__(self, sample_name, file_list, out_file, period):
+        self.sample_name = sample_name
         self.isData = ('data' in self.sample_name)
-        self.file_names = os.listdir(sample_location)
+        if isinstance(file_list, basestring): # the list is a file
+            self.file_names = []
+            with open(file_list,'r') as files:
+                for f in files:
+                    self.file_names += [f]
+        else:                                 # the list is a python list
+            self.file_names = file_list
         self.out_file = out_file
-        self.sample_location = sample_location
         self.period = period
 
     def __enter__(self):
@@ -112,10 +117,12 @@ class AnalyzerBase(object):
         '''
         The primary analyzer loop.
         '''
-        self.eventMap = {}
-        self.bestCandMap = {}
+        print "%s %s %s: Analyzing" % (str(datetime.datetime.now()), self.channel, self.sample_name)
+        eventMap = {}
+        bestCandMap = {}
         self.cutflowMap = {}
         eventsToWrite = set()
+        #eventsNotToWrite = set()
         eventsWritten = set()
         numEvts = 0
         totalWritten = 0
@@ -123,9 +130,10 @@ class AnalyzerBase(object):
         # iterate over files
         for i, file_name in enumerate(self.file_names):
             print "%s %s %s: Processing %i/%i files" % (str(datetime.datetime.now()), self.channel, self.sample_name, i+1, len(self.file_names))
+            sys.stdout.flush()
+            if file_name.startswith('/store'): file_name = 'root://cmsxrootd.hep.wisc.edu//%s' % file_name
 
-            file_path = os.path.join(self.sample_location, file_name)
-            rtFile = rt.TFile(file_path, "READ")
+            rtFile = rt.TFile.Open(file_name, "READ")
 
             # iterate over final states
             for fs in self.final_states:
@@ -147,6 +155,7 @@ class AnalyzerBase(object):
                     rtrow.GetEntry(r)
                     if numFSEvents % 10000 == 0:
                         if len(self.file_names)==1: print "%s %s %s: %s %i/%i entries" % (str(datetime.datetime.now()), self.channel, self.sample_name, fs, numFSEvents, totalFSEvents)
+                        sys.stdout.flush()
                     numFSEvents += 1
 
                     # cache to prevent excessive reads of fsa ntuple
@@ -163,22 +172,26 @@ class AnalyzerBase(object):
 
                     # can we define the object we want?
                     candidate = self.choose_objects(rtrow)
-                    if not candidate: continue # in case no objects satisfy our requirements
+                    if not candidate: # in case no objects satisfy our conditions
+                        #eventsNotToWrite.add(eventkey) # passed preselection but isnt good final state
+                        continue
                     if self.num+1>old:
                         self.cutflowMap[eventkey] = self.num+1
 
                     # check combinatorics
-                    if eventkey in self.bestCandMap: 
-                        bestcand = self.bestCandMap[eventkey]
+                    if eventkey in bestCandMap: 
+                        bestcand = bestCandMap[eventkey]
                     else:
                         numMin = len(candidate[0])
                         bestcand = [float('inf')] * numMin
                     if self.good_to_store(rtrow,candidate[0],bestcand):
-                        self.bestCandMap[eventkey] = candidate[0]
+                        bestCandMap[eventkey] = candidate[0]
                         if self.num+2>old:
                             self.cutflowMap[eventkey] = self.num+2
                         ntupleRow = self.store_row(rtrow, *candidate[1])
-                        self.eventMap[eventkey] = ntupleRow
+                        eventMap[eventkey] = ntupleRow
+                        #if eventkey in eventsToWrite: # additional check on double counting
+                        #    eventsNotToWrite.add(eventkey)
                         eventsToWrite.add(eventkey)
 
             rtFile.Close("R")
@@ -187,20 +200,21 @@ class AnalyzerBase(object):
             # end of file, write the ntuples
             self.file.cd()
             for key in eventsToWrite:
+                #if key in eventsNotToWrite: continue
                 if key in eventsWritten:
                     print "%s %s %s: Error: attempted to write previously written event" % (str(datetime.datetime.now()), self.channel, self.sample_name)
                 else:
-                    self.write_row(self.eventMap[key])
+                    self.write_row(eventMap[key])
                     self.ntuple.Fill()
             eventsWritten.update(eventsToWrite)
-            self.eventMap = {}
+            eventMap = {}
             eventsToWrite = set()
 
         # now we store all events that are kept
         print "%s %s %s: Filling Tree" % (str(datetime.datetime.now()), self.channel, self.sample_name)
         #self.file.cd()
         #for key in eventsToWrite:
-        #    self.write_row(self.eventMap[key])
+        #    self.write_row(eventMap[key])
         #    self.ntuple.Fill()
         print "%s %s %s: Filled Tree (%i events)" % (str(datetime.datetime.now()), self.channel, self.sample_name, len(eventsWritten))
 
@@ -325,26 +339,63 @@ class AnalyzerBase(object):
             ntupleRow["finalstate.centralJetVeto30"] = float(rtrow.vbfJetVeto30)
 
         def store_state(rtrow,ntupleRow,state,theObjects,period):
+            masses = {'e':0.511e-3, 'm':0.1056, 't':1.776}
             objStart = 0
             metVar = 'pfMet' if period=='13' else 'type1_pfMet'
+            mtVar = 'PFMET' if period=='13' else 'PfMet_Ty1'
             for i in state:
                 numObjects = len([ x for x in self.object_definitions[i] if x != 'n']) if theObjects else 0
                 finalObjects = theObjects[objStart:objStart+numObjects]
                 orderedFinalObjects = sorted(finalObjects, key = lambda x: getattr(rtrow,"%sPt" % x))
                 if len(self.object_definitions[i]) == 1:
                     ntupleRow["%s.mass" %i] = float(-9)
+                    ntupleRow["%s.Pt" %i] = float(-9)
+                    ntupleRow["%s.Eta" %i] = float(-9)
+                    ntupleRow["%s.Phi" %i] = float(-9)
                     ntupleRow["%s.sT" %i] = float(getattr(rtrow, "%sPt" % finalObjects[0])) if theObjects else float(-9)
                     ntupleRow["%s.dPhi" %i] = float(-9)
                     ntupleRow["%s.dR" %i] = float(-9)
                     ntupleRow["%sFlv.Flv" %i] = finalObjects[0][0] if theObjects else 'a'
                 elif 'n' == self.object_definitions[i][1]:
-                    ntupleRow["%s.mass" %i] = float(getattr(rtrow, "%sMtToPFMET" % finalObjects[0])) if theObjects else float(-9)
+                    if theObjects: # get lorentz vectors
+                        pt1 = getattr(rtrow, "%sPt" % finalObjOrdered[0])
+                        eta1 = getattr(rtrow, "%sEta" % finalObjOrdered[0])
+                        phi1 = getattr(rtrow, "%sPhi" % finalObjOrdered[0])
+                        mass1 = masses[finalObjOrdered[0][0]]
+                        px1 = pt1*rt.TMath.Cos(phi1)
+                        py1 = pt1*rt.TMath.Sin(phi1)
+                        ptMet = getattr(rtrow, "%sPt" % metVar)
+                        phiMet = getattr(rtrow, "%sPhi" % metVar)
+                        pxMet = ptMet*rt.TMath.Cos(phiMet)
+                        pyMet = ptMet*rt.TMath.Sin(phiMet)
+                        wpt = rt.TMath.Sqrt((px1+pxMet)**2 + (py1+pyMet)**2)
+                    else:
+                        wpt = -9
+                    ntupleRow["%s.mass" %i] = float(getattr(rtrow, "%sMtTo%s" % (finalObjects[0], mtVar))) if theObjects else float(-9)
+                    ntupleRow["%s.Pt" %i] = float(wpt)
                     ntupleRow["%s.sT" %i] = float(getattr(rtrow, "%sPt" % finalObjects[0]) + getattr(rtrow, '%sEt' %metVar)) if theObjects else float(-9)
                     ntupleRow["%s.dPhi" %i] = float(getattr(rtrow, "%sToMETDPhi" % finalObjects[0])) if theObjects else float(-9)
                     ntupleRow["%sFlv.Flv" %i] = finalObjects[0][0] if theObjects else 'a'
                 else:
                     finalObjOrdered = ordered(finalObjects[0], finalObjects[1]) if theObjects else []
+                    #if theObjects: # get lorentz vectors
+                    #    vec1 = rt.TLorentzVector()
+                    #    pt1 = getattr(rtrow, "%sPt" % finalObjOrdered[0])
+                    #    eta1 = getattr(rtrow, "%sEta" % finalObjOrdered[0])
+                    #    phi1 = getattr(rtrow, "%sPhi" % finalObjOrdered[0])
+                    #    mass1 = masses[finalObjOrdered[0][0]]
+                    #    vec1.SetPtEtaPhiM(pt1,eta1,phi1,mass1)
+                    #    vec2 = rt.TLorentzVector()
+                    #    pt2 = getattr(rtrow, "%sPt" % finalObjOrdered[1])
+                    #    eta2 = getattr(rtrow, "%sEta" % finalObjOrdered[1])
+                    #    phi2 = getattr(rtrow, "%sPhi" % finalObjOrdered[1])
+                    #    mass2 = masses[finalObjOrdered[1][0]]
+                    #    vec2.SetPtEtaPhiM(pt2,eta2,phi2,mass2)
+                    #    vec3 = vec1+vec2
+                    #else:
+                    #    vec3 = 0
                     ntupleRow["%s.mass" %i] = float(getattr(rtrow, "%s_%s_Mass" % (finalObjOrdered[0], finalObjOrdered[1]))) if theObjects else float(-9)
+                    ntupleRow["%s.Pt" %i] = float(getattr(rtrow, "%s_%s_Pt" % (finalObjOrdered[0], finalObjOrdered[1]))) if theObjects else float(-9)
                     ntupleRow["%s.sT" %i]   = float(sum([getattr(rtrow, "%sPt" % x) for x in finalObjects])) if theObjects else float(-9)
                     ntupleRow["%s.dPhi" %i] = float(getattr(rtrow, "%s_%s_DPhi" % (finalObjOrdered[0], finalObjOrdered[1]))) if theObjects else float(-9)
                     ntupleRow["%s.dR" %i] = float(getattr(rtrow, "%s_%s_DR" % (finalObjOrdered[0], finalObjOrdered[1]))) if theObjects else float(-9)

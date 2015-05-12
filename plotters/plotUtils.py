@@ -61,9 +61,11 @@ def defineCutFlowMap(region,channels,mass):
         'mass' : None
     }
     regionMap['WZ'][0] = {
+        'mass' : 'finalstate.mass>100',
         'zpt' : '(z1.Pt1>20.&z1.Pt2>10.)',
         'zmass' : 'fabs(z1.mass-%f)<20.' % ZMASS,
         'bveto' : 'finalstate.bjetVeto30Medium==0',
+        'wdr' : 'w1.dR1_z1_1>0.1 & w1.dR1_z1_2>0.1',
         'wpt' : 'w1.Pt1>20.',
         'met' : 'w1.met>30.',
     }
@@ -98,6 +100,12 @@ def defineCutFlowMap(region,channels,mass):
         cutMap['preselection'] = ['All events','Three lepton','Trigger','Fiducial','4th lepton veto']
         cutMap['cuts'] = ['1', regionMap['WZ'][0]['zpt'], regionMap['WZ'][0]['zmass'], regionMap['WZ'][0]['bveto'],\
                           regionMap['WZ'][0]['wpt'], regionMap['WZ'][0]['met']]
+        # this is 8 tev, add a period check later
+        cutMap['labels'] = ['Preselection (ID)', 'Z lepton p_{T}', 'Z window', 'Mass 3l', 'W #DeltaR to Z', 'W lepton p_{T}', 'E_{T}^{miss}']
+        cutMap['labels_simple'] = ['Presel (ID)', 'Z lep pt', 'Z window', 'mass3l', 'W dR', 'W lep pt', 'MET']
+        cutMap['preselection'] = ['All events','Three lepton','Trigger','Fiducial','4th lepton veto']
+        cutMap['cuts'] = ['1', regionMap['WZ'][0]['zpt'], regionMap['WZ'][0]['zmass'], regionMap['WZ'][0]['mass'],\
+                          regionMap['WZ'][0]['wdr'], regionMap['WZ'][0]['wpt'], regionMap['WZ'][0]['met']]
     else:
         cutMap['cuts'] = '1'
         cutMap['labels'] = ['%s Full Selection' %region]
@@ -185,7 +193,13 @@ def getMergeDict(period):
                                         'WZJetsTo2L2Q_TuneZ2star_8TeV-madgraph-tauola',\
                                         'WZJetsTo3LNu_TuneZ2_8TeV-madgraph-tauola',\
                                         'ZZJetsTo4L_TuneZ2star_8TeV-madgraph-tauola']
-        sampleMergeDict['ZZJets']    = ['ZZJetsTo4L_TuneZ2star_8TeV-madgraph-tauola']
+        #sampleMergeDict['ZZJets']    = ['ZZJetsTo4L_TuneZ2star_8TeV-madgraph-tauola']
+        sampleMergeDict['ZZJets']    = ['ZZTo2e2mu_8TeV-powheg-pythia6',\
+                                        'ZZTo2e2tau_8TeV-powheg-pythia6',\
+                                        'ZZTo2mu2tau_8TeV-powheg-pythia6',\
+                                        'ZZTo4e_8TeV-powheg-pythia6',\
+                                        'ZZTo4mu_8TeV-powheg-pythia6',\
+                                        'ZZTo4tau_8TeV-powheg-pythia6']
         sampleMergeDict['SingleTop'] = ['T_s-channel_TuneZ2star_8TeV-powheg-tauola',\
                                         'T_t-channel_TuneZ2star_8TeV-powheg-tauola',\
                                         'T_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola',\

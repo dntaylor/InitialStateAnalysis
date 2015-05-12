@@ -167,7 +167,7 @@ class Plotter(PlotterBase):
         if ymax: stack.SetMaximum(ymax)
         else:
             newymax = max(datamax,stack.GetMaximum()) if plotdata else stack.GetMaximum()
-            if not nostack and not plotdata: stack.SetMaximum(1.25*newymax)
+            if not nostack: stack.SetMaximum(1.25*newymax)
         if plotratio:
             stack.GetHistogram().GetXaxis().SetLabelOffset(999)
 
