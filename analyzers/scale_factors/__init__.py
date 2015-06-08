@@ -11,17 +11,37 @@ sys.argv.pop()
 class TriggerScaleFactors(object):
 
     def __init__(self):
-        pass
+        self.ww_scales = self.init_ww_scales()
+
+    def init_ww_scales(self):
+        scales = {}
+        with open(os.path.join(os.path.dirname(__file__),'WW_140416_TriggerEfficiencies.txt'),'r') as file:
+            for line in file.readlines()[1:]:
+                line.rstrip()
+                leg, etalow, etahigh, ptlow, pthigh, eff, errdown, errup = line.split()
+                if leg not in scales:
+                    scales[leg] = []
+                scales[leg].append([float(etalow),float(etahigh),float(ptlow),float(pthigh),float(eff),float(errdown),float(errup)])
+        return scales
 
     def scale_factor(self, rtrow, *lep_list, **kwargs):
         lep_objs = [(x, getattr(rtrow,"%sPt"%x), abs(getattr(rtrow,"%sEta"%x))) for x in lep_list]
         lep_ord = sorted(lep_objs, key=itemgetter(1), reverse=True)
-        eff = 1-(\
-                (1-self.double_lead_eff(*lep_ord[0])) * (1-self.double_lead_eff(*lep_ord[1])) * (1-self.double_lead_eff(*lep_ord[2]))\
-                + self.double_lead_eff(*lep_ord[0]) * (1-self.double_trail_eff(*lep_ord[1])) * (1-self.double_trail_eff(*lep_ord[2]))\
-                + self.double_lead_eff(*lep_ord[1]) * (1-self.double_trail_eff(*lep_ord[2])) * (1-self.double_trail_eff(*lep_ord[0]))\
-                + self.double_lead_eff(*lep_ord[2]) * (1-self.double_trail_eff(*lep_ord[0])) * (1-self.double_trail_eff(*lep_ord[1]))\
-                )
+        if len(lep_ord)==3:
+            eff = 1-(\
+                    (1-self.double_lead_eff(*lep_ord[0])) * (1-self.double_lead_eff(*lep_ord[1])) * (1-self.double_lead_eff(*lep_ord[2]))\
+                    + self.double_lead_eff(*lep_ord[0]) * (1-self.double_trail_eff(*lep_ord[1])) * (1-self.double_trail_eff(*lep_ord[2]))\
+                    + self.double_lead_eff(*lep_ord[1]) * (1-self.double_trail_eff(*lep_ord[2])) * (1-self.double_trail_eff(*lep_ord[0]))\
+                    + self.double_lead_eff(*lep_ord[2]) * (1-self.double_trail_eff(*lep_ord[0])) * (1-self.double_trail_eff(*lep_ord[1]))\
+                    )
+        elif len(lep_ord)==2:
+            eff = 1-(\
+                    (1-self.double_lead_eff(*lep_ord[0])) * (1-self.double_lead_eff(*lep_ord[1]))\
+                    + self.double_lead_eff(*lep_ord[0]) * (1-self.double_trail_eff(*lep_ord[1]))\
+                    + self.double_lead_eff(*lep_ord[1]) * (1-self.double_trail_eff(*lep_ord[0]))\
+                    )
+        else:
+            eff = 1
         return eff
 
     def single_eff(self,l,pt,eta):
@@ -39,7 +59,14 @@ class TriggerScaleFactors(object):
         if l[0]=='m': return self.double_trail_m(pt,eta)
         return 1.
 
+    def get_eff(self,leg,pt,eta):
+        for etalow, etahigh, ptlow, pthigh, eff, errdown, errup in self.ww_scales[leg]:
+            if eta>=etalow and eta<etahigh and pt>=ptlow and pt<pthigh:
+                return eff
+        return 1.
+
     def single_e(self,pt,eta):
+        return self.get_eff('SingleEl',pt,eta)
         pts = [10.,12.5,15.,17.5,20.,22.5,25.,27.5,30.,35.,40.,50.,7000.]
         if eta < 1.5:
            effs = [0.,0.,0.,0.,0.,0.,0.05,0.62,0.9,0.91,0.91,0.91]
@@ -51,6 +78,7 @@ class TriggerScaleFactors(object):
         return 1.0
 
     def single_m(self,pt,eta):
+        return self.get_eff('SingleMu',pt,eta)
         pts = [10.,12.5,15.,17.5,20.,22.5,25.,27.5,30.,35.,40.,50.,7000.]
         if eta < 0.8:
             effs = [0.0, 0.0, 0.0, 0.0, 0.01, 0.5, 0.9, 0.91, 0.91, 0.91, 0.94, 0.94]
@@ -66,6 +94,7 @@ class TriggerScaleFactors(object):
         return 1.0
 
     def double_lead_e(self,pt,eta):
+        return self.get_eff('DoubleElLead',pt,eta)
         pts = [10.,12.5,15.,17.5,20.,22.5,25.,27.5,30.,35.,40.,50.,7000.]
         if eta < 1.5:
             effs = [0.0, 0.0, 0.0, 0.75, 0.97, 0.97, 0.97, 0.97, 0.97, 0.97, 0.97, 0.97]
@@ -77,6 +106,7 @@ class TriggerScaleFactors(object):
         return 1.0
 
     def double_trail_e(self,pt,eta):
+        return self.get_eff('DoubleElTrail',pt,eta)
         pts = [10.,12.5,15.,17.5,20.,22.5,25.,27.5,30.,35.,40.,50.,7000.]
         if eta < 1.5:
             effs = [0.77, 0.84, 0.88, 0.91, 0.93, 0.94, 0.95, 0.95, 0.96, 0.96, 0.96, 0.96]
@@ -88,6 +118,7 @@ class TriggerScaleFactors(object):
         return 1.0
 
     def double_lead_m(self,pt,eta):
+        return self.get_eff('DoubleMuLead',pt,eta)
         pts = [10.,12.5,15.,17.5,20.,22.5,25.,27.5,30.,35.,40.,50.,7000.]
         if eta < 1.2:
             effs = [0.0, 0.0, 0.1, 0.93, 0.94, 0.94, 0.94, 0.94, 0.94, 0.94, 0.94, 0.94]
@@ -101,6 +132,7 @@ class TriggerScaleFactors(object):
         return 1.0
 
     def double_trail_m(self,pt,eta):
+        return self.get_eff('DoubleMuTrail',pt,eta)
         pts = [10.,12.5,15.,17.5,20.,22.5,25.,27.5,30.,35.,40.,50.,7000.]
         if eta < 1.2:
             effs = [0.94, 0.95, 0.96, 0.96, 0.96, 0.96, 0.96, 0.96, 0.96, 0.96, 0.96, 0.96]
@@ -117,23 +149,37 @@ class TriggerScaleFactors(object):
 class LeptonScaleFactors(object):
 
     def __init__(self):
+        # WZ ones
         m_id_file = open(os.path.join(os.path.dirname(__file__),'MuonEfficiencies_Run2012ReReco_53X.pkl'),'r')
         self.m_id_dict = pickle.load(m_id_file)
         m_iso_file = open(os.path.join(os.path.dirname(__file__),'MuonEfficiencies_ISO_Run_2012ReReco_53X.pkl'),'r')
         self.m_iso_dict = pickle.load(m_iso_file)
 
+        # 4l ones
+        path = os.path.join(os.path.dirname(__file__),'CombinedMethod_ScaleFactors_RecoIdIsoSip.root')
+        self.e_rtfile = rt.TFile(path, 'READ')
+        self.e_hist = self.e_rtfile.Get("h_electronScaleFactor_RecoIdIsoSip")
+
+        path = os.path.join(os.path.dirname(__file__), 'MuonScaleFactors_2011_2012.root')
+        self.m_rtfile = rt.TFile(path, 'READ')
+        self.m_hist = self.m_rtfile.Get("TH2D_ALL_2012")
+
+    def close(self):
+        self.e_rtfile.Close()
+        self.m_rtfile.Close()
 
     def scale_factor(self, row, *lep_list, **kwargs):
         tight = kwargs.pop('tight',False)
+        loose = kwargs.pop('loose',False)
         out = 1.0
         out = []
         for l in lep_list:
             lep_type = l[0]
 
             if lep_type == 'm':
-                out += [self.m_tight_scale(row, l)]
+                out += [self.m_4l_scale(row,l)] if loose else [self.m_tight_scale(row, l)]
             elif lep_type == 'e':
-                out += [self.e_ww_scale(row, l)]
+                out += [self.e_4l_scale(row,l)] if loose else [self.e_ww_scale(row, l)]
             elif lep_type == 't':
                 out += [[1,1,1]] # TODO
             else:
@@ -230,3 +276,28 @@ class LeptonScaleFactors(object):
             if pt<pts[p+1]: return [effs[p], effs[p]+errs[p], effs[p]-errs[p]]
         return [1.0,1,1]
 
+    def e_4l_scale(self, row, l):
+        pt = getattr(row, "%sPt" % l)
+        eta = getattr(row, "%sEta" % l)
+        global_bin = self.e_hist.FindBin(pt, eta)
+        scl = self.e_hist.GetBinContent(global_bin)
+        err = self.e_hist.GetBinError(global_bin)
+
+        if scl < 0.1:
+            scl = 1.0
+            err = 0.02
+
+        return [scl, scl + err, scl - err]
+
+    def m_4l_scale(self, row, l):
+        pt = getattr(row, "%sPt" % l)
+        eta = getattr(row, "%sEta" % l)
+        global_bin = self.m_hist.FindBin(pt, eta)
+        scl = self.m_hist.GetBinContent(global_bin)
+        err = self.m_hist.GetBinError(global_bin)
+
+        if scl < 0.1:
+            scl = 1.0
+            err = 0.005
+
+        return [scl, scl + err, scl - err]

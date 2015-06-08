@@ -69,17 +69,19 @@ class AnalyzerHpp2l(AnalyzerBase):
     ###########################
     def preselection(self,rtrow):
         cuts = CutSequence()
-        cuts.add(self.trigger)
+        if self.isData: cuts.add(self.trigger)
+        #cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.overlap)
         cuts.add(self.trigger_threshold)
-        cuts.add(self.ID_tight)
+        cuts.add(self.ID_loose)
         cuts.add(self.qcd_rejection)
         return cuts
 
     def selection(self,rtrow):
         cuts = CutSequence()
-        cuts.add(self.trigger)
+        if self.isData: cuts.add(self.trigger)
+        #cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.overlap)
         cuts.add(self.trigger_threshold)
@@ -100,12 +102,12 @@ class AnalyzerHpp2l(AnalyzerBase):
                 'm':0.12
             }
             if self.period=='8':
-                #kwargs['idDef']['e'] = 'WZTight'
-                #kwargs['idDef']['m'] = 'WZTight'
-                kwargs['idDef']['e'] = '4l'
-                kwargs['idDef']['m'] = '4l'
-                kwargs['isoCut']['e'] = 0.4
-                kwargs['isoCut']['m'] = 0.4
+                kwargs['idDef']['e'] = 'WZTight'
+                kwargs['idDef']['m'] = 'WZTight'
+                #kwargs['idDef']['e'] = '4l'
+                #kwargs['idDef']['m'] = '4l'
+                #kwargs['isoCut']['e'] = 0.4
+                #kwargs['isoCut']['m'] = 0.4
         if type=='Loose':
             kwargs['idDef'] = {
                 'e':'Loose',
@@ -232,22 +234,26 @@ class AnalyzerHpp2l_Z(AnalyzerHpp2l):
 
     def preselection(self,rtrow):
         cuts = CutSequence()
-        cuts.add(self.trigger)
+        if self.isData: cuts.add(self.trigger)
+        #cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.overlap)
         cuts.add(self.trigger_threshold)
-        cuts.add(self.ID_tight)
-
+        cuts.add(self.ID_loose)
+        cuts.add(self.zSelection)
+        cuts.add(self.metVeto)
         return cuts
 
     def selection(self,rtrow):
         cuts = CutSequence()
-        cuts.add(self.trigger)
+        if self.isData: cuts.add(self.trigger)
+        #cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.overlap)
         cuts.add(self.trigger_threshold)
         cuts.add(self.ID_tight)
         cuts.add(self.zSelection)
+        cuts.add(self.metVeto)
         return cuts
 
     def zSelection(self,rtrow):
@@ -256,6 +262,14 @@ class AnalyzerHpp2l_Z(AnalyzerHpp2l):
         m1 = getattr(rtrow,'%s_%s_Mass' % (o[0],o[1]))
         l0Pt = getattr(rtrow,'%sPt' %leps[0])
         return abs(m1-ZMASS)<20. and l0Pt>20.
+
+    def metVeto(self,rtrow):
+        leps = self.objects
+        if self.period=='8':
+            if rtrow.type1_pfMetEt > 30.: return False
+        else:
+            if rtrow.pfMetEt > 30.: return False
+        return True
 
 
 class AnalyzerHpp2l_TT(AnalyzerHpp2l):
@@ -300,23 +314,30 @@ class AnalyzerHpp2l_TT(AnalyzerHpp2l):
 
     def preselection(self,rtrow):
         cuts = CutSequence()
-        cuts.add(self.trigger)
+        if self.isData: cuts.add(self.trigger)
+        #cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.overlap)
         cuts.add(self.trigger_threshold)
-        cuts.add(self.ID_tight)
+        cuts.add(self.ID_loose)
         cuts.add(self.qcd_rejection)
+        cuts.add(self.z_veto)
+        cuts.add(self.metCut)
+        cuts.add(self.jetCut)
         return cuts
 
     def selection(self,rtrow):
         cuts = CutSequence()
-        cuts.add(self.trigger)
+        if self.isData: cuts.add(self.trigger)
+        #cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.overlap)
         cuts.add(self.trigger_threshold)
         cuts.add(self.ID_tight)
         cuts.add(self.qcd_rejection)
         cuts.add(self.z_veto)
+        cuts.add(self.metCut)
+        cuts.add(self.jetCut)
         return cuts
 
     def z_veto(self,rtrow):
@@ -326,7 +347,16 @@ class AnalyzerHpp2l_TT(AnalyzerHpp2l):
         m1 = getattr(rtrow,'%s_%s_Mass' % (o[0], o[1]))
         return abs(m1-ZMASS)>20.
 
+    def metCut(self,rtrow):
+        leps = self.objects
+        if self.period=='8':
+            if rtrow.type1_pfMetEt < 30.: return False
+        else:
+            if rtrow.pfMetEt < 30.: return False
+        return True
 
+    def jetCut(self,rtrow):
+        return rtrow.jetVeto30 > 1
 
 
 ##########################

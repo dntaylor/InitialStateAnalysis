@@ -34,11 +34,11 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
     strForBranch += "passTight/I:"
     strToProcess += "Int_t passLoose;"
     strForBranch += "passLoose:"
-    for prompts in list(product(range(numObjs+1),repeat=numObjTypes)):
-        if sum(prompts) > numObjs: continue
-        promptString = ''.join([str(x) for x in prompts])
-        strToProcess += "Int_t pass_%s;" % promptString
-        strForBranch += "pass_%s:" % promptString
+    #for prompts in list(product(range(numObjs+1),repeat=numObjTypes)):
+    #    if sum(prompts) > numObjs: continue
+    #    promptString = ''.join([str(x) for x in prompts])
+    #    strToProcess += "Int_t pass_%s;" % promptString
+    #    strForBranch += "pass_%s:" % promptString
     for altId in alternateIds:
         strToProcess += "Int_t pass_%s;" % altId
         strForBranch += "pass_%s:" % altId
@@ -57,11 +57,13 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
        Int_t   lumi;\
        Int_t   nvtx;\
        Float_t lep_scale;\
+       Float_t lep_scale_up;\
+       Float_t lep_scale_down;\
        Float_t trig_scale;\
        Float_t pu_weight;\
     };");
     eventStruct = rt.structEvent_t()
-    structureDict['event'] = [eventStruct, eventStruct,'evt/I:run:lumi:nvtx:lep_scale/F:trig_scale:pu_weight']
+    structureDict['event'] = [eventStruct, eventStruct,'evt/I:run:lumi:nvtx:lep_scale/F:lep_scale_up:lep_scale_down:trig_scale:pu_weight']
     structOrder += ['event']
 
     rt.gROOT.ProcessLine(
@@ -97,11 +99,11 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
        Int_t   bjetVeto30Medium;\
        Int_t   bjetVeto20Tight;\
        Int_t   bjetVeto30Tight;\
-       Int_t   muonVeto5;\
-       Int_t   muonVeto10Loose;\
-       Int_t   muonVeto15;\
-       Int_t   elecVeto10;"
-    fsStrForBranch += "jetVeto20/I:jetVeto30:jetVeto40:bjetVeto20Loose:bjetVeto30Loose:bjetVeto20Medium:bjetVeto30Medium:bjetVeto20Tight:bjetVeto30Tight:muonVeto5:muonVeto10Loose:muonVeto15:elecVeto10:"
+       Int_t   muonVetoTight;\
+       Int_t   elecVetoTight;\
+       Int_t   muonVetoLoose;\
+       Int_t   elecVetoLoose;"
+    fsStrForBranch += "jetVeto20/I:jetVeto30:jetVeto40:bjetVeto20Loose:bjetVeto30Loose:bjetVeto20Medium:bjetVeto30Medium:bjetVeto20Tight:bjetVeto30Tight:muonVetoTight:elecVetoTight:muonVetoLoose:elecVetoLoose:"
 
     if doVBF:
         fsStrToProcess += "Int_t   centralJetVeto20;\
@@ -121,6 +123,8 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
        Float_t Eta;\
        Float_t Phi;\
        Float_t Iso;\
+       Float_t LepScaleLoose;\
+       Float_t LepScaleTight;\
        Int_t   Chg;\
        Int_t   PassTight;\
     };");
@@ -150,7 +154,7 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
                     charName = 'g'
                     phoCount += 1
                     objCount = phoCount
-                structureDict['%s%i' % (charName, objCount)] = [objStruct, objStruct, 'Pt/F:Eta:Phi:Iso:Chg/I:PassTight']
+                structureDict['%s%i' % (charName, objCount)] = [objStruct, objStruct, 'Pt/F:Eta:Phi:Iso:LepScaleLoose:LepScaleTight:Chg/I:PassTight']
                 structureDict['%s%iFlv' % (charName, objCount)] = [flvStruct, rt.AddressOf(flvStruct,'Flv'),'Flv/C']
                 structOrder += ['%s%i' % (charName, objCount)]
                 structOrder += ['%s%iFlv' % (charName, objCount)]
@@ -179,12 +183,14 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
                         Float_t metPhi;"
                 else:
                     objCount += 1
-                    strForBranch += "Pt%i:Eta%i:Phi%i:Iso%i:" % (objCount, objCount, objCount, objCount)
+                    strForBranch += "Pt%i:Eta%i:Phi%i:Iso%i:LepScaleLoose%i:LepScaleTight%i:" % (objCount, objCount, objCount, objCount, objCount, objCount)
                     strToProcess += "\
                         Float_t Pt%i;\
                         Float_t Eta%i;\
                         Float_t Phi%i;\
-                        Float_t Iso%i;" % (objCount, objCount, objCount, objCount)
+                        Float_t Iso%i;\
+                        Float_t LepScaleLoose%i;\
+                        Float_t LepScaleTight%i;" % (objCount, objCount, objCount, objCount, objCount, objCount)
                     # do the deltaRs
                     #for s in states:
                     #    for k in state:

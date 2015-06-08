@@ -44,6 +44,8 @@ def elec_id(rtrow, l, period, idType):
         if not elec_WZ_loose(rtrow,l,period): return False
     if idType=='WZTight':
         if not elec_WZ_tight(rtrow,l,period): return False
+    if idType=='4l':
+        if not elec_4l_id(rtrow,l,period): return False
     return True
 
 def muon_id(rtrow, l, period, idType):
@@ -59,6 +61,8 @@ def muon_id(rtrow, l, period, idType):
         if not muon_WZ_loose(rtrow,l,period): return False
     if idType=='WZTight':
         if not muon_WZ_tight(rtrow,l,period): return False
+    if idType=='4l':
+        if not muon_4l_id(rtrow,l,period): return False
     return True
 
 def tau_id(rtrow, l, period, idType):
@@ -216,3 +220,21 @@ def muon_WZ_tight(rtrow, l, period):
 
     return passid
 
+####################
+### 8 TeV 4l IDs ###
+####################
+
+def muon_4l_id(rtrow,l,period):
+    dz = getattr(rtrow, "%sPVDZ" % l) < 1.0
+    dxy = getattr(rtrow, "%sPVDXY" % l) < 0.5
+    sip = getattr(rtrow, "%sIP3DS" % l) < 4.0
+    mu_type = getattr(rtrow, "%sIsTracker" % l) or getattr(rtrow, "%sIsGlobal" % l)
+    return all([dz, dxy, sip, mu_type])
+
+def elec_4l_id(rtrow, l, period):
+    dz = getattr(rtrow, "%sPVDZ" % l) < 1.0
+    dxy = getattr(rtrow, "%sPVDXY" % l) < 0.5
+    sip = getattr(rtrow, "%sIP3DS" % l) < 4.0
+    nhit = getattr(rtrow, "%sMissingHits" % l) <= 1
+    mva = _elec_mva_nontriggering(rtrow, l, period)
+    return all([dz, dxy, sip, nhit, mva])

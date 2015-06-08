@@ -36,7 +36,7 @@ class AnalyzerWZ(AnalyzerBase):
             'z1': ['em','em'],
         }
         self.cutflow_labels = ['Trigger','Fiducial','ID','Z Selection','W Selection']
-        self.alternateIds, self.alternateIdMap = self.defineAlternateIds(period)
+        #self.alternateIds, self.alternateIdMap = self.defineAlternateIds(period)
         self.doVBF = (period=='13')
         super(AnalyzerWZ, self).__init__(sample_name, file_list, out_file, period)
 
@@ -79,7 +79,7 @@ class AnalyzerWZ(AnalyzerBase):
         '''
         Veto on 4th lepton
         '''
-        return (rtrow.eVetoWZ + rtrow.muVetoWZ == 0) if self.period=='13' else\
+        return (rtrow.eVetoWZIsoTight + rtrow.muVetoWZIsoTight == 0) if self.period=='13' else\
                (rtrow.elecVetoWZTight + rtrow.muonVetoWZTight == 0)
 
     def defineAlternateIds(self,period):
@@ -130,8 +130,8 @@ class AnalyzerWZ(AnalyzerBase):
         #if self.isData or self.period=='13': cuts.add(self.trigger)
         cuts.add(self.trigger)
         cuts.add(self.fiducial)
-        if self.period=='13': cuts.add(self.passAnyId)
-        if self.period=='8': cuts.add(self.ID_tight)
+        #if self.period=='13': cuts.add(self.passAnyId)
+        cuts.add(self.ID_tight)
         #cuts.add(self.mass3l)
         #cuts.add(self.zSelection)
         #cuts.add(self.wSelection)
@@ -260,40 +260,22 @@ class AnalyzerWZ(AnalyzerBase):
             if dr < 0.1: return False
         return True
 
-class AnalyzerWZ_TT(AnalyzerWZ):
-    def __init__(self, sample_location, out_file, period):
-        super(AnalyzerWZ_TT, self).__init__(sample_location, out_file, period)
-        self.channel = 'TT'
+class AnalyzerWZ_DataDriven(AnalyzerWZ):
+    def __init__(self, sample_name, file_list, out_file, period, **kwargs):
+        super(AnalyzerWZ_DataDriven, self).__init__(sample_name, file_list, out_file, period, **kwargs)
+        self.channel = 'DataDriven'
 
-    def choose_objects(self, rtrow):
-        cands = []
-        for l in permutations(self.objects):
-            if lep_order(l[0], l[1]):
-                continue
-
-            OS1 = getattr(rtrow, "%s_%s_SS" % (l[0], l[1])) < 0.5 # select opposite sign
-            mass = getattr(rtrow, "%s_%s_Mass" % (l[0], l[1]))
-            massdiff = abs(ZMASS-mass)
-
-            ordList = [l[1], l[0], l[2]] if getattr(rtrow,'%sPt' % l[0]) < getattr(rtrow,'%sPt' % l[1]) else l
-
-            if OS1 and l[0][0]!=l[1][0]:
-                o02 = ordered(l[0],l[2])
-                o12 = ordered(l[1],l[2])
-                os02 = getattr(rtrow, "%s_%s_SS" % (o02[0], o02[1])) < 0.5 
-                os12 = getattr(rtrow, "%s_%s_SS" % (o12[0], o12[1])) < 0.5 
-                # reject ossf pairs
-                if not ((os02 and l[0][0]==l[2][0]) or (os12 and l[1][0]==l[2][0])):
-                    cands.append((massdiff, list(ordList)))
-
-        if not len(cands): return 0
-
-        # Sort by mass difference
-        cands.sort(key=lambda x: x[0])
-        massdiff, leps = cands[0]
-
-        return ([massdiff], leps)
-
+    def preselection(self,rtrow):
+        cuts = CutSequence()
+        #if self.isData or self.period=='13': cuts.add(self.trigger)
+        cuts.add(self.trigger)
+        cuts.add(self.fiducial)
+        #if self.period=='13': cuts.add(self.passAnyId)
+        cuts.add(self.ID_loose)
+        #cuts.add(self.mass3l)
+        #cuts.add(self.zSelection)
+        #cuts.add(self.wSelection)
+        return cuts
 
 ##########################
 ###### Command line ######
@@ -317,7 +299,7 @@ def main(argv=None):
     args = parse_command_line(argv)
 
     if args.analyzer == 'WZ': analyzer = AnalyzerWZ(args.sample_name,args.file_list,args.out_file,args.period)
-    if args.analyzer == 'TT': analyzer = AnalyzerWZ_TT(args.sample_name,args.file_list,args.out_file,args.period)
+    if args.analyzer == 'DataDriven': analyzer = AnalyzerWZ_DataDriven(args.sample_name,args.file_list,args.out_file,args.period)
     with analyzer as thisAnalyzer:
         thisAnalyzer.analyze()
 

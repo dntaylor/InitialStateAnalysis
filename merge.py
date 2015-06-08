@@ -23,8 +23,8 @@ def parse_command_line(argv):
     parser = argparse.ArgumentParser(description="Run the desired analyzer on "
                                                  "FSA n-tuples")
 
-    parser.add_argument('analysis', type=str, choices=['WZ','Hpp3l','Hpp4l'], help='Analysis to run')
-    parser.add_argument('channel', type=str, choices=['WZ','TT','Hpp3l','Hpp4l','FakeRate'], help='Channel to run for given analysis')
+    parser.add_argument('analysis', type=str, choices=['Z','WZ','Hpp2l','Hpp3l','Hpp4l'], help='Analysis to run')
+    parser.add_argument('channel', type=str, choices=['Z','WZ','TT','Hpp2l','Hpp3l','Hpp4l','FakeRate','DataDriven'], help='Channel to run for given analysis')
     parser.add_argument('period', type=str, choices=['7','8','13'], help='Energy (TeV)')
     parser.add_argument('jobName',nargs='?',type=str,const='',help='Job Name for condor submission')
     args = parser.parse_args(argv)
@@ -50,7 +50,7 @@ def main(argv=None):
     # now merge the data samples (checking for duplicate events)
     datasets = {
         '7' : ['Run2011A', 'Run2011B'],
-        '8' : ['Run2012A', 'Run2012B', 'Run2012A', 'Run2012D'],
+        '8' : ['Run2012A', 'Run2012B', 'Run2012C', 'Run2012D'],
         '13': []
     }
     for dataset in datasets[args.period]:
@@ -59,7 +59,7 @@ def main(argv=None):
         tchain = rt.TChain()
         datafiles = glob.glob('%s/data_*_%s_*.root' % (ntupledir, dataset))
         for f in datafiles:
-            tchain.Add('%s/%s' % (f, args.analysis))
+            tchain.Add('%s/%s' % (f, args.channel))
         # setup for iterating over tree
         events = set()
         numToSubtract = 0
@@ -80,23 +80,23 @@ def main(argv=None):
             tree.Fill()
         # and the cutflows
         # TODO: This is WRONG! only the last entry will be correct... solve later I guesss, perhaps a cutflow tree
-        cutflows = {}
-        for datafile in datafiles:
-            file = rt.TFile(datafile)
-            cutflowHist = file.Get('cutflow')
-            numBins = cutflowHist.GetNbinsX()-2
-            cutflow = []
-            for b in range(numBins):
-               cutflow += [cutflowHist.GetBinContent(b+1)]
-            cutflows[datafile] = cutflow
-        cutflow = [sum(x) for x in zip(*cutflows.itervalues())]
-        cutflow = [x-numToSubtract for x in cutflow]
-        numBins = len(cutflow)
-        cutflowHist = rt.TH1F('cutflow','cutflow',numBins,0,numBins)
-        for b in range(numBins):
-           cutflowHist.SetBinContent(b+1,cutflow[b])
+        #cutflows = {}
+        #for datafile in datafiles:
+        #    file = rt.TFile(datafile)
+        #    cutflowHist = file.Get('cutflow')
+        #    numBins = cutflowHist.GetNbinsX()-2
+        #    cutflow = []
+        #    for b in range(numBins):
+        #       cutflow += [cutflowHist.GetBinContent(b+1)]
+        #    cutflows[datafile] = cutflow
+        #cutflow = [sum(x) for x in zip(*cutflows.itervalues())]
+        #cutflow = [x-numToSubtract for x in cutflow]
+        #numBins = len(cutflow)
+        #cutflowHist = rt.TH1F('cutflow','cutflow',numBins,0,numBins)
+        #for b in range(numBins):
+        #   cutflowHist.SetBinContent(b+1,cutflow[b])
         tfile.cd()
-        cutflowHist.Write()
+        #cutflowHist.Write()
         tfile.Write()
         tfile.Close()
 

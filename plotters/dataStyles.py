@@ -14,12 +14,18 @@ Purple  = ROOT.TColor.GetColor('#AD33FF')
 PurpleA = ROOT.TColor.GetColor('#7924B2')
 Yellow  = ROOT.TColor.GetColor('#FFFF00')
 YellowA = ROOT.TColor.GetColor('#FFCC26')
+Gold    = ROOT.TColor.GetColor('#CCCC00')
+GoldA   = ROOT.TColor.GetColor('#D1D119')
+DarkYellow  = ROOT.TColor.GetColor('#FFCC00')
+DarkYellowA = ROOT.TColor.GetColor('#E6B800')
 Orange  = ROOT.TColor.GetColor('#DC7612')
 OrangeA = ROOT.TColor.GetColor('#BD3200')
 Blue    = ROOT.TColor.GetColor('#107FC9')
 BlueA   = ROOT.TColor.GetColor('#0E4EAD')
 Navy    = ROOT.TColor.GetColor('#003399')
 NavyA   = ROOT.TColor.GetColor('#00297A')
+DarkRed = ROOT.TColor.GetColor('#A30000')
+DarkRedA= ROOT.TColor.GetColor('#8F0000')
 Red     = ROOT.TColor.GetColor('#F01800')
 RedA    = ROOT.TColor.GetColor('#780000')
 Green   = ROOT.TColor.GetColor('#36802D')
@@ -51,6 +57,17 @@ dataStyles['ZZJets'] = {
 dataStyles['ZZJetsTo4L_TuneZ2star_8TeV-madgraph-tauola'] = copy.deepcopy(dataStyles['ZZJets'])
 dataStyles['Diboson'] = copy.deepcopy(dataStyles['ZZJets'])
 dataStyles['Diboson']['name'] = 'Diboson'
+
+dataStyles['ZG'] = {
+    'legendstyle' : 'f',
+    'drawstyle' : 'hist',
+    'linecolor' : DarkRedA,
+    'fillcolor' : DarkRed,
+    'name' : "Z#gamma",
+    'fillstyle': 1001,
+}
+
+dataStyles['ZGToLLG_8TeV-madgraph'] = copy.deepcopy(dataStyles['ZG'])
 
 dataStyles['WZJets'] = {
     'legendstyle' : 'f',
@@ -110,12 +127,18 @@ dataStyles['ZJets'] = {
 }
 
 dataStyles['DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball'] = copy.deepcopy(dataStyles['ZJets'])
+dataStyles['DYJetsToLL_M-10To50filter_8TeV-madgraph'] = copy.deepcopy(dataStyles['ZJets'])
+dataStyles['DYJetsToLL_M-10To50filter_8TeV-madgraph']['name'] = "Z Low Mass"
+dataStyles['DYJetsToLL_M-10To50filter_8TeV-madgraph']['fillcolor'] = Gold
+dataStyles['DYJetsToLL_M-10To50filter_8TeV-madgraph']['linecolor'] = GoldA
 dataStyles['Z1jets_M50'] = copy.deepcopy(dataStyles['ZJets'])
 dataStyles['Z2jets_M50_S10'] = copy.deepcopy(dataStyles['ZJets'])
 dataStyles['Z3jets_M50'] = copy.deepcopy(dataStyles['ZJets'])
 dataStyles['Z4jets_M50'] = copy.deepcopy(dataStyles['ZJets'])
 dataStyles['WJets'] = copy.deepcopy(dataStyles['ZJets'])
 dataStyles['WJets']['name'] = "W+Jets"
+dataStyles['WJets']['fillcolor'] = DarkYellow
+dataStyles['WJets']['linecolor'] = DarkYellowA
 
 dataStyles['TTJets'] = {
     'legendstyle' : 'f',

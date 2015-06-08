@@ -73,8 +73,11 @@ xsecs[8] = {
     'HPlusPlusHMinusHTo3L_M-600_8TeV-calchep-pythia6': 0.17286 * FB,
     'HPlusPlusHMinusHTo3L_M-700_8TeV-calchep-pythia6': 0.05762 * FB,
 
-    'DYJetsToLL_M-10To50filter_8TeV-madgraph':          860.5 * PB,
-    'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball': 3532.8 * PB,
+    'WJetsToLNu_TuneZ2Star_8TeV-madgraph-tarball-v1' : 36257.2 * PB,
+    'WJetsToLNu_TuneZ2Star_8TeV-madgraph-tarball-v2' : 36257.2 * PB,
+
+    'DYJetsToLL_M-10To50filter_8TeV-madgraph':          915 * PB,
+    'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball': 3503.7 * PB,
 
     'Z1jets_M50':     Z_XSEC * 0.190169492,
     'Z2jets_M50_S10': Z_XSEC * 0.061355932,
@@ -103,10 +106,13 @@ xsecs[8] = {
     'ZZTo2e2tau_8TeV-powheg-pythia6':  0.1767 * PB,
     'ZZTo2mu2tau_8TeV-powheg-pythia6': 0.1767 * PB,
 
-    'ZZJetsTo4L_TuneZ2star_8TeV-madgraph-tauola': 0.1296 * PB,
+    'ZZJetsTo4L_TuneZ2star_8TeV-madgraph-tauola':   0.1769 * PB,
+    'ZZJetsTo2L2Q_TuneZ2star_8TeV-madgraph-tauola': 2.4487 * PB,
 
-    'WZJetsTo2L2Q_TuneZ2star_8TeV-madgraph-tauola': 2.207 * PB,
-    'WZJetsTo3LNu_TuneZ2_8TeV-madgraph-tauola':     1.058 * PB,
+    'ZGToLLG_8TeV-madgraph': 132.6 * PB,
+
+    'WZJetsTo2L2Q_TuneZ2star_8TeV-madgraph-tauola': 1.09 * 2.207 * PB, # From CMS WZ analysis data/theo = 1.09
+    'WZJetsTo3LNu_TuneZ2_8TeV-madgraph-tauola':     1.09 * 1.058 * PB, # From CMS WZ analysis data/theo = 1.09
 
     'WWJetsTo2L2Nu_TuneZ2star_8TeV-madgraph-tauola' : 54.838*(0.1075+0.1057+0.1125)*(0.1075+0.1057+0.1125) * PB,
 

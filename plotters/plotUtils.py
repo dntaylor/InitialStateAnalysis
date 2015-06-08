@@ -20,26 +20,26 @@ def python_mkdir(dir):
 
 def defineCutFlowMap(region,channels,mass):
     # define regions (based on number of taus in higgs candidate)
-    regionMap = { 'Hpp3l' : {}, 'Hpp4l' : {}, 'WZ' : {} }
+    regionMap = { 'Hpp3l' : {}, 'Hpp4l' : {}, 'WZ' : {}, 'Z' : {}, 'TT' : {}, }
     regionMap['Hpp3l'][0] = {
         'st' : 'finalstate.sT>1.1*%f+60.' %mass,
         'zveto' : 'fabs(z1.mass-%f)>80.' %ZMASS,
         'met' : None,
-        'dphi' : 'hN.dPhi<%f/600.+1.95' %mass,
+        'dphi' : 'fabs(hN.dPhi)<%f/600.+1.95' %mass,
         'mass' : 'hN.mass>0.9*%f&&hN.mass<1.1*%f' %(mass,mass)
     }
     regionMap['Hpp3l'][1] = {
         'st' : 'finalstate.sT>0.85*%f+125.' %mass,
         'zveto' : 'fabs(z1.mass-%f)>80.' %ZMASS,
         'met' : 'finalstate.met>20.',
-        'dphi' : 'hN.dPhi<%f/200.+1.15' %mass,
+        'dphi' : 'fabs(hN.dPhi)<%f/200.+1.15' %mass,
         'mass' : 'hN.mass>0.5*%f&&hN.mass<1.1*%f' %(mass,mass)
     }
     regionMap['Hpp3l'][2] = {
         'st' : '(finalstate.sT>%f-10||finalstate.sT>200.)' %mass,
         'zveto' : 'fabs(z1.mass-%f)>50.' %ZMASS,
         'met' : 'finalstate.met>20.',
-        'dphi' : 'hN.dPhi<2.1',
+        'dphi' : 'fabs(hN.dPhi)<2.1',
         'mass' : 'hN.mass>0.5*%f-20.&&hN.mass<1.1*%f' %(mass,mass)
     }
     regionMap['Hpp4l'][0] = {
@@ -57,7 +57,7 @@ def defineCutFlowMap(region,channels,mass):
     regionMap['Hpp4l'][2] = {
         'st' : 'finalstate.sT>120.',
         'zveto' : 'fabs(z1.mass-%f)>50.&&fabs(z2.mass-%f)>50.' %(ZMASS,ZMASS),
-        'dphi' : 'hN.dPhi<2.5',
+        'dphi' : 'fabs(hN.dPhi)<2.5',
         'mass' : None
     }
     regionMap['WZ'][0] = {
@@ -68,6 +68,18 @@ def defineCutFlowMap(region,channels,mass):
         'wdr' : 'w1.dR1_z1_1>0.1 & w1.dR1_z1_2>0.1',
         'wpt' : 'w1.Pt1>20.',
         'met' : 'w1.met>30.',
+    }
+    regionMap['Z'][0] = {
+        'zpt' : '(z1.Pt1>20.&z1.Pt2>10.)',
+        'zmass' : 'fabs(z1.mass-%f)<20.' % ZMASS,
+        'metveto' : 'met<30.',
+        'bveto' : 'finalstate.bjetVeto30Medium==0',
+    }
+    regionMap['TT'][0] = {
+        'zveto' : 'fabs(z1.mass-%f)>20.' % ZMASS,
+        'met': 'met>30.',
+        'jets' : 'finalstate.jetVeto30>1',
+        'bjets' : 'finalstate.bjetVeto30Medium>0',
     }
     # define cutmap to be returned
     cutMap = { 'cuts' : [], 'labels': [], 'labels_simple': [], 'preselection': [] }
@@ -94,18 +106,51 @@ def defineCutFlowMap(region,channels,mass):
                  'zveto' : '',
                  'dphi' : '',
                  'mass' : '' }
-    elif region == 'WZ' or region == 'TT':
-        cutMap['labels'] = ['Preselection (ID)', 'Z lepton p_{T}', 'Z window', 'b-jet Veto', 'W lepton p_{T}', 'E_{T}^{miss}']
-        cutMap['labels_simple'] = ['Presel (ID)', 'Z lep pt', 'Z window', 'bjet Veto', 'W lep pt', 'MET']
+    elif region == 'WZ':
         cutMap['preselection'] = ['All events','Three lepton','Trigger','Fiducial','4th lepton veto']
-        cutMap['cuts'] = ['1', regionMap['WZ'][0]['zpt'], regionMap['WZ'][0]['zmass'], regionMap['WZ'][0]['bveto'],\
-                          regionMap['WZ'][0]['wpt'], regionMap['WZ'][0]['met']]
+        cutMap['labels'] = ['Preselection (ID)',\
+                            'Z lepton p_{T}',\
+                            'Z window',\
+                            'Mass 3l',\
+                            #'b-jet Veto',\
+                            'W #DeltaR to Z',\
+                            'W lepton p_{T}',\
+                            'E_{T}^{miss}'\
+                           ]
+        cutMap['labels_simple'] = ['Presel (ID)',\
+                                   'Z lep pt',\
+                                   'Z window',\
+                                   'mass3l',\
+                                   #'bjet Veto',\
+                                   'W dR',\
+                                   'W lep pt',\
+                                   'MET'\
+                                  ]
+        cutMap['cuts'] = ['1',\
+                          regionMap['WZ'][0]['zpt'],\
+                          regionMap['WZ'][0]['zmass'],\
+                          regionMap['WZ'][0]['mass'],\
+                          #regionMap['WZ'][0]['bveto'],\
+                          regionMap['WZ'][0]['wdr'],\
+                          regionMap['WZ'][0]['wpt'],\
+                          regionMap['WZ'][0]['met']\
+                         ]
         # this is 8 tev, add a period check later
-        cutMap['labels'] = ['Preselection (ID)', 'Z lepton p_{T}', 'Z window', 'Mass 3l', 'W #DeltaR to Z', 'W lepton p_{T}', 'E_{T}^{miss}']
-        cutMap['labels_simple'] = ['Presel (ID)', 'Z lep pt', 'Z window', 'mass3l', 'W dR', 'W lep pt', 'MET']
+        #cutMap['labels'] = ['Preselection (ID)', 'Z lepton p_{T}', 'Z window', 'Mass 3l', 'W #DeltaR to Z', 'W lepton p_{T}', 'E_{T}^{miss}']
+        #cutMap['labels_simple'] = ['Presel (ID)', 'Z lep pt', 'Z window', 'mass3l', 'W dR', 'W lep pt', 'MET']
+        #cutMap['preselection'] = ['All events','Three lepton','Trigger','Fiducial','4th lepton veto']
+        #cutMap['cuts'] = ['1', regionMap['WZ'][0]['zpt'], regionMap['WZ'][0]['zmass'], regionMap['WZ'][0]['mass'],\
+        #                  regionMap['WZ'][0]['wdr'], regionMap['WZ'][0]['wpt'], regionMap['WZ'][0]['met']]
+    elif region=='Z':
+        cutMap['labels'] = ['Preselection (ID)', 'Z lepton p_{T}', 'Z window', 'met veto', 'b veto']
+        cutMap['labels_simple'] = ['Presel (ID)', 'Z lep pt', 'Z window', 'met veto', 'b veto']
         cutMap['preselection'] = ['All events','Three lepton','Trigger','Fiducial','4th lepton veto']
-        cutMap['cuts'] = ['1', regionMap['WZ'][0]['zpt'], regionMap['WZ'][0]['zmass'], regionMap['WZ'][0]['mass'],\
-                          regionMap['WZ'][0]['wdr'], regionMap['WZ'][0]['wpt'], regionMap['WZ'][0]['met']]
+        cutMap['cuts'] = ['1', regionMap['Z'][0]['zpt'], regionMap['Z'][0]['zmass'], regionMap['Z'][0]['metveto'], regionMap['Z'][0]['bveto']]
+    elif region=='TT':
+        cutMap['labels'] = ['Preselection (ID)', 'Z veto', 'met', 'jets', 'b jets']
+        cutMap['labels_simple'] = ['Presel (ID)', 'Z veto', 'met', 'jets', 'b jets']
+        cutMap['preselection'] = ['All events','Three lepton','Trigger','Fiducial','4th lepton veto']
+        cutMap['cuts'] = ['1', regionMap['TT'][0]['zveto'], regionMap['TT'][0]['met'], regionMap['TT'][0]['jets'], regionMap['TT'][0]['bjets']]
     else:
         cutMap['cuts'] = '1'
         cutMap['labels'] = ['%s Full Selection' %region]
@@ -160,8 +205,12 @@ def getChannels(numLeptons,**kwargs):
     leptons = ['l%i' %(x+1) for x in range(numLeptons)]
     lepTypes = 'emt' if runTau else 'em'
     lepPairs = [x[0]+x[1] for x in itertools.combinations_with_replacement(lepTypes,2)]
-    if numLeptons == 3: channels = [x[0]+x[1] for x in itertools.product(lepPairs,lepTypes)]
-    else: channels = [x[0]+x[1] for x in itertools.product(lepPairs,lepPairs)]
+    if numLeptons == 2:
+        channels = [x[0]+x[1] for x in itertools.product(lepTypes,lepTypes)]
+    elif numLeptons == 3:
+        channels = [x[0]+x[1] for x in itertools.product(lepPairs,lepTypes)]
+    else:
+        channels = [x[0]+x[1] for x in itertools.product(lepPairs,lepPairs)]
     return channels,leptons
 
 def getMergeDict(period):
@@ -192,26 +241,34 @@ def getMergeDict(period):
         sampleMergeDict['Diboson']   = ['WWJetsTo2L2Nu_TuneZ2star_8TeV-madgraph-tauola',\
                                         'WZJetsTo2L2Q_TuneZ2star_8TeV-madgraph-tauola',\
                                         'WZJetsTo3LNu_TuneZ2_8TeV-madgraph-tauola',\
-                                        'ZZJetsTo4L_TuneZ2star_8TeV-madgraph-tauola']
-        #sampleMergeDict['ZZJets']    = ['ZZJetsTo4L_TuneZ2star_8TeV-madgraph-tauola']
-        sampleMergeDict['ZZJets']    = ['ZZTo2e2mu_8TeV-powheg-pythia6',\
-                                        'ZZTo2e2tau_8TeV-powheg-pythia6',\
-                                        'ZZTo2mu2tau_8TeV-powheg-pythia6',\
-                                        'ZZTo4e_8TeV-powheg-pythia6',\
-                                        'ZZTo4mu_8TeV-powheg-pythia6',\
-                                        'ZZTo4tau_8TeV-powheg-pythia6']
+                                        'ZZJetsTo4L_TuneZ2star_8TeV-madgraph-tauola',\
+                                        'ZZJetsTo2L2Q_TuneZ2star_8TeV-madgraph-tauola']
+        sampleMergeDict['ZZJets']    = ['ZZJetsTo4L_TuneZ2star_8TeV-madgraph-tauola',\
+                                        'ZZJetsTo2L2Q_TuneZ2star_8TeV-madgraph-tauola']
+        #sampleMergeDict['ZZJets']    = ['ZZTo2e2mu_8TeV-powheg-pythia6',\
+        #                                'ZZTo2e2tau_8TeV-powheg-pythia6',\
+        #                                'ZZTo2mu2tau_8TeV-powheg-pythia6',\
+        #                                'ZZTo4e_8TeV-powheg-pythia6',\
+        #                                'ZZTo4mu_8TeV-powheg-pythia6',\
+        #                                'ZZTo4tau_8TeV-powheg-pythia6']
         sampleMergeDict['SingleTop'] = ['T_s-channel_TuneZ2star_8TeV-powheg-tauola',\
                                         'T_t-channel_TuneZ2star_8TeV-powheg-tauola',\
                                         'T_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola',\
                                         'Tbar_s-channel_TuneZ2star_8TeV-powheg-tauola',\
                                         'Tbar_t-channel_TuneZ2star_8TeV-powheg-tauola',\
                                         'Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola']
-        sampleMergeDict['TTJets']    = ['TTJetsFullLepMGDecays', 'TTJetsSemiLepMGDecays']
-        sampleMergeDict['ZJets']     = ['Z1jets_M50',\
-                                        'Z2jets_M50_S10',\
-                                        'Z3jets_M50',\
-                                        'Z4jets_M50']
-        #sampleMergeDict['ZJets']     = ['DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball']
+        sampleMergeDict['TTJets']    = ['TTJetsFullLepMGDecays',\
+                                        'TTJetsSemiLepMGDecays']
+        #sampleMergeDict['ZJets']     = ['Z1jets_M50',\
+        #                                'Z2jets_M50_S10',\
+        #                                'Z3jets_M50',\
+        #                                'Z4jets_M50']
+        sampleMergeDict['ZJets']     = ['DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball']
+        #sampleMergeDict['ZJets']     = ['DYJetsToLL_M-10To50filter_8TeV-madgraph',\
+        #                                'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball']
+        sampleMergeDict['WJets']     = ['WJetsToLNu_TuneZ2Star_8TeV-madgraph-tarball-v1',\
+                                        'WJetsToLNu_TuneZ2Star_8TeV-madgraph-tarball-v2']
+        sampleMergeDict['ZG']        = ['ZGToLLG_8TeV-madgraph']
         sampleMergeDict['data']      = ['data_Run2012A',\
                                         'data_Run2012B',\
                                         'data_Run2012C',\
@@ -221,6 +278,7 @@ def getMergeDict(period):
                                         'TTWWJets',\
                                         'TTGJets']
         sampleMergeDict['VVVJets']   = ['ZZZNoGstarJets',\
+                                        'WZZNoGstarJets',\
                                         'WWZNoGstarJets',\
                                         'WWWJets']
     return sampleMergeDict
@@ -234,6 +292,9 @@ def getSigMap(numLeptons,mass):
              'WZ'  : 'WZJets',
              'WW'  : 'WWJets',
              'Z'   : 'ZJets',
+             'Zlow': 'DYJetsToLL_M-10To50filter_8TeV-madgraph',
+             'W'   : 'WJets',
+             'ZG'  : 'ZG',
              'DB'  : 'Diboson',
              'TT'  : 'TTJets',
              'T'   : 'SingleTop',
@@ -286,8 +347,13 @@ def getChannelStringsCuts(region,channels):
     channelsWZ = [['ee','e'],['ee','m'],['mm','e'],['mm','m']]
     channelStringsWZ = ['(ee)e','(ee)#mu','(#mu#mu)e','(#mu#mu)#mu']
     channelCutsWZ = ['z1Flv=="%s"&&w1Flv=="%s"' %(x[0],x[1]) for x in channelsWZ]
+    channelsZ = [['ee'],['mm']]
+    channelStringsZ = ['ee','#mu#mu']
+    channelCutsZ = ['z1Flv=="%s"' %(x[0]) for x in channelsZ]
     plotChannelCuts = channelCuts
     if region in ['WZ']: plotChannelCuts = channelCutsWZ
+    if region in ['Z']: plotChannelCuts = channelCutsZ
     plotChannelStrings = channelStrings
     if region in ['WZ']: plotChannelStrings = channelStringsWZ
+    if region in ['Z']: plotChannelStrings = channelStringsZ
     return plotChannelStrings, plotChannelCuts

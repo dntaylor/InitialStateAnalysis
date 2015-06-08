@@ -48,14 +48,21 @@ class CutSequence(object):
     '''
     def __init__(self):
         self.cut_sequence = []
+        self.results = 0
 
-    def add(self, fun):
-        self.cut_sequence.append(fun)
+    def add(self, fun, label=''):
+        self.cut_sequence.append([fun,label])
 
     def evaluate(self, rtrow):
         for i,cut in enumerate(self.cut_sequence):
-            if not cut(rtrow): return False, i
-        return True, i+1
+            if not cut[0](rtrow):
+                self.results = i
+                return False
+        self.results = i+1
+        return True
+
+    def getResults(self):
+        return self.results
 
 def lep_order(a, b):
     '''
@@ -120,9 +127,8 @@ class AnalyzerBase(object):
         print "%s %s %s: Analyzing" % (str(datetime.datetime.now()), self.channel, self.sample_name)
         eventMap = {}
         bestCandMap = {}
-        self.cutflowMap = {}
+        cutflowMap = {}
         eventsToWrite = set()
-        #eventsNotToWrite = set()
         eventsWritten = set()
         numEvts = 0
         totalWritten = 0
@@ -139,8 +145,15 @@ class AnalyzerBase(object):
             for fs in self.final_states:
                 if len(self.file_names)<10: print "%s %s: %s" % (self.channel, self.sample_name, fs)
                 tree = rtFile.Get("%s/final/Ntuple" % fs)
-                metatree = rtFile.Get("%s/eventCount" % fs)
-                tempEvts = metatree.GetEntries()
+                if self.period=='8':
+                    metatree = rtFile.Get("%s/metaInfo" % fs)
+                    tempEvts = 0
+                    for entry in xrange(metatree.GetEntries()):
+                        metatree.GetEntry(entry)
+                        tempEvts += metatree.nevents
+                else: # THIS WAS MY PROBLEM AT 8 TEV: TODO: Check 13TeV in FSA with miniAOD
+                    metatree = rtFile.Get("%s/eventCount" % fs)
+                    tempEvts = metatree.GetEntries()
 
                 self.objects = self.enumerate_objects(fs)
 
@@ -161,22 +174,20 @@ class AnalyzerBase(object):
                     # cache to prevent excessive reads of fsa ntuple
                     self.cache = {}
 
-                    # now see if event is viable
-                    passPreselection = self.pass_preselection(rtrow)
+                    # event number for dictionary storing
                     eventkey = (rtrow.evt, rtrow.lumi, rtrow.run)
-                    old = self.cutflowMap[eventkey] if eventkey in self.cutflowMap else -1
-                    if self.num>old:
-                        self.cutflowMap[eventkey] = self.num
-                    if not passPreselection:
-                        continue
 
                     # can we define the object we want?
                     candidate = self.choose_objects(rtrow)
                     if not candidate: # in case no objects satisfy our conditions
-                        #eventsNotToWrite.add(eventkey) # passed preselection but isnt good final state
                         continue
-                    if self.num+1>old:
-                        self.cutflowMap[eventkey] = self.num+1
+
+                    # now see if event is viable
+                    passPreselection = self.pass_preselection(rtrow)
+
+                    # check preselection
+                    if not passPreselection:
+                        continue
 
                     # check combinatorics
                     if eventkey in bestCandMap: 
@@ -186,12 +197,8 @@ class AnalyzerBase(object):
                         bestcand = [float('inf')] * numMin
                     if self.good_to_store(rtrow,candidate[0],bestcand):
                         bestCandMap[eventkey] = candidate[0]
-                        if self.num+2>old:
-                            self.cutflowMap[eventkey] = self.num+2
                         ntupleRow = self.store_row(rtrow, *candidate[1])
                         eventMap[eventkey] = ntupleRow
-                        #if eventkey in eventsToWrite: # additional check on double counting
-                        #    eventsNotToWrite.add(eventkey)
                         eventsToWrite.add(eventkey)
 
             rtFile.Close("R")
@@ -200,7 +207,6 @@ class AnalyzerBase(object):
             # end of file, write the ntuples
             self.file.cd()
             for key in eventsToWrite:
-                #if key in eventsNotToWrite: continue
                 if key in eventsWritten:
                     print "%s %s %s: Error: attempted to write previously written event" % (str(datetime.datetime.now()), self.channel, self.sample_name)
                 else:
@@ -210,35 +216,30 @@ class AnalyzerBase(object):
             eventMap = {}
             eventsToWrite = set()
 
-        # now we store all events that are kept
-        print "%s %s %s: Filling Tree" % (str(datetime.datetime.now()), self.channel, self.sample_name)
-        #self.file.cd()
-        #for key in eventsToWrite:
-        #    self.write_row(eventMap[key])
-        #    self.ntuple.Fill()
         print "%s %s %s: Filled Tree (%i events)" % (str(datetime.datetime.now()), self.channel, self.sample_name, len(eventsWritten))
 
         # now we store the total processed events
         print "%s %s %s: Processed %i events" % (str(datetime.datetime.now()), self.channel, self.sample_name, numEvts)
 
-        # and the cutflow
+        ## and the cutflow
         cutflowVals = []
-        for val in self.cutflowMap.itervalues():
-            for i in range(val+1):
-                if len(cutflowVals)<i+1: cutflowVals.append(1)
-                else: cutflowVals[i] += 1
-        print "%s %s %s: Cutflow: " % (str(datetime.datetime.now()), self.channel, self.sample_name), cutflowVals
+        #for val in cutflowMap.itervalues():
+        #    for i in range(val+1):
+        #        if len(cutflowVals)<i+1: cutflowVals.append(1)
+        #        else: cutflowVals[i] += 1
+        #print "%s %s %s: Cutflow: " % (str(datetime.datetime.now()), self.channel, self.sample_name), cutflowVals
 
         cutflowHist = rt.TH1F('cutflow','cutflow',len(cutflowVals)+1,0,len(cutflowVals)+1)
         cutflowHist.SetBinContent(1,numEvts)
-        for i in range(len(cutflowVals)):
-            cutflowHist.SetBinContent(i+2,cutflowVals[i])
-        # rename cutflow bins if self.cutflow_labels defined
-        if hasattr(self,'cutflow_labels'):
-            pass # TODO
+        #for i in range(len(cutflowVals)):
+        #    cutflowHist.SetBinContent(i+2,cutflowVals[i])
+        ## rename cutflow bins if self.cutflow_labels defined
+        #if hasattr(self,'cutflow_labels'):
+        #    pass # TODO
         cutflowHist.Write()
 
     def finish(self):
+        self.lepscaler.close()
         self.file.Write()
         self.file.Close()
 
@@ -287,13 +288,13 @@ class AnalyzerBase(object):
                     allowedObjects += fsObj
                     break
         numObjTypes = len(allowedObjects)
-        for prompts in list(product(range(numObjs+1),repeat=numObjTypes)):
-            if sum(prompts) > numObjs: continue
-            promptString = ''.join([str(x) for x in prompts])
-            promptDict = {}
-            for o in range(len(allowedObjects)):
-                promptDict[allowedObjects[o]] = prompts[o]
-            ntupleRow["select.pass_%s"%promptString] = int(self.npass(rtrow,promptDict,**self.getIdArgs('Tight')))
+        #for prompts in list(product(range(numObjs+1),repeat=numObjTypes)):
+        #    if sum(prompts) > numObjs: continue
+        #    promptString = ''.join([str(x) for x in prompts])
+        #    promptDict = {}
+        #    for o in range(len(allowedObjects)):
+        #        promptDict[allowedObjects[o]] = prompts[o]
+        #    ntupleRow["select.pass_%s"%promptString] = int(self.npass(rtrow,promptDict,**self.getIdArgs('Tight')))
         for altId in self.alternateIds:
             ntupleRow["select.pass_%s"%altId] = int(self.ID(rtrow,*self.objects,**self.alternateIdMap[altId]))
 
@@ -302,8 +303,11 @@ class AnalyzerBase(object):
         ntupleRow["event.lumi"] = int(rtrow.lumi)
         ntupleRow["event.run"] = int(rtrow.run)
         ntupleRow["event.nvtx"] = int(rtrow.nvtx)
-        ntupleRow["event.lep_scale"] = float(self.lepscaler.scale_factor(rtrow, *objects)[0]) if self.period=='8' else float(1.)
+        ntupleRow["event.lep_scale"] = float(self.lepscaler.scale_factor(rtrow, *objects, loose=True)[0]) if self.period=='8' else float(1.)
+        ntupleRow["event.lep_scale_up"] = float(self.lepscaler.scale_factor(rtrow, *objects, loose=True)[1]) if self.period=='8' else float(1.)
+        ntupleRow["event.lep_scale_down"] = float(self.lepscaler.scale_factor(rtrow, *objects, loose=True)[2]) if self.period=='8' else float(1.)
         ntupleRow["event.trig_scale"] = float(self.trigscaler.scale_factor(rtrow, *objects)) if self.period=='8' else float(1.)
+        #ntupleRow["event.trig_scale"] = float(1.)
         ntupleRow["event.pu_weight"] = float(self.pu_weights.weight(rtrow)) if self.period=='8' else float(1.)
 
         channelString = ''
@@ -324,10 +328,10 @@ class AnalyzerBase(object):
         ntupleRow["finalstate.bjetVeto30Medium"] = int(rtrow.bjetCISVVeto30Medium) if self.period=='13' else int(rtrow.bjetCSVVeto30)
         ntupleRow["finalstate.bjetVeto20Tight"] = int(rtrow.bjetCISVVeto20Tight) if self.period=='13' else -1
         ntupleRow["finalstate.bjetVeto30Tight"] = int(rtrow.bjetCISVVeto30Tight) if self.period=='13' else -1
-        ntupleRow["finalstate.muonVeto5"] = int(rtrow.muVetoPt5IsoIdVtx)
-        ntupleRow["finalstate.muonVeto10Loose"] = int(rtrow.muGlbIsoVetoPt10)
-        ntupleRow["finalstate.muonVeto15"] = int(rtrow.muVetoPt15IsoIdVtx)
-        ntupleRow["finalstate.elecVeto10"] = int(rtrow.eVetoMVAIsoVtx)
+        ntupleRow["finalstate.muonVetoTight"] = int(rtrow.muVetoWZIsoTight) if self.period=='13' else int(rtrow.muonVetoWZTight)
+        ntupleRow["finalstate.elecVetoTight"] = int(rtrow.eVetoWZIsoTight) if self.period=='13' else int(rtrow.elecVetoWZTight)
+        ntupleRow["finalstate.muonVetoLoose"] = int(rtrow.muVetoWZ) if self.period=='13' else int(rtrow.muVetoPt5IsoIdVtx)
+        ntupleRow["finalstate.elecVetoLoose"] = int(rtrow.eVetoWZ) if self.period=='13' else int(rtrow.eVetoMVAIsoVtx)
         if self.doVBF:
             ntupleRow["finalstate.vbfMass"] = float(rtrow.vbfMass)
             ntupleRow["finalstate.vbfPt"] = float(rtrow.vbfdijetpt)
@@ -346,7 +350,7 @@ class AnalyzerBase(object):
             for i in state:
                 numObjects = len([ x for x in self.object_definitions[i] if x != 'n']) if theObjects else 0
                 finalObjects = theObjects[objStart:objStart+numObjects]
-                orderedFinalObjects = sorted(finalObjects, key = lambda x: getattr(rtrow,"%sPt" % x))
+                orderedFinalObjects = sorted(finalObjects, key = lambda x: getattr(rtrow,"%sPt" % x), reverse=True)
                 if len(self.object_definitions[i]) == 1:
                     ntupleRow["%s.mass" %i] = float(-9)
                     ntupleRow["%s.Pt" %i] = float(-9)
@@ -364,7 +368,7 @@ class AnalyzerBase(object):
                         mass1 = masses[finalObjOrdered[0][0]]
                         px1 = pt1*rt.TMath.Cos(phi1)
                         py1 = pt1*rt.TMath.Sin(phi1)
-                        ptMet = getattr(rtrow, "%sPt" % metVar)
+                        ptMet = getattr(rtrow, "%sEt" % metVar)
                         phiMet = getattr(rtrow, "%sPhi" % metVar)
                         pxMet = ptMet*rt.TMath.Cos(phiMet)
                         pyMet = ptMet*rt.TMath.Sin(phiMet)
@@ -417,6 +421,11 @@ class AnalyzerBase(object):
                         else:
                             isoVal = float(-9)
                         ntupleRow["%s.Iso%i" % (i,objCount)] = isoVal
+                        ntupleRow["%s.LepScaleLoose%i" % (i,objCount)] = float(self.lepscaler.scale_factor(rtrow, orderedFinalObjects[objCount-1], loose=True)[0]) if theObjects else float(-1)
+                        ntupleRow["%s.LepScaleTight%i" % (i,objCount)] = float(self.lepscaler.scale_factor(rtrow, orderedFinalObjects[objCount-1], loose=False)[0]) if theObjects else float(-1)
+                        if self.period=='13':
+                            ntupleRow["%s.LepScaleLoose%i" % (i,objCount)] = float(1.)
+                            ntupleRow["%s.LepScaleTight%i" % (i,objCount)] = float(1.)
                         ntupleRow["%s.Chg%i" % (i,objCount)] = float(getattr(rtrow, "%sCharge" % orderedFinalObjects[objCount-1])) if theObjects else float(-9)
                         ntupleRow["%s.PassTight%i" % (i,objCount)] = float(self.ID(rtrow,orderedFinalObjects[objCount-1],**self.getIdArgs('Tight'))) if theObjects else float(-9)
                         # manually add w z deltaRs
@@ -446,7 +455,7 @@ class AnalyzerBase(object):
         lepCount = 0
         jetCount = 0
         phoCount = 0
-        orderedAllObjects = sorted(objects, key = lambda x: getattr(rtrow,"%sPt" % x))
+        orderedAllObjects = sorted(objects, key = lambda x: getattr(rtrow,"%sPt" % x), reverse=True)
         for obj in orderedAllObjects:
             if obj[0] in 'emt':
                 charName = 'l'
@@ -466,6 +475,8 @@ class AnalyzerBase(object):
             if obj[0]=='e': isoVar = 'RelPFIsoRho'
             if obj[0]=='m': isoVar = 'RelPFIsoDBDefault'
             ntupleRow["%s%i.Iso" % (charName,objCount)] = float(getattr(rtrow, "%s%s" % (obj, isoVar))) if obj[0] in 'em' else float(-1.)
+            ntupleRow["%s%i.LepScaleLoose" % (charName,objCount)] = float(self.lepscaler.scale_factor(rtrow, obj, loose=True)[0]) if self.period=='8' else float(1.)
+            ntupleRow["%s%i.LepScaleTight" % (charName,objCount)] = float(self.lepscaler.scale_factor(rtrow, obj, loose=False)[0]) if self.period=='8' else float(1.)
             ntupleRow["%s%i.Chg" % (charName,objCount)] = float(getattr(rtrow, "%sCharge" % obj))
             ntupleRow["%s%i.PassTight" % (charName,objCount)] = float(self.ID(rtrow,obj,**self.getIdArgs('Tight')))
             ntupleRow["%s%iFlv.Flv" % (charName,objCount)] = obj[0]
@@ -486,7 +497,8 @@ class AnalyzerBase(object):
         '''
         if 'preselection' in self.cache: return self.cache['preselection']
         cuts = self.preselection(rtrow)
-        cutResults,self.num = cuts.evaluate(rtrow)
+        cutResults = cuts.evaluate(rtrow)
+        self.cache['cutflow'] = cuts
         self.cache['preselection'] = cutResults
         return cutResults
 
@@ -497,7 +509,7 @@ class AnalyzerBase(object):
         '''
         if 'selection' in self.cache: return self.cache['selection']
         cuts = self.selection(rtrow)
-        cutResults,self.num = cuts.evaluate(rtrow)
+        cutResults = cuts.evaluate(rtrow)
         self.cache['selection'] = cutResults
         return cutResults
 

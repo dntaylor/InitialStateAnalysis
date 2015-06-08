@@ -16,7 +16,9 @@ import signal
 from multiprocessing import Pool
 
 from utilities.utilities import *
-from analyzers.AnalyzerWZ import AnalyzerWZ, AnalyzerWZ_TT
+from analyzers.AnalyzerZ import AnalyzerZ
+from analyzers.AnalyzerWZ import AnalyzerWZ, AnalyzerWZ_DataDriven
+from analyzers.AnalyzerHpp2l import AnalyzerHpp2l, AnalyzerHpp2l_Z, AnalyzerHpp2l_TT
 from analyzers.AnalyzerHpp3l import AnalyzerHpp3l, AnalyzerHpp3l_WZ, AnalyzerHpp3l_FakeRate
 from analyzers.AnalyzerHpp4l import AnalyzerHpp4l
 
@@ -24,9 +26,17 @@ def run_analyzer(args):
     '''Run the analysis'''
     analysis, channel, sample_name, filelist, outfile, period = args
     analyzerMap = {
+        'Z'       : {
+                    'Z'       : AnalyzerZ,
+                    },
+        'Hpp2l'   : {
+                    'Hpp2l'   : AnalyzerHpp2l,
+                    'Z'       : AnalyzerHpp2l_Z,
+                    'TT'      : AnalyzerHpp2l_TT,
+                    },
         'WZ'      : {
-                    'WZ'      : AnalyzerWZ,
-                    'TT'      : AnalyzerWZ_TT,
+                    'WZ'         : AnalyzerWZ,
+                    'DataDriven' : AnalyzerWZ_DataDriven,
                     },
         'Hpp3l'   : {
                     'Hpp3l'   : AnalyzerHpp3l,
@@ -44,18 +54,19 @@ def run_analyzer(args):
 def get_sample_names(analysis,period,samples):
     '''Get unix sample names'''
     ntupleDict = {
-        '7': {
-            'WZ'   : 'N/A',
-            'Hpp3l': 'N/A',
-            'Hpp4l': 'N/A', 
-        },
         '8': {
-            'WZ'   : '2015-05-10-8TeV', 
-            'Hpp3l': '2015-05-10-8TeV',
+            'Z'    : '2015-06-01-8TeV-2l',
+            'TT'   : '2015-06-01-8TeV-2l',
+            'Hpp2l': '2015-06-01-8TeV-2l',
+            'WZ'   : '2015-06-01-8TeV', 
+            'Hpp3l': '2015-06-01-8TeV',
             'Hpp4l': 'N/A', 
         },
         '13': {
-            'WZ'   : '2015-04-28-13TeV',
+            'Z'    : 'N/A',
+            'TT'   : 'N/A',
+            'Hpp2l': 'N/A',
+            'WZ'   : '2015-05-22-13TeV',
             'Hpp3l': '2015-03-30-13TeV-3l',
             'Hpp4l': '2015-03-30-13TeV-4l',
         },
@@ -74,13 +85,18 @@ def run_ntuples(analysis, channel, period, samples):
     python_mkdir(ntup_dir)
     root_dir, sample_names = get_sample_names(analysis,period,samples)
 
-    p = Pool(8)
 
     filelists = {}
     for sample in sample_names:
         sampledir = '%s/%s' % (root_dir, sample)
         filelists[sample] = ['%s/%s' % (sampledir, x) for x in os.listdir(sampledir)]
 
+    if len(sample_names)==1: # only one, its a test, dont use map
+        name = sample_names[0]
+        run_analyzer((analysis, channel, name, filelists[name], "%s/%s.root" % (ntup_dir, name), period))
+        return 0
+
+    p = Pool(8)
     try:
         p.map_async(run_analyzer, [(analysis, channel, name, filelists[name], "%s/%s.root" % (ntup_dir, name), period) for name in sample_names]).get(999999)
     except KeyboardInterrupt:
@@ -145,9 +161,9 @@ def parse_command_line(argv):
     parser = argparse.ArgumentParser(description="Run the desired analyzer on "
                                                  "FSA n-tuples")
 
-    parser.add_argument('analysis', type=str, choices=['WZ','Hpp3l','Hpp4l'], help='Analysis to run')
-    parser.add_argument('channel', type=str, choices=['WZ','TT','Hpp3l','Hpp4l','FakeRate'], help='Channel to run for given analysis')
-    parser.add_argument('period', type=str, choices=['7','8','13'], help='Energy (TeV)')
+    parser.add_argument('analysis', type=str, choices=['Z','WZ','Hpp2l','Hpp3l','Hpp4l'], help='Analysis to run')
+    parser.add_argument('channel', type=str, choices=['Z','WZ','TT','Hpp2l','Hpp3l','Hpp4l','FakeRate','DataDriven'], help='Channel to run for given analysis')
+    parser.add_argument('period', type=str, choices=['8','13'], help='Energy (TeV)')
     parser.add_argument('sample_names', nargs='+',help='Sample names w/ UNIX wildcards')
     parser.add_argument('-s','--submit',action='store_true',help='Submit jobs to condor')
     parser.add_argument('-jn','--jobName',nargs='?',type=str,const='',help='Job Name for condor submission')

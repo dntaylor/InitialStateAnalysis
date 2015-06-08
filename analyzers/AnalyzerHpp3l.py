@@ -89,7 +89,8 @@ class AnalyzerHpp3l(AnalyzerBase):
 
                 if l[0][0] == l[1][0] and os1 and abs(m1-ZMASS) < bestZDiff:
                     bestZDiff = abs(m1-ZMASS)
-                    bestLeptons = l
+                    ordList = [l[1], l[0], l[2]] if getattr(rtrow,'%sPt' % l[0]) < getattr(rtrow,'%sPt' % l[1]) else l
+                    bestLeptons = ordList
 
             return bestLeptons
 
@@ -106,8 +107,10 @@ class AnalyzerHpp3l(AnalyzerBase):
     ###########################
     def preselection(self,rtrow):
         cuts = CutSequence()
-        cuts.add(self.trigger)
+        if self.isData: cuts.add(self.trigger)
+        #cuts.add(self.trigger)
         cuts.add(self.fiducial)
+        cuts.add(self.overlap)
         cuts.add(self.trigger_threshold)
         cuts.add(self.ID_loose)
         cuts.add(self.qcd_rejection)
@@ -115,8 +118,10 @@ class AnalyzerHpp3l(AnalyzerBase):
 
     def selection(self,rtrow):
         cuts = CutSequence()
-        cuts.add(self.trigger)
+        if self.isData: cuts.add(self.trigger)
+        #cuts.add(self.trigger)
         cuts.add(self.fiducial)
+        cuts.add(self.overlap)
         cuts.add(self.trigger_threshold)
         cuts.add(self.ID_tight)
         cuts.add(self.qcd_rejection)
@@ -137,6 +142,10 @@ class AnalyzerHpp3l(AnalyzerBase):
             if self.period=='8':
                 kwargs['idDef']['e'] = 'WZTight'
                 kwargs['idDef']['m'] = 'WZTight'
+                #kwargs['idDef']['e'] = '4l'
+                #kwargs['idDef']['m'] = '4l'
+                #kwargs['isoCut']['e'] = 0.4
+                #kwargs['isoCut']['m'] = 0.4
         if type=='Loose':
             kwargs['idDef'] = {
                 'e':'Loose',
@@ -148,8 +157,12 @@ class AnalyzerHpp3l(AnalyzerBase):
                 'm':0.2
             }
             if self.period=='8':
-                kwargs['idDef']['e'] = 'WZLoose'
-                kwargs['idDef']['m'] = 'WZLoose'
+                #kwargs['idDef']['e'] = 'WZLoose'
+                #kwargs['idDef']['m'] = 'WZLoose'
+                kwargs['idDef']['e'] = '4l'
+                kwargs['idDef']['m'] = '4l'
+                kwargs['isoCut']['e'] = 0.4
+                kwargs['isoCut']['m'] = 0.4
         return kwargs
 
     def trigger(self, rtrow):
@@ -168,13 +181,13 @@ class AnalyzerHpp3l(AnalyzerBase):
     def fiducial(self, rtrow):
         for l in self.objects:
             if l[0]=='e':
-                ptcut = 10.0 # CBID: 20, MVA trig: 10, MVA nontrig: 5
+                ptcut = 10.0
                 etacut = 2.5
             if l[0]=='m':
-                ptcut = 10.0 # ???
+                ptcut = 10.0
                 etacut = 2.4
             if l[0]=='t':
-                ptcut = 20.0 # 20
+                ptcut = 20.0
                 etacut = 2.3
             if getattr(rtrow, '%sPt' % l) < ptcut:
                 return False
@@ -198,6 +211,15 @@ class AnalyzerHpp3l(AnalyzerBase):
                     for l in combinations(self.objects, 2)]
         return all(qcd_pass)
 
+    def overlap(self,rtrow):
+        for l in permutations(self.objects):
+            if lep_order(l[0],l[1]):
+                continue
+            dr = getattr(rtrow, '%s_%s_DR' % (l[0],l[1]))
+            if dr < 0.1: return False
+        return True
+
+
 #######################
 ### Control regions ###
 #######################
@@ -212,20 +234,23 @@ class AnalyzerHpp3l_WZ(AnalyzerHpp3l):
 
     def preselection(self,rtrow):
         cuts = CutSequence()
-        cuts.add(self.trigger)
+        if self.isData: cuts.add(self.trigger)
+        #cuts.add(self.trigger)
         cuts.add(self.fiducial)
+        cuts.add(self.overlap)
         cuts.add(self.trigger_threshold)
         cuts.add(self.ID_loose)
         cuts.add(self.mass3l)
         cuts.add(self.zSelection)
         cuts.add(self.wSelection)
-
         return cuts
 
     def selection(self,rtrow):
         cuts = CutSequence()
-        cuts.add(self.trigger)
+        if self.isData: cuts.add(self.trigger)
+        #cuts.add(self.trigger)
         cuts.add(self.fiducial)
+        cuts.add(self.overlap)
         cuts.add(self.trigger_threshold)
         cuts.add(self.ID_tight)
         cuts.add(self.mass3l)
@@ -325,6 +350,7 @@ class AnalyzerHpp3l_FakeRate(AnalyzerHpp3l):
         cuts = CutSequence()
         cuts.add(self.trigger)
         cuts.add(self.fiducial)
+        cuts.add(self.overlap)
         cuts.add(self.trigger_threshold)
         cuts.add(self.ID_loose)
         cuts.add(self.qcd_rejection)
@@ -335,6 +361,7 @@ class AnalyzerHpp3l_FakeRate(AnalyzerHpp3l):
         cuts = CutSequence()
         cuts.add(self.trigger)
         cuts.add(self.fiducial)
+        cuts.add(self.overlap)
         cuts.add(self.trigger_threshold)
         cuts.add(self.ID_tight)
         cuts.add(self.qcd_rejection)

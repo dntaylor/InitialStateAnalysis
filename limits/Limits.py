@@ -9,8 +9,8 @@ import ROOT
 
 from .datacard import Datacard
 import plotters.xsec as xsec
-from plotters.FakeRatePlotter import FakeRatePlotter
-from plotters.plotUtils import _3L_MASSES, _4L_MASSES, ZMASS, getChannels, getSigMap, getIntLumiMap
+from plotters.Plotter import Plotter
+from plotters.plotUtils import _3L_MASSES, _4L_MASSES, ZMASS, getChannels, getSigMap, getIntLumiMap, getMergeDict
 
 ROOT.gROOT.SetBatch(ROOT.kTRUE)
 
@@ -43,15 +43,16 @@ class Limits(object):
         saves = '%s_%s_%iTeV' % (analysis,analysis,runPeriod)
         sigMap = getSigMap(nl,mass)
         intLumiMap = getIntLumiMap()
+        mergeDict = getMergeDict(runPeriod)
         regionBackground = {
-            'Hpp3l' : ['T','TT', 'TTV','Z','VVV','DB'],
-            'Hpp4l' : ['T','TT', 'TTV','Z','VVV','DB']
+            'Hpp3l' : ['T','TT', 'TTV','W','Z','VVV','ZG','WW','ZZ','WZ'],
+            'Hpp4l' : ['T','TT', 'TTV','Z','VVV','ZG','ZZ','WZ']
         }
         if runPeriod==13: regionBackground['Hpp3l'] = ['T','TT', 'TTV','Z','DB']
         if runPeriod==13: regionBackground['Hpp4l'] = ['T','TT', 'TTV','Z','DB']
         channels, leptons = getChannels(nl,runTau=runTau)
     
-        plotter = FakeRatePlotter(analysis,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName=plotName)
+        plotter = Plotter(analysis,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName=plotName,mergeDict=mergeDict)
         if not doFakes: plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in regionBackground[analysis]])
         if runPeriod==8: plotter.initializeDataSamples([sigMap[runPeriod]['data']])
         plotter.setIntLumi(intLumiMap[runPeriod])
@@ -88,7 +89,7 @@ class Limits(object):
         lumiscale = self.lumi/samplelumi
         val = 0
         tree = tfile.Get(self.analysis)
-        tree.Draw('event.pu_weight>>h%s()'%sample,'event.lep_scale*(%s)' %cut,'goff')
+        tree.Draw('event.pu_weight>>h%s()'%sample,'event.trig_scale*event.lep_scale*(%s)' %cut,'goff')
         if not ROOT.gDirectory.Get("h%s" %sample): return [0,0]
         hist = ROOT.gDirectory.Get("h%s" %sample).Clone("hnew%s" %sample)
         hist.Sumw2()
@@ -106,7 +107,7 @@ class Limits(object):
     def gen_card(self, file_name, **kwargs):
         mass = kwargs.pop('mass',500)
         cuts = kwargs.pop('cuts','1')
-        period = kwargs.pop('period',13)
+        period = kwargs.pop('period',8)
         values = []
         weights = []
 
@@ -126,7 +127,7 @@ class Limits(object):
         maxMass = 800.
         srCut = '(h1.mass>0.9*%f & h1.mass<1.1*%f & h1.mass>%f & h1.mass<%f)' %(mass,mass,minMass,maxMass)
         sbCut = '((h1.mass<150. & h1.mass>%f) ||  (h1.mass>1.1*%f & h1.mass<%f))' %(minMass,mass,maxMass)
-        fullCut = '3l.sT>1.1*%f+60. & fabs(z.mass-%f)>80. & h1.dPhi<%f/600.+1.95' %(mass,ZMASS,mass)
+        fullCut = 'finalstate.sT>1.1*%f+60. & fabs(z1.mass-%f)>80. & h1.dPhi<%f/600.+1.95' %(mass,ZMASS,mass)
         finalSRCut = 'h1.mass>0.9*%f & h1.mass<1.1*%f' %(mass,mass)
         # TODO: change for 4l
 
@@ -151,8 +152,11 @@ class Limits(object):
         else:
             nSBData, eSBData = plotter.getNumEntries('%s&%s&%s&%s' %(myCut,sbCut,fullCut,cuts),*plotter.data,doError=True)
             nSRData, eSRData = plotter.getNumEntries('%s&%s&%s&%s' %(myCut,finalSRCut,fullCut,cuts),*plotter.data,doError=True)
-        nBGSR = alpha*(nSBData+1)
-        eBGSR = alpha*((nSBData+1) ** 0.5)
+        nBGSR = alpha*(nSBData)
+        eBGSR = alpha*((nSBData) ** 0.5)
+        self.alpha = alpha
+        self.nSBData = nSBData
+        self.nBGSR = nBGSR
 
         # store values for values card
         sbVal = nBGSR
@@ -170,16 +174,24 @@ class Limits(object):
         # if nBGSR < stat uncertainty of MC in SR, nBGSR = stat uncertainty
         if nBGSR < eBGSR: nBGSR = eBGSR
         # print this out just to check
-        print "nSBMC: %0.4f" % nSB
-        print "eSBMC: %0.4f" % eSB
-        print "nSRMC: %0.4f" % nSR
-        print "eSRMC: %0.4f" % eSR
-        print "alpha: %0.4f" % alpha
-        print "nSBDa: %0.4f" % nSBData
-        print "eSBDa: %0.4f" % nSBData
-        print "nBGSR: %0.4f" % nBGSR
-        print "eBGSR: %0.4f" % eBGSR
+        #print "nSBMC: %0.4f" % nSB
+        #print "eSBMC: %0.4f" % eSB
+        #print "nSRMC: %0.4f" % nSR
+        #print "eSRMC: %0.4f" % eSR
+        #print "alpha: %0.4f" % alpha
+        #print "nSBDa: %0.4f" % nSBData
+        #print "eSBDa: %0.4f" % eSBData
+        #print "nBGSR: %0.4f" % nBGSR
+        #print "eBGSR: %0.4f" % eBGSR
         #if not self.blinded: print "nSRDa: %0.4f" % nSRData
+        strToSave = ":".join(["%0.4f" % x for x in [nSB,eSB,nSR,eSR,alpha,nSBData,eSBData,nBGSR,eBGSR]])
+        if self.blinded:
+            strToSave += ':%0.4f' % 0
+        else:
+            strToSave += ':%0.4f' % nSRData
+
+        with open(self.out_dir+'/alphavalues.txt', 'w') as file:
+            file.write(strToSave)
 
         # calculate values
         bgMap = {}
@@ -210,6 +222,9 @@ class Limits(object):
 
         # here we decide what datacard format we want to output
         if self.bgMode=='sideband':
+            # add the systematics for the alpha
+            alphaSys = {'bg':self.alpha}
+            self.add_systematics("alpha","gmN %i" %self.nSBData, **alphaSys)
             for key in self.sample_groups:
                 is_data = self.sample_groups[key]['isData']
                 if self.sample_groups[key]['isSig']:

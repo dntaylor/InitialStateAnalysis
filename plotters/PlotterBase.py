@@ -36,6 +36,7 @@ class PlotterBase(object):
         blind = kwargs.pop('blind',False)
         rootName = kwargs.pop('rootName','plots')
         mergeDict = kwargs.pop('mergeDict',{})
+        scaleFactor = kwargs.pop('scaleFactor','event.pu_weight*event.lep_scale*event.trig_scale')
         for key, value in kwargs.iteritems():
             print "Unrecognized parameter '" + key + "' = " + str(value)
 
@@ -84,6 +85,7 @@ class PlotterBase(object):
         self.samples = {}
         self.intLumi = 25000. # just a default 25 fb-1 for plotting without data
         self.sampleMergeDict = mergeDict
+        self.scaleFactor = scaleFactor
 
     def reset(self):
         '''Reset the plotter class'''
@@ -137,10 +139,16 @@ class PlotterBase(object):
         if 'data' in sample:
             lumifile = self.ntupleDir+'/%s.lumicalc.sum' % sample
         else:
+            #jsonfile = self.ntupleDir+'/%s.meta.json' % sample
+            #with open(jsonfile) as data_file:    
+            #    numJson = json.load(data_file)
+            #n_evts = numJson['n_evts']
             cutflowHist = self.samples[sample]['file'].Get('cutflow')
             n_evts = cutflowHist.GetBinContent(1)
             sample_xsec = self.xsecs[sample]
             self.samples[sample]['lumi'] = float(n_evts)/sample_xsec
+            #print 'Initializing MC sample %s with %i events and xsec %f to lumi %f.'\
+            #      % (sample, n_evts, sample_xsec, self.samples[sample]['lumi'])
 
     def initializeSamples(self,sampleList):
         '''Initialize a list of samples to the sample dictionary.'''
@@ -168,6 +176,7 @@ class PlotterBase(object):
         doError = kwargs.pop('doError',False)
         scaleup = kwargs.pop('scaleup',False)
         unweighted = kwargs.pop('doUnweighted',False)
+        doDataDriven = kwargs.pop('doDataDriven',False) # a custom weight (for datadriven background)
         totalVal = 0
         totalErr2 = 0
         if sample in self.sampleMergeDict:
@@ -176,7 +185,9 @@ class PlotterBase(object):
                 if 'data' not in s and not unweighted:
                     #if scaleup: tree.Draw('event.pu_weight>>h%s()'%s,'event.lep_scale_up*event.trig_scale*(%s)' %selection,'goff')
                     #if not scaleup: tree.Draw('event.pu_weight>>h%s()'%s,'event.lep_scale*event.trig_scale*(%s)' %selection,'goff')
-                    tree.Draw('event.pu_weight>>h%s()'%s,'event.lep_scale*(%s)' %selection,'goff')
+                    if scaleup: tree.Draw('1>>h%s()'%s,'%s*(%s)' %(self.scaleFactor,selection),'goff')
+                    if not scaleup: tree.Draw('1>>h%s()'%s,'%s*(%s)' %(self.scaleFactor,selection),'goff')
+                    #tree.Draw('event.pu_weight>>h%s()'%s,'event.lep_scale*(%s)' %selection,'goff')
                     if not ROOT.gDirectory.Get("h%s" %s):
                         val = 0
                     else:
@@ -189,6 +200,14 @@ class PlotterBase(object):
                     err = err * self.intLumi/lumi
                 else:
                     val = tree.GetEntries(selection)
+                    if doDataDriven:
+                        tree.Draw('event.datadriven_weight>>h%s()'%s,selection,'goff')
+                        if not ROOT.gDirectory.Get("h%s" %s):
+                            val = 0
+                        else:
+                            hist = ROOT.gDirectory.Get("h%s" %s).Clone("hnew%s" %s)
+                            hist.Sumw2()
+                            val = hist.Integral()
                     err = val ** 0.5
                 totalVal += val
                 totalErr2 += err*err
@@ -197,7 +216,9 @@ class PlotterBase(object):
             if 'data' not in sample and not unweighted:
                 #if scaleup: tree.Draw('event.pu_weight>>h%s()'%sample,'event.lep_scale_up*event.trig_scale*(%s)' %selection,'goff')
                 #if not scaleup: tree.Draw('event.pu_weight>>h%s()'%sample,'event.lep_scale*event.trig_scale*(%s)' %selection,'goff')
-                tree.Draw('event.pu_weight>>h%s()'%sample,'event.lep_scale*(%s)' %selection,'goff')
+                if scaleup: tree.Draw('1>>h%s()'%sample,'%s*(%s)' %(self.scaleFactor,selection),'goff')
+                if not scaleup: tree.Draw('1>>h%s()'%sample,'%s*(%s)' %(self.scaleFactor,selection),'goff')
+                #tree.Draw('event.pu_weight>>h%s()'%sample,'event.lep_scale*(%s)' %selection,'goff')
                 if not ROOT.gDirectory.Get("h%s" %sample):
                     val = 0
                 else:
@@ -210,6 +231,14 @@ class PlotterBase(object):
                 err = err * self.intLumi/lumi
             else:
                 val = tree.GetEntries(selection)
+                if doDataDriven:
+                    tree.Draw('event.datadriven_weight>>h%s()'%sample,selection,'goff')
+                    if not ROOT.gDirectory.Get("h%s" %sample):
+                        val = 0
+                    else:
+                        hist = ROOT.gDirectory.Get("h%s" %sample).Clone("hnew%s" %sample)
+                        hist.Sumw2()
+                        val = hist.Integral()
                 err = val ** 0.5
             totalVal += val
             totalErr2 += err*err
@@ -240,14 +269,14 @@ class PlotterBase(object):
     def getSingleVarHist(self,tree,sample,variable,binning,cut):
         '''Single variable, single sample hist'''
         self.j += 1
-        if 'data' not in sample: lumi = self.samples[sample]['lumi']
         if len(binning) == 3: # standard drawing
             drawString = "%s>>h%s%s(%s)" % (variable, sample, variable, ", ".join(str(x) for x in binning))
         else: # we will need to rebin
             drawString = "%s>>h%s%s()" % (variable, sample, variable)
         if not cut: cut = '1'
         if 'data' not in sample and self.sqrts != 13: # TODO: dont forget to remove when we have data!
-            tree.Draw(drawString,'(event.pu_weight*event.lep_scale*event.trig_scale)*('+cut+')','goff')
+            #tree.Draw(drawString,'(event.pu_weight*event.lep_scale*event.trig_scale)*('+cut+')','goff')
+            tree.Draw(drawString,'%s*(%s)' % (self.scaleFactor,cut),'goff')
         else:
             tree.Draw(drawString,cut,'goff')
         if not ROOT.gDirectory.Get("h%s%s" %(sample, variable)):
@@ -257,7 +286,17 @@ class PlotterBase(object):
             hist.Rebin(len(binning)-1,"hnew%s%s" %(sample,variable),array('d',binning))
             hist = ROOT.gDirectory.Get("hnew%s%s" %(sample,variable)).Clone("hnewmod%s%s"%(sample,variable))
         if 'data' not in sample: # if it is mc, scale to intLumi
-            hist.Scale(self.intLumi/lumi)
+            lumi = self.samples[sample]['lumi']
+            theScale = float(self.intLumi)/lumi
+            #print 'Scaling sample %s to %f with sample lumi of %f and scale factor %f.'\
+            #      % (sample, self.intLumi, lumi, theScale)
+            #print 'The old integral was %f' % hist.Integral()
+            hist.Scale(theScale)
+            #print 'The new integral is %s' % hist.Integral()
+        else:
+            #print 'For data sample %s the integral is %f.' % (sample, hist.Integral())
+            pass
+            
         return hist
 
     def getHist(self, sample, variables, binning, cut, noFormat=False, **kwargs):
@@ -287,7 +326,9 @@ class PlotterBase(object):
         hist = hists[0].Clone("hmerged%s%s" % (sample, variables[0]))
         hist.Reset()
         hist.Merge(hists)
+        #print 'The total integral for %s after merging is %f.' % (sample, hist.Integral())
         hist = self.getOverflowUnderflow(hist,**kwargs)
+        #print 'After overflow it is %f.' % (hist.Integral())
         if normalize:
             integral = hist.Integral()
             if integral: hist.Scale(1.0/integral)
@@ -311,6 +352,44 @@ class PlotterBase(object):
         hist.Merge(hists)
         return hist
 
+    def getDataDrivenHist(self, variable, binning, cut, noFormat=False, **kwargs):
+        '''Return a histogram corresponding to the data driven estimation of a background'''
+        histName = 'hdataDriven%s' % variable
+        binEdges = binning
+        if len(binning)==3:
+            hist = ROOT.TH1F(histName, histName, *binning)
+            binEdges = range(binning[1],binning[2],(binning[2]-binning[1])/binning[0])
+        else:
+            hist = ROOT.TH1F(histName+'temp', histName+'temp', len(binning)-1, binning[0], binning[-1])
+            hist.Rebin(len(binning)-1,histName+'new',array('d',binning))
+            hist = ROOT.gDirectory.Get(histName+'new').Clone(histName)
+        for b in range(len(binning)-1):
+            bin = b+1
+            cutString = '%s & %s >= %f & %s < %f' % (cut, variable, binEdges[b], variable, binEdges[b+1])
+            vals = {}
+            errs = {}
+            for comb in itertools.product('PF', repeat=3): # hard code 3l for now
+                combCut = cutString
+                for l in range(3):
+                    if comb[l] == 'P':
+                        combCut += ' & l%i.passTight==1'
+                    else:
+                        combCut += ' & l%i.passTight==0'
+                val = 0
+                err2 = 0
+                for sample in self.data:
+                    # need to embed the weights, pt dependent, calculate in z->ll sample and QCD enriched smaple (prompt and fake rate, respectively)
+                    tempval, temperr = self.getNumEntries(combCut,sample,doError=True,doDataDriven=True,**kwargs)
+                    val += tempval
+                    err2 += temperr**2
+                err = err2**0.5
+                vals[comb] = val
+                errs[comp] = err
+            binContent = vals['PPP'] - vals['PPF'] - vals['PFP'] + vals['PFF'] - vals['FPP'] + vals['FPF'] + vals['FFP'] - vals['FFF']
+            binError = sum([x**2 for x in errs.itervalues()])**0.5
+            hist.SetBinContent(bin,binContent)
+            hist.SetBinError(bin,binError)
+
     def getMCStack(self, variables, binning, cut, **kwargs):
         '''Return a stack of MC histograms'''
         nostack = kwargs.pop('nostack',False)
@@ -322,6 +401,7 @@ class PlotterBase(object):
                 hist.SetFillStyle(0)
                 hist.SetLineWidth(2)
             mcstack.Add(hist)
+        #print 'And the full stack integral is %f.' % mcstack.GetStack().Last().Integral()
         return mcstack
 
     def get_stat_err(self, hist):
@@ -350,8 +430,8 @@ class PlotterBase(object):
         ratiostaterr.SetStats(0)
         ratiostaterr.SetTitle("")
         ratiostaterr.GetYaxis().SetTitle("Data/MC")
-        ratiostaterr.SetMaximum(2.)
-        ratiostaterr.SetMinimum(0)
+        ratiostaterr.SetMaximum(1.5)
+        ratiostaterr.SetMinimum(0.5)
         ratiostaterr.SetMarkerSize(0)
         ratiostaterr.SetFillColor(ROOT.EColor.kGray+3)
         ratiostaterr.SetFillStyle(3013)
@@ -430,33 +510,32 @@ class PlotterBase(object):
         y_l = [1-gap_]
         ex_l = [0]
         ey_l = [0.04/ar_l]
-        x_l = array("d",x_l)
-        ex_l = array("d",ex_l)
-        y_l = array("d",y_l)
-        ey_l = array("d",ey_l)
-        latex.SetTextFont(42)
-        latex.SetTextAngle(0)
-        latex.SetTextColor(ROOT.EColor.kBlack)    
-        latex.SetTextSize(0.7/n_) 
-        #latex.SetTextSize(0.25) 
-        latex.SetTextAlign(12) 
+        x_l = array("f",x_l)
+        ex_l = array("f",ex_l)
+        y_l = array("f",y_l)
+        ey_l = array("f",ey_l)
         # plot data label
         if plotdata:
             gr_l =  ROOT.TGraphErrors(1, x_l, y_l, ex_l, ey_l)
             ROOT.gStyle.SetEndErrorSize(0)
-            gr_l.SetMarkerStyle(20)
+            #gr_l.SetMarkerStyle(20)
             gr_l.SetMarkerSize(0.9)
             gr_l.Draw("0P")
-            xx_ = x_l[0]
-            yy_ = y_l[0]
-            latex.DrawLatex(xx_+1.*bwx_,yy_,"Data")
+        latex.SetTextFont(42)
+        latex.SetTextAngle(0)
+        latex.SetTextColor(ROOT.EColor.kBlack)    
+        latex.SetTextSize(0.7/n_) 
+        latex.SetTextAlign(12) 
+        #latex.SetTextSize(0.25) 
         # plot mc labels
         allMC = self.backgrounds + self.signal if plotsignal else self.backgrounds
         box_ = ROOT.TBox()
+        xx_ = x_l[0]
+        yy_ = y_l[0]
+        if plotdata:
+            latex.DrawLatex(xx_+1.*bwx_,yy_,"Data")
         for s in range(len(allMC)):
-            xx_ = x_l[0]
-            yy_ = y_l[0]
-            yy_ -= gap_*(s+1) if plotdata else gap_*s
+            yy_ -= gap_
             box_.SetFillColor( self.dataStyles[allMC[s]]['fillcolor'] )
             if allMC[s] in self.signal:
                 box_.SetFillStyle( 0 )

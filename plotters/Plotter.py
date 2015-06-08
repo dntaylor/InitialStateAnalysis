@@ -212,6 +212,13 @@ class Plotter(PlotterBase):
             mchist = stack.GetStack().Last().Clone("mchist%s" % savename)
             if plotdata:
                 ratio = self.get_ratio(data,mchist,"ratio%s" % savename)
+                if len(blinder)==2:
+                    ratioblind = ratio.Clone("ratioblind")
+                    start = ratioblind.FindBin(blinder[0])
+                    end = ratioblind.FindBin(blinder[1])
+                    for i in range(start,end+1):
+                        ratioblind.SetBinContent(i,999)
+                        ratioblind.SetBinError(i,0)
             if plotsig:
                 sig = sighist.Clone("sig%s" % savename)
                 sig.Add(mchist)
@@ -235,7 +242,11 @@ class Plotter(PlotterBase):
             ratiostaterr.Draw("e2")
             ratiostaterr.Draw("e2 same")
             ratiounity.Draw("same")
-            if plotdata: ratio.Draw("e0 same")
+            if plotdata:
+                if len(blinder)==2:
+                    ratioblind.Draw("e0 same")
+                else:
+                    ratio.Draw("e0 same")
             if plotsig: ratiosig.Draw("hist same")
 
         # draw cms lumi
