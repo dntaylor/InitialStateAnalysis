@@ -131,6 +131,21 @@ def main(argv=None):
             states = [initial_states]
             alternateIds = []
             doVBF = False
+        if args.analysis == 'Hpp3l':
+            channel = 'Hpp3l'
+            final_states = ['eee','eem','emm','mmm'] # no tau
+            initial_states = ['h1','h2']
+            other_states = [['z1', 'w1']]
+            states = other_states + [initial_states]
+            object_definitions = {
+                'h1': ['em','em'],
+                'h2': ['em','n'],
+                'z1': ['em','em'],
+                'w1': ['em','n'],
+            }
+            alternateIds = []
+            doVBF = False
+
         ntuple, branches = buildNtuple(object_definitions,states,channel,final_states,altIds=alternateIds,doVBF=doVBF)
 
     numPrinted = 0

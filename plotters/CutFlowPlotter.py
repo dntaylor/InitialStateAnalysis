@@ -278,7 +278,7 @@ class CutFlowPlotter(PlotterBase):
             bgNum = sum([float(x.split()[-1]) for x in lines[1:-1]])
             sNum = float(lines[-2].split()[-1]) if plotdata else float(lines[-1].split()[-1])
             sOverRootBG = sNum/math.sqrt(bgNum) if bgNum else 9999999.
-            print "S/sqrt(B) = %.2f" % sOverRootBG
+            #print "S/sqrt(B) = %.2f" % sOverRootBG
 
         # reset signal names
         if plotsig:

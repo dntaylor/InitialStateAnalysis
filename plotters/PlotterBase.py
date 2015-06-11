@@ -22,7 +22,8 @@ import CMS_lumi, tdrstyle
 from plotUtils import *
 
 ROOT.gROOT.SetBatch(ROOT.kTRUE)
-ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
+#ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
+ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 2001;")
 tdrstyle.setTDRStyle()
 
 class PlotterBase(object):

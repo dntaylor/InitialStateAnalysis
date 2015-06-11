@@ -257,7 +257,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     print "MKPLOTS:%s:%s:%iTeV: Plotting cut flow" % (analysis, channel, runPeriod)
     cutFlowMap = {}
     cutFlowMap[channel] = defineCutFlowMap(channel,finalStates,mass)
-    print cutFlowMap
+    #print cutFlowMap
     plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_cutFlowSelections',mergeDict=mergeDict,scaleFactor=scaleFactor)
     if useSignal:
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]+['Sig']])

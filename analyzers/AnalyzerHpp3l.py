@@ -62,9 +62,11 @@ class AnalyzerHpp3l(AnalyzerBase):
 
             SS1 = getattr(rtrow, "%s_%s_SS" % (l[0], l[1])) > 0 # select same sign
             OS = getattr(rtrow, "%sCharge" % l[0]) != getattr(rtrow, "%sCharge" % l[2]) # select opposite sign
+            #pts = [getattr(rtrow, "%sPt" %x) for x in l]
 
             if SS1 and OS:
                 cands.append([[0],list(l)]) # minimization is by veto, not variable
+                #cands.append([[sum(pts)],list(l)]) # minimization is 3 largest pt leptons
 
         if not len(cands): return 0
 
