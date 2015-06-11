@@ -66,7 +66,7 @@ def get_sample_names(analysis,period,samples):
             'Z'    : 'N/A',
             'TT'   : 'N/A',
             'Hpp2l': 'N/A',
-            'WZ'   : '2015-05-22-13TeV',
+            'WZ'   : '2015-06-10-13TeV',
             'Hpp3l': '2015-03-30-13TeV-3l',
             'Hpp4l': '2015-03-30-13TeV-4l',
         },

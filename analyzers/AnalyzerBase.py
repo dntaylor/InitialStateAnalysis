@@ -328,10 +328,10 @@ class AnalyzerBase(object):
         ntupleRow["finalstate.bjetVeto30Medium"] = int(rtrow.bjetCISVVeto30Medium) if self.period=='13' else int(rtrow.bjetCSVVeto30)
         ntupleRow["finalstate.bjetVeto20Tight"] = int(rtrow.bjetCISVVeto20Tight) if self.period=='13' else -1
         ntupleRow["finalstate.bjetVeto30Tight"] = int(rtrow.bjetCISVVeto30Tight) if self.period=='13' else -1
-        ntupleRow["finalstate.muonVetoTight"] = int(rtrow.muVetoWZIsoTight) if self.period=='13' else int(rtrow.muonVetoWZTight)
-        ntupleRow["finalstate.elecVetoTight"] = int(rtrow.eVetoWZIsoTight) if self.period=='13' else int(rtrow.elecVetoWZTight)
-        ntupleRow["finalstate.muonVetoLoose"] = int(rtrow.muVetoWZ) if self.period=='13' else int(rtrow.muVetoPt5IsoIdVtx)
-        ntupleRow["finalstate.elecVetoLoose"] = int(rtrow.eVetoWZ) if self.period=='13' else int(rtrow.eVetoMVAIsoVtx)
+        ntupleRow["finalstate.muonVetoTight"] = int(rtrow.muVetoTight) if self.period=='13' else int(rtrow.muonVetoWZTight)
+        ntupleRow["finalstate.elecVetoTight"] = int(rtrow.eVetoTight) if self.period=='13' else int(rtrow.elecVetoWZTight)
+        ntupleRow["finalstate.muonVetoLoose"] = int(rtrow.muVeto) if self.period=='13' else int(rtrow.muVetoPt5IsoIdVtx)
+        ntupleRow["finalstate.elecVetoLoose"] = int(rtrow.eVeto) if self.period=='13' else int(rtrow.eVetoMVAIsoVtx)
         if self.doVBF:
             ntupleRow["finalstate.vbfMass"] = float(rtrow.vbfMass)
             ntupleRow["finalstate.vbfPt"] = float(rtrow.vbfdijetpt)

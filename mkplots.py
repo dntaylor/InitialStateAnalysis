@@ -45,6 +45,7 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
     #plotMethod('finalstate.elecVeto10',[8,0,8],savedir+'elecVeto10',yaxis='Events',xaxis='Electron Veto (p_{T}>10 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
     plotMethod('finalstate.met',[40,0,200],savedir+'met',yaxis='Events/5.0 GeV',xaxis='E_{T}^{miss} (GeV)',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
     plotMethod('finalstate.mass',[40,0,400],savedir+'mass',yaxis='Events/10.0 GeV',xaxis='Mass (GeV)',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
+    plotMethod('finalstate.mass',[150,0,300],savedir+'mass_zoom',yaxis='Events/2.0 GeV',xaxis='Mass (GeV)',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
     plotMethod('event.nvtx',[50,0,50],savedir+'puVertices',yaxis='Events',xaxis='Number PU Vertices',legendpos=43,logy=0,cut=myCut,**kwargs)
     if analysis in ['Hpp3l','Hpp4l'] or region in ['Hpp2l']:
         plotMethod('h1.mass',[24,0,600],savedir+'hppMass',yaxis='Events/25.0 GeV/c^{2}',xaxis='M(l^{+}l^{+}) (GeV/c^{2})',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
@@ -129,15 +130,15 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     intLumiMap = getIntLumiMap()
     channelBackground = {
         #'Hpp2l' : ['T', 'TT', 'TTV', 'Z', 'ZG', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'Hpp2l' : ['T', 'TT', 'TTV', 'W', 'Zlow', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'Hpp2l' : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
         #'Z'     : ['T', 'TT', 'TTV', 'W', 'Z', 'ZG', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'Z'     : ['T', 'TT', 'TTV', 'W', 'Zlow', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'Z'     : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
         #'WZ'    : ['T', 'TT', 'TTV', 'Z', 'ZG', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'WZ'    : ['T', 'TT', 'TTV', 'W', 'Zlow', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'WZ'    : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
         #'TT'    : ['T', 'TT', 'TTV', 'W', 'Z', 'ZG', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'TT'    : ['T', 'TT', 'TTV', 'W', 'Zlow', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'TT'    : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
         #'Hpp3l' : ['T', 'TT', 'TTV', 'Z', 'ZG', 'VVV', 'DB'],
-        'Hpp3l' : ['T', 'TT', 'TTV', 'W', 'Zlow', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'Hpp3l' : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
         'Hpp4l' : ['TT', 'Z', 'DB']
     }
     if runPeriod==13:

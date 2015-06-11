@@ -100,7 +100,7 @@ class AnalyzerHpp3l(AnalyzerBase):
         '''
         Veto on 4th lepton (considered in 4l analysis)
         '''
-        return (rtrow.eVetoMVAIsoVtx + rtrow.muVetoPt5IsoIdVtx == 0)
+        return (rtrow.elecVeto4l + rtrow.muonVeto4l == 0)
 
     ###########################
     ### Define preselection ###

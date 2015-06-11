@@ -76,6 +76,12 @@ xsecs[8] = {
     'WJetsToLNu_TuneZ2Star_8TeV-madgraph-tarball-v1' : 36257.2 * PB,
     'WJetsToLNu_TuneZ2Star_8TeV-madgraph-tarball-v2' : 36257.2 * PB,
 
+    'W1JetsToLNu_TuneZ2Star_8TeV-madgraph' : 6662.8 * PB,
+    'W2JetsToLNu_TuneZ2Star_8TeV-madgraph' : 2159.2 * PB,
+    'W3JetsToLNu_TuneZ2Star_8TeV-madgraph' : 640.4 * PB,
+    'W4JetsToLNu_TuneZ2Star_8TeV-madgraph' : 264. * PB,
+    'WbbJetsToLNu_Massive_TuneZ2star_8TeV-madgraph-pythia6_tauola' : 138.9 * PB,
+
     'DYJetsToLL_M-10To50filter_8TeV-madgraph':          915 * PB,
     'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball': 3503.7 * PB,
 
@@ -108,6 +114,10 @@ xsecs[8] = {
 
     'ZZJetsTo4L_TuneZ2star_8TeV-madgraph-tauola':   0.1769 * PB,
     'ZZJetsTo2L2Q_TuneZ2star_8TeV-madgraph-tauola': 2.4487 * PB,
+
+    'ZZ_TuneZ2star_8TeV_pythia6_tauola' : 8.2 * PB,
+    'WZ_TuneZ2star_8TeV_pythia6_tauola' : 33.6 * PB,
+    'WW_TuneZ2star_8TeV_pythia6_tauola' : 56.0 * PB,
 
     'ZGToLLG_8TeV-madgraph': 132.6 * PB,
 

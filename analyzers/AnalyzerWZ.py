@@ -79,7 +79,7 @@ class AnalyzerWZ(AnalyzerBase):
         '''
         Veto on 4th lepton
         '''
-        return (rtrow.eVetoWZIsoTight + rtrow.muVetoWZIsoTight == 0) if self.period=='13' else\
+        return (rtrow.eVetoTight + rtrow.muVetoTight == 0) if self.period=='13' else\
                (rtrow.elecVetoWZTight + rtrow.muonVetoWZTight == 0)
 
     def defineAlternateIds(self,period):
@@ -127,8 +127,8 @@ class AnalyzerWZ(AnalyzerBase):
     ###########################
     def preselection(self,rtrow):
         cuts = CutSequence()
-        #if self.isData or self.period=='13': cuts.add(self.trigger)
-        cuts.add(self.trigger)
+        if self.isData: cuts.add(self.trigger)
+        #cuts.add(self.trigger)
         cuts.add(self.fiducial)
         #if self.period=='13': cuts.add(self.passAnyId)
         cuts.add(self.ID_tight)
@@ -139,7 +139,7 @@ class AnalyzerWZ(AnalyzerBase):
 
     def selection(self,rtrow):
         cuts = CutSequence()
-        if self.isData or self.period=='13': cuts.add(self.trigger)
+        if self.isData: cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.ID_tight)
         if self.period=='8': cuts.add(self.mass3l)
@@ -162,6 +162,8 @@ class AnalyzerWZ(AnalyzerBase):
             if self.period=='8':
                 kwargs['idDef']['e'] = 'WZTight'
                 kwargs['idDef']['m'] = 'WZTight'
+            if self.period=='13':
+                kwargs['isoCut']['e'] = 9999.
         if type=='Loose':
             kwargs['idDef'] = {
                 'e':'Loose',
@@ -175,6 +177,8 @@ class AnalyzerWZ(AnalyzerBase):
             if self.period=='8':
                 kwargs['idDef']['e'] = 'WZLoose'
                 kwargs['idDef']['m'] = 'WZLoose'
+            if self.period=='13':
+                kwargs['isoCut']['e'] = 9999.
         if type=='Veto':
             kwargs['idDef'] = {
                 'e':'Veto',

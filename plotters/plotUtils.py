@@ -236,21 +236,25 @@ def getMergeDict(period):
     # 8 TeV sample aliases
     if period==8:
         sampleMergeDict['WWJets']    = ['WWJetsTo2L2Nu_TuneZ2star_8TeV-madgraph-tauola']
+        #sampleMergeDict['WWJets']    = ['WW_TuneZ2star_8TeV_pythia6_tauola']
         sampleMergeDict['WZJets']    = ['WZJetsTo2L2Q_TuneZ2star_8TeV-madgraph-tauola',\
                                         'WZJetsTo3LNu_TuneZ2_8TeV-madgraph-tauola']
-        sampleMergeDict['Diboson']   = ['WWJetsTo2L2Nu_TuneZ2star_8TeV-madgraph-tauola',\
-                                        'WZJetsTo2L2Q_TuneZ2star_8TeV-madgraph-tauola',\
-                                        'WZJetsTo3LNu_TuneZ2_8TeV-madgraph-tauola',\
-                                        'ZZJetsTo4L_TuneZ2star_8TeV-madgraph-tauola',\
+        #sampleMergeDict['WZJets']    = ['WZ_TuneZ2star_8TeV_pythia6_tauola']
+        #sampleMergeDict['Diboson']   = ['WWJetsTo2L2Nu_TuneZ2star_8TeV-madgraph-tauola',\
+        #                                'WZJetsTo2L2Q_TuneZ2star_8TeV-madgraph-tauola',\
+        #                                'WZJetsTo3LNu_TuneZ2_8TeV-madgraph-tauola',\
+        #                                'ZZJetsTo4L_TuneZ2star_8TeV-madgraph-tauola',\
+        #                                'ZZJetsTo2L2Q_TuneZ2star_8TeV-madgraph-tauola']
+        #sampleMergeDict['ZZJets']    = ['ZZJetsTo4L_TuneZ2star_8TeV-madgraph-tauola',\
+        #                                'ZZJetsTo2L2Q_TuneZ2star_8TeV-madgraph-tauola']
+        sampleMergeDict['ZZJets']    = ['ZZTo2e2mu_8TeV-powheg-pythia6',\
+                                        'ZZTo2e2tau_8TeV-powheg-pythia6',\
+                                        'ZZTo2mu2tau_8TeV-powheg-pythia6',\
+                                        'ZZTo4e_8TeV-powheg-pythia6',\
+                                        'ZZTo4mu_8TeV-powheg-pythia6',\
+                                        'ZZTo4tau_8TeV-powheg-pythia6',\
                                         'ZZJetsTo2L2Q_TuneZ2star_8TeV-madgraph-tauola']
-        sampleMergeDict['ZZJets']    = ['ZZJetsTo4L_TuneZ2star_8TeV-madgraph-tauola',\
-                                        'ZZJetsTo2L2Q_TuneZ2star_8TeV-madgraph-tauola']
-        #sampleMergeDict['ZZJets']    = ['ZZTo2e2mu_8TeV-powheg-pythia6',\
-        #                                'ZZTo2e2tau_8TeV-powheg-pythia6',\
-        #                                'ZZTo2mu2tau_8TeV-powheg-pythia6',\
-        #                                'ZZTo4e_8TeV-powheg-pythia6',\
-        #                                'ZZTo4mu_8TeV-powheg-pythia6',\
-        #                                'ZZTo4tau_8TeV-powheg-pythia6']
+        #sampleMergeDict['ZZJets']    = ['ZZ_TuneZ2star_8TeV_pythia6_tauola']
         sampleMergeDict['SingleTop'] = ['T_s-channel_TuneZ2star_8TeV-powheg-tauola',\
                                         'T_t-channel_TuneZ2star_8TeV-powheg-tauola',\
                                         'T_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola',\
@@ -263,12 +267,12 @@ def getMergeDict(period):
         #                                'Z2jets_M50_S10',\
         #                                'Z3jets_M50',\
         #                                'Z4jets_M50']
-        sampleMergeDict['ZJets']     = ['DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball']
-        #sampleMergeDict['ZJets']     = ['DYJetsToLL_M-10To50filter_8TeV-madgraph',\
-        #                                'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball']
+        #sampleMergeDict['ZJets']     = ['DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball']
+        sampleMergeDict['ZJets']     = ['DYJetsToLL_M-10To50filter_8TeV-madgraph',\
+                                        'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball']
         sampleMergeDict['WJets']     = ['WJetsToLNu_TuneZ2Star_8TeV-madgraph-tarball-v1',\
                                         'WJetsToLNu_TuneZ2Star_8TeV-madgraph-tarball-v2']
-        sampleMergeDict['ZG']        = ['ZGToLLG_8TeV-madgraph']
+        #sampleMergeDict['ZG']        = ['ZGToLLG_8TeV-madgraph']
         sampleMergeDict['data']      = ['data_Run2012A',\
                                         'data_Run2012B',\
                                         'data_Run2012C',\
