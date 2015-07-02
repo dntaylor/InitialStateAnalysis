@@ -38,7 +38,7 @@ def main(argv=None):
     args = parse_command_line(argv)
 
     # merge individual samples
-    ntupledir = 'ntuples%s_%stev_%s' % (args.analysis, args.period, args.channel)
+    ntupledir = 'ntuples/%s_%sTeV_%s' % (args.analysis, args.period, args.channel)
     os.system('mkdir -p %s' % ntupledir)
     sampledirs = ['%s/%s' % (args.jobName, name) for name in os.listdir(args.jobName)]
     for sampledir in sampledirs:

@@ -83,7 +83,7 @@ def get_sample_names(analysis,period,samples):
 
 def run_ntuples(analysis, channel, period, samples):
     '''Run a given analyzer for the H++ analysis'''
-    ntup_dir = './ntuples%s_%stev_%s' % (analysis, period, channel)
+    ntup_dir = './ntuples/%s_%sTeV_%s' % (analysis, period, channel)
     python_mkdir(ntup_dir)
     root_dir, sample_names = get_sample_names(analysis,period,samples)
 

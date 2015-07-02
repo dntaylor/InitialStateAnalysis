@@ -61,7 +61,7 @@ def limit(analysis,period,mass,**kwargs):
     #if chans:
     #    chanCut = '('+'||'.join(['channel=="%s"'%c for c in chans])+')'
 
-    limits = Limits(analysis, period, cuts, './ntuples%s_%itev_%s' % (analysis, period, analysis),
+    limits = Limits(analysis, period, cuts, './ntuples/%s_%iTeV_%s' % (analysis, period, analysis),
                     './datacards/%s_%itev/%s/%s' % (analysis, period, directory, mass),
                     channels=['dblh%s' % analysis], lumi=intLumiMap[period],
                     blinded=True, bgMode=mode, scalefactor=scalefactor)
@@ -234,7 +234,7 @@ def calculateLeptonSystematic(mass,bp):
     region = 'Hpp3l'
     runPeriod = 8
     nl = 3
-    ntuples = 'ntuples%s_%itev_%s' % (analysis,runPeriod,region)
+    ntuples = 'ntuples/%s_%iTeV_%s' % (analysis,runPeriod,region)
     saves = '%s_%s_%sTeV' % (analysis,region,runPeriod)
     sigMap = getSigMap(nl,mass)
     intLumiMap = getIntLumiMap()

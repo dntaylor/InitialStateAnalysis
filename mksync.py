@@ -32,7 +32,7 @@ def sync(analysis,channel,period,**kwargs):
 
     # sync on WZ sample
     # sync on channels: eee, eem, emm, mmm
-    ntuples = 'ntuples%s_%stev_%s' % (analysis,period,channel)
+    ntuples = 'ntuples/%s_%sTeV_%s' % (analysis,period,channel)
     saves = '%s_%s_%sTeV' % (analysis,channel,period)
     mergeDict = getMergeDict(period)
     nl = 3 if analysis == 'WZ' or analysis == 'Hpp3l' else 4

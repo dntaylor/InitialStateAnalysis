@@ -27,7 +27,7 @@ def getVals(plotter,passCut,denomCut):
     return (p,f,val)
 
 def initializePlotter(analysis, period, mass, plotName, nl, runTau):
-    ntuples = 'ntuples%s_%itev_%s' % (analysis,period,analysis)
+    ntuples = 'ntuples/%s_%iTeV_%s' % (analysis,period,analysis)
     saves = '%s_%s_%iTeV' % (analysis,analysis,period)
     sigMap = getSigMap(nl,mass)
     intLumiMap = getIntLumiMap()

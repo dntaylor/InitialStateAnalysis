@@ -75,7 +75,7 @@ def generate(analysis, channel, period, **kwargs):
     }
     nl = numleps[channel]
     channels, leptons = getChannels(nl)
-    ntuples = 'ntuples%s_%stev_%s' % (analysis,period,channel)
+    ntuples = 'ntuples/%s_%sTeV_%s' % (analysis,period,channel)
     saves = '%s_%s_%sTeV' % (analysis,channel,period)
     intLumiMap = getIntLumiMap()
     finalStates, leptons = getChannels(nl)

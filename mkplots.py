@@ -143,7 +143,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         'Hpp4l': 4,
     }
     nl = numleps[analysis]
-    ntuples = 'ntuples%s_%stev_%s' % (analysis,runPeriod,channel)
+    ntuples = 'ntuples/%s_%sTeV_%s' % (analysis,runPeriod,channel)
     saves = '%s_%s_%sTeV' % (analysis,channel,runPeriod)
     sigMap = getSigMap(nl,mass)
     intLumiMap = getIntLumiMap()
@@ -366,7 +366,7 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
         'Hpp4l': 4,
     }
     nl = numleps[analysis]
-    ntuples = 'ntuples%s_%stev_%s' % (analysis,runPeriod,channel)
+    ntuples = 'ntuples/%s_%sTeV_%s' % (analysis,runPeriod,channel)
     saves = '%s_%s_%sTeV' % (analysis,channel,runPeriod)
     sigMap = getSigMap(nl,mass)
     intLumiMap = getIntLumiMap()

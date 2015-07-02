@@ -40,7 +40,7 @@ class Limits(object):
 
     def getPlotter(self,analysis,runPeriod,mass,runTau,plotName,doFakes):
         nl = 3 if analysis=='Hpp3l' or analysis=='WZ' else 4
-        ntuples = 'ntuples%s_%itev_%s' % (analysis,runPeriod,analysis)
+        ntuples = 'ntuples/%s_%iTeV_%s' % (analysis,runPeriod,analysis)
         saves = '%s_%s_%iTeV' % (analysis,analysis,runPeriod)
         sigMap = getSigMap(nl,mass)
         intLumiMap = getIntLumiMap()
