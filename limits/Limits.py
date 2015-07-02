@@ -17,7 +17,7 @@ ROOT.gROOT.SetBatch(ROOT.kTRUE)
 class Limits(object):
 
     def __init__(self, analysis, period, base_selections, ntuple_dir, out_dir,
-                 channels=[], lumi=25.0, blinded=True, bgMode='mc'):
+                 channels=[], lumi=25.0, blinded=True, bgMode='mc', scalefactor='event.pu_weight*event.lep_scale*event.trig_scale'):
         self.base_selections = base_selections
         self.analysis = analysis
         self.period = period
@@ -31,6 +31,7 @@ class Limits(object):
         self.channels = channels
         self.xsecs = xsec.xsecs[period]
         self.bgMode = bgMode
+        self.scalefactor = scalefactor
 
         self.log = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO)
@@ -45,14 +46,14 @@ class Limits(object):
         intLumiMap = getIntLumiMap()
         mergeDict = getMergeDict(runPeriod)
         regionBackground = {
-            'Hpp3l' : ['T','TT', 'TTV','W','Z','VVV','ZG','WW','ZZ','WZ'],
-            'Hpp4l' : ['T','TT', 'TTV','Z','VVV','ZG','ZZ','WZ']
+            'Hpp3l' : ['T','TT', 'TTV','Z','VVV','WW','ZZ','WZ'],
+            'Hpp4l' : ['T','TT', 'TTV','Z','VVV','WW','ZZ','WZ']
         }
         if runPeriod==13: regionBackground['Hpp3l'] = ['T','TT', 'TTV','Z','DB']
         if runPeriod==13: regionBackground['Hpp4l'] = ['T','TT', 'TTV','Z','DB']
         channels, leptons = getChannels(nl,runTau=runTau)
     
-        plotter = Plotter(analysis,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName=plotName,mergeDict=mergeDict)
+        plotter = Plotter(analysis,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName=plotName,mergeDict=mergeDict,scaleFactor=self.scalefactor)
         if not doFakes: plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in regionBackground[analysis]])
         if runPeriod==8: plotter.initializeDataSamples([sigMap[runPeriod]['data']])
         plotter.setIntLumi(intLumiMap[runPeriod])
@@ -121,6 +122,8 @@ class Limits(object):
             cutMC_data = self.base_selections + '&&(' + '||'.join(cuts) + ')' # full selection for bg and data
             cutSig = [self.base_selections + '&&' + x for x in cuts]          # different selections or signal so it can be scaled
             cuts = '(' + '||'.join(cuts) + ')'
+        m3l = 'finalstate.mass>100.'
+        cuts = cuts + ' & ' + m3l 
 
         # setup sideband stuff
         minMass = 12.
@@ -137,9 +140,13 @@ class Limits(object):
 
         nSBDict = {}
         nSRDict = {}
+        sbcut = '%s & %s & %s' %(myCut,sbCut,cuts)
+        srcut = '%s & %s & %s & %s' %(myCut,srCut,fullCut, cuts)
+        print 'Sideband cut:', sbcut
+        print 'Signal region cut:', srcut
         for background in plotter.backgrounds:
-            nSBDict[background] = plotter.getNumEntries('%s&%s&%s' %(myCut,sbCut,cuts),background,doError=True)
-            nSRDict[background] = plotter.getNumEntries('%s&%s&%s' %(myCut,srCut,cuts),background,doError=True)
+            nSBDict[background] = plotter.getNumEntries(sbcut,background,doError=True)
+            nSRDict[background] = plotter.getNumEntries(srcut,background,doError=True)
         nSB = sum([x[0] for x in nSBDict.itervalues()])
         eSB = sum([x[1]*x[1] for x in nSBDict.itervalues()]) ** 0.5
         nSR = sum([x[0] for x in nSRDict.itervalues()])
@@ -150,8 +157,11 @@ class Limits(object):
             nSBData, eSBData = (0., 0.)
             nSRData, eSRData = (0., 0.)
         else:
-            nSBData, eSBData = plotter.getNumEntries('%s&%s&%s&%s' %(myCut,sbCut,fullCut,cuts),*plotter.data,doError=True)
-            nSRData, eSRData = plotter.getNumEntries('%s&%s&%s&%s' %(myCut,finalSRCut,fullCut,cuts),*plotter.data,doError=True)
+            #nSBData, eSBData = plotter.getNumEntries('%s&%s&%s&%s' %(myCut,sbCut,fullCut,cuts),*plotter.data,doError=True)
+            #nSRData, eSRData = plotter.getNumEntries('%s&%s&%s&%s' %(myCut,finalSRCut,fullCut,cuts),*plotter.data,doError=True)
+            # switch to using preselection for more statistics
+            nSBData, eSBData = plotter.getNumEntries(sbcut,*plotter.data,doError=True)
+            nSRData, eSRData = plotter.getNumEntries(srcut,*plotter.data,doError=True)
         nBGSR = alpha*(nSBData)
         eBGSR = alpha*((nSBData) ** 0.5)
         self.alpha = alpha

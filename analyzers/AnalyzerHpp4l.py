@@ -46,6 +46,7 @@ class AnalyzerHpp4l(AnalyzerBase):
             self.object_definitions['h2'] = ['emt', 'emt']
             self.object_definitions['z1'] = ['emt', 'emt']
             self.object_definitions['z2'] = ['emt', 'emt']
+        self.lepargs = {'loose':True}
         self.cutflow_labels = ['Trigger','Fiducial','Trigger Threshold','ID','QCD Suppression']
         super(AnalyzerHpp4l, self).__init__(sample_name, file_list, out_file, period)
 
@@ -116,8 +117,9 @@ class AnalyzerHpp4l(AnalyzerBase):
     ###########################
     def preselection(self,rtrow):
         cuts = CutSequence()
-        cuts.add(self.trigger)
+        if self.isData: cuts.add(self.trigger)
         cuts.add(self.fiducial)
+        cuts.add(self.overlap)
         cuts.add(self.trigger_threshold)
         cuts.add(self.ID_loose)
         cuts.add(self.qcd_rejection)
@@ -125,8 +127,9 @@ class AnalyzerHpp4l(AnalyzerBase):
 
     def selection(self,rtrow):
         cuts = CutSequence()
-        cuts.add(self.trigger)
+        if self.isData: cuts.add(self.trigger)
         cuts.add(self.fiducial)
+        cuts.add(self.overlap)
         cuts.add(self.trigger_threshold)
         cuts.add(self.ID_tight)
         cuts.add(self.qcd_rejection)
@@ -144,6 +147,13 @@ class AnalyzerHpp4l(AnalyzerBase):
                 'e':0.15,
                 'm':0.12
             }
+            if self.period=='8':
+                kwargs['idDef']['e'] = 'WZTight'
+                kwargs['idDef']['m'] = 'WZTight'
+                #kwargs['idDef']['e'] = '4l'
+                #kwargs['idDef']['m'] = '4l'
+                #kwargs['isoCut']['e'] = 0.4
+                #kwargs['isoCut']['m'] = 0.4
         if type=='Loose':
             kwargs['idDef'] = {
                 'e':'Loose',
@@ -154,12 +164,20 @@ class AnalyzerHpp4l(AnalyzerBase):
                 'e':0.2,
                 'm':0.2
             }
+            if self.period=='8':
+                #kwargs['idDef']['e'] = 'WZLoose'
+                #kwargs['idDef']['m'] = 'WZLoose'
+                kwargs['idDef']['e'] = '4l'
+                kwargs['idDef']['m'] = '4l'
+                kwargs['isoCut']['e'] = 0.4
+                kwargs['isoCut']['m'] = 0.4
         return kwargs
+
+
 
     def trigger(self, rtrow):
         triggers = ["mu17ele8isoPass", "mu8ele17isoPass",
-                    "doubleETightPass", "tripleEPass",
-                    "doubleMuPass", "doubleMuTrkPass"]
+                    "doubleETightPass", "doubleMuPass", "doubleMuTrkPass"]
 
         if self.period == '13':
             triggers = ['muEPass', 'eMuPass', 'doubleMuPass',
@@ -173,13 +191,13 @@ class AnalyzerHpp4l(AnalyzerBase):
     def fiducial(self, rtrow):
         for l in self.objects:
             if l[0]=='e':
-                ptcut = 20.0 # CBID: 20, MVA trig: 10, MVA nontrig: 5
+                ptcut = 10.0
                 etacut = 2.5
             if l[0]=='m':
-                ptcut = 20.0 # ???
+                ptcut = 10.0
                 etacut = 2.4
             if l[0]=='t':
-                ptcut = 20.0 # 20
+                ptcut = 20.0
                 etacut = 2.3
             if getattr(rtrow, '%sPt' % l) < ptcut:
                 return False
@@ -203,6 +221,57 @@ class AnalyzerHpp4l(AnalyzerBase):
                     for l in combinations(self.objects, 2)]
         return all(qcd_pass)
 
+    def overlap(self,rtrow):
+        for l in permutations(self.objects):
+            if lep_order(l[0],l[1]):
+                continue
+            dr = getattr(rtrow, '%s_%s_DR' % (l[0],l[1]))
+            if dr < 0.1: return False
+        return True
+
+#######################
+### Control regions ###
+#######################
+class AnalyzerHpp4l_ZZ(AnalyzerHpp4l):
+    '''
+    ZZ control region for Hpp4l
+    '''
+    def __init__(self, sample_name, file_list, out_file, period, **kwargs):
+        super(AnalyzerHpp4l_ZZ, self).__init__(sample_name, file_list, out_file, period, **kwargs)
+        self.channel = 'ZZ'
+        self.cutflow_labels = ['Trigger','Fiducial','Trigger Threshold','ID','Mass 3l','Z selection','W selection']
+
+    def preselection(self,rtrow):
+        cuts = CutSequence()
+        if self.isData: cuts.add(self.trigger)
+        cuts.add(self.fiducial)
+        cuts.add(self.overlap)
+        cuts.add(self.trigger_threshold)
+        cuts.add(self.ID_loose)
+        cuts.add(self.zSelection)
+        return cuts
+
+    def selection(self,rtrow):
+        cuts = CutSequence()
+        if self.isData: cuts.add(self.trigger)
+        cuts.add(self.fiducial)
+        cuts.add(self.overlap)
+        cuts.add(self.trigger_threshold)
+        cuts.add(self.ID_tight)
+        cuts.add(self.zSelection)
+        return cuts
+
+    def zSelection(self,rtrow):
+        leps = self.choose_alternative_objects(rtrow, ['z1','z2'])
+        if not leps: return False
+        o1 = ordered(leps[0], leps[1])
+        m1 = getattr(rtrow,'%s_%s_Mass' % (o1[0],o1[1]))
+        o2 = ordered(leps[2], leps[3])
+        m2 = getattr(rtrow,'%s_%s_Mass' % (o2[0],o2[1]))
+        l0Pt = getattr(rtrow,'%sPt' %leps[0])
+        return abs(m1-ZMASS)<30. and abs(m2-ZMASS)<30. and l0Pt>20.
+
+
 ##########################
 ###### Command line ######
 ##########################
@@ -224,6 +293,7 @@ def main(argv=None):
     args = parse_command_line(argv)
 
     if args.analyzer == 'Hpp4l': analyzer = AnalyzerHpp4l(args.sample_name,args.file_list,args.out_file,args.period)
+    if args.analyzer == 'ZZ': analyzer = AnalyzerHpp4l_ZZ(args.sample_name,args.file_list,args.out_file,args.period)
     with analyzer as thisAnalyzer:
         thisAnalyzer.analyze()
 

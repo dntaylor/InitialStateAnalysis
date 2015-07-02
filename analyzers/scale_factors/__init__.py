@@ -35,11 +35,12 @@ class TriggerScaleFactors(object):
                     + self.double_lead_eff(*lep_ord[2]) * (1-self.double_trail_eff(*lep_ord[0])) * (1-self.double_trail_eff(*lep_ord[1]))\
                     )
         elif len(lep_ord)==2:
-            eff = 1-(\
-                    (1-self.double_lead_eff(*lep_ord[0])) * (1-self.double_lead_eff(*lep_ord[1]))\
-                    + self.double_lead_eff(*lep_ord[0]) * (1-self.double_trail_eff(*lep_ord[1]))\
-                    + self.double_lead_eff(*lep_ord[1]) * (1-self.double_trail_eff(*lep_ord[0]))\
-                    )
+            #eff = 1-(\
+            #        (1-self.double_lead_eff(*lep_ord[0])) * (1-self.double_lead_eff(*lep_ord[1]))\
+            #        + self.double_lead_eff(*lep_ord[0]) * (1-self.double_trail_eff(*lep_ord[1]))\
+            #        + self.double_lead_eff(*lep_ord[1]) * (1-self.double_trail_eff(*lep_ord[0]))\
+            #        )
+            eff = self.double_lead_eff(*lep_ord[0]) * self.double_trail_eff(*lep_ord[1])
         else:
             eff = 1
         return eff

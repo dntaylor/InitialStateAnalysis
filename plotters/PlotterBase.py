@@ -184,10 +184,11 @@ class PlotterBase(object):
             for s in self.sampleMergeDict[sample]:
                 tree = self.samples[s]['file'].Get(self.analysis)
                 if 'data' not in s and not unweighted:
+                    thisCut = selection + ' & ' + self.sampleMergeDict[sample][s]
                     #if scaleup: tree.Draw('event.pu_weight>>h%s()'%s,'event.lep_scale_up*event.trig_scale*(%s)' %selection,'goff')
                     #if not scaleup: tree.Draw('event.pu_weight>>h%s()'%s,'event.lep_scale*event.trig_scale*(%s)' %selection,'goff')
-                    if scaleup: tree.Draw('1>>h%s()'%s,'%s*(%s)' %(self.scaleFactor,selection),'goff')
-                    if not scaleup: tree.Draw('1>>h%s()'%s,'%s*(%s)' %(self.scaleFactor,selection),'goff')
+                    if scaleup: tree.Draw('1>>h%s()'%s,'%s*(%s)' %("event.lep_scale_up*event.trig_scale*event.pu_weight",thisCut),'goff')
+                    if not scaleup: tree.Draw('1>>h%s()'%s,'%s*(%s)' %(self.scaleFactor,thisCut),'goff')
                     #tree.Draw('event.pu_weight>>h%s()'%s,'event.lep_scale*(%s)' %selection,'goff')
                     if not ROOT.gDirectory.Get("h%s" %s):
                         val = 0
@@ -217,7 +218,7 @@ class PlotterBase(object):
             if 'data' not in sample and not unweighted:
                 #if scaleup: tree.Draw('event.pu_weight>>h%s()'%sample,'event.lep_scale_up*event.trig_scale*(%s)' %selection,'goff')
                 #if not scaleup: tree.Draw('event.pu_weight>>h%s()'%sample,'event.lep_scale*event.trig_scale*(%s)' %selection,'goff')
-                if scaleup: tree.Draw('1>>h%s()'%sample,'%s*(%s)' %(self.scaleFactor,selection),'goff')
+                if scaleup: tree.Draw('1>>h%s()'%sample,'%s*(%s)' %("event.lep_scale_up*event.trig_scale*event.pu_weight",selection),'goff')
                 if not scaleup: tree.Draw('1>>h%s()'%sample,'%s*(%s)' %(self.scaleFactor,selection),'goff')
                 #tree.Draw('event.pu_weight>>h%s()'%sample,'event.lep_scale*(%s)' %selection,'goff')
                 if not ROOT.gDirectory.Get("h%s" %sample):
@@ -267,6 +268,62 @@ class PlotterBase(object):
         htmp.SetEntries(hist.GetEntries())
         return htmp
 
+    def getSingleVarHist2D(self,tree,sample,var1,var2,bin1,bin2,cut,**kwargs):
+        '''Plot a single sample hist with two variables'''
+        zbin = kwargs.pop('zbin',[10,0,10])
+        drawString = "%s:%s>>h%s%s%s(%s)" % (var2,var1,sample,var1,var2,', '.join(str(x) for x in bin1+bin2))
+        #drawString = "%s:%s>>h%s%s%s" % (var2,var1,sample,var1,var2)
+        if not cut: cut = '1'
+        if 'data' not in sample and self.sqrts != 13: # TODO: dont forget to remove when we have data!
+            tree.Draw(drawString,'%s*(%s)' % (self.scaleFactor,cut),'goff')
+        else:
+            tree.Draw(drawString,cut,'goff')
+        if not ROOT.gDirectory.Get("h%s%s%s" %(sample, var1,var2)):
+            return 0
+        hist = ROOT.gDirectory.Get("h%s%s%s" %(sample, var1,var2)).Clone("hmod%s%s%s"%(sample,var1,var2))
+        if 'data' not in sample: # if it is mc, scale to intLumi
+            lumi = self.samples[sample]['lumi']
+            theScale = float(self.intLumi)/lumi
+            hist.Scale(theScale)
+            hist.SetMarkerColor(4)
+        hist.GetXaxis().SetLimits(bin1[1],bin1[2])
+        hist.GetYaxis().SetLimits(bin2[1],bin2[2])
+        hist.GetZaxis().SetRangeUser(zbin[1],zbin[2])
+        return hist
+
+    def getHist2D(self, sample, var1, var2, bin1, bin2, cut, **kwargs):
+        '''Return a histogram of a given variable from the given dataset with a cut'''
+        normalize = kwargs.pop('normalize',False)
+        hists = ROOT.TList()
+        for v in range(len(var1)):
+            if sample in self.sampleMergeDict:
+                for s in self.sampleMergeDict[sample]:
+                    tree = self.samples[s]['file'].Get(self.analysis)
+                    if len(var1) != len(cut):
+                        thisCut = cut + ' & ' + self.sampleMergeDict[sample][s]
+                        hist = self.getSingleVarHist2D(tree,s,var1[v],var2[v],bin1,bin2,thisCut,**kwargs)
+                    else:
+                        thisCut = cut[v] + ' & ' + self.sampleMergeDict[sample][s]
+                        hist = self.getSingleVarHist2D(tree,s,var1[v],var2[v],bin1,bin2,thisCut,**kwargs)
+                    if hist:
+                        hists.Add(hist)
+            else:
+                tree = self.samples[sample]['file'].Get(self.analysis)
+                if len(var1) != len(cut):
+                    hist = self.getSingleVarHist2D(tree,sample,var1[v],var2[v],bin1,bin2,cut,**kwargs)
+                else:
+                    hist = self.getSingleVarHist2D(tree,sample,var1[v],var2[v],bin1,bin2,cut[v],**kwargs)
+                if hist:
+                    hists.Add(hist)
+        if hists.IsEmpty():
+            return 0
+        hist = hists[0].Clone("hmerged%s%s%s" % (sample, var1[0], var2[0]))
+        hist.Reset()
+        hist.Merge(hists)
+        hist.SetTitle(self.dataStyles[sample]['name'])
+        return hist
+
+
     def getSingleVarHist(self,tree,sample,variable,binning,cut):
         '''Single variable, single sample hist'''
         self.j += 1
@@ -309,9 +366,11 @@ class PlotterBase(object):
                 for s in self.sampleMergeDict[sample]:
                     tree = self.samples[s]['file'].Get(self.analysis)
                     if len(variables) != len(cut):
-                        hist = self.getSingleVarHist(tree,s,variables[v],binning,cut)
+                        thisCut = cut + ' & ' + self.sampleMergeDict[sample][s]
+                        hist = self.getSingleVarHist(tree,s,variables[v],binning,thisCut)
                     else:
-                        hist = self.getSingleVarHist(tree,s,variables[v],binning,cut[v])
+                        thisCut = cut[v] + ' & ' + self.sampleMergeDict[sample][s]
+                        hist = self.getSingleVarHist(tree,s,variables[v],binning,thisCut)
                     if hist:
                         hists.Add(hist)
             else:
@@ -340,6 +399,17 @@ class PlotterBase(object):
             hist.SetFillColor(self.dataStyles[sample]['fillcolor'])
             hist.SetLineColor(self.dataStyles[sample]['linecolor'])
             hist.SetFillStyle(self.dataStyles[sample]['fillstyle'])
+        return hist
+
+    def getData2D(self, var1, var2, bin1, bin2, cut, **kwargs):
+        '''Return a histogram of data for the given variable'''
+        hists = ROOT.TList()
+        for sample in self.data:
+            hist = self.getHist2D(sample, var1, var2, bin1, bin2, cut, **kwargs)
+            hists.Add(hist)
+        hist = hists[0].Clone("hdata%s%s" % (var1[0], var2[0]))
+        hist.Reset()
+        hist.Merge(hists)
         return hist
 
     def getData(self, variables, binning, cut, noFormat=False, **kwargs):
@@ -390,6 +460,25 @@ class PlotterBase(object):
             binError = sum([x**2 for x in errs.itervalues()])**0.5
             hist.SetBinContent(bin,binContent)
             hist.SetBinError(bin,binError)
+
+    def getMCStack2D(self, var1, var2, bin1, bin2, cut, **kwargs):
+        '''Return a stack of MC histograms'''
+        #mcstack = ROOT.THStack('hs%s%s' % (var1[0], var2[0]),'mc stack')
+        #for sample in self.backgrounds:
+        #    hist = self.getHist2D(sample, var1, var2, bin1, bin2, cut, **kwargs)
+        #    if not hist: continue
+        #    mcstack.Add(hist)
+        ##print 'And the full stack integral is %f.' % mcstack.GetStack().Last().Integral()
+        #return mcstack
+        hists = ROOT.TList()
+        for sample in self.backgrounds:
+            hist = self.getHist2D(sample, var1, var2, bin1, bin2, cut, **kwargs)
+            hists.Add(hist)
+        hist = hists[0].Clone("hdata%s%s" % (var1[0], var2[0]))
+        hist.Reset()
+        hist.Merge(hists)
+        return hist
+
 
     def getMCStack(self, variables, binning, cut, **kwargs):
         '''Return a stack of MC histograms'''

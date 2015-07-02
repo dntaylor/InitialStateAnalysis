@@ -15,7 +15,7 @@ def sync(analysis,channel,period,**kwargs):
     doBjetVeto = kwargs.pop('doBjetVeto',False)
     doEfficiency = kwargs.pop('doEfficiency',False)
     doCutflow = kwargs.pop('doCutflow',False)
-    cut = kwargs.pop('cut','select.passTight')
+    cut = kwargs.pop('cut','1')
 
     # WZ only for now
     if not (analysis == channel == 'WZ'): return

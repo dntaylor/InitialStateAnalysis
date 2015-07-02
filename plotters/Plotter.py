@@ -268,3 +268,63 @@ class Plotter(PlotterBase):
         if plotratio:
             self.resetCanvas()
 
+    def plotMCDataSignalRatio2D(self, var1, var2, bin1, bin2, savename, **kwargs):
+        cut = kwargs.pop('cut', '')
+        zbin = kwargs.pop('zbin',[10,0,10])
+        xaxis = kwargs.pop('xaxis', '')
+        yaxis = kwargs.pop('yaxis', '')
+        xrange = kwargs.pop('xrange', [])
+        xmin = kwargs.pop('xmin', None)
+        xmax = kwargs.pop('xmax', None)
+        ymin = kwargs.pop('xmin', None)
+        ymax = kwargs.pop('xmax', None)
+        overflow = kwargs.pop('overflow',False)
+        underflow = kwargs.pop('underflow',False)
+        nostack = kwargs.pop('nostack',False)
+        normalize = kwargs.pop('normalize',False)
+        blinder = kwargs.pop('blinder', [])
+        logy = kwargs.pop('logy', 1)
+        logx = kwargs.pop('logx', 0)
+        plotmc = kwargs.pop('plotmc', 1)
+        plotsig = kwargs.pop('plotsig', 1)
+        plotdata = kwargs.pop('plotdata', 1)
+        plotratio = kwargs.pop('plotratio', 1)
+        lumitext = kwargs.pop('lumitext', 11)
+        legendpos = kwargs.pop('legendpos', 33)
+        signalscale = kwargs.pop('signalscale',1)
+        isprelim = kwargs.pop('isprelim', 1)
+        if not xmin and len(xrange)==2: xmin = xrange[0]
+        if not xmax and len(xrange)==2: xmax = xrange[1]
+        if xmin or xmax: xrange = [xmin, xmax]
+        for key, value in kwargs.iteritems():
+            print "Unrecognized parameter '" + key + "' = " + str(value)
+
+        if type(var1) is not list: var1 = [var1]
+        if type(var2) is not list: var2 = [var2]
+
+        self.canvas.SetRightMargin(0.14)
+
+        # plot monte carlo
+        if plotmc:
+            stack = self.getMCStack2D(var1,var2,bin1,bin2,cut,zbin=zbin)
+            stack.SetTitle("")
+            stack.Draw("colz")
+            stack.GetXaxis().SetTitle(xaxis)
+            stack.GetYaxis().SetTitle(yaxis)
+            stack.GetYaxis().SetTitleOffset(1)
+
+        # plot data
+        if plotdata:
+            data = self.getData2D(var1, var2, bin1, bin2, cut,zbin=zbin)
+            data.SetTitle("")
+            #data.SetMarkerColor(2)
+            #data.SetMarkerSize(2)
+            data.Draw("colz")
+            data.GetXaxis().SetTitle(xaxis)
+            data.GetYaxis().SetTitle(yaxis)
+            data.GetYaxis().SetTitleOffset(1)
+
+        # save everything
+        self.canvas.cd()
+        self.save(savename)
+

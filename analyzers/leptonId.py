@@ -87,7 +87,7 @@ def _muon_zz_loose(rtrow, l, period):
     isGlobal = getattr(rtrow, '%sIsGlobal' % l)
     isTracker = getattr(rtrow, '%sIsTracker' % l)
     matchedStations = getattr(rtrow, '%sMatchedStations' % l)
-    return isGlobal or isTracker or matchedStations>0
+    return isGlobal or (isTracker and matchedStations>0)
 
 def _muon_zz_tight(rtrow, l, period):
     if not _muon_zz_loose(rtrow,l,period): return False

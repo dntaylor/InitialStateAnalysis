@@ -96,9 +96,11 @@ def plot_limits(analysis, period, savename, **kwargs):
     expected.GetYaxis().SetTitleOffset(1.)
     expected.GetYaxis().SetTitleSize(0.05)
 
+    expected.Draw()
     twoSigma.Draw('f')
     oneSigma.Draw('f')
-    expected.Draw()
+    expected.Draw('same')
+    ROOT.gPad.RedrawAxis()
     if not blind: observed.Draw()
 
     ratiounity = ROOT.TLine(expected.GetXaxis().GetXmin(),1,expected.GetXaxis().GetXmax(),1)

@@ -45,6 +45,7 @@ class AnalyzerHpp3l(AnalyzerBase):
             self.object_definitions['h2'] = ['emt', 'n']
             self.object_definitions['z1'] = ['emt', 'emt']
             self.object_definitions['w1'] = ['emt', 'n']
+        self.lepargs = {'tight':True}
         self.cutflow_labels = ['Trigger','Fiducial','Trigger Threshold','ID','QCD Suppression']
         super(AnalyzerHpp3l, self).__init__(sample_name, file_list, out_file, period)
 
@@ -62,11 +63,12 @@ class AnalyzerHpp3l(AnalyzerBase):
 
             SS1 = getattr(rtrow, "%s_%s_SS" % (l[0], l[1])) > 0 # select same sign
             OS = getattr(rtrow, "%sCharge" % l[0]) != getattr(rtrow, "%sCharge" % l[2]) # select opposite sign
-            #pts = [getattr(rtrow, "%sPt" %x) for x in l]
+            pts = [getattr(rtrow, "%sPt" %x) for x in l]
 
             if SS1 and OS:
-                cands.append([[0],list(l)]) # minimization is by veto, not variable
-                #cands.append([[sum(pts)],list(l)]) # minimization is 3 largest pt leptons
+                ordList = [l[1], l[0], l[2]] if getattr(rtrow,'%sPt' % l[0]) < getattr(rtrow,'%sPt' % l[1]) else l
+                #cands.append([[0],list(ordList)]) # minimization is by veto, not variable
+                cands.append([[1./sum(pts)],list(ordList)]) # minimization is 3 largest pt leptons
 
         if not len(cands): return 0
 
@@ -97,12 +99,12 @@ class AnalyzerHpp3l(AnalyzerBase):
             return bestLeptons
 
     # overide good_to_store
-    @staticmethod
-    def good_to_store(rtrow, cand1, cand2):
-        '''
-        Veto on 4th lepton (considered in 4l analysis)
-        '''
-        return (rtrow.elecVeto4l + rtrow.muonVeto4l == 0)
+    #@staticmethod
+    #def good_to_store(rtrow, cand1, cand2):
+    #    '''
+    #    Veto on 4th lepton (considered in 4l analysis)
+    #    '''
+    #    return (rtrow.elecVeto4l + rtrow.muonVeto4l == 0)
 
     ###########################
     ### Define preselection ###
@@ -110,18 +112,16 @@ class AnalyzerHpp3l(AnalyzerBase):
     def preselection(self,rtrow):
         cuts = CutSequence()
         if self.isData: cuts.add(self.trigger)
-        #cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.overlap)
         cuts.add(self.trigger_threshold)
-        cuts.add(self.ID_loose)
+        cuts.add(self.ID_tight)
         cuts.add(self.qcd_rejection)
         return cuts
 
     def selection(self,rtrow):
         cuts = CutSequence()
         if self.isData: cuts.add(self.trigger)
-        #cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.overlap)
         cuts.add(self.trigger_threshold)
@@ -237,7 +237,6 @@ class AnalyzerHpp3l_WZ(AnalyzerHpp3l):
     def preselection(self,rtrow):
         cuts = CutSequence()
         if self.isData: cuts.add(self.trigger)
-        #cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.overlap)
         cuts.add(self.trigger_threshold)
@@ -250,7 +249,6 @@ class AnalyzerHpp3l_WZ(AnalyzerHpp3l):
     def selection(self,rtrow):
         cuts = CutSequence()
         if self.isData: cuts.add(self.trigger)
-        #cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.overlap)
         cuts.add(self.trigger_threshold)
@@ -284,96 +282,6 @@ class AnalyzerHpp3l_WZ(AnalyzerHpp3l):
             dr = getattr(rtrow, '%s_%s_DR' % (o[0],o[1]))
             if dr < 0.1: return False
         return True
-
-
-
-#######################
-###### Fake rate ######
-#######################
-class AnalyzerHpp3l_FakeRate(AnalyzerHpp3l):
-    '''
-    A class to produce ntuples to calculate the fakerate for the leptons.
-    '''
-    def __init__(self, sample_name, file_list, out_file, period, **kwargs):
-        super(AnalyzerHpp3l_FakeRate, self).__init__(sample_name, file_list, out_file, period, **kwargs)
-        self.channel = 'FakeRate'
-        self.final_states = ['emm','mmm','mmt'] 
-        self.initial_states = ['z1','f1']
-        self.other_states = []
-        self.object_definitions = {
-            'z1': ['m','m'],
-            'f1': ['emt'],
-        }
-        self.cutflow_labels = ['Trigger','Fiducial','Trigger Threshold','ID','QCD Suppression','Z Selection']
-
-    ###############################
-    ### Define Object selection ###
-    ###############################
-    def choose_objects(self, rtrow):
-        '''
-        Select candidate objects
-        '''
-        cands = []
-        bestZDiff = float('inf')
-        for l in permutations(self.objects):
-            if lep_order(l[0], l[1]):
-                continue
-
-            # first two must be the Z candidate
-            OS1 = getattr(rtrow, "%s_%s_SS" % (l[0], l[1])) < 0.5 # select opposite sign
-            SF1 = l[0][0]==l[1][0] # select same flavor
-            massdiff = abs(getattr(rtrow,'%s_%s_Mass' % (l[0], l[1]))-ZMASS)
-
-            if OS1 and SF1:
-                cands.append([massdiff,list(l)])
-
-        if not len(cands): return 0
-
-        cands.sort(key=lambda x: x[0])
-        massdiff, leps = cands[0]
-
-        return ([massdiff], leps)
-
-    # reoveride
-    def choose_alternative_objects(self, rtorw, state):
-        return []
-
-    @staticmethod
-    def good_to_store(rtrow, cand1, cand2):
-        '''
-        Iterate through minimizing variables.
-        '''
-        for min1, min2 in zip(cand1, cand2):
-            if min1 < min2: return True
-            if min1 > min2: return False
-        return False
-
-    def preselection(self,rtrow):
-        cuts = CutSequence()
-        cuts.add(self.trigger)
-        cuts.add(self.fiducial)
-        cuts.add(self.overlap)
-        cuts.add(self.trigger_threshold)
-        cuts.add(self.ID_loose)
-        cuts.add(self.qcd_rejection)
-        cuts.add(self.z_selection)
-        return cuts
-
-    def selection(self,rtrow):
-        cuts = CutSequence()
-        cuts.add(self.trigger)
-        cuts.add(self.fiducial)
-        cuts.add(self.overlap)
-        cuts.add(self.trigger_threshold)
-        cuts.add(self.ID_tight)
-        cuts.add(self.qcd_rejection)
-        cuts.add(self.z_selection)
-        return cuts
-
-    def z_selection(self,rtrow):
-        '''Select Z candidate'''
-        m1 = getattr(rtrow,'%s_%s_Mass' % (self.objects[0], self.objects[1]))
-        return abs(m1-ZMASS)<20.
 
 
 

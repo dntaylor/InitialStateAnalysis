@@ -17,9 +17,9 @@ from multiprocessing import Pool
 
 from utilities.utilities import *
 from analyzers.AnalyzerZ import AnalyzerZ
-from analyzers.AnalyzerWZ import AnalyzerWZ, AnalyzerWZ_DataDriven
+from analyzers.AnalyzerWZ import AnalyzerWZ, AnalyzerWZ_DataDriven, AnalyzerWZ_Z, AnalyzerWZ_QCD
 from analyzers.AnalyzerHpp2l import AnalyzerHpp2l, AnalyzerHpp2l_Z, AnalyzerHpp2l_TT
-from analyzers.AnalyzerHpp3l import AnalyzerHpp3l, AnalyzerHpp3l_WZ, AnalyzerHpp3l_FakeRate
+from analyzers.AnalyzerHpp3l import AnalyzerHpp3l, AnalyzerHpp3l_WZ
 from analyzers.AnalyzerHpp4l import AnalyzerHpp4l
 
 def run_analyzer(args):
@@ -37,11 +37,12 @@ def run_analyzer(args):
         'WZ'      : {
                     'WZ'         : AnalyzerWZ,
                     'DataDriven' : AnalyzerWZ_DataDriven,
+                    'Z'          : AnalyzerWZ_Z,
+                    'QCD'        : AnalyzerWZ_QCD,
                     },
         'Hpp3l'   : {
                     'Hpp3l'   : AnalyzerHpp3l,
                     'WZ'      : AnalyzerHpp3l_WZ,
-                    'FakeRate': AnalyzerHpp3l_FakeRate,
                     },
         'Hpp4l'   : {
                     'Hpp4l'   : AnalyzerHpp4l,
@@ -66,7 +67,8 @@ def get_sample_names(analysis,period,samples):
             'Z'    : 'N/A',
             'TT'   : 'N/A',
             'Hpp2l': 'N/A',
-            'WZ'   : '2015-06-10-13TeV',
+            #'WZ'   : '2015-06-27-13TeV',
+            'WZ'   : '2015-06-29-13TeV-25ns',
             'Hpp3l': '2015-03-30-13TeV-3l',
             'Hpp4l': '2015-03-30-13TeV-4l',
         },
@@ -150,7 +152,10 @@ def submitFwkliteJob(sampledir,args):
     # create farmout command
     farmoutString = 'farmoutAnalysisJobs --infer-cmssw-path --fwklite --input-file-list=%s' % (input_name)
     farmoutString += ' --submit-dir=%s --output-dag-file=%s --output-dir=%s' % (submit_dir, dag_dir, output_dir)
-    farmoutString += ' --extra-usercode-files=src/InitialStateAnalysis/analyzers --input-files-per-job=20 %s %s' % (jobName, bash_name)
+    if period == '8':
+        farmoutString += ' --extra-usercode-files=src/InitialStateAnalysis/analyzers --input-files-per-job=20 %s %s' % (jobName, bash_name)
+    else:
+        farmoutString += ' --extra-usercode-files=src/InitialStateAnalysis/analyzers --input-files-per-job=10 %s %s' % (jobName, bash_name)
 
     print 'Submitting %s' % sample_name
     os.system(farmoutString)
@@ -162,7 +167,7 @@ def parse_command_line(argv):
                                                  "FSA n-tuples")
 
     parser.add_argument('analysis', type=str, choices=['Z','WZ','Hpp2l','Hpp3l','Hpp4l'], help='Analysis to run')
-    parser.add_argument('channel', type=str, choices=['Z','WZ','TT','Hpp2l','Hpp3l','Hpp4l','FakeRate','DataDriven'], help='Channel to run for given analysis')
+    parser.add_argument('channel', type=str, choices=['Z','WZ','TT','Hpp2l','Hpp3l','Hpp4l','FakeRate','DataDriven','QCD'], help='Channel to run for given analysis')
     parser.add_argument('period', type=str, choices=['8','13'], help='Energy (TeV)')
     parser.add_argument('sample_names', nargs='+',help='Sample names w/ UNIX wildcards')
     parser.add_argument('-s','--submit',action='store_true',help='Submit jobs to condor')

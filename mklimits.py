@@ -31,6 +31,7 @@ def limit(analysis,period,mass,**kwargs):
     directory = kwargs.pop('directory','')
     chans = kwargs.pop('channels',['1'])
     mode = kwargs.pop('mode','mc')
+    scalefactor = kwargs.pop('scalefactor','event.pu_weight*event.lep_scale*event.trig_scale')
     logger.info("Processing mass-point %i" % mass)
 
     channels, leptons = getChannels(3 if analysis=='Hpp3l' or analysis=='WZ' else 4)
@@ -63,7 +64,7 @@ def limit(analysis,period,mass,**kwargs):
     limits = Limits(analysis, period, cuts, './ntuples%s_%itev_%s' % (analysis, period, analysis),
                     './datacards/%s_%itev/%s/%s' % (analysis, period, directory, mass),
                     channels=['dblh%s' % analysis], lumi=intLumiMap[period],
-                    blinded=True, bgMode=mode)
+                    blinded=True, bgMode=mode, scalefactor=scalefactor)
 
     signal =  sigMap[period]['Sig']
     if mode=='mc':
@@ -239,7 +240,7 @@ def calculateLeptonSystematic(mass,bp):
     intLumiMap = getIntLumiMap()
     mergeDict = getMergeDict(runPeriod)
     regionBackground = {
-        'Hpp3l' : ['T','TT', 'TTV','W','Z','VVV','ZG','WW','ZZ','WZ'],
+        'Hpp3l' : ['T','TT', 'TTV','W','Z','VVV','WW','ZZ','WZ'],
         'Hpp4l' : ['TT','Z','DB']
     }
     channels, leptons = getChannels(nl)
@@ -293,7 +294,7 @@ def calculateLeptonSystematic(mass,bp):
         chanCuts += [chanCut]
         chanScales += [thisScale]
 
-    fullCut = 'finalstate.sT>1.1*%f+60. & fabs(z1.mass-%f)>80. & h1.dPhi<%f/600.+1.95' %(mass,ZMASS,mass)
+    fullCut = 'finalstate.mass>100&finalstate.sT>1.1*%f+60. & fabs(z1.mass-%f)>80. & h1.dPhi<%f/600.+1.95' %(mass,ZMASS,mass)
     finalSRCut = 'h1.mass>0.9*%f & h1.mass<1.1*%f' %(mass,mass)
 
     totBG = 0
@@ -350,13 +351,14 @@ def add_systematics_fakerate(limits,mass,signal,name,chans,sigscale,period):
 def parse_command_line(argv):
     parser = argparse.ArgumentParser(description="Produce datacards")
 
-    parser.add_argument('region', type=str, choices=['WZ','Hpp3l','Hpp4l'], help='Analysis to run')
-    parser.add_argument('period', type=int, choices=[7, 8, 13], help='Energy (TeV)')
+    parser.add_argument('region', type=str, choices=['Hpp3l','Hpp4l'], help='Analysis to run')
+    parser.add_argument('period', type=int, choices=[8, 13], help='Energy (TeV)')
     parser.add_argument('-m','--mass',nargs='?',type=int,const=500,default=500,help='Mass for signal')
     parser.add_argument('-am','--allMasses',action='store_true',help='Run over all masses for signal')
     parser.add_argument('-bp','--branchingPoint',nargs='?',type=str,const='BP4',default='BP4',choices=['ee100','em100','mm100','BP1','BP2','BP3','BP4'],help='Choose branching point for H++')
     parser.add_argument('-ab','--allBranchingPoints',action='store_true',help='Run over all branching points for H++')
     parser.add_argument('-bg','--bgMode',nargs='?',type=str,const='mc',default='mc',choices=['mc','sideband','fakerate'],help='Choose BG estimation')
+    parser.add_argument('-sf','--scaleFactor',type=str,default='event.pu_weight*event.lep_scale*event.trig_scale',help='Scale factor for MC.')
 
     args = parser.parse_args(argv)
     return args
@@ -375,15 +377,15 @@ def main(argv=None):
     elif args.allMasses and args.allBranchingPoints:
         for mass in masses:
             for bp in branchingPoints:
-                BP(args.region,args.period,mass,bp,mode=args.bgMode)
+                BP(args.region,args.period,mass,bp,mode=args.bgMode,scalefactor=args.scaleFactor)
     elif args.allMasses:
         for mass in masses:
-            BP(args.region,args.period,mass,args.branchingPoint,mode=args.bgMode)
+            BP(args.region,args.period,mass,args.branchingPoint,mode=args.bgMode,scalefactor=args.scaleFactor)
     elif args.allBranchingPoints:
         for bp in branchingPoints:
-            BP(args.region,args.period,args.mass,bp,mode=args.bgMode)
+            BP(args.region,args.period,args.mass,bp,mode=args.bgMode,scalefactor=args.scaleFactor)
     else:
-        BP(args.region,args.period,args.mass,args.branchingPoint,mode=args.bgMode)
+        BP(args.region,args.period,args.mass,args.branchingPoint,mode=args.bgMode,scalefactor=args.scaleFactor)
 
     return 0
 

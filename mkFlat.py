@@ -30,8 +30,9 @@ def generate(analysis, channel, period, **kwargs):
           Variable1
           ...
     '''
-    cut = kwargs.pop('cut','select.passTight')
+    cut = kwargs.pop('cut','1')
     filename = kwargs.pop('filename','variables')
+    scaleFactor = kwargs.pop('scaleFactor','event.pu_weight*event.lep_scale*event.trig_scale')
     print 'MKFLAT:%s:%s:%iTeV: Running with selection %s' % (analysis, channel, period, cut)
     rootPath = 'rootfiles/%s_%s_%iTeV' % (analysis,channel, period)
     python_mkdir(rootPath)
@@ -78,7 +79,8 @@ def generate(analysis, channel, period, **kwargs):
     saves = '%s_%s_%sTeV' % (analysis,channel,period)
     intLumiMap = getIntLumiMap()
     finalStates, leptons = getChannels(nl)
-    plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=period)
+    mergeDict = getMergeDict(runPeriod)
+    plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=period,mergeDict=mergeDict,scaleFactor=scaleFactor)
     allSamples = [os.path.basename(fname).rstrip('.root') for fname in glob.glob('%s/*'%ntuples)]
     bgSamples = [x for x in allSamples if 'data' not in x]
     dataSamples = [x for x in allSamples if 'data' in x]

@@ -13,13 +13,14 @@ def printEvent(row,treeTuple,**kwargs):
     mode = kwargs.pop('mode','isa')
     channel = kwargs.pop('channel','')
     isMC = kwargs.pop('isMC',False)
+    branches = kwargs.pop('branches',{})
 
     printThisEvent = True
     if mode=='fsa':
-        thisEvent = [row.run, row.evt] if isMC else [row.run, row.lumi, row.evt]
+        thisEvent = [row.run, row.lumi, row.evt]
     elif mode=='isa':
-        eventStruct = treeTuple[2]
-        thisEvent = [eventStruct.run, eventStruct.evt] if isMC else [eventStruct.run, eventStruct.lumi, eventStruct.evt]
+        eventStruct = branches['event']
+        thisEvent = [eventStruct.run, eventStruct.lumi, eventStruct.evt]
     else:
         thisEvent = []
     if eventList: # check to see if event is in eventlist
@@ -30,6 +31,7 @@ def printEvent(row,treeTuple,**kwargs):
     # add in a way to check if it passed or failed a given cut
 
     if mode=='fsa': printFSAEvent(row,channel)
+    if mode=='isa': printISAEvent(row,treeTuple,branches,analysis)
     return 1
     
 def enumerate_leps(final_state):
@@ -43,28 +45,30 @@ def enumerate_leps(final_state):
            out += ['%s%i' % (i, n) for n in xrange(1, N+1)]
     return out
 
+def printISAEvent(row,tree,branches,analysis):
+    print 'TODO'
+
 def printFSAEvent(row,channel):
     leps = enumerate_leps(channel)
 
     print '-'*80
-    print '| Event listing FSA %s |' % (' '*58)
-    print '| Run: %7i Lumi: %5i Event: %11i %s |' %(row.run, row.lumi, row.evt, ' '*32)
-    print '|%s|' % ('-'*78)
-    print '| Channel: %5s Num Vertices: %3i %s |'\
-           % (channel, row.nvtx, ' '*43)
+    print '| Event listing FSA {0:58} |'.format('')
+    print '| Run: {0:7} Lumi: {1:5} Event: {2:11} {3:32} |'.format(row.run, row.lumi, row.evt, '')
+    print '|{0}|'.format('-'*78)
+    print '| Channel: {0:5} Num Vertices: {1:3} {2:42} |'.format(channel, row.nvtx, '')
 
     # print lepton info
+    lep_string = '| {0:2}: pT: {1:11.4f} eta: {2:9.4f} phi: {3:8.4f} iso: {4:7.4f} charge: {5:4} {6:1} |'
+    elec_string = '|     MVA: {0:10.4f} d0: {1:10.4f} dz: {2:9.4f} {3:27} |'
+    muon_string = '|     ID: {0:2} d0: {1:10.4f} dz: {2:9.4f} {3:30} |'
     for lep in leps:
         iso = getattr(row,'%sRelPFIsoDBDefault' %lep) if lep[0]=='m' else getattr(row,'%sRelPFIsoRho' %lep)
-        print '|%s|' % ('-'*78)
-        print '| %2s: pT: %11.4f eta: %9.4f phi: %8.4f iso: %7.4f charge: %2i %s |'\
-              % (lep, getattr(row,'%sPt' %lep), getattr(row,'%sEta' %lep), getattr(row,'%sPhi' %lep), iso, getattr(row,'%sCharge' %lep), ' '*3)
+        print '|{0}|'.format('-'*78)
+        print lep_string.format(lep, getattr(row,'%sPt' %lep), getattr(row,'%sEta' %lep), getattr(row,'%sPhi' %lep), iso, getattr(row,'%sCharge' %lep), '')
         if lep[0]=='e':
-            print '|     MVA: %10.4f d0: %10.4f dz: %9.4f %s |'\
-                  % (getattr(row,'%sMVATrig'%lep), getattr(row,'%sPVDXY'%lep), getattr(row,'%sPVDZ'%lep),' '*27)
+            print elec_string.format(getattr(row,'%sMVATrig'%lep), getattr(row,'%sPVDXY'%lep), getattr(row,'%sPVDZ'%lep),'')
         elif lep[0]=='m':
-            print '|     ID: %2i d0: %10.4f dz: %9.4f %s |'\
-                  % (getattr(row,'%sPFIDTight'%lep), getattr(row,'%sPVDXY'%lep), getattr(row,'%sPVDZ'%lep),' '*30)
+            print muon_string.format(getattr(row,'%sPFIDTight'%lep), getattr(row,'%sPVDXY'%lep), getattr(row,'%sPVDZ'%lep),'')
     print '-'*80
     print ''
 
@@ -150,6 +154,8 @@ def main(argv=None):
 
     numPrinted = 0
     for file in files:
+        #if numPrinted >= args.n:
+        #    break
         tfile = ROOT.TFile(file)
         if args.mode=='fsa':
             if not args.channel:
@@ -169,12 +175,18 @@ def main(argv=None):
         for row in tree:
             if args.list:
                 if args.mode=='fsa':
-                    print '%i:%i:%i' % (row.run, row.lumi, row.evt) if args.mc else '%i:%i:%i' % (row.run, row.lumi, row.evt)
+                    print '%i:%i:%i' % (row.run, row.lumi, row.evt)
                 else:
                     event = branches['event']
-                    print '%i:%i:%i' % (event.run, event.lumi, event.evt) if args.mc else '%i:%i:%i' % (event.run, event.lumi, event.evt)
+                    print '%i:%i:%i' % (event.run, event.lumi, event.evt)
+            else:
+                if args.mode=='isa':
+                    numPrinted += printEvent(row,tree,analysis=args.analysis,eventList=events,branches=branches,isMC=args.mc,mode=args.mode)
+                if args.mode=='fsa':
+                    numPrinted += printEvent(row,tree,channel=args.channel,eventList=events,isMC=args.mc,mode=args.mode)
+            #if numPrinted >= args.n:
+            #    break
         tfile.Close()
-
 
     return 0
 

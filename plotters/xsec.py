@@ -17,6 +17,7 @@ xsecs = { 7 : {},
           8 : {},
           13: {} }
 xsecs[13] = {
+    # these are the phys14 samples
     # https://twiki.cern.ch/twiki/bin/viewauth/CMS/StandardModelCrossSectionsat13TeV
     'WJetsToLNu_13TeV-madgraph-pythia8-tauola' : 20508.9 * PB,
     'DYJetsToLL_M-50_13TeV-madgraph-pythia8' : 6025.2 * PB,
@@ -44,6 +45,84 @@ xsecs[13] = {
     'TTZJets_Tune4C_13TeV-madgraph-tauola' : 2.232 * PB,
 
     'DBLH_m500' : 0.001652 * PB, # from pythia
+
+    # here we have all the samples for RunIISpring15DR (all from mcm unless otherwise noted)
+    'DYJetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8' : 18610   * PB,
+    'DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8'     :  5943.2 * PB,
+
+    'QCD_Pt-15to20_MuEnrichedPt5_TuneCUETP8M1_13TeV_pythia8'    : 1273190000      * PB,
+    'QCD_Pt-20to30_MuEnrichedPt5_TuneCUETP8M1_13TeV_pythia8'    :  558528000      * PB,
+    'QCD_Pt-30to50_MuEnrichedPt5_TuneCUETP8M1_13TeV_pythia8'    :  139803000      * PB,
+    'QCD_Pt-50to80_MuEnrichedPt5_TuneCUETP8M1_13TeV_pythia8'    :   19222500      * PB,
+    'QCD_Pt-80to120_MuEnrichedPt5_TuneCUETP8M1_13TeV_pythia8'   :    2758420      * PB,
+    'QCD_Pt-120to170_MuEnrichedPt5_TuneCUETP8M1_13TeV_pythia8'  :     469797      * PB,
+    'QCD_Pt-170to300_MuEnrichedPt5_TuneCUETP8M1_13TeV_pythia8'  :     117989      * PB,
+    'QCD_Pt-300to470_MuEnrichedPt5_TuneCUETP8M1_13TeV_pythia8'  :       7820.25   * PB,
+    'QCD_Pt-470to600_MuEnrichedPt5_TuneCUETP8M1_13TeV_pythia8'  :        645.528  * PB,
+    'QCD_Pt-600to800_MuEnrichedPt5_TuneCUETP8M1_13TeV_pythia8'  :        187.109  * PB,
+    'QCD_Pt-800to1000_MuEnrichedPt5_TuneCUETP8M1_13TeV_pythia8' :         32.3486 * PB,
+    'QCD_Pt-1000toInf_MuEnrichedPt5_TuneCUETP8M1_13TeV_pythia8' :         10.4305 * PB,
+
+    'QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8' : 720648000 * PB,
+
+    'QCD_Pt-15to20_EMEnriched_TuneCUETP8M1_13TeV_pythia8'   : 1279000000 * PB,
+    'QCD_Pt-20to30_EMEnriched_TuneCUETP8M1_13TeV_pythia8'   :  557600000 * PB,
+    'QCD_Pt-30to50_EMEnriched_TuneCUETP8M1_13TeV_pythia8'   :  136000000 * PB,
+    'QCD_Pt-50to80_EMEnriched_TuneCUETP8M1_13TeV_pythia8'   :   19800000 * PB,
+    'QCD_Pt-80to120_EMEnriched_TuneCUETP8M1_13TeV_pythia8'  :    2800000 * PB,
+    'QCD_Pt-120to170_EMEnriched_TuneCUETP8M1_13TeV_pythia8' :     477000 * PB,
+    'QCD_Pt-170to300_EMEnriched_TuneCUETP8M1_13TeV_pythia8' :     114000 * PB,
+    'QCD_Pt-300toInf_EMEnriched_TuneCUETP8M1_13TeV_pythia8' :       9000 * PB,
+    
+    'QCD_Pt_5to10_TuneCUETP8M1_13TeV_pythia8'      : 61018300000           * PB,
+    'QCD_Pt_10to15_TuneCUETP8M1_13TeV_pythia8'     :  5887580000           * PB,
+    'QCD_Pt_15to30_TuneCUETP8M1_13TeV_pythia8'     :  1837410000           * PB,
+    'QCD_Pt_30to50_TuneCUETP8M1_13TeV_pythia8'     :   140932000           * PB,
+    'QCD_Pt_50to80_TuneCUETP8M1_13TeV_pythia8'     :    19204300           * PB,
+    'QCD_Pt_80to120_TuneCUETP8M1_13TeV_pythia8'    :     2762530           * PB,
+    'QCD_Pt_120to170_TuneCUETP8M1_13TeV_pythia8'   :      471100           * PB,
+    'QCD_Pt_170to300_TuneCUETP8M1_13TeV_pythia8'   :      117276           * PB,
+    'QCD_Pt_300to470_TuneCUETP8M1_13TeV_pythia8'   :        7823           * PB,
+    'QCD_Pt_470to600_TuneCUETP8M1_13TeV_pythia8'   :         648.2         * PB,
+    'QCD_Pt_800to1000_TuneCUETP8M1_13TeV_pythia8'  :          32.293       * PB,
+    'QCD_Pt_1000to1400_TuneCUETP8M1_13TeV_pythia8' :           9.4183      * PB,
+    'QCD_Pt_1400to1800_TuneCUETP8M1_13TeV_pythia8' :           0.84265     * PB,
+    'QCD_Pt_1800to2400_TuneCUETP8M1_13TeV_pythia8' :           0.114943    * PB,
+    'QCD_Pt_2400to3200_TuneCUETP8M1_13TeV_pythia8' :           0.00682981  * PB,
+    'QCD_Pt_3200toInf_TuneCUETP8M1_13TeV_pythia8'  :           0.000165445 * PB,
+    
+    # https://twiki.cern.ch/twiki/bin/viewauth/CMS/SingleTopSigma
+    'ST_s-channel_4f_leptonDecays_13TeV-amcatnlo-pythia8_TuneCUETP8M1'       :  11.36 * PB,
+    'ST_t-channel_4f_leptonDecays_13TeV-amcatnlo-pythia8_TuneCUETP8M1'       : 216.99 * PB,
+    'ST_t-channel_5f_leptonDecays_13TeV-amcatnlo-pythia8_TuneCUETP8M1'       : 216.99 * PB,
+    'ST_t-channel_antitop_4f_leptonDecays_13TeV-powheg-pythia8_TuneCUETP8M1' :  80.95 * PB,
+    'ST_t-channel_top_4f_leptonDecays_13TeV-powheg-pythia8_TuneCUETP8M1'     : 136.02 * PB,
+    'ST_tW_antitop_5f_DS_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1'  :  35.6  * PB,
+    'ST_tW_antitop_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1'     :  35.6  * PB,
+    'ST_tW_top_5f_DS_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1'      :  35.6  * PB,
+    'ST_tW_top_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1'         :  35.6  * PB,
+
+    # https://twiki.cern.ch/twiki/bin/view/LHCPhysics/TtbarNNLO
+    'TTJets_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8' : 815.96 * PB,
+    'TTTo2L2Nu_13TeV-powheg'                         : 815.96 * (0.1086 * 3)**2 * PB,
+    'TT_TuneCUETP8M1_13TeV-powheg-pythia8'           : 815.96 * PB,
+
+    'WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8' : 60781.5 * PB,
+
+    'WWTo2L2Nu_13TeV-powheg'        : 63.21 * (0.1086 * 3)**2 * PB,
+    'WWTo4Q_13TeV-powheg'           : 63.21 * (1 - 0.1086 * 3)**2 * PB,
+    'WWToLNuQQ_13TeV-powheg'        : 63.21 * (0.1086 * 3) * (1 - 0.1086 * 3) * PB,
+    'WW_TuneCUETP8M1_13TeV-pythia8' : 63.21 * PB,
+
+    'WZTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8' : 10.96    * PB,
+    'WZTo3LNu_TuneCUETP8M1_13TeV-powheg-pythia8'     :  4.42965 * PB,
+    'WZ_TuneCUETP8M1_13TeV-pythia8'                  : 22.82    * PB,
+
+    'ZZTo2L2Q_13TeV_amcatnloFXFX_madspin_pythia8' :  3.38  * PB,
+    'ZZTo4L_13TeV_powheg_pythia8'                 :  1.256 * PB,
+    'ZZTo4Q_13TeV_amcatnloFXFX_madspin_pythia8'   :  6.842 * PB,
+    'ZZ_TuneCUETP8M1_13TeV-pythia8'               : 10.32  * PB,
+    
 }
 
 xsecs[8] = {
@@ -82,13 +161,22 @@ xsecs[8] = {
     'W4JetsToLNu_TuneZ2Star_8TeV-madgraph' : 264. * PB,
     'WbbJetsToLNu_Massive_TuneZ2star_8TeV-madgraph-pythia6_tauola' : 138.9 * PB,
 
+    'WGstarToLNu2E_TuneZ2star_8TeV-madgraph-tauola' : 5.87 * PB,
+    'WGstarToLNu2Mu_TuneZ2star_8TeV-madgraph-tauola' : 1.91 * PB,
+
     'DYJetsToLL_M-10To50filter_8TeV-madgraph':          915 * PB,
-    'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball': 3503.7 * PB,
+    'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball': Z_XSEC,
+    'DYJetsToLL_M-10To50filter_8TeV-madgraph_filtered':          915 * PB,
+    'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball_filtered': Z_XSEC,
 
     'Z1jets_M50':     Z_XSEC * 0.190169492,
     'Z2jets_M50_S10': Z_XSEC * 0.061355932,
     'Z3jets_M50':     Z_XSEC * 0.017322034,
     'Z4jets_M50':     Z_XSEC * 0.007810169,
+    'Z1jets_M50_filtered':     Z_XSEC * 0.190169492,
+    'Z2jets_M50_S10_filtered': Z_XSEC * 0.061355932,
+    'Z3jets_M50_filtered':     Z_XSEC * 0.017322034,
+    'Z4jets_M50_filtered':     Z_XSEC * 0.007810169,
 
     'TTJetsFullLepMGDecays': TT_XSEC * BR_WLNU * BR_WLNU,
     'TTJetsSemiLepMGDecays': TT_XSEC * BR_WJJ * BR_WLNU * 2,
@@ -105,6 +193,11 @@ xsecs[8] = {
     'Tbar_t-channel_TuneZ2star_8TeV-powheg-tauola':     30.7 * PB,
     'Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola': 11.1 * PB,
 
+    'GluGluToZZTo4L_8TeV-gg2zz-pythia6': 4.8 * FB,
+    'GluGluToZZTo2L2L_TuneZ2star_8TeV-gg2zz-pythia6': 12.03 * FB,
+
+    'GluGluToHToZZTo4L_M-125_8TeV-powheg-pythia6': 5.38752 * FB,
+
     'ZZTo4e_8TeV-powheg-pythia6':      0.07691 * PB,
     'ZZTo4mu_8TeV-powheg-pythia6':     0.07691 * PB,
     'ZZTo4tau_8TeV-powheg-pythia6':    0.07691 * PB,
@@ -114,6 +207,7 @@ xsecs[8] = {
 
     'ZZJetsTo4L_TuneZ2star_8TeV-madgraph-tauola':   0.1769 * PB,
     'ZZJetsTo2L2Q_TuneZ2star_8TeV-madgraph-tauola': 2.4487 * PB,
+    'ZZJetsTo2L2Nu_TuneZ2star_8TeV-madgraph-tauola': 0.36 * PB,
 
     'ZZ_TuneZ2star_8TeV_pythia6_tauola' : 8.2 * PB,
     'WZ_TuneZ2star_8TeV_pythia6_tauola' : 33.6 * PB,

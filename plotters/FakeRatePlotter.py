@@ -21,7 +21,7 @@ class FakeRatePlotter(PlotterBase):
         fakeHist = ROOT.TH2F(savename,'',len(ptBins)-1,array('d',ptBins),len(etaBins)-1,array('d',etaBins))
         for p in range(len(ptBins)-1):
             for e in range(len(etaBins)-1):
-                kinCut = '%s>%f & %s<%f & abs(%s)>%f & abs(%s)<%f' %\
+                kinCut = '%s>=%f & %s<%f & abs(%s)>=%f & abs(%s)<%f' %\
                          (ptVar, ptBins[p], ptVar, ptBins[p+1], etaVar, etaBins[e], etaVar, etaBins[e+1])
                 numCut = '%s & %s' % (kinCut, passSelection)
                 denomCut = '%s & %s' % (kinCut, failSelection)

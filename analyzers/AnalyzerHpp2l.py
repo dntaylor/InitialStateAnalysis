@@ -36,6 +36,7 @@ class AnalyzerHpp2l(AnalyzerBase):
         }
         if runTau:
             self.object_definitions['h1'] = ['emt', 'emt']
+        self.lepargs = {'tight':True}
         self.cutflow_labels = ['Trigger','Fiducial','Trigger Threshold','ID','QCD Suppression']
         super(AnalyzerHpp2l, self).__init__(sample_name, file_list, out_file, period)
 
@@ -70,18 +71,17 @@ class AnalyzerHpp2l(AnalyzerBase):
     def preselection(self,rtrow):
         cuts = CutSequence()
         if self.isData: cuts.add(self.trigger)
-        #cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.overlap)
         cuts.add(self.trigger_threshold)
-        cuts.add(self.ID_loose)
+        cuts.add(self.ID_tight)
         cuts.add(self.qcd_rejection)
         return cuts
 
     def selection(self,rtrow):
         cuts = CutSequence()
-        if self.isData: cuts.add(self.trigger)
-        #cuts.add(self.trigger)
+        #if self.isData: cuts.add(self.trigger)
+        cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.overlap)
         cuts.add(self.trigger_threshold)
@@ -235,19 +235,18 @@ class AnalyzerHpp2l_Z(AnalyzerHpp2l):
     def preselection(self,rtrow):
         cuts = CutSequence()
         if self.isData: cuts.add(self.trigger)
-        #cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.overlap)
         cuts.add(self.trigger_threshold)
-        cuts.add(self.ID_loose)
+        cuts.add(self.ID_tight)
         cuts.add(self.zSelection)
         cuts.add(self.metVeto)
         return cuts
 
     def selection(self,rtrow):
         cuts = CutSequence()
-        if self.isData: cuts.add(self.trigger)
-        #cuts.add(self.trigger)
+        #if self.isData: cuts.add(self.trigger)
+        cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.overlap)
         cuts.add(self.trigger_threshold)
@@ -257,14 +256,13 @@ class AnalyzerHpp2l_Z(AnalyzerHpp2l):
         return cuts
 
     def zSelection(self,rtrow):
-        leps = self.objects
+        leps = self.objCand
         o = ordered(leps[0], leps[1])
         m1 = getattr(rtrow,'%s_%s_Mass' % (o[0],o[1]))
         l0Pt = getattr(rtrow,'%sPt' %leps[0])
         return abs(m1-ZMASS)<20. and l0Pt>20.
 
     def metVeto(self,rtrow):
-        leps = self.objects
         if self.period=='8':
             if rtrow.type1_pfMetEt > 30.: return False
         else:
@@ -315,11 +313,10 @@ class AnalyzerHpp2l_TT(AnalyzerHpp2l):
     def preselection(self,rtrow):
         cuts = CutSequence()
         if self.isData: cuts.add(self.trigger)
-        #cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.overlap)
         cuts.add(self.trigger_threshold)
-        cuts.add(self.ID_loose)
+        cuts.add(self.ID_tight)
         cuts.add(self.qcd_rejection)
         cuts.add(self.z_veto)
         cuts.add(self.metCut)
@@ -328,8 +325,8 @@ class AnalyzerHpp2l_TT(AnalyzerHpp2l):
 
     def selection(self,rtrow):
         cuts = CutSequence()
-        if self.isData: cuts.add(self.trigger)
-        #cuts.add(self.trigger)
+        #if self.isData: cuts.add(self.trigger)
+        cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.overlap)
         cuts.add(self.trigger_threshold)
@@ -342,13 +339,13 @@ class AnalyzerHpp2l_TT(AnalyzerHpp2l):
 
     def z_veto(self,rtrow):
         '''Select Z candidate'''
-        leps = self.objects
+        leps = self.objCand
         o = ordered(leps[0], leps[1])
         m1 = getattr(rtrow,'%s_%s_Mass' % (o[0], o[1]))
         return abs(m1-ZMASS)>20.
 
     def metCut(self,rtrow):
-        leps = self.objects
+        leps = self.objCand
         if self.period=='8':
             if rtrow.type1_pfMetEt < 30.: return False
         else:

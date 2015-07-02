@@ -182,6 +182,9 @@ class AnalyzerBase(object):
                     if not candidate: # in case no objects satisfy our conditions
                         continue
 
+                    # name candidate
+                    self.objCand = candidate[1]
+
                     # now see if event is viable
                     passPreselection = self.pass_preselection(rtrow)
 
@@ -193,11 +196,11 @@ class AnalyzerBase(object):
                     if eventkey in bestCandMap: 
                         bestcand = bestCandMap[eventkey]
                     else:
-                        numMin = len(candidate[0])
+                        numMin = len(self.objCand)
                         bestcand = [float('inf')] * numMin
                     if self.good_to_store(rtrow,candidate[0],bestcand):
                         bestCandMap[eventkey] = candidate[0]
-                        ntupleRow = self.store_row(rtrow, *candidate[1])
+                        ntupleRow = self.store_row(rtrow, *self.objCand)
                         eventMap[eventkey] = ntupleRow
                         eventsToWrite.add(eventkey)
 
@@ -298,17 +301,18 @@ class AnalyzerBase(object):
         for altId in self.alternateIds:
             ntupleRow["select.pass_%s"%altId] = int(self.ID(rtrow,*self.objects,**self.alternateIdMap[altId]))
 
+        scales = self.getScales(rtrow,objects,**self.lepargs)
         
         ntupleRow["event.evt"] = int(rtrow.evt)
         ntupleRow["event.lumi"] = int(rtrow.lumi)
         ntupleRow["event.run"] = int(rtrow.run)
         ntupleRow["event.nvtx"] = int(rtrow.nvtx)
-        ntupleRow["event.lep_scale"] = float(self.lepscaler.scale_factor(rtrow, *objects, loose=True)[0]) if self.period=='8' else float(1.)
-        ntupleRow["event.lep_scale_up"] = float(self.lepscaler.scale_factor(rtrow, *objects, loose=True)[1]) if self.period=='8' else float(1.)
-        ntupleRow["event.lep_scale_down"] = float(self.lepscaler.scale_factor(rtrow, *objects, loose=True)[2]) if self.period=='8' else float(1.)
-        ntupleRow["event.trig_scale"] = float(self.trigscaler.scale_factor(rtrow, *objects)) if self.period=='8' else float(1.)
-        #ntupleRow["event.trig_scale"] = float(1.)
-        ntupleRow["event.pu_weight"] = float(self.pu_weights.weight(rtrow)) if self.period=='8' else float(1.)
+        ntupleRow["event.GenNUP"] = -1 if self.isData else int(rtrow.NUP)
+        ntupleRow["event.lep_scale"] = float(scales['lep'])
+        ntupleRow["event.lep_scale_up"] = float(scales['lepup'])
+        ntupleRow["event.lep_scale_down"] = float(scales['lepdown'])
+        ntupleRow["event.trig_scale"] = float(scales['trig'])
+        ntupleRow["event.pu_weight"] = float(scales['puweight'])
 
         channelString = ''
         for x in objects: channelString += x[0]
@@ -421,13 +425,25 @@ class AnalyzerBase(object):
                         else:
                             isoVal = float(-9)
                         ntupleRow["%s.Iso%i" % (i,objCount)] = isoVal
+                        ntupleRow["%s.Dxy%i" % (i,objCount)] = float(getattr(rtrow, "%sPVDXY" % orderedFinalObjects[objCount-1])) if theObjects else float(-9)
+                        ntupleRow["%s.Dz%i" % (i,objCount)] = float(getattr(rtrow, "%sPVDZ" % orderedFinalObjects[objCount-1])) if theObjects else float(-9)
+                        ntupleRow["%s.JetPt%i" % (i,objCount)] = float(getattr(rtrow, "%sJetPt" % orderedFinalObjects[objCount-1])) if theObjects else float(-9.)
+                        ntupleRow["%s.JetBTag%i" % (i,objCount)] = float(-9.)
+                        if theObjects:
+                            ntupleRow["%s.JetBTag%i" % (i,objCount)] = float(getattr(rtrow, "%sJetCSVBtag" % orderedFinalObjects[objCount-1])) if period=='8' else float(getattr(rtrow, "%sJetPFCISVBtag" % orderedFinalObjects[objCount-1]))
                         ntupleRow["%s.LepScaleLoose%i" % (i,objCount)] = float(self.lepscaler.scale_factor(rtrow, orderedFinalObjects[objCount-1], loose=True)[0]) if theObjects else float(-1)
                         ntupleRow["%s.LepScaleTight%i" % (i,objCount)] = float(self.lepscaler.scale_factor(rtrow, orderedFinalObjects[objCount-1], loose=False)[0]) if theObjects else float(-1)
                         if self.period=='13':
                             ntupleRow["%s.LepScaleLoose%i" % (i,objCount)] = float(1.)
                             ntupleRow["%s.LepScaleTight%i" % (i,objCount)] = float(1.)
                         ntupleRow["%s.Chg%i" % (i,objCount)] = float(getattr(rtrow, "%sCharge" % orderedFinalObjects[objCount-1])) if theObjects else float(-9)
+                        ntupleRow["%s.PassLoose%i" % (i,objCount)] = float(self.ID(rtrow,orderedFinalObjects[objCount-1],**self.getIdArgs('Loose'))) if theObjects else float(-9)
                         ntupleRow["%s.PassTight%i" % (i,objCount)] = float(self.ID(rtrow,orderedFinalObjects[objCount-1],**self.getIdArgs('Tight'))) if theObjects else float(-9)
+                        ntupleRow["%s.GenPdgId%i" % (i,objCount)] = -2000
+                        ntupleRow["%s.MotherGenPdgId%i" % (i,objCount)] = -2000
+                        if not self.isData and theObjects:
+                            ntupleRow["%s.GenPdgId%i" % (i,objCount)] = float(getattr(rtrow, "%sGenPdgId" % orderedFinalObjects[objCount-1]))
+                            ntupleRow["%s.MotherGenPdgId%i" % (i,objCount)] = float(getattr(rtrow, "%sGenMotherPdgId" % orderedFinalObjects[objCount-1]))
                         # manually add w z deltaRs
                         if i=='w1':
                             oZ1 = ordered(theObjects[0],theObjects[2]) if theObjects else []
@@ -475,11 +491,21 @@ class AnalyzerBase(object):
             if obj[0]=='e': isoVar = 'RelPFIsoRho'
             if obj[0]=='m': isoVar = 'RelPFIsoDBDefault'
             ntupleRow["%s%i.Iso" % (charName,objCount)] = float(getattr(rtrow, "%s%s" % (obj, isoVar))) if obj[0] in 'em' else float(-1.)
+            ntupleRow["%s%i.JetPt" % (charName,objCount)] = float(getattr(rtrow, "%sJetPt" % obj))
+            ntupleRow["%s%i.JetBTag" % (charName,objCount)] = float(getattr(rtrow, "%sJetCSVBtag" % obj)) if self.period=='8' else float(getattr(rtrow, "%sJetPFCISVBtag" % obj))
+            ntupleRow["%s%i.Dxy" % (charName,objCount)] = float(getattr(rtrow, "%sPVDXY" % obj))
+            ntupleRow["%s%i.Dz" % (charName,objCount)] = float(getattr(rtrow, "%sPVDZ" % obj))
             ntupleRow["%s%i.LepScaleLoose" % (charName,objCount)] = float(self.lepscaler.scale_factor(rtrow, obj, loose=True)[0]) if self.period=='8' else float(1.)
             ntupleRow["%s%i.LepScaleTight" % (charName,objCount)] = float(self.lepscaler.scale_factor(rtrow, obj, loose=False)[0]) if self.period=='8' else float(1.)
             ntupleRow["%s%i.Chg" % (charName,objCount)] = float(getattr(rtrow, "%sCharge" % obj))
+            ntupleRow["%s%i.PassLoose" % (charName,objCount)] = float(self.ID(rtrow,obj,**self.getIdArgs('Loose')))
             ntupleRow["%s%i.PassTight" % (charName,objCount)] = float(self.ID(rtrow,obj,**self.getIdArgs('Tight')))
             ntupleRow["%s%iFlv.Flv" % (charName,objCount)] = obj[0]
+            ntupleRow["%s%i.GenPdgId" % (charName,objCount)] = -2000
+            ntupleRow["%s%i.MotherGenPdgId" % (charName,objCount)] = -2000
+            if not self.isData:
+                ntupleRow["%s%i.GenPdgId" % (charName,objCount)] = float(getattr(rtrow, "%sGenPdgId" % obj))
+                ntupleRow["%s%i.MotherGenPdgId" % (charName,objCount)] = float(getattr(rtrow, "%sGenMotherPdgId" % obj))
 
         return ntupleRow
 
@@ -568,3 +594,23 @@ class AnalyzerBase(object):
                 if obj[0] in 'tjgn': continue # no iso cut on tau
                 if getattr(rtrow, '%s%s' %(obj,isotype)) > isoCut[obj[0]]: return False
         return True
+
+    def getScales(self,rtrow,objects,**lepargs):
+        '''Return the scale factors in a dictionary'''
+        scales = {
+            'lep'     : 1,
+            'lepup'   : 1,
+            'lepdown' : 1,
+            'trig'    : 1,
+            'puweight': 1,
+        }
+        if self.period=='8':
+            lepscales = self.lepscaler.scale_factor(rtrow, *objects, **lepargs)
+            trigscale = self.trigscaler.scale_factor(rtrow, *objects)
+            puweight  = self.pu_weights.weight(rtrow)
+            scales['lep']      = lepscales[0]
+            scales['lepup']    = lepscales[1]
+            scales['lepdown']  = lepscales[2]
+            scales['trig']     = trigscale
+            scales['puweight'] = puweight
+        return scales

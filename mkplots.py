@@ -6,21 +6,10 @@ from plotters.CutFlowPlotter import CutFlowPlotter
 from plotters.EfficiencyPlotter import EfficiencyPlotter
 from plotters.FakeRatePlotter import FakeRatePlotter
 from plotters.plotUtils import *
+from plotters.plotUtils import ZMASS
 import argparse
 import itertools
 import sys
-
-ZMASS = 91.1876
-
-def plotKinematicsMethod(plotMethod,variables,savename,cuts,**kwargs):
-    savedir = kwargs.pop('savedir','')
-    if savedir: savedir += '/'
-    if type(variables) is not list: variables = [variables]
-    for var, c in zip(variables, cuts):
-        plotMethod(var+'.Pt',[50,0,250],savedir+var+savename+'Pt',cut=c,yaxis='Events/5.0 GeV/c^{2}',xaxis='p_{T} (GeV/c)',legendpos=43,**kwargs)
-        plotMethod(var+'.Eta',[30,-3.0,3.0],savedir+var+savename+'Eta',cut=c,yaxis='Events',xaxis='#eta',legendpos=43,**kwargs)
-        plotMethod(var+'.Phi',[30,-3.14159,3.14159],savedir+var+savename+'Phi',cut=c,yaxis='Events',xaxis='#phi',legendpos=43,**kwargs)
-
 
 def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
     savedir = kwargs.pop('savedir','')
@@ -35,9 +24,9 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
     plotMethod('finalstate.muonVetoLoose',[8,0,8],savedir+'numMuonsLoose',yaxis='Events',xaxis='Number of Muons (p_{T}>10 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
     plotMethod('finalstate.elecVetoTight',[8,0,8],savedir+'numElectronsTight',yaxis='Events',xaxis='Number of Electrons (p_{T}>10 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
     plotMethod('finalstate.muonVetoTight',[8,0,8],savedir+'numMuonsTight',yaxis='Events',xaxis='Number of Muons (p_{T}>10 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
-    plotMethod('finalstate.bjetVeto30Loose',[8,0,8],savedir+'numBJets30Loose',yaxis='Events',xaxis='Number of b Jets (p_{T}>30 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
+    #plotMethod('finalstate.bjetVeto30Loose',[8,0,8],savedir+'numBJets30Loose',yaxis='Events',xaxis='Number of b Jets (p_{T}>30 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
     plotMethod('finalstate.bjetVeto30Medium',[8,0,8],savedir+'numBJets30Medium',yaxis='Events',xaxis='Number of b Jets (p_{T}>30 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
-    plotMethod('finalstate.bjetVeto30Tight',[8,0,8],savedir+'numBJets30Tight',yaxis='Events',xaxis='Number of b Jets (p_{T}>30 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
+    #plotMethod('finalstate.bjetVeto30Tight',[8,0,8],savedir+'numBJets30Tight',yaxis='Events',xaxis='Number of b Jets (p_{T}>30 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
     #plotMethod('finalstate.jetVeto40',[8,0,8],savedir+'numJets40',yaxis='Events',xaxis='Number of Jets (p_{T}>40 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
     #plotMethod('finalstate.muonVeto5',[8,0,8],savedir+'muonVeto5',yaxis='Events',xaxis='Muon Veto (p_{T}>5 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
     #plotMethod('finalstate.muonVeto10Loose',[8,0,8],savedir+'muonVeto10',yaxis='Events',xaxis='Muon Veto (p_{T}>10 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
@@ -47,6 +36,14 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
     plotMethod('finalstate.mass',[40,0,400],savedir+'mass',yaxis='Events/10.0 GeV',xaxis='Mass (GeV)',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
     plotMethod('finalstate.mass',[150,0,300],savedir+'mass_zoom',yaxis='Events/2.0 GeV',xaxis='Mass (GeV)',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
     plotMethod('event.nvtx',[50,0,50],savedir+'puVertices',yaxis='Events',xaxis='Number PU Vertices',legendpos=43,logy=0,cut=myCut,**kwargs)
+    # plot lepton kinematics
+    for l in range(nl):
+        name = 'l%i' % (l+1)
+        plotMethod('%s.Pt' %name,[40,0,200],savedir+'%sPt' %name,yaxis='Events/5.0 GeV',xaxis='p_{T}^{%s} (GeV)' %name,legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('%s.Eta' %name,[30,-3.0,3.0],savedir+'%sEta' %name,yaxis='Events',xaxis='#eta^{%s}' %name,legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('%s.Phi' %name,[30,-3.14159,3.14159],savedir+'%sPhi' %name,yaxis='Events',xaxis='#phi^{%s}' %name,legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('%s.Iso' %name,[50,0,.5],savedir+'%sIso' %name,yaxis='Events',xaxis='Relative Isolation (%s)' %name,legendpos=43,logy=0,cut=myCut,**kwargs)
+    # plot doubly charged higgs stuff
     if analysis in ['Hpp3l','Hpp4l'] or region in ['Hpp2l']:
         plotMethod('h1.mass',[24,0,600],savedir+'hppMass',yaxis='Events/25.0 GeV/c^{2}',xaxis='M(l^{+}l^{+}) (GeV/c^{2})',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('h1.mass',[24,0,600],savedir+'hppMass_mod',yaxis='Events/25.0 GeV/c^{2}',xaxis='M(l^{+}l^{+}) (GeV/c^{2})',lumitext=33,legendpos=41,logy=0,cut=myCut,overflow=True,**kwargs)
@@ -57,8 +54,10 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
         plotMethod('h1.Iso1',[50,0,0.5],savedir+'hppLeadingIso',yaxis='Events',xaxis='Iso/p_{T} (#Phi^{++} Leading Lepton)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('h1.Iso2',[50,0,0.5],savedir+'hppSubleadingIso',yaxis='Events',xaxis='Iso/p_{T} (#Phi^{++} Subleading Lepton)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('h1.dR',[60,0,6],savedir+'hppdR',yaxis='Events',xaxis='#DeltaR(l^{+}l^{+})',legendpos=43,logy=0,cut=myCut,**kwargs)
+    # plot Z stuff
     if analysis in ['Z', 'Hpp3l', 'Hpp4l', 'WZ'] or region in ['Z', 'TT']:
         plotMethod('z1.mass',[42,70,112],savedir+'z1Mass',yaxis='Events/1.0 GeV',xaxis='M(l^{+}l^{-}) (Z1) (GeV)',legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('z1.mass',[60,60,120],savedir+'z1Mass_newWidth',yaxis='Events/1.0 GeV',xaxis='M(l^{+}l^{-}) (Z1) (GeV)',legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod('z1.mass',[7,80.5,101.5],savedir+'z1Mass_wideBin',yaxis='Events/3.0 GeV',xaxis='M(l^{+}l^{-}) (Z1) (GeV)',legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod('z1.mass',[80,0,240],savedir+'z1Mass_fullWindow',yaxis='Events/3.0 GeV',xaxis='M(l^{+}l^{-}) (Z1) (GeV)',legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod('z1.mass',[80,0,240],savedir+'z1Mass_fullWindow_log',yaxis='Events/3.0 GeV',xaxis='M(l^{+}l^{-}) (Z1) (GeV)',legendpos=43,logy=1,cut=myCut,**kwargs)
@@ -68,6 +67,19 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
         plotMethod('z1.Iso1',[50,0,0.5],savedir+'z1LeadingIso',yaxis='Events',xaxis='Iso/p_{T} (Z1 Leading Lepton)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('z1.Iso2',[50,0,0.5],savedir+'z1SubleadingIso',yaxis='Events',xaxis='Iso/p_{T} (Z1 Subleading Lepton)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('z1.dR',[60,0,6],savedir+'z1dR',yaxis='Events',xaxis='#DeltaR',legendpos=43,logy=0,cut=myCut,**kwargs)
+        #plotMethod('z1.JetPt1',[40,0,400],savedir+'z1JetPtLead',yaxis='Events/10.0 GeV',xaxis='p_{T}^{Z Lead Lepton Jet} (GeV)',legendpos=43,logy=0,cut=myCut,**kwargs)
+        #plotMethod('z1.JetBTag1',[40,-1,1],savedir+'z1JetBTagLead',yaxis='Events',xaxis='Z Lead Lepton Jet BTag',legendpos=43,logy=0,cut=myCut,**kwargs)
+        #plotMethod('z1.GenPdgId1',[80,-40,40],savedir+'z1GenPdgIdLead',yaxis='Events',xaxis='Z Lead Lepton PDG ID',legendpos=43,logy=0,cut=myCut,**kwargs)
+        #plotMethod('z1.MotherGenPdgId1',[80,-40,40],savedir+'z1MotherGenPdgIdLead',yaxis='Events',xaxis='Z Lead Lepton Mother PDG ID',legendpos=43,logy=0,cut=myCut,**kwargs)
+        #plotMethod('z1.Dxy1',[100,-.1,.1],savedir+'z1DXY1',yaxis='Events',xaxis='#Delta(lepton,pv)_{XY}',legendpos=43,logy=0,cut=myCut,**kwargs)
+        #plotMethod('z1.Dz1',[100,-.1,.1],savedir+'z1DZ1',yaxis='Events',xaxis='#Delta(lepton,pv)_{Z}',legendpos=43,logy=0,cut=myCut,**kwargs)
+        #plotMethod('z1.Dxy2',[100,-.1,.1],savedir+'z1DXY2',yaxis='Events',xaxis='#Delta(lepton,pv)_{XY}',legendpos=43,logy=0,cut=myCut,**kwargs)
+        #plotMethod('z1.Dz2',[100,-.1,.1],savedir+'z1DZ2',yaxis='Events',xaxis='#Delta(lepton,pv)_{Z}',legendpos=43,logy=0,cut=myCut,**kwargs)
+        #plotMethod('z1.JetPt2',[40,0,400],savedir+'z1JetPtSubLead',yaxis='Events/10.0 GeV',xaxis='p_{T}^{Z SubLead Lepton Jet} (GeV)',legendpos=43,logy=0,cut=myCut,**kwargs)
+        #plotMethod('z1.JetBTag2',[40,-1,1],savedir+'z1JetBTagSubLead',yaxis='Events',xaxis='Z Lead SubLepton Jet BTag',legendpos=43,logy=0,cut=myCut,**kwargs)
+        #plotMethod('z1.GenPdgId2',[80,-40,40],savedir+'z1GenPdgIdSubLead',yaxis='Events',xaxis='Z SubLead Lepton PDG ID',legendpos=43,logy=0,cut=myCut,**kwargs)
+        #plotMethod('z1.MotherGenPdgId2',[80,-40,40],savedir+'z1MotherGenPdgIdSubLead',yaxis='Events',xaxis='Z SubLead Lepton Mother PDG ID',legendpos=43,logy=0,cut=myCut,**kwargs)
+    # plot second z stuff
     if analysis in ['Hpp4l']:
         plotMethod('z2.mass',[42,70,112],savedir+'z2Mass',yaxis='Events/1.0 GeV',xaxis='M(l^{+}l^{-}) (Z2) (GeV)',legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod('z2.mass',[7,80.5,101.5],savedir+'z2Mass_wideBin',yaxis='Events/3.0 GeV',xaxis='M(l^{+}l^{-}) (Z2) (GeV)',legendpos=43,logy=0,cut=myCut,**kwargs)
@@ -78,6 +90,7 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
         plotMethod('z2.Pt2',[40,0,200],savedir+'z2SubleadingLeptonPt',yaxis='Events/5.0 GeV',xaxis='p_{T}^{Z2 Subleading Lepton} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('z2.Iso1',[50,0,0.5],savedir+'z2LeadingIso',yaxis='Events',xaxis='Iso/p_{T} (Z2 Leading Lepton)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('z2.Iso2',[50,0,0.5],savedir+'z2SubleadingIso',yaxis='Events',xaxis='Iso/p_{T} (Z2 Subleading Lepton)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+    # plot W stuff
     if analysis in ['Hpp3l', 'WZ']:
         plotMethod('w1.Pt',[40,0,400],savedir+'w1Pt',yaxis='Events/10.0 GeV',xaxis='p_{T}^{W} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('w1.Pt1',[40,0,200],savedir+'w1LeptonPt',yaxis='Events/5.0 GeV',xaxis='p_{T}^{W Lepton} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
@@ -86,6 +99,12 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
         plotMethod('w1.dPhi',[32,0,3.2],savedir+'w1dPhi',yaxis='Events/0.1 rad',xaxis='#Delta#phi(W lepton, E_{T}^{miss}) (rad)',legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod('w1.dR1_z1_1',[60,0,6],savedir+'w1dR1_1',yaxis='Events',xaxis='#DeltaR(W^{lepton},Z^{leading lepton})',legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod('w1.dR1_z1_2',[60,0,6],savedir+'w1dR1_2',yaxis='Events',xaxis='#DeltaR(W^{lepton},Z^{subleading lepton})',legendpos=43,logy=0,cut=myCut,**kwargs)
+        #plotMethod('w1.Dxy1',[100,-.1,.1],savedir+'w1DXY',yaxis='Events',xaxis='#Delta(lepton,pv)_{XY}',legendpos=43,logy=0,cut=myCut,**kwargs)
+        #plotMethod('w1.Dz1',[100,-.1,.1],savedir+'w1DZ',yaxis='Events',xaxis='#Delta(lepton,pv)_{Z}',legendpos=43,logy=0,cut=myCut,**kwargs)
+        #plotMethod('w1.JetPt1',[40,0,400],savedir+'w1JetPt',yaxis='Events/10.0 GeV',xaxis='p_{T}^{W Lepton Jet} (GeV)',legendpos=43,logy=0,cut=myCut,**kwargs)
+        #plotMethod('w1.JetBTag1',[40,-1,1],savedir+'w1JetBTag',yaxis='Events',xaxis='W Lepton Jet BTag',legendpos=43,logy=0,cut=myCut,**kwargs)
+        #plotMethod('w1.GenPdgId1',[80,-40,40],savedir+'w1GenPdgId',yaxis='Events',xaxis='W Lepton PDG ID',legendpos=43,logy=0,cut=myCut,**kwargs)
+        #plotMethod('w1.MotherGenPdgId1',[80,-40,40],savedir+'w1MotherGenPdgId',yaxis='Events',xaxis='W Lepton Mother PDG ID',legendpos=43,logy=0,cut=myCut,**kwargs)
         #plotMethod('w1.mll_z1_1',[80,0,240],savedir+'dilepton_mass_1_ss',yaxis='Events/3.0 GeV',xaxis='M(l^{#pm}l^{#pm}) (Z_{l1},W_{l}) (GeV)',legendpos=43,logy=0,cut='w1.Chg1==z1.Chg1 & %s' %myCut,overflow=True,**kwargs)
         #plotMethod('w1.mll_z1_2',[80,0,240],savedir+'dilepton_mass_2_ss',yaxis='Events/3.0 GeV',xaxis='M(l^{#pm}l^{#pm}) (Z_{l2},W_{l}) (GeV)',legendpos=43,logy=0,cut='w1.Chg1==z1.Chg2 & %s' %myCut,overflow=True,**kwargs)
         #plotMethod('w1.mll_z1_1',[80,0,240],savedir+'dilepton_mass_1_os',yaxis='Events/3.0 GeV',xaxis='M(l^{#pm}l^{#mp}) (Z_{l1},W_{l}) (GeV)',legendpos=43,logy=0,cut='w1.Chg1!=z1.Chg1 & %s' %myCut,overflow=True,**kwargs)
@@ -129,22 +148,19 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     sigMap = getSigMap(nl,mass)
     intLumiMap = getIntLumiMap()
     channelBackground = {
-        #'Hpp2l' : ['T', 'TT', 'TTV', 'Z', 'ZG', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'Hpp2l' : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
-        #'Z'     : ['T', 'TT', 'TTV', 'W', 'Z', 'ZG', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'Z'     : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
-        #'WZ'    : ['T', 'TT', 'TTV', 'Z', 'ZG', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'WZ'    : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
-        #'TT'    : ['T', 'TT', 'TTV', 'W', 'Z', 'ZG', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'TT'    : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
-        #'Hpp3l' : ['T', 'TT', 'TTV', 'Z', 'ZG', 'VVV', 'DB'],
-        'Hpp3l' : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'Hpp4l' : ['TT', 'Z', 'DB']
+        'Hpp2l' : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'HZZ', 'WW', 'WZ'],
+        'Z'     : ['T', 'TT', 'TTV', 'W', 'Z', 'Zlow', 'VVV', 'ZZ', 'HZZ', 'WW', 'WZ'],
+        'WZ'    : ['T', 'TT', 'TTV', 'Z', 'VVV', 'ZZ', 'HZZ', 'WW', 'WZ'],
+        'TT'    : ['T', 'TT', 'TTV', 'W', 'Z', 'Zlow', 'VVV', 'ZZ', 'HZZ', 'WW', 'WZ'],
+        #'TT'    : ['T', 'TT', 'TTV', 'W', 'Z', 'ZG', 'VVV', 'ZZ', 'HZZ', 'WW', 'WZ'],
+        'Hpp3l' : ['T', 'TT', 'TTV', 'Z', 'VVV', 'ZZ', 'HZZ', 'WW', 'WZ'],
+        #'Hpp3l' : ['T', 'TT', 'TTV', 'Z', 'ZG', 'VVV', 'ZZ', 'HZZ', 'WW', 'WZ'],
+        'Hpp4l' : ['TT', 'TTV', 'Z', 'VVV', 'ZZ', 'HZZ', 'WW', 'WZ']
     }
     if runPeriod==13:
         channelBackground = {
-            'WZ'    : ['T', 'TT', 'TTV', 'Z', 'ZZ', 'WZ'],
-            'TT'    : ['T', 'TT', 'TTV', 'Z', 'ZZ', 'WZ'],
+            'WZ'    : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
+            'TT'    : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
             'Hpp3l' : ['T', 'TT', 'TTV', 'Z', 'DB'],
             'Hpp4l' : ['T', 'TT', 'Z', 'TTV', 'DB']
         }
@@ -166,26 +182,16 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
     if dataplot: plotter.initializeDataSamples([sigMap[runPeriod]['data']])
     plotter.setIntLumi(intLumiMap[runPeriod])
+
+
+    if analysis in ['Hpp3l'] and not blind:
+        plotter.plotMCDataSignalRatio2D('z1.mass','finalstate.mass', [70,0,140], [100,0,200], 'm3l_v_z1_mc', plotdata=0, plotmc=1, cut=myCut, xaxis='M(l^{+}l^{-})',yaxis='M(3l)')
+        plotter.plotMCDataSignalRatio2D('z1.mass','finalstate.mass', [70,0,140], [100,0,200], 'm3l_v_z1_data', plotdata=1, plotmc=0, cut=myCut, xaxis='M(l^{+}l^{-})',yaxis='M(3l)')
+
     plotMode = 'plotMCDataRatio' if dataplot else 'plotMC'
     plotMethod = getattr(plotter,plotMode)
     print "MKPLOTS:%s:%s:%iTeV: Plotting discriminating variables" % (analysis,channel, runPeriod)
     plotDistributions(plotMethod,myCut,nl,isControl,analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
-    #if channel in ['Z', 'TT']: # plot the 3rd lepton veto selection
-    #    print "MKPLOTS:%s:%s:%iTeV: Plotting discriminating variables loose e veto" % (analysis,channel, runPeriod)
-    #    plotDistributions(plotMethod,myCut+' & finalstate.elecVetoLoose==1 & finalstate.muonVetoLoose==0',nl,isControl,savedir='eVetoLoose',analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
-    #    print "MKPLOTS:%s:%s:%iTeV: Plotting discriminating variables loose m veto" % (analysis,channel, runPeriod)
-    #    plotDistributions(plotMethod,myCut+' & finalstate.muonVetoLoose==1 & finalstate.elecVetoLoose==0',nl,isControl,savedir='mVetoLoose',analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
-    #    print "MKPLOTS:%s:%s:%iTeV: Plotting discriminating variables tight e veto" % (analysis,channel, runPeriod)
-    #    plotDistributions(plotMethod,myCut+' & finalstate.elecVetoTight==1 & finalstate.muonVetoLoose==0',nl,isControl,savedir='eVetoTight',analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
-    #    print "MKPLOTS:%s:%s:%iTeV: Plotting discriminating variables tight m veto" % (analysis,channel, runPeriod)
-    #    plotDistributions(plotMethod,myCut+' & finalstate.muonVetoTight==1 & finalstate.elecVetoLoose==0',nl,isControl,savedir='mVetoTight',analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
-
-    # plotting kinematic plots
-    #print "MKPLOTS:%s:%s:%iTeV: Plotting kinematics" % (analysis, channel, runPeriod)
-    #plotKinematicsMethod(plotMethod,leptons,'Lepton',[myCut]*nl,logy=0)
-    #plotKinematicsMethod(plotMethod,leptons,'Electron',['%sFlv=="e"&&%s' %(x,myCut) for x in leptons],logy=0)
-    #plotKinematicsMethod(plotMethod,leptons,'Muon',['%sFlv=="m"&&%s' %(x,myCut) for x in leptons],logy=0)
-    #if runTau: plotKinematicsMethod(plotMethod,leptons,'Tau',['%sFlv=="t"&&%s' %(x,myCut) for x in leptons],logy=0)
 
     # each channel
     if plotFinalStates:
@@ -193,15 +199,6 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         for c in fsToPlot:
             print "MKPLOTS:%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c)
             plotDistributions(plotMethod,myCut+'&&channel=="%s"'%c,nl,isControl,savedir=c,analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
-            #if channel in ['Z', 'TT']: # plot the 3rd lepton veto selection
-            #    print "MKPLOTS:%s:%s:%iTeV: Plotting discriminating variables loose e veto" % (analysis,channel, runPeriod)
-            #    plotDistributions(plotMethod,myCut+' & finalstate.elecVetoLoose==1 & finalstate.muonVetoLoose==0 & channel=="%s"'%c,nl,isControl,savedir=c+'/eVetoLoose',analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
-            #    print "MKPLOTS:%s:%s:%iTeV: Plotting discriminating variables loose m veto" % (analysis,channel, runPeriod)
-            #    plotDistributions(plotMethod,myCut+' & finalstate.muonVetoLoose==1 & finalstate.elecVetoLoose==0 & channel=="%s"'%c,nl,isControl,savedir=c+'/mVetoLoose',analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
-            #    print "MKPLOTS:%s:%s:%iTeV: Plotting discriminating variables tight e veto" % (analysis,channel, runPeriod)
-            #    plotDistributions(plotMethod,myCut+' & finalstate.elecVetoTight==1 & finalstate.muonVetoLoose==0 & channel=="%s"'%c,nl,isControl,savedir=c+'/eVetoTight',analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
-            #    print "MKPLOTS:%s:%s:%iTeV: Plotting discriminating variables tight m veto" % (analysis,channel, runPeriod)
-            #    plotDistributions(plotMethod,myCut+' & finalstate.muonVetoTight==1 & finalstate.elecVetoLoose==0 & channel=="%s"'%c,nl,isControl,savedir=c+'/mVetoTight',analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
 
     # some partially blind plots for h++
     if runPeriod==8 and not dataplot and analysis in ['Hpp3l']:
@@ -235,10 +232,6 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         # plot the signal overlay
         print "MKPLOTS:%s:%s:%iTeV: Plotting signal overlay discriminating variables" % (analysis, channel, runPeriod)
         plotDistributions(plotMethod,myCut,nl,isControl,savedir='overlay',signalscale=100,analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
-        #print "MKPLOTS:%s:%s:%iTeV: Plotting signal overlay kinematics" % (analysis, channel, runPeriod)
-        #plotKinematicsMethod(plotMethod,leptons,'Lepton',[myCut]*nl,signalscale=1000,savedir='overlay',logy=1)
-        #plotKinematicsMethod(plotMethod,leptons,'Electron',['%sFlv=="e"&&%s' %(x,myCut) for x in leptons],signalscale=100,savedir='overlay',logy=1)
-        #plotKinematicsMethod(plotMethod,leptons,'Muon',['%sFlv=="m"&&%s' %(x,myCut) for x in leptons],signalscale=100,savedir='overlay',logy=1)
 
     # plot shapes
     if plotShapes:
@@ -278,7 +271,6 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
                     print "MKPLOTS:%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c)
                     plotDistributions(plotMethod,'%s&channel=="%s"&%s'%(myCut,c,thisCut),nl,isControl,savedir='cutflow/%s/%s' %(cutFlowMap[channel]['labels_simple'][i],c),analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
 
-
     # plot cut flows on same plot
     plotter = CutFlowPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_cutflow',mergeDict=mergeDict,scaleFactor=scaleFactor)
     plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
@@ -313,89 +305,152 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         plotMethod(['%s&&%s'%(myCut,thisCut)]+['%s&&%s&&%s' %(x,myCut,thisCut) for x in plotChannelCuts],'cutflow/%s/individualChannels'%cutFlowMap[channel]['labels_simple'][i],labels=['Total']+plotChannelStrings,nosum=True,lumitext=33,logy=0)
 
     # plot efficiencies
-    if analysis in ['WZ']:
-        print "MKPLOTS:%s:%s:%iTeV: Plotting efficiency" % (analysis, channel, runPeriod)
-        plotter = EfficiencyPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_efficiency',mergeDict=mergeDict,scaleFactor=scaleFactor)
-        plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel] if x != 'WZ'])
-        plotter.initializeSignalSamples([sigMap[runPeriod]['WZ']])
-        if dataplot: plotter.initializeDataSamples([sigMap[runPeriod]['data']])
-        plotter.setIntLumi(intLumiMap[runPeriod])
-        plotMode = 'plotCutFlowMCDataSignal' if dataplot else 'plotCutFlowMCSignal'
-        plotMethod = getattr(plotter,plotMode)
-        plotMethod([x+'&&'+myCut for x in cutFlowMap[channel]['cuts']],'efficiency',labels=cutFlowMap[channel]['labels'],lumitext=33)
-        if plotFinalStates:
-            for c in fsToPlot:
-                print "MKPLOTS:%s:%s:%iTeV: Plotting efficiency  %s" % (analysis, channel, runPeriod, c)
-                plotMethod(['%s&&channel=="%s"&&%s' %(x,c,myCut) for x in cutFlowMap[channel]['cuts']],'%s/efficiency'%c,labels=cutFlowMap[channel]['labels'],lumitext=33,logy=0)
+    #if analysis in ['WZ']:
+    #    print "MKPLOTS:%s:%s:%iTeV: Plotting efficiency" % (analysis, channel, runPeriod)
+    #    plotter = EfficiencyPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_efficiency',mergeDict=mergeDict,scaleFactor=scaleFactor)
+    #    plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel] if x != 'WZ'])
+    #    plotter.initializeSignalSamples([sigMap[runPeriod]['WZ']])
+    #    if dataplot: plotter.initializeDataSamples([sigMap[runPeriod]['data']])
+    #    plotter.setIntLumi(intLumiMap[runPeriod])
+    #    plotMode = 'plotCutFlowMCDataSignal' if dataplot else 'plotCutFlowMCSignal'
+    #    plotMethod = getattr(plotter,plotMode)
+    #    plotMethod([x+'&&'+myCut for x in cutFlowMap[channel]['cuts']],'efficiency',labels=cutFlowMap[channel]['labels'],lumitext=33)
+    #    if plotFinalStates:
+    #        for c in fsToPlot:
+    #            print "MKPLOTS:%s:%s:%iTeV: Plotting efficiency  %s" % (analysis, channel, runPeriod, c)
+    #            plotMethod(['%s&&channel=="%s"&&%s' %(x,c,myCut) for x in cutFlowMap[channel]['cuts']],'%s/efficiency'%c,labels=cutFlowMap[channel]['labels'],lumitext=33,logy=0)
 
-        # plot cut flows overlays
-        plotter = CutFlowPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_cutflow_overlay',mergeDict=mergeDict,scaleFactor=scaleFactor)
-        plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel] if x not in ['WZ']])
-        plotter.initializeSignalSamples([sigMap[runPeriod]['WZ']])
-        if dataplot: plotter.initializeDataSamples([sigMap[runPeriod]['data']])
-        plotter.setIntLumi(intLumiMap[runPeriod])
-        plotMode = 'plotCutFlowMCDataSignal' if dataplot else 'plotCutFlowMCSignal'
-        plotMethod = getattr(plotter,plotMode)
-        plotMethod([x+'&&'+myCut for x in cutFlowMap[channel]['cuts']],'cutFlow_overlay',labels=cutFlowMap[channel]['labels'],lumitext=33,logy=0)
-        if plotFinalStates:
-            for c in fsToPlot:
-                print "MKPLOTS:%s:%s:%iTeV: Plotting cut flow overlay  %s" % (analysis, channel, runPeriod, c)
-                plotMethod(['%s&&channel=="%s"&&%s' %(x,c,myCut) for x in cutFlowMap[channel]['cuts']],'%s/cutFlow_overlay'%c,labels=cutFlowMap[channel]['labels'],lumitext=33,logy=0)
+    #    # plot cut flows overlays
+    #    plotter = CutFlowPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_cutflow_overlay',mergeDict=mergeDict,scaleFactor=scaleFactor)
+    #    plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel] if x not in ['WZ']])
+    #    plotter.initializeSignalSamples([sigMap[runPeriod]['WZ']])
+    #    if dataplot: plotter.initializeDataSamples([sigMap[runPeriod]['data']])
+    #    plotter.setIntLumi(intLumiMap[runPeriod])
+    #    plotMode = 'plotCutFlowMCDataSignal' if dataplot else 'plotCutFlowMCSignal'
+    #    plotMethod = getattr(plotter,plotMode)
+    #    plotMethod([x+'&&'+myCut for x in cutFlowMap[channel]['cuts']],'cutFlow_overlay',labels=cutFlowMap[channel]['labels'],lumitext=33,logy=0)
+    #    if plotFinalStates:
+    #        for c in fsToPlot:
+    #            print "MKPLOTS:%s:%s:%iTeV: Plotting cut flow overlay  %s" % (analysis, channel, runPeriod, c)
+    #            plotMethod(['%s&&channel=="%s"&&%s' %(x,c,myCut) for x in cutFlowMap[channel]['cuts']],'%s/cutFlow_overlay'%c,labels=cutFlowMap[channel]['labels'],lumitext=33,logy=0)
 
 
 def plotFakeRate(analysis,channel,runPeriod,**kwargs):
     '''Plot fake rate for an analysis.'''
-    ntuples = 'ntuples%s_%stev_%s' % (analysis,runPeriod,channel)
-    saves = '%s_%s_%sTeV_Fakes' % (analysis,channel,runPeriod)
-    nl = 3 if analysis in ['Hpp3l','WZ'] else 4
+    blind = kwargs.pop('blind',True)
     mass = kwargs.pop('mass',500)
-    isControl = False
+    runTau = kwargs.pop('runTau',False)
+    myCut = kwargs.pop('myCut','1')
+    plotFinalStates = kwargs.pop('plotFinalStates',False)
+    plotJetBins = kwargs.pop('plotJetBins',False)
+    plotOverlay = kwargs.pop('plotOverlay',False)
+    plotShapes = kwargs.pop('plotShapes',False)
+    plotCutFlow = kwargs.pop('plotCutFlow',False)
+    finalStatesToPlot = kwargs.pop('finalStates','all')
+    nostack = kwargs.pop('nostack',False)
+    normalize = kwargs.pop('normalize',False)
+    scaleFactor = kwargs.pop('scaleFactor','event.pu_weight*event.lep_scale*event.trig_scale')
+    useSignal = analysis in ['Hpp3l','Hpp4l']
+    for key, value in kwargs.iteritems():
+        print "Unrecognized parameter '" + key + "' = " + str(value)
+        return 0
+
+    if useSignal: print "MKPLOTS:%s:%s:%iTeV: Mass: %i" % (analysis,channel,runPeriod,mass)
+    isControl = analysis != channel
+    numleps = {
+        'Hpp2l': 2,
+        'Z'    : 2,
+        'TT'   : 2,
+        'WZ'   : 3,
+        'Hpp3l': 3,
+        'Hpp4l': 4,
+    }
+    nl = numleps[analysis]
+    ntuples = 'ntuples%s_%stev_%s' % (analysis,runPeriod,channel)
+    saves = '%s_%s_%sTeV' % (analysis,channel,runPeriod)
     sigMap = getSigMap(nl,mass)
-    mergeDict = getMergeDict(runPeriod)
     intLumiMap = getIntLumiMap()
     channelBackground = {
-        'WZ' : ['T','TT', 'TTV', 'Z', 'VVV', 'ZZ','WZ'],
-        'Hpp3l' : ['T','TT', 'TTV','Z','VVV','DB'],
-        'Hpp4l' : ['TT','Z','DB'],
-        'FakeRate' : ['T','TT', 'TTV','Z','VVV','DB'],
+        'Hpp2l' : ['T', 'TT', 'TTV', 'W', 'Z', 'ZG', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'Z'     : ['T', 'TT', 'TTV', 'W', 'Z', 'ZG', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'WZ'    : ['T', 'TT', 'TTV', 'W', 'Z', 'ZG', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'TT'    : ['T', 'TT', 'TTV', 'W', 'Z', 'ZG', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'Hpp3l' : ['T', 'TT', 'TTV', 'W', 'Z', 'ZG', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'Hpp4l' : ['TT', 'Z', 'DB']
     }
     if runPeriod==13:
         channelBackground = {
-            'WZ' : ['T','TT', 'TTV', 'Z', 'ZZ','WZ'],
-            'Hpp3l' : ['T', 'TT', 'TTV','Z','DB'],
-            'Hpp4l' : ['T', 'TT', 'Z', 'TTV','DB'],
-            'FakeRate' : ['T', 'TT', 'TTV','Z','DB'],
+            'WZ'    : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
+            'Z'    : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
+            'TT'    : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
+            'Hpp2l' : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
+            'Hpp3l' : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
+            'Hpp4l' : ['T', 'TT', 'Z', 'TTV', 'WW', 'ZZ', 'WZ']
         }
 
+    finalStates, leptons = getChannels(nl,runTau=runTau)
+    if finalStatesToPlot=='all':
+        fsToPlot = finalStates
+    else:
+        fsToPlot = finalStatesToPlot.split(',')
+    print 'MKPLOTS:%s:%s:%iTeV: Cuts to be applied: %s' % (analysis, channel, runPeriod, myCut)
+    dataplot = (isControl or not blind) and runPeriod in [7,8]
+    mergeDict = getMergeDict(runPeriod)
+
+    # define fake regions
+    lepName = {'e': 'Elec', 'm': 'Muon', 't': 'Tau'}
+    fakeRegions = {}
+    fakeRegions['WZ'] = {}
+    for f in ['e', 'm']:
+        for p in ['Loose', 'Tight']:
+            # select leading Z pt, Z window [60,120], tight (or loose) Z, low met, m3l>100, w1 mass < 30
+            for z in ['Loose', 'Tight']:
+                fakeRegion = 'Z{0}Probe{1}{2}'.format(z,lepName[f],p)
+                denom = 'z1.Pt1>20. & z1.mass>60. & z1.mass<120. & z1.Pass{0}1 & z1.Pass{0}2 & finalstate.met<20. & finalstate.mass>100. & w1.mass<20. & w1Flv=="{1}"'.format(z,f)
+                numer = '{0} & w1.Pass{1}1'.format(denom,p)
+                fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
+            # select w lepton pt, z veto, met
+            #'W' : 'w1.Pt1>20. & (z1.mass<60. | z1.mass>120.) & finalstate.met>30. & w1.mass>30.',
+            # veto Z, low met, w mass veto
+            #'QCD' : '(z1.mass<60. | z1.mass>120.) & finalstate.met<20. & w1.mass<20.',
+
     # setup selections
-    denomSelection = 'select.pass_elecLoose0p20 & select.pass_muonLoose0p20 & finalstate.bjetVeto30==0 & (z1.Pt1>20.&z1.Pt2>10.) & fabs(z1.mass-91.1876)<20. & w1.Pt1>20. & w1.met<30.'
-    eDenom = denomSelection+' & w1Flv=="e"'
-    mDenom = denomSelection+' & w1Flv=="m"'
-    ePtBins = [20,30,40,60,100,1000]
-    mPtBins = [20,30,40,60,100,1000]
-    eEtaBins = [0,1.479,2.5]
-    mEtaBins = [0,1.2,2.4]
+    ptBins = [10,20,40,100,1000]
+    etaBins = {
+        'e': [0,1.479,2.5],
+        'm': [0,1.2,2.4],
+    }
+    for fakeRegion in fakeRegions[analysis]:
+        print "MKPLOTS:%s:%s:%iTeV: Fake Region: %s" % (analysis,channel, runPeriod, fakeRegion)
+        denom = fakeRegions[analysis][fakeRegion]['denom']
+        numer = fakeRegions[analysis][fakeRegion]['numer']
+        probe = fakeRegions[analysis][fakeRegion]['probe']
+        ptvar = fakeRegions[analysis][fakeRegion]['ptVar']
+        etavar = fakeRegions[analysis][fakeRegion]['etaVar']
 
-    plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict)
-    plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
-    #plotter.initializeDataSamples([sigMap[runPeriod]['data']])
-    plotter.setIntLumi(intLumiMap[runPeriod])
-    plotMode = 'plotMC'
-    plotMethod = getattr(plotter,plotMode)
-    print "MKPLOTS:%s:%s:%iTeV: Plotting discriminating variables" % (analysis,channel, runPeriod)
-    plotDistributions(plotMethod,denomSelection,nl,isControl,analysis=analysis)
-    plotDistributions(plotMethod,eDenom,nl,isControl,analysis=analysis,savedir='elec')
-    plotDistributions(plotMethod,mDenom,nl,isControl,analysis=analysis,savedir='muon')
+        plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,rootName='{0}_fakeplots'.format(fakeRegion))
+        plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
+        #plotter.initializeDataSamples([sigMap[runPeriod]['data']])
+        plotter.setIntLumi(intLumiMap[runPeriod])
+        plotMode = 'plotMC'
+        plotMethod = getattr(plotter,plotMode)
+        print "MKPLOTS:%s:%s:%iTeV: Plotting discriminating variables: All Probes" % (analysis,channel, runPeriod)
+        plotDistributions(plotMethod,denom,nl,isControl,analysis=analysis,savedir='fakeRate/{0}_all'.format(fakeRegion))
+        print "MKPLOTS:%s:%s:%iTeV: Plotting discriminating variables: Passing" % (analysis,channel, runPeriod)
+        plotDistributions(plotMethod,numer,nl,isControl,analysis=analysis,savedir='fakeRate/{0}_prompts'.format(fakeRegion))
+        print "MKPLOTS:%s:%s:%iTeV: Plotting discriminating variables: Failing" % (analysis,channel, runPeriod)
+        plotDistributions(plotMethod,'{0} & !({1})'.format(denom,numer),nl,isControl,analysis=analysis,savedir='fakeRate/{0}_fakes'.format(fakeRegion))
 
-    # now plot the fake rates
-    print "MKPLOTS:%s:%s:%iTeV: Computing fake rates" % (analysis,channel, runPeriod)
-    plotter = FakeRatePlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='fakerates',mergeDict=mergeDict)
-    # this should be done in data... using mc until we get some!
-    plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
-    #plotter.initializeDataSamples([sigMap[runPeriod]['data']])
-    plotter.setIntLumi(intLumiMap[runPeriod])
-    plotter.plotFakeRate('w1.pass_elecMedium0p15_1 & '+eDenom, eDenom, 'fakeRate_elec', ptBins=ePtBins, etaBins=eEtaBins, logx=1)
-    plotter.plotFakeRate('w1.pass_muonTight0p12_1 & '+mDenom, mDenom, 'fakeRate_muon', ptBins=mPtBins, etaBins=mEtaBins, logx=1)
+        # now plot the fake rates
+        print "MKPLOTS:%s:%s:%iTeV: Computing fake rates" % (analysis,channel, runPeriod)
+        plotter = FakeRatePlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='{0}_fakerates'.format(fakeRegion),mergeDict=mergeDict)
+        # this should be done in data... using mc until we get some!
+        # subtract WZ, ZZ, ttbar contributions from data
+        # only initialize Z... in MC?
+        plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
+        #plotter.initializeDataSamples([sigMap[runPeriod]['data']])
+        plotter.setIntLumi(intLumiMap[runPeriod])
+        plotter.plotFakeRate(numer, denom, 'fakeRate/{0}_fakerate'.format(fakeRegion), ptBins=ptBins, etaBins=etaBins[probe], logx=1, ptVar=ptvar, etaVar=etavar)
 
 def parse_command_line(argv):
     parser = argparse.ArgumentParser(description="Plot a given channel and period")

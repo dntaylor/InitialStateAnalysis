@@ -56,6 +56,7 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
        Int_t   run;\
        Int_t   lumi;\
        Int_t   nvtx;\
+       Int_t   GenNUP;\
        Float_t lep_scale;\
        Float_t lep_scale_up;\
        Float_t lep_scale_down;\
@@ -63,7 +64,7 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
        Float_t pu_weight;\
     };");
     eventStruct = rt.structEvent_t()
-    structureDict['event'] = [eventStruct, eventStruct,'evt/I:run:lumi:nvtx:lep_scale/F:lep_scale_up:lep_scale_down:trig_scale:pu_weight']
+    structureDict['event'] = [eventStruct, eventStruct,'evt/I:run:lumi:nvtx:GenNUP:lep_scale/F:lep_scale_up:lep_scale_down:trig_scale:pu_weight']
     structOrder += ['event']
 
     rt.gROOT.ProcessLine(
@@ -123,10 +124,17 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
        Float_t Eta;\
        Float_t Phi;\
        Float_t Iso;\
+       Float_t Dxy;\
+       Float_t Dz;\
+       Float_t JetPt;\
+       Float_t JetBTag;\
        Float_t LepScaleLoose;\
        Float_t LepScaleTight;\
        Int_t   Chg;\
+       Int_t   PassLoose;\
        Int_t   PassTight;\
+       Int_t   GenPdgId;\
+       Int_t   MotherGenPdgId;\
     };");
     rt.gROOT.ProcessLine(
     "struct structObjChar_t {\
@@ -154,7 +162,7 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
                     charName = 'g'
                     phoCount += 1
                     objCount = phoCount
-                structureDict['%s%i' % (charName, objCount)] = [objStruct, objStruct, 'Pt/F:Eta:Phi:Iso:LepScaleLoose:LepScaleTight:Chg/I:PassTight']
+                structureDict['%s%i' % (charName, objCount)] = [objStruct, objStruct, 'Pt/F:Eta:Phi:Iso:Dxy:Dz:JetPt:JetBTag:LepScaleLoose:LepScaleTight:Chg/I:PassLoose:PassTight:GenPdgId:MotherGenPdgId']
                 structureDict['%s%iFlv' % (charName, objCount)] = [flvStruct, rt.AddressOf(flvStruct,'Flv'),'Flv/C']
                 structOrder += ['%s%i' % (charName, objCount)]
                 structOrder += ['%s%iFlv' % (charName, objCount)]
@@ -164,7 +172,7 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
         for key in state:
             val = object_definitions[key]
             strForBranch = ""
-            strToProcess = "struct struct%s_t {" % key.upper()
+            strToProcess = "struct struct%s_t {" % (key.upper())
             strForBranch += "mass/F:Pt:sT:dPhi:"
             strToProcess += "\
                 Float_t mass;\
@@ -183,14 +191,18 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
                         Float_t metPhi;"
                 else:
                     objCount += 1
-                    strForBranch += "Pt%i:Eta%i:Phi%i:Iso%i:LepScaleLoose%i:LepScaleTight%i:" % (objCount, objCount, objCount, objCount, objCount, objCount)
+                    strForBranch += "Pt{0}:Eta{0}:Phi{0}:Iso{0}:Dxy{0}:Dz{0}:JetPt{0}:JetBTag{0}:LepScaleLoose{0}:LepScaleTight{0}:".format(objCount)
                     strToProcess += "\
-                        Float_t Pt%i;\
-                        Float_t Eta%i;\
-                        Float_t Phi%i;\
-                        Float_t Iso%i;\
-                        Float_t LepScaleLoose%i;\
-                        Float_t LepScaleTight%i;" % (objCount, objCount, objCount, objCount, objCount, objCount)
+                        Float_t Pt{0};\
+                        Float_t Eta{0};\
+                        Float_t Phi{0};\
+                        Float_t Iso{0};\
+                        Float_t Dxy{0};\
+                        Float_t Dz{0};\
+                        Float_t JetPt{0};\
+                        Float_t JetBTag{0};\
+                        Float_t LepScaleLoose{0};\
+                        Float_t LepScaleTight{0};".format(objCount)
                     # do the deltaRs
                     #for s in states:
                     #    for k in state:
@@ -213,19 +225,21 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
                 if obj == 'n': continue
                 else:
                     objCount += 1
-                    strForBranch += "Chg%i/I:PassTight%i:" % (objCount, objCount) if objCount == 1 else\
-                                    "Chg%i:PassTight%i:" % (objCount, objCount)
+                    strForBranch += "Chg{0}/I:PassLoose{0}:PassTight{0}:GenPdgId{0}:MotherGenPdgId{0}:".format(objCount)
                     strToProcess += "\
-                        Int_t   Chg%i;\
-                        Int_t   PassTight%i;" % (objCount, objCount)
+                        Int_t   Chg{0};\
+                        Int_t   PassLoose{0};\
+                        Int_t   PassTight{0};\
+                        Int_t   GenPdgId{0};\
+                        Int_t   MotherGenPdgId{0};".format(objCount)
                     for altId in alternateIds:
-                        strToProcess += "Int_t pass_%s_%i;" % (altId, objCount)
-                        strForBranch += "pass_%s_%i:" % (altId, objCount)
+                        strToProcess += "Int_t pass_{0}_{1};".format(altId, objCount)
+                        strForBranch += "pass_{0}_{1}:".format(altId, objCount)
             strForBranch = strForBranch[:-1] # remove trailing :
             strToProcess += "\
                 };"
             rt.gROOT.ProcessLine(strToProcess)
-            initialStruct = getattr(rt,"struct%s_t" % key.upper())()
+            initialStruct = getattr(rt,"struct{0}_t".format(key.upper()))()
             structureDict[key] = [initialStruct, initialStruct, strForBranch]
             structOrder += [key]
 

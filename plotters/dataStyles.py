@@ -24,6 +24,8 @@ Blue    = ROOT.TColor.GetColor('#107FC9')
 BlueA   = ROOT.TColor.GetColor('#0E4EAD')
 Navy    = ROOT.TColor.GetColor('#003399')
 NavyA   = ROOT.TColor.GetColor('#00297A')
+Steel   = ROOT.TColor.GetColor('#9999FF')
+SteelA  = ROOT.TColor.GetColor('#B8B8FF')
 DarkRed = ROOT.TColor.GetColor('#A30000')
 DarkRedA= ROOT.TColor.GetColor('#8F0000')
 Red     = ROOT.TColor.GetColor('#F01800')
@@ -58,6 +60,16 @@ dataStyles['ZZJetsTo4L_TuneZ2star_8TeV-madgraph-tauola'] = copy.deepcopy(dataSty
 dataStyles['Diboson'] = copy.deepcopy(dataStyles['ZZJets'])
 dataStyles['Diboson']['name'] = 'Diboson'
 
+dataStyles['HZZ'] = {
+    'legendstyle' : 'f',
+    'drawstyle' : 'hist',
+    'linecolor' : SteelA,
+    'fillcolor' : Steel,
+    'name' : "HZZ",
+    'fillstyle': 1001,
+}
+
+
 dataStyles['ZG'] = {
     'legendstyle' : 'f',
     'drawstyle' : 'hist',
@@ -68,6 +80,10 @@ dataStyles['ZG'] = {
 }
 
 dataStyles['ZGToLLG_8TeV-madgraph'] = copy.deepcopy(dataStyles['ZG'])
+
+dataStyles['WGJets'] = copy.deepcopy(dataStyles['ZG'])
+dataStyles['WGJets']['name'] = 'W#gamma*'
+
 
 dataStyles['WZJets'] = {
     'legendstyle' : 'f',

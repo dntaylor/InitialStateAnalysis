@@ -35,6 +35,7 @@ class AnalyzerWZ(AnalyzerBase):
             'w1': ['em','n'],
             'z1': ['em','em'],
         }
+        self.lepargs = {'tight':True}
         self.cutflow_labels = ['Trigger','Fiducial','ID','Z Selection','W Selection']
         #self.alternateIds, self.alternateIdMap = self.defineAlternateIds(period)
         self.doVBF = (period=='13')
@@ -59,10 +60,10 @@ class AnalyzerWZ(AnalyzerBase):
             mass = getattr(rtrow, "%s_%s_Mass" % (l[0], l[1]))
             massdiff = abs(ZMASS-mass)
 
-            ordList = [l[1], l[0], l[2]] if getattr(rtrow,'%sPt' % l[0]) < getattr(rtrow,'%sPt' % l[1]) else l
+            ordList = [l[1], l[0], l[2]] if getattr(rtrow,'%sPt' % l[0]) < getattr(rtrow,'%sPt' % l[1]) else [l[0], l[1], l[2]]
 
             if OS1 and l[0][0]==l[1][0]:
-                cands.append((massdiff, list(ordList)))
+                cands.append((massdiff, ordList))
 
         if not len(cands): return 0
 
@@ -128,13 +129,11 @@ class AnalyzerWZ(AnalyzerBase):
     def preselection(self,rtrow):
         cuts = CutSequence()
         if self.isData: cuts.add(self.trigger)
-        #cuts.add(self.trigger)
         cuts.add(self.fiducial)
         #if self.period=='13': cuts.add(self.passAnyId)
-        cuts.add(self.ID_tight)
-        #cuts.add(self.mass3l)
-        #cuts.add(self.zSelection)
-        #cuts.add(self.wSelection)
+        #cuts.add(self.ID_tight)
+        #cuts.add(self.ID_loose)
+        cuts.add(self.ID_veto)
         return cuts
 
     def selection(self,rtrow):
@@ -142,7 +141,7 @@ class AnalyzerWZ(AnalyzerBase):
         if self.isData: cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.ID_tight)
-        if self.period=='8': cuts.add(self.mass3l)
+        cuts.add(self.mass3l)
         cuts.add(self.zSelection)
         cuts.add(self.wSelection)
         return cuts
@@ -182,13 +181,15 @@ class AnalyzerWZ(AnalyzerBase):
         if type=='Veto':
             kwargs['idDef'] = {
                 'e':'Veto',
-                'm':'Loose',
+                'm':'ZZLoose',
                 't':'Loose'
             }
             kwargs['isoCut'] = {
                 'e':0.4,
                 'm':0.4
             }
+            if self.period=='13':
+                kwargs['isoCut']['e'] = 9999.
         if hasattr(self,'alternateIds'):
             if type in self.alternateIds:
                 kwargs = self.alternateIdMap[type]
@@ -245,14 +246,15 @@ class AnalyzerWZ(AnalyzerBase):
         return rtrow.Mass > 100.
 
     def zSelection(self,rtrow):
-        leps = self.objects
+        leps = self.objCand
         o = ordered(leps[0], leps[1])
         m1 = getattr(rtrow,'%s_%s_Mass' % (o[0],o[1]))
         l0Pt = getattr(rtrow,'%sPt' %leps[0])
-        return abs(m1-ZMASS)<20. and l0Pt>20.
+        #return abs(m1-ZMASS)<20. and l0Pt>20.
+        return (m1>=60. and m1<=120. and l0Pt>20.)
 
     def wSelection(self,rtrow):
-        leps = self.objects
+        leps = self.objCand
         if getattr(rtrow, '%sPt' %leps[2])<20.: return False
         if self.period=='8':
             if rtrow.type1_pfMetEt < 30.: return False
@@ -271,15 +273,91 @@ class AnalyzerWZ_DataDriven(AnalyzerWZ):
 
     def preselection(self,rtrow):
         cuts = CutSequence()
-        #if self.isData or self.period=='13': cuts.add(self.trigger)
-        cuts.add(self.trigger)
+        if self.isData: cuts.add(self.trigger)
         cuts.add(self.fiducial)
-        #if self.period=='13': cuts.add(self.passAnyId)
         cuts.add(self.ID_loose)
-        #cuts.add(self.mass3l)
-        #cuts.add(self.zSelection)
-        #cuts.add(self.wSelection)
         return cuts
+
+class AnalyzerWZ_Z(AnalyzerWZ):
+    def __init__(self, sample_name, file_list, out_file, period, **kwargs):
+        super(AnalyzerWZ_Z, self).__init__(sample_name, file_list, out_file, period, **kwargs)
+        self.channel = 'Z'
+
+    def preselection(self,rtrow):
+        cuts = CutSequence()
+        if self.isData: cuts.add(self.trigger)
+        cuts.add(self.fiducial)
+        cuts.add(self.ID_loose)
+        cuts.add(self.ID_tight_Z)
+        cuts.add(self.zSelection)
+        cuts.add(self.metveto)
+        return cuts
+
+    def selection(self,rtrow):
+        cuts = CutSequence()
+        if self.isData: cuts.add(self.trigger)
+        cuts.add(self.fiducial)
+        cuts.add(self.ID_tight)
+        cuts.add(self.zSelection)
+        cuts.add(self.metveto)
+        return cuts
+
+    def ID_tight_Z(self, rtrow):
+        return self.ID(rtrow,*self.objCand[:2],**self.getIdArgs('Tight'))
+
+    def metveto(self,rtrow):
+        if self.period=='8':
+            if rtrow.type1_pfMetEt > 20.: return False
+        else:
+            if rtrow.pfMetEt > 20.: return False
+        return True
+
+class AnalyzerWZ_QCD(AnalyzerWZ):
+    def __init__(self, sample_name, file_list, out_file, period, **kwargs):
+        super(AnalyzerWZ_QCD, self).__init__(sample_name, file_list, out_file, period, **kwargs)
+        self.channel = 'QCD'
+
+    def preselection(self,rtrow):
+        cuts = CutSequence()
+        if self.isData: cuts.add(self.trigger)
+        cuts.add(self.fiducial)
+        cuts.add(self.ID_loose)
+        cuts.add(self.metveto)
+        cuts.add(self.wveto)
+        cuts.add(self.zveto)
+        return cuts
+
+    def trigger(self, rtrow):
+        triggers = ["singleEPass", "singleMuPass"]
+
+        for t in triggers:
+            if getattr(rtrow,t)>0:
+                return True
+        return False
+
+    def metveto(self,rtrow):
+        if self.period=='8':
+            if rtrow.type1_pfMetEt > 20.: return False
+        else:
+            if rtrow.pfMetEt > 20.: return False
+        return True
+
+    def wveto(self,rtrow):
+        mtVar = 'PFMET' if self.period=='13' else 'PfMet_Ty1'
+        obj = self.objCand[2]
+        if obj[0] == 'm':
+            return getattr(rtrow, "%sMtTo%s" % (obj, mtVar)) < 20.
+        return True
+
+    def zveto(self,rtrow):
+        leps = self.objCand
+        o = ordered(leps[0], leps[1])
+        m1 = getattr(rtrow,'%s_%s_Mass' % (o[0],o[1]))
+        if o[0][0] == 'e':
+            return abs(m1-ZMASS)>30. and m1>20.
+        if o[0][0] == 'm':
+            return abs(m1-ZMASS)>15. and m1>20.
+
 
 ##########################
 ###### Command line ######
@@ -304,6 +382,8 @@ def main(argv=None):
 
     if args.analyzer == 'WZ': analyzer = AnalyzerWZ(args.sample_name,args.file_list,args.out_file,args.period)
     if args.analyzer == 'DataDriven': analyzer = AnalyzerWZ_DataDriven(args.sample_name,args.file_list,args.out_file,args.period)
+    if args.analyzer == 'Z': analyzer = AnalyzerWZ_Z(args.sample_name,args.file_list,args.out_file,args.period)
+    if args.analyzer == 'QCD': analyzer = AnalyzerWZ_QCD(args.sample_name,args.file_list,args.out_file,args.period)
     with analyzer as thisAnalyzer:
         thisAnalyzer.analyze()
 
