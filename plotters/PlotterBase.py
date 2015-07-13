@@ -594,7 +594,7 @@ class PlotterBase(object):
         if plotdata: leg.AddEntry(datahist,'Data','ep')
         for hist in mchist.GetHists():
             leg.AddEntry(hist,hist.GetTitle(),'f')
-        if plotsig: leg.AddEntry(sighist)
+        if plotsig: leg.AddEntry(sighist,sighist.GetTitle(),'f')
         return leg
 
     def save(self, savename):
