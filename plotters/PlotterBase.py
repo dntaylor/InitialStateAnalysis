@@ -564,7 +564,9 @@ class PlotterBase(object):
 
     def getLegend(self,plotdata,plotsig,plotratio,legendpos,mchist,datahist,sighist):
 
-        numEntries = len(self.backgrounds)+len(self.signal)+1 if plotdata else len(self.backgrounds)+len(self.signal)
+        numEntries = len(self.backgrounds)
+        if plotsig: numEntries+=1
+        if plotdata: numEntries+=1
         # setup legend position
         if legendpos % 10 == 1:   # on the left
             xend = 0.45
