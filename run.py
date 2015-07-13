@@ -17,7 +17,9 @@ from multiprocessing import Pool
 
 from utilities.utilities import *
 from analyzers.AnalyzerZ import AnalyzerZ
-from analyzers.AnalyzerWZ import AnalyzerWZ, AnalyzerWZ_DataDriven, AnalyzerWZ_Z, AnalyzerWZ_QCD
+from analyzers.AnalyzerWZ import AnalyzerWZ, AnalyzerWZ_Z
+from analyzers.AnalyzerWZ_W import AnalyzerWZ_W
+from analyzers.AnalyzerWZ_QCD import AnalyzerWZ_QCD
 from analyzers.AnalyzerHpp2l import AnalyzerHpp2l, AnalyzerHpp2l_Z, AnalyzerHpp2l_TT
 from analyzers.AnalyzerHpp3l import AnalyzerHpp3l, AnalyzerHpp3l_WZ
 from analyzers.AnalyzerHpp4l import AnalyzerHpp4l
@@ -35,10 +37,14 @@ def run_analyzer(args):
                     'TT'      : AnalyzerHpp2l_TT,
                     },
         'WZ'      : {
-                    'WZ'         : AnalyzerWZ,
-                    'DataDriven' : AnalyzerWZ_DataDriven,
-                    'Z'          : AnalyzerWZ_Z,
-                    'QCD'        : AnalyzerWZ_QCD,
+                    'WZ'      : AnalyzerWZ,
+                    'Z'       : AnalyzerWZ_Z,
+                     },
+        'WZ_W'    : {
+                    'W'       : AnalyzerWZ_W,
+                    },
+        'WZ_QCD'  : {
+                    'QCD'     : AnalyzerWZ_QCD,
                     },
         'Hpp3l'   : {
                     'Hpp3l'   : AnalyzerHpp3l,
@@ -56,21 +62,22 @@ def get_sample_names(analysis,period,samples):
     '''Get unix sample names'''
     ntupleDict = {
         '8': {
-            'Z'    : '2015-06-01-8TeV-2l',
-            'TT'   : '2015-06-01-8TeV-2l',
-            'Hpp2l': '2015-06-01-8TeV-2l',
-            'WZ'   : '2015-06-01-8TeV', 
-            'Hpp3l': '2015-06-01-8TeV',
-            'Hpp4l': 'N/A', 
+            'Z'     : '2015-06-01-8TeV-2l',
+            'TT'    : '2015-06-01-8TeV-2l',
+            'Hpp2l' : '2015-06-01-8TeV-2l',
+            'WZ'    : '2015-06-01-8TeV', 
+            'Hpp3l' : '2015-06-01-8TeV',
+            'Hpp4l' : 'N/A', 
         },
         '13': {
-            'Z'    : 'N/A',
-            'TT'   : 'N/A',
-            'Hpp2l': 'N/A',
-            #'WZ'   : '2015-06-27-13TeV',
-            'WZ'   : '2015-06-29-13TeV-25ns',
-            'Hpp3l': '2015-03-30-13TeV-3l',
-            'Hpp4l': '2015-03-30-13TeV-4l',
+            'Z'     : 'N/A',
+            'TT'    : 'N/A',
+            'Hpp2l' : 'N/A',
+            'WZ'    : '2015-06-29-13TeV-25ns',
+            'WZ_W'  : '2015-07-06-13TeV-25ns-2l',
+            'WZ_QCD': '2015-07-06-13TeV-25ns-lj',
+            'Hpp3l' : '2015-03-30-13TeV-3l',
+            'Hpp4l' : '2015-03-30-13TeV-4l',
         },
     }
     root_dir = '/hdfs/store/user/dntaylor/data/%s' % ntupleDict[period][analysis]
@@ -166,8 +173,8 @@ def parse_command_line(argv):
     parser = argparse.ArgumentParser(description="Run the desired analyzer on "
                                                  "FSA n-tuples")
 
-    parser.add_argument('analysis', type=str, choices=['Z','WZ','Hpp2l','Hpp3l','Hpp4l'], help='Analysis to run')
-    parser.add_argument('channel', type=str, choices=['Z','WZ','TT','Hpp2l','Hpp3l','Hpp4l','FakeRate','DataDriven','QCD'], help='Channel to run for given analysis')
+    parser.add_argument('analysis', type=str, choices=['Z','WZ','WZ_W','WZ_QCD','Hpp2l','Hpp3l','Hpp4l'], help='Analysis to run')
+    parser.add_argument('channel', type=str, choices=['Z','WZ','W','QCD','TT','Hpp2l','Hpp3l','Hpp4l'], help='Channel to run for given analysis')
     parser.add_argument('period', type=str, choices=['8','13'], help='Energy (TeV)')
     parser.add_argument('sample_names', nargs='+',help='Sample names w/ UNIX wildcards')
     parser.add_argument('-s','--submit',action='store_true',help='Submit jobs to condor')

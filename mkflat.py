@@ -48,16 +48,23 @@ def generate(analysis, channel, period, **kwargs):
         'muonVetoLoose'    : (['finalstate.muonVetoLoose'],    [8,0,8],     cut),
         'elecVetoTight'    : (['finalstate.elecVetoTight'],    [8,0,8],     cut),
         'muonVetoTight'    : (['finalstate.muonVetoTight'],    [8,0,8],     cut),
-        'bjetVeto30Loose'  : (['finalstate.bjetVeto30Loose'],  [8,0,8],     cut),
         'bjetVeto30Medium' : (['finalstate.bjetVeto30Medium'], [8,0,8],     cut),
-        'bjetVeto30Tight'  : (['finalstate.bjetVeto30Tight'],  [8,0,8],     cut),
         'met'              : (['finalstate.met'],              [40,0,200],  cut),
         'mass'             : (['finalstate.mass'],             [40,0,400],  cut),
         'puVertices'       : (['event.nvtx'],                  [50,0,50],   cut),
         
     }
+    if analysis in ['Hpp3l','Hpp4l'] or region in ['Hpp2l']:
+        selectionDict['hppMass']   = (['h1.mass'], [24,0,600],  cut)
+        selectionDict['hppDPhi']   = (['h1.dPhi'], [32,0,3.2],  cut)
+        selectionDict['hppPt']     = (['h1.Pt'],   [40,0,400],  cut)
+        selectionDict['hppPt1']    = (['h1.Pt1'],  [40,0,200],  cut)
+        selectionDict['hppPt2']    = (['h1.Pt2'],  [40,0,200],  cut)
+        selectionDict['hppIso1']   = (['h1.Iso1'], [50,0,0.5],  cut)
+        selectionDict['hppIso2']   = (['h1.Iso2'], [50,0,0.5],  cut)
+        selectionDict['hppDR']     = (['h1.dR'],   [60,0,6],    cut)
     if analysis in ['Z', 'Hpp3l', 'Hpp4l', 'WZ'] or region in ['Z', 'TT']:
-        selectionDict['zMass']     = (['z1.mass'], [42,70,112], cut)
+        selectionDict['zMass']     = (['z1.mass'], [60,60,120], cut)
         selectionDict['zMassFull'] = (['z1.mass'], [80,0,240],  cut)
         selectionDict['zPt']       = (['z1.Pt'],   [40,0,400],  cut)
         selectionDict['zPt1']      = (['z1.Pt1'],  [40,0,200],  cut)
@@ -65,6 +72,13 @@ def generate(analysis, channel, period, **kwargs):
         selectionDict['zIso1']     = (['z1.Iso1'], [50,0,0.5],  cut)
         selectionDict['zIso2']     = (['z1.Iso2'], [50,0,0.5],  cut)
         selectionDict['zDR']       = (['z1.dR'],   [60,0,6],    cut)
+    if analysis in ['Hpp3l','WZ']:
+        selectionDict['wPt']       = (['w1.Pt'],   [40,0,400],  cut)
+        selectionDict['wPt1']      = (['w1.Pt1'],  [40,0,200],  cut)
+        selectionDict['wIso1']     = (['w1.Iso1'], [50,0,0.5],  cut)
+        selectionDict['wMass']     = (['w1.mass'], [40,0,200],  cut)
+        selectionDict['wDPhi']     = (['w1.dPhi'], [32,0,3.2],  cut)
+
     numleps = {
         'Hpp2l': 2,
         'Z'    : 2,
@@ -74,12 +88,25 @@ def generate(analysis, channel, period, **kwargs):
         'Hpp4l': 4,
     }
     nl = numleps[channel]
+
+    for l in range(nl):
+        name = 'l%i' % (l+1)
+        for f in ['','e','m']:
+            thisCut = cut
+            if f:
+                thisCut = cut + ' & %sFlv=="%s"' % (name,f)
+            selectionDict['%sPt%s'%(name,f.upper())]  = (['%s.Pt' %name],  [40,0,200],            thisCut)
+            selectionDict['%sEta%s'%(name,f.upper())] = (['%s.Eta' %name], [30,-3.0,3.0],         thisCut)
+            selectionDict['%sPhi%s'%(name,f.upper())] = (['%s.Phi' %name], [30,-3.14159,3.14159], thisCut)
+            selectionDict['%sIso%s'%(name,f.upper())] = (['%s.Iso' %name], [50,0,.5],             thisCut)
+
+
     channels, leptons = getChannels(nl)
     ntuples = 'ntuples/%s_%sTeV_%s' % (analysis,period,channel)
     saves = '%s_%s_%sTeV' % (analysis,channel,period)
     intLumiMap = getIntLumiMap()
     finalStates, leptons = getChannels(nl)
-    mergeDict = getMergeDict(runPeriod)
+    mergeDict = getMergeDict(period)
     plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=period,mergeDict=mergeDict,scaleFactor=scaleFactor)
     allSamples = [os.path.basename(fname).rstrip('.root') for fname in glob.glob('%s/*'%ntuples)]
     bgSamples = [x for x in allSamples if 'data' not in x]
@@ -87,7 +114,8 @@ def generate(analysis, channel, period, **kwargs):
     plotter.initializeBackgroundSamples(bgSamples)
     if dataSamples: plotter.initializeDataSamples(dataSamples)
     plotter.setIntLumi(intLumiMap[period])
-    histNames = bgSamples + ['data']
+    histNames = bgSamples
+    if dataSamples: histNames += ['data']
     adir = savefile.mkdir(channel)
     adir.cd()
     print 'MKFLAT:%s:%s:%iTeV: Creating analysis directory' % (analysis, channel, period)

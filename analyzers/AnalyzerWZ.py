@@ -201,7 +201,7 @@ class AnalyzerWZ(AnalyzerBase):
                         "doubleETightPass", "doubleMuPass", "doubleMuTrkPass"]
 
         if self.period == '13':
-            triggers = ['muEPass', 'doubleMuPass', 'doubleEPass', 'eMuPass']
+            triggers = ['singleMuSingleEPass', 'doubleMuPass', 'doubleEPass', 'singleESingleMuPass']
 
         for t in triggers:
             if getattr(rtrow,t)>0:

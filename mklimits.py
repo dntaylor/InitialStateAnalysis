@@ -129,14 +129,15 @@ def BP(analysis,period,mass,bp,**kwargs):
 
 def add_systematics_mc(limits,mass,signal,name,chans,sigscale,period):
     limits.add_group("hpp%i" % mass, signal, scale=sigscale, isSignal=True)
-    if period=='8': limits.add_group("dyjets", "Z*j*")
-    if period=='13': limits.add_group("dyjets", "DY*")
+    if period==8: limits.add_group("dyjets", "Z*j*")
+    if period==13: limits.add_group("dyjets", "DY*")
     limits.add_group("zz", "ZZJ*")
     limits.add_group("wz", "WZJ*")
-    if period=='8': limits.add_group("ww", "WWJ*")
-    if period=='8': limits.add_group("zzz", "ZZZ*")
-    if period=='8': limits.add_group("wwz", "WWZ*")
-    if period=='8': limits.add_group("www", "WWW*")
+    if period==8: limits.add_group("ww", "WWJ*")
+    if period==8: limits.add_group("zzz", "ZZZ*")
+    if period==8: limits.add_group("wzz", "WZZ*")
+    if period==8: limits.add_group("wwz", "WWZ*")
+    if period==8: limits.add_group("www", "WWW*")
     limits.add_group("top", "T[(B|b)ar]_*")
     limits.add_group("tt", "TTJ*")
     limits.add_group("ttz", "TTZJ*")
@@ -150,6 +151,7 @@ def add_systematics_mc(limits,mass,signal,name,chans,sigscale,period):
         'wz':           1.026,
         'ww':           1.026,
         'zzz':          1.026,
+        'wzz':          1.026,
         'wwz':          1.026,
         'www':          1.026,
         'tt':           1.026,
@@ -159,57 +161,29 @@ def add_systematics_mc(limits,mass,signal,name,chans,sigscale,period):
     }
     limits.add_systematics("lumi", "lnN", **lumi)
 
-    eid = {
-        'hpp%i' % mass: 1.01,
-        'dyjets':       1.01,
-        'zz':           1.01,
-        'wz':           1.01,
-        'ww':           1.01,
-        'zzz':          1.01,
-        'wwz':          1.01,
-        'www':          1.01,
-        'tt':           1.01,
-        'ttz':          1.01,
-        'ttw':          1.01,
-        'top':          1.01
-    }
-    limits.add_systematics("eid", "lnN", **eid)
+    idSys = "%0.3f" %calculateLeptonSystematic(mass,name)
 
-    muid = {
-        'hpp%i' % mass: 1.005,
-        'dyjets':       1.005,
-        'zz':           1.005,
-        'wz':           1.005,
-        'ww':           1.005,
-        'zzz':          1.005,
-        'wwz':          1.005,
-        'www':          1.005,
-        'tt':           1.005,
-        'ttz':          1.005,
-        'ttw':          1.005,
-        'top':          1.005
+    lepid = {
+        'hpp%i' % mass: idSys,
+        'dyjets':       idSys,
+        'zz':           idSys,
+        'wz':           idSys,
+        'ww':           idSys,
+        'zzz':          idSys,
+        'wzz':          idSys,
+        'wwz':          idSys,
+        'www':          idSys,
+        'tt':           idSys,
+        'ttz':          idSys,
+        'ttw':          idSys,
+        'top':          idSys
     }
-    limits.add_systematics("muid", "lnN", **muid)
-
-    muiso = {
-        'hpp%i' % mass: 1.002,
-        'dyjets':       1.002,
-        'zz':           1.002,
-        'wz':           1.002,
-        'ww':           1.002,
-        'zzz':          1.002,
-        'wwz':          1.002,
-        'www':          1.002,
-        'tt':           1.002,
-        'ttz':          1.002,
-        'ttw':          1.002,
-        'top':          1.002
-    }
-    limits.add_systematics("muiso", "lnN", **muiso)
+    limits.add_systematics("lepid", "lnN", **lepid)
 
     sigmc = {'hpp%i' % mass: 1.15}
     limits.add_systematics("sigmc", "lnN", **sigmc)
 
+    # uncertainties taken from relevant smp papers
     mcdata = {
         'zz':           1.105,
         'wz':           1.056,
@@ -218,16 +192,18 @@ def add_systematics_mc(limits,mass,signal,name,chans,sigscale,period):
     }
     limits.add_systematics("mcdata", "lnN", **mcdata)
 
+    # all uncertainties taken from https://twiki.cern.ch/twiki/bin/viewauth/CMS/StandardModelCrossSectionsat8TeV
     pdf = {
-        'zzz':          1.026,
-        'wwz':          1.051,
-        'www':          1.043,
-        'ttz':          1.105,
+        'zzz':          1.027,
+        'wzz':          1.060,
+        'wwz':          1.056,
+        'www':          1.047,
+        'ttz':          1.117,
         'ttw':          1.289
     }
     limits.add_systematics("pdf", "lnN", **pdf)
 
-    limits.gen_card("%s.txt" % name,mass=mass,cuts=chans)
+    limits.gen_card("%s_mc.txt" % name,mass=mass,cuts=chans)
 
 def calculateLeptonSystematic(mass,bp):
     analysis = 'Hpp3l'

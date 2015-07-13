@@ -199,7 +199,6 @@ class EfficiencyPlotter(PlotterBase):
         frame.Draw()
 
         # legend
-        #self.drawLegend(plotdata,plotsig,plotratio,legendpos)
         legend = ROOT.TLegend(0.3,0.77,0.6,0.90)
         legend.SetFillColor(0)
         legend.AddEntry(bgEff,'Background Efficiency')

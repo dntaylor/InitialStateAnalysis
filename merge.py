@@ -23,8 +23,8 @@ def parse_command_line(argv):
     parser = argparse.ArgumentParser(description="Run the desired analyzer on "
                                                  "FSA n-tuples")
 
-    parser.add_argument('analysis', type=str, choices=['Z','WZ','Hpp2l','Hpp3l','Hpp4l'], help='Analysis to run')
-    parser.add_argument('channel', type=str, choices=['Z','WZ','TT','Hpp2l','Hpp3l','Hpp4l','FakeRate','DataDriven'], help='Channel to run for given analysis')
+    parser.add_argument('analysis', type=str, choices=['Z','WZ','WZ_W','Hpp2l','Hpp3l','Hpp4l'], help='Analysis to run')
+    parser.add_argument('channel', type=str, choices=['Z','WZ','W','TT','Hpp2l','Hpp3l','Hpp4l','FakeRate','DataDriven'], help='Channel to run for given analysis')
     parser.add_argument('period', type=str, choices=['7','8','13'], help='Energy (TeV)')
     parser.add_argument('jobName',nargs='?',type=str,const='',help='Job Name for condor submission')
     args = parser.parse_args(argv)
@@ -51,7 +51,7 @@ def main(argv=None):
     datasets = {
         '7' : ['Run2011A', 'Run2011B'],
         '8' : ['Run2012A', 'Run2012B', 'Run2012C', 'Run2012D'],
-        '13': []
+        '13': ['Run2015B']
     }
     for dataset in datasets[args.period]:
         print 'Merging dataset %s' % dataset

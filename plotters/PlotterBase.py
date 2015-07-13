@@ -274,13 +274,14 @@ class PlotterBase(object):
         drawString = "%s:%s>>h%s%s%s(%s)" % (var2,var1,sample,var1,var2,', '.join(str(x) for x in bin1+bin2))
         #drawString = "%s:%s>>h%s%s%s" % (var2,var1,sample,var1,var2)
         if not cut: cut = '1'
-        if 'data' not in sample and self.sqrts != 13: # TODO: dont forget to remove when we have data!
+        if 'data' not in sample:
             tree.Draw(drawString,'%s*(%s)' % (self.scaleFactor,cut),'goff')
         else:
             tree.Draw(drawString,cut,'goff')
         if not ROOT.gDirectory.Get("h%s%s%s" %(sample, var1,var2)):
             return 0
         hist = ROOT.gDirectory.Get("h%s%s%s" %(sample, var1,var2)).Clone("hmod%s%s%s"%(sample,var1,var2))
+        hist.Sumw2()
         if 'data' not in sample: # if it is mc, scale to intLumi
             lumi = self.samples[sample]['lumi']
             theScale = float(self.intLumi)/lumi
@@ -332,7 +333,7 @@ class PlotterBase(object):
         else: # we will need to rebin
             drawString = "%s>>h%s%s()" % (variable, sample, variable)
         if not cut: cut = '1'
-        if 'data' not in sample and self.sqrts != 13: # TODO: dont forget to remove when we have data!
+        if 'data' not in sample:
             #tree.Draw(drawString,'(event.pu_weight*event.lep_scale*event.trig_scale)*('+cut+')','goff')
             tree.Draw(drawString,'%s*(%s)' % (self.scaleFactor,cut),'goff')
         else:
@@ -343,6 +344,7 @@ class PlotterBase(object):
         if len(binning) != 3: # variable binning (list of bin edges
             hist.Rebin(len(binning)-1,"hnew%s%s" %(sample,variable),array('d',binning))
             hist = ROOT.gDirectory.Get("hnew%s%s" %(sample,variable)).Clone("hnewmod%s%s"%(sample,variable))
+        hist.Sumw2()
         if 'data' not in sample: # if it is mc, scale to intLumi
             lumi = self.samples[sample]['lumi']
             theScale = float(self.intLumi)/lumi
@@ -389,6 +391,7 @@ class PlotterBase(object):
         #print 'The total integral for %s after merging is %f.' % (sample, hist.Integral())
         hist = self.getOverflowUnderflow(hist,**kwargs)
         #print 'After overflow it is %f.' % (hist.Integral())
+        hist.Sumw2()
         if normalize:
             integral = hist.Integral()
             if integral: hist.Scale(1.0/integral)
@@ -559,89 +562,38 @@ class PlotterBase(object):
         CMS_lumi.lumi_13TeV = "%0.1f fb^{-1}" % (float(self.intLumi)/1000.)
         CMS_lumi.CMS_lumi(self.plotpad if plotratio else self.canvas,self.period,position)
 
-    def drawLegend(self,plotdata,plotsignal,plotratio,legendpos):
-        '''Plot a legend using the new PUB COMM recommendations.'''
-        # initialize latex for labels and legend
-        latex = ROOT.TLatex()
-        # setup number of things to include in legend
-        n_ = len(self.backgrounds)
-        if plotdata: n_ += 1
-        if plotsignal: n_ += len(self.signal)
-        # create legend position
-        if legendpos % 10 == 1: # on the left
-            x1_l = 0.45
+    def getLegend(self,plotdata,plotsig,plotratio,legendpos,mchist,datahist,sighist):
+
+        numEntries = len(self.backgrounds)+len(self.signal)+1 if plotdata else len(self.backgrounds)+len(self.signal)
+        # setup legend position
+        if legendpos % 10 == 1:   # on the left
+            xend = 0.45
         elif legendpos % 10 == 2: # in the middle
-            x1_l = 0.70
+            xend = 0.70
         else: # default (on right)
-            x1_l = 0.95
-        dx_l = 0.3
-        x0_l = x1_l-dx_l
-        if legendpos//10 == 1: # bottom
-            y1_l = 0.35
-        elif legendpos//10 == 2: # middle
-            y1_l = 0.59
-        elif legendpos//10 == 4: # very top (in line with CMS label)
-            y1_l = 0.91
-        else: # default, top, just below CMS label
-            y1_l = 0.77
-        if plotratio: y1_l *= 0.95
-        dy_l = 0.045*n_ # number of things in legend
-        #if plotratio: dy_l *= 0.85
-        y0_l = y1_l-dy_l
-        legend = ROOT.TPad("legend_0","legend_0",x0_l,y0_l,x1_l,y1_l)
-        legend.Draw()
-        # now setup the position of the boxes in the legend
-        legend.cd()
-        ar_l = dy_l/dx_l
-        gap_ = 1./(n_+1)
-        bwx_ = 0.12
-        bwy_ = gap_/1.5
-        x_l = [1.2*bwx_]
-        y_l = [1-gap_]
-        ex_l = [0]
-        ey_l = [0.04/ar_l]
-        x_l = array("f",x_l)
-        ex_l = array("f",ex_l)
-        y_l = array("f",y_l)
-        ey_l = array("f",ey_l)
-        # plot data label
-        if plotdata:
-            gr_l =  ROOT.TGraphErrors(1, x_l, y_l, ex_l, ey_l)
-            ROOT.gStyle.SetEndErrorSize(0)
-            #gr_l.SetMarkerStyle(20)
-            gr_l.SetMarkerSize(0.9)
-            gr_l.Draw("0P")
-        latex.SetTextFont(42)
-        latex.SetTextAngle(0)
-        latex.SetTextColor(ROOT.EColor.kBlack)    
-        latex.SetTextSize(0.7/n_) 
-        latex.SetTextAlign(12) 
-        #latex.SetTextSize(0.25) 
-        # plot mc labels
-        allMC = self.backgrounds + self.signal if plotsignal else self.backgrounds
-        box_ = ROOT.TBox()
-        xx_ = x_l[0]
-        yy_ = y_l[0]
-        if plotdata:
-            latex.DrawLatex(xx_+1.*bwx_,yy_,"Data")
-        for s in range(len(allMC)):
-            yy_ -= gap_
-            box_.SetFillColor( self.dataStyles[allMC[s]]['fillcolor'] )
-            if allMC[s] in self.signal:
-                box_.SetFillStyle( 0 )
-            else:
-                box_.SetFillStyle( self.dataStyles[allMC[s]]['fillstyle'] )
-            box_.DrawBox( xx_-bwx_/2, yy_-bwy_/2, xx_+bwx_/2, yy_+bwy_/2 )
-            box_.SetLineStyle( ROOT.kSolid )
-            if allMC[s] in self.signal:
-                box_.SetLineWidth( 2 )
-            else:
-                box_.SetLineWidth( 1 )
-            box_.SetLineColor( self.dataStyles[allMC[s]]['linecolor'] )
-            box_.SetFillStyle( 0 )
-            box_.DrawBox( xx_-bwx_/2, yy_-bwy_/2, xx_+bwx_/2, yy_+bwy_/2 )
-            latex.DrawLatex(xx_+1.*bwx_,yy_,self.dataStyles[allMC[s]]['name'])
-        self.canvas.Update()
+            xend = 0.95
+        if legendpos//10 == 1:    # bottom
+            yend = 0.35
+        elif legendpos//10 == 2:  # middle
+            yend = 0.59
+        elif legendpos//10 == 4:  # very top (in line with CMS label)
+            yend = 0.91
+        else:                     # default, top, just below CMS label
+            yend = 0.77
+        xstart = xend-0.3
+        ystart = yend-numEntries*0.045
+        if plotratio: yend *= 0.95
+        # create and draw legend
+        leg = ROOT.TLegend(xstart,ystart,xend,yend,'','NDC')
+        leg.SetTextFont(42)
+        leg.SetTextSize(0.33/numEntries)
+        leg.SetBorderSize(0)
+        leg.SetFillColor(0)
+        if plotdata: leg.AddEntry(datahist,'Data','ep')
+        for hist in mchist.GetHists():
+            leg.AddEntry(hist,hist.GetTitle(),'f')
+        if plotsig: leg.AddEntry(sighist)
+        return leg
 
     def save(self, savename):
         '''Save the canvas in multiple formats.'''

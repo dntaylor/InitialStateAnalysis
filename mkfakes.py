@@ -11,6 +11,7 @@ import argparse
 import itertools
 import sys
 import pickle
+import json
 
 def makeFakes(analysis,channel,runPeriod,**kwargs):
     '''Plot fake rate for an analysis.'''
@@ -27,6 +28,7 @@ def makeFakes(analysis,channel,runPeriod,**kwargs):
         'Z'    : 2,
         'TT'   : 2,
         'WZ'   : 3,
+        'WZ_W' : 3,
         'Hpp3l': 3,
         'Hpp4l': 4,
     }
@@ -49,13 +51,31 @@ def makeFakes(analysis,channel,runPeriod,**kwargs):
     for f in ['e', 'm']:
         for p in ['Loose', 'Tight']:
             # select leading Z pt, Z window [60,120], tight (or loose) Z, low met, m3l>100, w1 mass < 30
-            for z in ['Loose', 'Tight']:
-                fakeRegion = 'Z{0}Probe{1}{2}'.format(z,lepName[f],p)
-                denom = 'z1.Pt1>20. & z1.mass>60. & z1.mass<120. & z1.Pass{0}1 & z1.Pass{0}2 & finalstate.met<20. & finalstate.mass>100. & w1.mass<20. & w1Flv=="{1}"'.format(z,f)
-                numer = '{0} & w1.Pass{1}1'.format(denom,p)
-                fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
+            if analysis in ['WZ']:
+                for z in ['Loose', 'Tight']:
+                    fakeRegion = 'Z{0}Probe{1}{2}'.format(z,lepName[f],p)
+                    denom = 'z1.Pt1>20. & z1.mass>60. & z1.mass<120. & z1.Pass{0}1 & z1.Pass{0}2 & finalstate.met<20. & finalstate.mass>100. & w1.mass<20. & w1.dR1_z1_1>0.1 & w1.dR1_z1_2>0.1 & w1Flv=="{1}"'.format(z,f)
+                    numer = '{0} & w1.Pass{1}1'.format(denom,p)
+                    fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
+                    if p=='Tight':
+                       fakeRegion += '_LooseProbe'
+                       denom += ' & w1.PassLoose1'
+                       numer += ' & w1.PassLoose1'
+                       fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
             # select w lepton pt, z veto, met
             #'W' : 'w1.Pt1>20. & (z1.mass<60. | z1.mass>120.) & finalstate.met>30. & w1.mass>30.',
+            if analysis in ['WZ_W']:
+                for w in ['Loose','Tight']:
+                    fakeRegion = 'W{0}Probe{1}{2}'.format(w,lepName[f],p)
+                    denom = 'w1.Pt1>20. & w1.mass>30. & finalstate.met>30. & (z1.mass<60. | z1.mass>120.) & l1.Chg==l2.Chg & z1.dR>0.1 & w1.Pass{0}1 & w2Flv=="{1}"'.format(w,f)
+                    numer = '{0} & w2.Pass{1}1'.format(denom,p)
+                    fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w2.Pt1', 'etaVar': 'w2.Eta1'}
+                    if p=='Tight':
+                       fakeRegion += '_LooseProbe'
+                       denom += ' & w2.PassLoose1'
+                       numer += ' & w2.PassLoose1'
+                       fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w2.Pt1', 'etaVar': 'w2.Eta1'}
+
             # veto Z, low met, w mass veto
             #'QCD' : '(z1.mass<60. | z1.mass>120.) & finalstate.met<20. & w1.mass<20.',
 
@@ -66,13 +86,13 @@ def makeFakes(analysis,channel,runPeriod,**kwargs):
         'm': [0,1.2,2.4],
     }
     fakes = {}
-    for fakeRegion in fakeRegions[analysis]:
+    for fakeRegion in fakeRegions['WZ']:
         print "MKPLOTS:%s:%s:%iTeV: Fake Region: %s" % (analysis,channel, runPeriod, fakeRegion)
-        denom = fakeRegions[analysis][fakeRegion]['denom']
-        numer = fakeRegions[analysis][fakeRegion]['numer']
-        probe = fakeRegions[analysis][fakeRegion]['probe']
-        ptvar = fakeRegions[analysis][fakeRegion]['ptVar']
-        etavar = fakeRegions[analysis][fakeRegion]['etaVar']
+        denom = fakeRegions['WZ'][fakeRegion]['denom']
+        numer = fakeRegions['WZ'][fakeRegion]['numer']
+        probe = fakeRegions['WZ'][fakeRegion]['probe']
+        ptvar = fakeRegions['WZ'][fakeRegion]['ptVar']
+        etavar = fakeRegions['WZ'][fakeRegion]['etaVar']
 
         # now plot the fake rates
         print "MKFAKES:%s:%s:%iTeV: Computing fake rates" % (analysis,channel, runPeriod)
@@ -98,7 +118,7 @@ def makeFakes(analysis,channel,runPeriod,**kwargs):
                 fakeerror = hist.GetBinError(ptBin,etaBin)
                 fakes[fakeRegion][fakekey] = {'fakerate':fakerate,'error':fakeerror}
 
-    print fakes
+    print json.dumps(fakes,sort_keys=True,indent=4)
     # save pickle file
     pickle.dump(fakes,open('fakes.pkl','wb'))
                 
@@ -107,8 +127,8 @@ def makeFakes(analysis,channel,runPeriod,**kwargs):
 def parse_command_line(argv):
     parser = argparse.ArgumentParser(description="Plot a given channel and period")
 
-    parser.add_argument('analysis', type=str, choices=['Z','WZ','Hpp2l','Hpp3l','Hpp4l'], help='Analysis to plot')
-    parser.add_argument('channel', type=str, choices=['Z','WZ','TT','Hpp2l','Hpp3l','Hpp4l','FakeRate'], help='Channel in analysis')
+    parser.add_argument('analysis', type=str, choices=['Z','WZ','WZ_W','Hpp2l','Hpp3l','Hpp4l'], help='Analysis to plot')
+    parser.add_argument('channel', type=str, choices=['Z','WZ','W','TT','Hpp2l','Hpp3l','Hpp4l','FakeRate'], help='Channel in analysis')
     parser.add_argument('period', type=int, choices=[7,8,13], help='Energy (TeV)')
     parser.add_argument('-c','--cut',type=str,default='1',help='Cut to be applied to plots.')
     parser.add_argument('-sf','--scaleFactor',type=str,default='event.pu_weight*event.lep_scale*event.trig_scale',help='Scale factor for plots.')

@@ -55,7 +55,7 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
         plotMethod('h1.Iso2',[50,0,0.5],savedir+'hppSubleadingIso',yaxis='Events',xaxis='Iso/p_{T} (#Phi^{++} Subleading Lepton)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('h1.dR',[60,0,6],savedir+'hppdR',yaxis='Events',xaxis='#DeltaR(l^{+}l^{+})',legendpos=43,logy=0,cut=myCut,**kwargs)
     # plot Z stuff
-    if analysis in ['Z', 'Hpp3l', 'Hpp4l', 'WZ'] or region in ['Z', 'TT']:
+    if analysis in ['Z', 'Hpp3l', 'Hpp4l', 'WZ', 'WZ_W'] or region in ['Z', 'TT']:
         plotMethod('z1.mass',[42,70,112],savedir+'z1Mass',yaxis='Events/1.0 GeV',xaxis='M(l^{+}l^{-}) (Z1) (GeV)',legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod('z1.mass',[60,60,120],savedir+'z1Mass_newWidth',yaxis='Events/1.0 GeV',xaxis='M(l^{+}l^{-}) (Z1) (GeV)',legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod('z1.mass',[7,80.5,101.5],savedir+'z1Mass_wideBin',yaxis='Events/3.0 GeV',xaxis='M(l^{+}l^{-}) (Z1) (GeV)',legendpos=43,logy=0,cut=myCut,**kwargs)
@@ -91,14 +91,12 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
         plotMethod('z2.Iso1',[50,0,0.5],savedir+'z2LeadingIso',yaxis='Events',xaxis='Iso/p_{T} (Z2 Leading Lepton)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('z2.Iso2',[50,0,0.5],savedir+'z2SubleadingIso',yaxis='Events',xaxis='Iso/p_{T} (Z2 Subleading Lepton)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
     # plot W stuff
-    if analysis in ['Hpp3l', 'WZ']:
+    if analysis in ['Hpp3l', 'WZ', 'WZ_W']:
         plotMethod('w1.Pt',[40,0,400],savedir+'w1Pt',yaxis='Events/10.0 GeV',xaxis='p_{T}^{W} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('w1.Pt1',[40,0,200],savedir+'w1LeptonPt',yaxis='Events/5.0 GeV',xaxis='p_{T}^{W Lepton} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('w1.Iso1',[50,0,0.5],savedir+'w1Iso',yaxis='Events',xaxis='Iso/p_{T} (W Lepton)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('w1.mass',[40,0,200],savedir+'w1Mass',yaxis='Events/5.0 GeV',xaxis='M_{T}^{W} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('w1.dPhi',[32,0,3.2],savedir+'w1dPhi',yaxis='Events/0.1 rad',xaxis='#Delta#phi(W lepton, E_{T}^{miss}) (rad)',legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('w1.dR1_z1_1',[60,0,6],savedir+'w1dR1_1',yaxis='Events',xaxis='#DeltaR(W^{lepton},Z^{leading lepton})',legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('w1.dR1_z1_2',[60,0,6],savedir+'w1dR1_2',yaxis='Events',xaxis='#DeltaR(W^{lepton},Z^{subleading lepton})',legendpos=43,logy=0,cut=myCut,**kwargs)
         #plotMethod('w1.Dxy1',[100,-.1,.1],savedir+'w1DXY',yaxis='Events',xaxis='#Delta(lepton,pv)_{XY}',legendpos=43,logy=0,cut=myCut,**kwargs)
         #plotMethod('w1.Dz1',[100,-.1,.1],savedir+'w1DZ',yaxis='Events',xaxis='#Delta(lepton,pv)_{Z}',legendpos=43,logy=0,cut=myCut,**kwargs)
         #plotMethod('w1.JetPt1',[40,0,400],savedir+'w1JetPt',yaxis='Events/10.0 GeV',xaxis='p_{T}^{W Lepton Jet} (GeV)',legendpos=43,logy=0,cut=myCut,**kwargs)
@@ -110,6 +108,9 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
         #plotMethod('w1.mll_z1_1',[80,0,240],savedir+'dilepton_mass_1_os',yaxis='Events/3.0 GeV',xaxis='M(l^{#pm}l^{#mp}) (Z_{l1},W_{l}) (GeV)',legendpos=43,logy=0,cut='w1.Chg1!=z1.Chg1 & %s' %myCut,overflow=True,**kwargs)
         #plotMethod('w1.mll_z1_2',[80,0,240],savedir+'dilepton_mass_2_os',yaxis='Events/3.0 GeV',xaxis='M(l^{#pm}l^{#mp}) (Z_{l2},W_{l}) (GeV)',legendpos=43,logy=0,cut='w1.Chg1!=z1.Chg2 & %s' %myCut,overflow=True,**kwargs)
         #plotMethod(['w1.mll_z1_1','w1.mll_z1_2'],[80,0,240],savedir+'dilepton_mass',yaxis='Events/3.0 GeV',xaxis='M(ll) (Z_{l},W_{l}) (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+    if analysis in ['Hpp3l', 'WZ']:
+        plotMethod('w1.dR1_z1_1',[60,0,6],savedir+'w1dR1_1',yaxis='Events',xaxis='#DeltaR(W^{lepton},Z^{leading lepton})',legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('w1.dR1_z1_2',[60,0,6],savedir+'w1dR1_2',yaxis='Events',xaxis='#DeltaR(W^{lepton},Z^{subleading lepton})',legendpos=43,logy=0,cut=myCut,**kwargs)
 
 
 def plotRegion(analysis,channel,runPeriod,**kwargs):
@@ -171,7 +172,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     else:
         fsToPlot = finalStatesToPlot.split(',')
     print 'MKPLOTS:%s:%s:%iTeV: Cuts to be applied: %s' % (analysis, channel, runPeriod, myCut)
-    dataplot = (isControl or not blind) and runPeriod in [7,8]
+    dataplot = (isControl or not blind)
     mergeDict = getMergeDict(runPeriod)
 
     # Plotting discriminating variables
@@ -361,6 +362,7 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
         'Hpp2l': 2,
         'Z'    : 2,
         'TT'   : 2,
+        'WZ_W' : 2,
         'WZ'   : 3,
         'Hpp3l': 3,
         'Hpp4l': 4,
@@ -370,23 +372,7 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
     saves = '%s_%s_%sTeV' % (analysis,channel,runPeriod)
     sigMap = getSigMap(nl,mass)
     intLumiMap = getIntLumiMap()
-    channelBackground = {
-        'Hpp2l' : ['T', 'TT', 'TTV', 'W', 'Z', 'ZG', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'Z'     : ['T', 'TT', 'TTV', 'W', 'Z', 'ZG', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'WZ'    : ['T', 'TT', 'TTV', 'W', 'Z', 'ZG', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'TT'    : ['T', 'TT', 'TTV', 'W', 'Z', 'ZG', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'Hpp3l' : ['T', 'TT', 'TTV', 'W', 'Z', 'ZG', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'Hpp4l' : ['TT', 'Z', 'DB']
-    }
-    if runPeriod==13:
-        channelBackground = {
-            'WZ'    : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
-            'Z'    : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
-            'TT'    : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
-            'Hpp2l' : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
-            'Hpp3l' : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
-            'Hpp4l' : ['T', 'TT', 'Z', 'TTV', 'WW', 'ZZ', 'WZ']
-        }
+    channelBackground = getChannelBackgrounds(runPeriod)
 
     finalStates, leptons = getChannels(nl,runTau=runTau)
     if finalStatesToPlot=='all':
@@ -394,9 +380,10 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
     else:
         fsToPlot = finalStatesToPlot.split(',')
     print 'MKPLOTS:%s:%s:%iTeV: Cuts to be applied: %s' % (analysis, channel, runPeriod, myCut)
-    dataplot = (isControl or not blind) and runPeriod in [7,8]
+    dataplot = (isControl or not blind)
     mergeDict = getMergeDict(runPeriod)
 
+    # TODO: load from pickle file
     # define fake regions
     lepName = {'e': 'Elec', 'm': 'Muon', 't': 'Tau'}
     fakeRegions = {}
@@ -404,29 +391,44 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
     for f in ['e', 'm']:
         for p in ['Loose', 'Tight']:
             # select leading Z pt, Z window [60,120], tight (or loose) Z, low met, m3l>100, w1 mass < 30
-            for z in ['Loose', 'Tight']:
-                fakeRegion = 'Z{0}Probe{1}{2}'.format(z,lepName[f],p)
-                denom = 'z1.Pt1>20. & z1.mass>60. & z1.mass<120. & z1.Pass{0}1 & z1.Pass{0}2 & finalstate.met<20. & finalstate.mass>100. & w1.mass<20. & w1Flv=="{1}"'.format(z,f)
-                numer = '{0} & w1.Pass{1}1'.format(denom,p)
-                fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
+            if analysis in ['WZ']:
+                for z in ['Loose', 'Tight']:
+                    fakeRegion = 'Z{0}Probe{1}{2}'.format(z,lepName[f],p)
+                    denom = 'z1.Pt1>20. & z1.mass>60. & z1.mass<120. & z1.Pass{0}1 & z1.Pass{0}2 & finalstate.met<20. & finalstate.mass>100. & w1.mass<20. & w1.dR1_z1_1>0.1 & w1.dR1_z1_2>0.1 & w1Flv=="{1}"'.format(z,f)
+                    numer = '{0} & w1.Pass{1}1'.format(denom,p)
+                    fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
+                    if p=='Tight':
+                       fakeRegion += '_LooseProbe'
+                       denom += ' & w1.PassLoose1'
+                       numer += ' & w1.PassLoose1'
+                       fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
             # select w lepton pt, z veto, met
             #'W' : 'w1.Pt1>20. & (z1.mass<60. | z1.mass>120.) & finalstate.met>30. & w1.mass>30.',
-            # veto Z, low met, w mass veto
-            #'QCD' : '(z1.mass<60. | z1.mass>120.) & finalstate.met<20. & w1.mass<20.',
+            if analysis in ['WZ_W']:
+                for w in ['Loose','Tight']:
+                    fakeRegion = 'W{0}Probe{1}{2}'.format(w,lepName[f],p)
+                    denom = 'w1.Pt1>20. & w1.mass>30. & finalstate.met>30. & (z1.mass<60. | z1.mass>120.) & l1.Chg==l2.Chg & z1.dR>0.1 & w1.Pass{0}1 & w2Flv=="{1}"'.format(w,f)
+                    numer = '{0} & w2.Pass{1}1'.format(denom,p)
+                    fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w2.Pt1', 'etaVar': 'w2.Eta1'}
+                    if p=='Tight':
+                       fakeRegion += '_LooseProbe'
+                       denom += ' & w2.PassLoose1'
+                       numer += ' & w2.PassLoose1'
+                       fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w2.Pt1', 'etaVar': 'w2.Eta1'}
 
     # setup selections
-    ptBins = [10,20,40,100,1000]
+    ptBins = [10,20,40,100]
     etaBins = {
         'e': [0,1.479,2.5],
         'm': [0,1.2,2.4],
     }
-    for fakeRegion in fakeRegions[analysis]:
+    for fakeRegion in fakeRegions['WZ']:
         print "MKPLOTS:%s:%s:%iTeV: Fake Region: %s" % (analysis,channel, runPeriod, fakeRegion)
-        denom = fakeRegions[analysis][fakeRegion]['denom']
-        numer = fakeRegions[analysis][fakeRegion]['numer']
-        probe = fakeRegions[analysis][fakeRegion]['probe']
-        ptvar = fakeRegions[analysis][fakeRegion]['ptVar']
-        etavar = fakeRegions[analysis][fakeRegion]['etaVar']
+        denom = fakeRegions['WZ'][fakeRegion]['denom']
+        numer = fakeRegions['WZ'][fakeRegion]['numer']
+        probe = fakeRegions['WZ'][fakeRegion]['probe']
+        ptvar = fakeRegions['WZ'][fakeRegion]['ptVar']
+        etavar = fakeRegions['WZ'][fakeRegion]['etaVar']
 
         plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,rootName='{0}_fakeplots'.format(fakeRegion))
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
@@ -455,8 +457,8 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
 def parse_command_line(argv):
     parser = argparse.ArgumentParser(description="Plot a given channel and period")
 
-    parser.add_argument('analysis', type=str, choices=['Z','WZ','Hpp2l','Hpp3l','Hpp4l'], help='Analysis to plot')
-    parser.add_argument('channel', type=str, choices=['Z','WZ','TT','Hpp2l','Hpp3l','Hpp4l','FakeRate'], help='Channel in analysis')
+    parser.add_argument('analysis', type=str, choices=['Z','WZ','WZ_W','Hpp2l','Hpp3l','Hpp4l'], help='Analysis to plot')
+    parser.add_argument('channel', type=str, choices=['Z','WZ','W','TT','Hpp2l','Hpp3l','Hpp4l','FakeRate'], help='Channel in analysis')
     parser.add_argument('period', type=int, choices=[7,8,13], help='Energy (TeV)')
     parser.add_argument('-pf','--plotFinalStates',action='store_true',help='Plot individual final states')
     parser.add_argument('-pj','--plotJetBins',action='store_true',help='Plot jet bins')

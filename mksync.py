@@ -12,7 +12,6 @@ def sync(analysis,channel,period,**kwargs):
     '''Print sync information to file.'''
     runTau = kwargs.pop('runTau',False)
     blind = kwargs.pop('blind',True)
-    doBjetVeto = kwargs.pop('doBjetVeto',False)
     doEfficiency = kwargs.pop('doEfficiency',False)
     doCutflow = kwargs.pop('doCutflow',False)
     cut = kwargs.pop('cut','1')
@@ -26,8 +25,6 @@ def sync(analysis,channel,period,**kwargs):
     print '%s:%s:%iTeV' % (analysis, channel, period)
     print 'Selection to be used:'
     print cut
-    if doBjetVeto:
-        print 'Bjet veto to be applied: finalstate.bjetVeto30==0'
     print ''
 
     # sync on WZ sample
@@ -44,13 +41,13 @@ def sync(analysis,channel,period,**kwargs):
     }
     plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=period,mergeDict=mergeDict)
     plotter.initializeBackgroundSamples([sigMap[period][x] for x in channelBackground[channel]])
-    intLumi = 19700
+    intLumi = 1000
     plotter.setIntLumi(intLumi)
     cutflow = {
         'pre' : cut,
         'bjet' : 'finalstate.bjetVeto30Medium==0',
         'zpt' : '(z1.Pt1>20.&z1.Pt2>10.)',
-        'zmass' : 'fabs(z1.mass-%f)<20.' % ZMASS,
+        'zmass' : 'z1.mass>60 & z1.mass<120',
         'wpt' : 'w1.Pt1>20.',
         'wdr' : 'w1.dR1_z1_1>0.1 & w1.dR1_z1_2>0.1',
         'met' : 'w1.met>30.',
@@ -58,11 +55,9 @@ def sync(analysis,channel,period,**kwargs):
     }
     cutflowMap = defineCutFlowMap('WZ',0,0)
     cutflows = ['pre','zpt','zmass','wdr','wpt','met']
-    if doBjetVeto: cutflows = ['pre','zpt','zmass','bjet','wdr','wpt','met']
 
     print 'WZ event counts'
     tempCut = cut
-    if doBjetVeto: tempCut += ' & finalstate.bjetVeto30Medium==0'
     for chan in fs:
         num = plotter.getNumEntries('%s&channel=="%s"' %(tempCut,chan), sigMap[period]['WZ'], doUnweighted=True)
         print '%s: %i' % (chan, num)
@@ -70,12 +65,12 @@ def sync(analysis,channel,period,**kwargs):
 
     # yields in each channel
     print 'Yields (scaled to %i pb-1)' % intLumi
-    theCut = '&'.join([cutflow[x] for x in cutflows])
-    print 'Selection applied: %s' % theCut
+    #theCut = '&'.join([cutflow[x] for x in cutflows])
+    print 'Selection applied: %s' % cut
     for chan in fs:
         print '%8s |    Channel |      Yield' % chan
         for b in channelBackground[channel]:
-            val = plotter.getNumEntries('%s&channel=="%s"' %(theCut,chan), sigMap[period][b])
+            val = plotter.getNumEntries('%s&channel=="%s"' %(cut,chan), sigMap[period][b])
             print '         | %10s | %10.2f' %(b,val)
         print ''
 

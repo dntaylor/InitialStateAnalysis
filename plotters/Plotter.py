@@ -249,11 +249,35 @@ class Plotter(PlotterBase):
                     ratio.Draw("e0 same")
             if plotsig: ratiosig.Draw("hist same")
 
+        if plotratio:
+            plotpad.cd()
+        else:
+            self.canvas.cd()
+        # try better legend
+        #numEntries = len(self.backgrounds)+len(self.signal)+1 if plotdata else len(self.backgrounds)+len(self.signal)
+        #xstart = 0.65
+        #ystart = 0.77-numEntries*0.045
+        #xend = 0.95
+        #yend = 0.77
+        #if plotratio: yend *= 0.95
+        #leg = ROOT.TLegend(xstart,ystart,xend,yend,'','NDC')
+        #leg.SetTextFont(42)
+        #leg.SetTextSize(0.33/numEntries)
+        #leg.SetBorderSize(0)
+        #leg.SetFillColor(0)
+        #if plotdata: leg.AddEntry(data,'Data','ep')
+        #for hist in stack.GetHists():
+        #    leg.AddEntry(hist,hist.GetTitle(),'f')
+        #if plotsig: leg.AddEntry(sighist)
+        #leg.Draw()
+        # legend
+        if not plotdata: data = 0
+        if not plotsig: sighist = 0
+        leg = self.getLegend(plotdata,plotsig,plotratio,legendpos,stack,data,sighist)
+        leg.Draw()
+
         # draw cms lumi
         self.setStyle(lumitext,plotdata,plotratio,isprelim)
-
-        # legend
-        self.drawLegend(plotdata,plotsig,plotratio,legendpos)
 
         # save everything
         self.canvas.cd()

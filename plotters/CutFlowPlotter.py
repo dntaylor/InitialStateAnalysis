@@ -263,7 +263,10 @@ class CutFlowPlotter(PlotterBase):
         frame.Draw()
 
         # legend
-        self.drawLegend(plotdata,plotsig,plotratio,legendpos)
+        if not plotdata: data = 0
+        if not plotsig: sighist = 0
+        leg = self.getLegend(plotdata,plotsig,plotratio,legendpos,stack,datahist,sighist)
+        leg.Draw()
 
         # save everything
         self.canvas.cd()

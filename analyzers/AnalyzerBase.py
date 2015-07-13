@@ -347,7 +347,7 @@ class AnalyzerBase(object):
             ntupleRow["finalstate.centralJetVeto30"] = float(rtrow.vbfJetVeto30)
 
         def store_state(rtrow,ntupleRow,state,theObjects,period):
-            masses = {'e':0.511e-3, 'm':0.1056, 't':1.776}
+            masses = {'e':0.511e-3, 'm':0.1056, 't':1.776, 'j':0}
             objStart = 0
             metVar = 'pfMet' if period=='13' else 'type1_pfMet'
             mtVar = 'PFMET' if period=='13' else 'PfMet_Ty1'
@@ -366,10 +366,10 @@ class AnalyzerBase(object):
                     ntupleRow["%sFlv.Flv" %i] = finalObjects[0][0] if theObjects else 'a'
                 elif 'n' == self.object_definitions[i][1]:
                     if theObjects: # get lorentz vectors
-                        pt1 = getattr(rtrow, "%sPt" % finalObjOrdered[0])
-                        eta1 = getattr(rtrow, "%sEta" % finalObjOrdered[0])
-                        phi1 = getattr(rtrow, "%sPhi" % finalObjOrdered[0])
-                        mass1 = masses[finalObjOrdered[0][0]]
+                        pt1 = getattr(rtrow, "%sPt" % finalObjects[0])
+                        eta1 = getattr(rtrow, "%sEta" % finalObjects[0])
+                        phi1 = getattr(rtrow, "%sPhi" % finalObjects[0])
+                        mass1 = masses[finalObjects[0][0]]
                         px1 = pt1*rt.TMath.Cos(phi1)
                         py1 = pt1*rt.TMath.Sin(phi1)
                         ptMet = getattr(rtrow, "%sEt" % metVar)
@@ -427,9 +427,9 @@ class AnalyzerBase(object):
                         ntupleRow["%s.Iso%i" % (i,objCount)] = isoVal
                         ntupleRow["%s.Dxy%i" % (i,objCount)] = float(getattr(rtrow, "%sPVDXY" % orderedFinalObjects[objCount-1])) if theObjects else float(-9)
                         ntupleRow["%s.Dz%i" % (i,objCount)] = float(getattr(rtrow, "%sPVDZ" % orderedFinalObjects[objCount-1])) if theObjects else float(-9)
-                        ntupleRow["%s.JetPt%i" % (i,objCount)] = float(getattr(rtrow, "%sJetPt" % orderedFinalObjects[objCount-1])) if theObjects else float(-9.)
+                        ntupleRow["%s.JetPt%i" % (i,objCount)] = float(getattr(rtrow, "%sJetPt" % orderedFinalObjects[objCount-1])) if (theObjects and orderedFinalObjects[objCount-1][0] in 'emt') else float(-9.)
                         ntupleRow["%s.JetBTag%i" % (i,objCount)] = float(-9.)
-                        if theObjects:
+                        if theObjects and orderedFinalObjects[objCount-1][0] in 'emt':
                             ntupleRow["%s.JetBTag%i" % (i,objCount)] = float(getattr(rtrow, "%sJetCSVBtag" % orderedFinalObjects[objCount-1])) if period=='8' else float(getattr(rtrow, "%sJetPFCISVBtag" % orderedFinalObjects[objCount-1]))
                         ntupleRow["%s.LepScaleLoose%i" % (i,objCount)] = float(self.lepscaler.scale_factor(rtrow, orderedFinalObjects[objCount-1], loose=True)[0]) if theObjects else float(-1)
                         ntupleRow["%s.LepScaleTight%i" % (i,objCount)] = float(self.lepscaler.scale_factor(rtrow, orderedFinalObjects[objCount-1], loose=False)[0]) if theObjects else float(-1)
@@ -445,7 +445,7 @@ class AnalyzerBase(object):
                             ntupleRow["%s.GenPdgId%i" % (i,objCount)] = float(getattr(rtrow, "%sGenPdgId" % orderedFinalObjects[objCount-1]))
                             ntupleRow["%s.MotherGenPdgId%i" % (i,objCount)] = float(getattr(rtrow, "%sGenMotherPdgId" % orderedFinalObjects[objCount-1]))
                         # manually add w z deltaRs
-                        if i=='w1':
+                        if i=='w1' and len(theObjects)==3:
                             oZ1 = ordered(theObjects[0],theObjects[2]) if theObjects else []
                             oZ2 = ordered(theObjects[1],theObjects[2]) if theObjects else []
                             ntupleRow["w1.dR1_z1_1"] = float(getattr(rtrow,"%s_%s_DR" % (oZ1[0],oZ1[1]))) if theObjects else float(-9)
@@ -491,10 +491,11 @@ class AnalyzerBase(object):
             if obj[0]=='e': isoVar = 'RelPFIsoRho'
             if obj[0]=='m': isoVar = 'RelPFIsoDBDefault'
             ntupleRow["%s%i.Iso" % (charName,objCount)] = float(getattr(rtrow, "%s%s" % (obj, isoVar))) if obj[0] in 'em' else float(-1.)
-            ntupleRow["%s%i.JetPt" % (charName,objCount)] = float(getattr(rtrow, "%sJetPt" % obj))
-            ntupleRow["%s%i.JetBTag" % (charName,objCount)] = float(getattr(rtrow, "%sJetCSVBtag" % obj)) if self.period=='8' else float(getattr(rtrow, "%sJetPFCISVBtag" % obj))
-            ntupleRow["%s%i.Dxy" % (charName,objCount)] = float(getattr(rtrow, "%sPVDXY" % obj))
-            ntupleRow["%s%i.Dz" % (charName,objCount)] = float(getattr(rtrow, "%sPVDZ" % obj))
+            ntupleRow["%s%i.JetPt" % (charName,objCount)] = float(getattr(rtrow, "%sJetPt" % obj)) if obj[0] in 'emt' else float(-1.)
+            if obj[0] in 'emt':
+                ntupleRow["%s%i.JetBTag" % (charName,objCount)] = float(getattr(rtrow, "%sJetCSVBtag" % obj)) if self.period=='8' else float(getattr(rtrow, "%sJetPFCISVBtag" % obj))
+                ntupleRow["%s%i.Dxy" % (charName,objCount)] = float(getattr(rtrow, "%sPVDXY" % obj))
+                ntupleRow["%s%i.Dz" % (charName,objCount)] = float(getattr(rtrow, "%sPVDZ" % obj))
             ntupleRow["%s%i.LepScaleLoose" % (charName,objCount)] = float(self.lepscaler.scale_factor(rtrow, obj, loose=True)[0]) if self.period=='8' else float(1.)
             ntupleRow["%s%i.LepScaleTight" % (charName,objCount)] = float(self.lepscaler.scale_factor(rtrow, obj, loose=False)[0]) if self.period=='8' else float(1.)
             ntupleRow["%s%i.Chg" % (charName,objCount)] = float(getattr(rtrow, "%sCharge" % obj))
@@ -503,7 +504,7 @@ class AnalyzerBase(object):
             ntupleRow["%s%iFlv.Flv" % (charName,objCount)] = obj[0]
             ntupleRow["%s%i.GenPdgId" % (charName,objCount)] = -2000
             ntupleRow["%s%i.MotherGenPdgId" % (charName,objCount)] = -2000
-            if not self.isData:
+            if not self.isData and obj[0] in 'emt':
                 ntupleRow["%s%i.GenPdgId" % (charName,objCount)] = float(getattr(rtrow, "%sGenPdgId" % obj))
                 ntupleRow["%s%i.MotherGenPdgId" % (charName,objCount)] = float(getattr(rtrow, "%sGenMotherPdgId" % obj))
 

@@ -338,6 +338,9 @@ def getMergeDict(period):
             'QCD_Pt_2400to3200_TuneCUETP8M1_13TeV_pythia8' : '1',
             'QCD_Pt_3200toInf_TuneCUETP8M1_13TeV_pythia8'  : '1',
         }
+        sampleMergeDict['data']      = {
+            'data_Run2015B': '1',
+        }
     # 8 TeV sample aliases
     if period==8:
         sampleMergeDict['WWJets']    = {
@@ -476,6 +479,7 @@ def getSigMap(numLeptons,mass):
              'TTV' : 'TTVJets',
              'QCD' : 'QCD',
              'Sig' : 'DBLH_m500',
+             'data': 'data'
         }
     }
     return sigMap
@@ -485,8 +489,8 @@ def getIntLumiMap():
     intLumiMap = {
         7 : 4900,
         8 : 19700,
-        #13: 15000
-        13: 1000
+        13: 1000,
+        #13: 7,
     }
     return intLumiMap
 
@@ -515,17 +519,19 @@ def getChannelStringsCuts(region,channels):
 
 def getChannelBackgrounds(runPeriod):
     channelBackground = {
-        'Hpp2l' : ['T', 'TT', 'TTV', 'W', 'Z', 'ZG', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'Z'     : ['T', 'TT', 'TTV', 'W', 'Z', 'ZG', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'WZ'    : ['T', 'TT', 'TTV', 'W', 'Z', 'ZG', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'TT'    : ['T', 'TT', 'TTV', 'W', 'Z', 'ZG', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'Hpp3l' : ['T', 'TT', 'TTV', 'W', 'Z', 'ZG', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'Hpp2l' : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'Z'     : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'WZ'    : ['T', 'TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'W'     : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'TT'    : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'Hpp3l' : ['T', 'TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
         'Hpp4l' : ['TT', 'Z', 'DB']
     }   
     if runPeriod==13:
         channelBackground = {
             'WZ'    : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
-            'Z'    : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
+            'W'     : ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'ZZ', 'WZ'],
+            'Z'     : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
             'TT'    : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
             'Hpp2l' : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
             'Hpp3l' : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],

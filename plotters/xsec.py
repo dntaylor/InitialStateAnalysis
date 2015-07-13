@@ -214,6 +214,7 @@ xsecs[8] = {
     'WW_TuneZ2star_8TeV_pythia6_tauola' : 56.0 * PB,
 
     'ZGToLLG_8TeV-madgraph': 132.6 * PB,
+    'ZGToLLG_8TeV-madgraph_filtered': 132.6 * PB,
 
     'WZJetsTo2L2Q_TuneZ2star_8TeV-madgraph-tauola': 1.09 * 2.207 * PB, # From CMS WZ analysis data/theo = 1.09
     'WZJetsTo3LNu_TuneZ2_8TeV-madgraph-tauola':     1.09 * 1.058 * PB, # From CMS WZ analysis data/theo = 1.09
