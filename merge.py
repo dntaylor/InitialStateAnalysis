@@ -24,7 +24,7 @@ def parse_command_line(argv):
                                                  "FSA n-tuples")
 
     parser.add_argument('analysis', type=str, choices=['Z','WZ','WZ_W','Hpp2l','Hpp3l','Hpp4l'], help='Analysis to run')
-    parser.add_argument('channel', type=str, choices=['Z','WZ','W','TT','Hpp2l','Hpp3l','Hpp4l','FakeRate','DataDriven'], help='Channel to run for given analysis')
+    parser.add_argument('channel', type=str, choices=['Z','WZ','W','TT','Hpp2l','Hpp3l','LowMass','Hpp4l','FakeRate','DataDriven'], help='Channel to run for given analysis')
     parser.add_argument('period', type=str, choices=['7','8','13'], help='Energy (TeV)')
     parser.add_argument('jobName',nargs='?',type=str,const='',help='Job Name for condor submission')
     args = parser.parse_args(argv)

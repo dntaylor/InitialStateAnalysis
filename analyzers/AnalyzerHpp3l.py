@@ -67,8 +67,8 @@ class AnalyzerHpp3l(AnalyzerBase):
 
             if SS1 and OS:
                 ordList = [l[1], l[0], l[2]] if getattr(rtrow,'%sPt' % l[0]) < getattr(rtrow,'%sPt' % l[1]) else l
-                #cands.append([[0],list(ordList)]) # minimization is by veto, not variable
-                cands.append([[1./sum(pts)],list(ordList)]) # minimization is 3 largest pt leptons
+                cands.append([[0],list(ordList)]) # minimization is by veto, not variable
+                #cands.append([[1./sum(pts)],list(ordList)]) # minimization is 3 largest pt leptons
 
         if not len(cands): return 0
 
@@ -99,12 +99,12 @@ class AnalyzerHpp3l(AnalyzerBase):
             return bestLeptons
 
     # overide good_to_store
-    #@staticmethod
-    #def good_to_store(rtrow, cand1, cand2):
-    #    '''
-    #    Veto on 4th lepton (considered in 4l analysis)
-    #    '''
-    #    return (rtrow.elecVeto4l + rtrow.muonVeto4l == 0)
+    @staticmethod
+    def good_to_store(rtrow, cand1, cand2):
+        '''
+        Veto on 4th lepton (considered in 4l analysis)
+        '''
+        return (rtrow.elecVeto4l + rtrow.muonVeto4l == 0)
 
     ###########################
     ### Define preselection ###
@@ -117,6 +117,7 @@ class AnalyzerHpp3l(AnalyzerBase):
         cuts.add(self.trigger_threshold)
         cuts.add(self.ID_tight)
         cuts.add(self.qcd_rejection)
+        cuts.add(self.mass3l)
         return cuts
 
     def selection(self,rtrow):
@@ -127,6 +128,7 @@ class AnalyzerHpp3l(AnalyzerBase):
         cuts.add(self.trigger_threshold)
         cuts.add(self.ID_tight)
         cuts.add(self.qcd_rejection)
+        cuts.add(self.mass3l)
         return cuts
 
     def getIdArgs(self,type):
@@ -220,6 +222,9 @@ class AnalyzerHpp3l(AnalyzerBase):
             dr = getattr(rtrow, '%s_%s_DR' % (l[0],l[1]))
             if dr < 0.1: return False
         return True
+    def mass3l(self,rtrow):
+        return rtrow.Mass > 100.
+
 
 
 #######################
@@ -258,9 +263,6 @@ class AnalyzerHpp3l_WZ(AnalyzerHpp3l):
         cuts.add(self.wSelection)
         return cuts
 
-    def mass3l(self,rtrow):
-        return rtrow.Mass > 100.
-
     def zSelection(self,rtrow):
         leps = self.choose_alternative_objects(rtrow, ['z1','w1'])
         if not leps: return False
@@ -284,7 +286,51 @@ class AnalyzerHpp3l_WZ(AnalyzerHpp3l):
         return True
 
 
+class AnalyzerHpp3l_LowMass(AnalyzerHpp3l):
+    '''
+    Low Mass control region for Hpp3l
+    '''
+    def __init__(self, sample_name, file_list, out_file, period, **kwargs):
+        super(AnalyzerHpp3l_LowMass, self).__init__(sample_name, file_list, out_file, period, **kwargs)
+        self.channel = 'LowMass'
+        self.cutflow_labels = []
 
+    def preselection(self,rtrow):
+        cuts = CutSequence()
+        if self.isData: cuts.add(self.trigger)
+        cuts.add(self.fiducial)
+        cuts.add(self.overlap)
+        cuts.add(self.trigger_threshold)
+        cuts.add(self.ID_tight)
+        cuts.add(self.qcd_rejection)
+        cuts.add(self.mass3l)
+        cuts.add(self.lowZ)
+        cuts.add(self.lowH)
+        return cuts
+
+    def selection(self,rtrow):
+        cuts = CutSequence()
+        if self.isData: cuts.add(self.trigger)
+        cuts.add(self.fiducial)
+        cuts.add(self.overlap)
+        cuts.add(self.trigger_threshold)
+        cuts.add(self.ID_tight)
+        cuts.add(self.qcd_rejection)
+        cuts.add(self.mass3l)
+        return cuts
+
+    def lowZ(self,rtrow):
+        leps = self.choose_alternative_objects(rtrow, ['z1','w1'])
+        if not leps: return True
+        o = ordered(leps[0], leps[1])
+        m1 = getattr(rtrow,'%s_%s_Mass' % (o[0],o[1]))
+        return m1<110.
+
+    def lowH(self,rtrow):
+        leps = self.objCand
+        o = ordered(leps[0], leps[1])
+        m1 = getattr(rtrow,'%s_%s_Mass' % (o[0],o[1]))
+        return m1<130.
 
 ##########################
 ###### Command line ######
@@ -308,7 +354,7 @@ def main(argv=None):
 
     if args.analyzer=='Hpp3l': analyzer = AnalyzerHpp3l(args.sample_name,args.file_list,args.out_file,args.period)
     if args.analyzer=='WZ': analyzer = AnalyzerHpp3l_WZ(args.sample_name,args.file_list,args.out_file,args.period)
-    if args.analyzer=='FakeRate': analyzer = AnalyzerHpp3l_FakeRate(args.sample_name,args.file_list,args.out_file,args.period)
+    if args.analyzer=='LowMass': analyzer = AnalyzerHpp3l_LowMass(args.sample_name,args.file_list,args.out_file,args.period)
     with analyzer as thisAnalyzer:
         thisAnalyzer.analyze()
 

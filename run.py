@@ -21,7 +21,7 @@ from analyzers.AnalyzerWZ import AnalyzerWZ, AnalyzerWZ_Z
 from analyzers.AnalyzerWZ_W import AnalyzerWZ_W
 from analyzers.AnalyzerWZ_QCD import AnalyzerWZ_QCD
 from analyzers.AnalyzerHpp2l import AnalyzerHpp2l, AnalyzerHpp2l_Z, AnalyzerHpp2l_TT
-from analyzers.AnalyzerHpp3l import AnalyzerHpp3l, AnalyzerHpp3l_WZ
+from analyzers.AnalyzerHpp3l import AnalyzerHpp3l, AnalyzerHpp3l_WZ, AnalyzerHpp3l_LowMass
 from analyzers.AnalyzerHpp4l import AnalyzerHpp4l
 
 def run_analyzer(args):
@@ -49,6 +49,7 @@ def run_analyzer(args):
         'Hpp3l'   : {
                     'Hpp3l'   : AnalyzerHpp3l,
                     'WZ'      : AnalyzerHpp3l_WZ,
+                    'LowMass' : AnalyzerHpp3l_LowMass,
                     },
         'Hpp4l'   : {
                     'Hpp4l'   : AnalyzerHpp4l,
@@ -174,7 +175,7 @@ def parse_command_line(argv):
                                                  "FSA n-tuples")
 
     parser.add_argument('analysis', type=str, choices=['Z','WZ','WZ_W','WZ_QCD','Hpp2l','Hpp3l','Hpp4l'], help='Analysis to run')
-    parser.add_argument('channel', type=str, choices=['Z','WZ','W','QCD','TT','Hpp2l','Hpp3l','Hpp4l'], help='Channel to run for given analysis')
+    parser.add_argument('channel', type=str, choices=['Z','WZ','W','QCD','TT','Hpp2l','Hpp3l','Hpp4l','LowMass'], help='Channel to run for given analysis')
     parser.add_argument('period', type=str, choices=['8','13'], help='Energy (TeV)')
     parser.add_argument('sample_names', nargs='+',help='Sample names w/ UNIX wildcards')
     parser.add_argument('-s','--submit',action='store_true',help='Submit jobs to condor')

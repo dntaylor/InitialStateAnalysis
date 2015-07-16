@@ -386,7 +386,7 @@ def getMergeDict(period):
             'TTJetsSemiLepMGDecays': '1',
         }
         sampleMergeDict['ZJets']     = {
-            #'DYJetsToLL_M-10To50filter_8TeV-madgraph'         : '1',
+            'DYJetsToLL_M-10To50filter_8TeV-madgraph'         : '1',
             #'Z1jets_M50'                                      : '1',
             #'Z2jets_M50_S10'                                  : '1',
             #'Z3jets_M50'                                      : '1',
@@ -489,8 +489,8 @@ def getIntLumiMap():
     intLumiMap = {
         7 : 4900,
         8 : 19700,
-        13: 1000,
-        #13: 7,
+        #13: 1000,
+        13: 6.95,
     }
     return intLumiMap
 
@@ -519,22 +519,24 @@ def getChannelStringsCuts(region,channels):
 
 def getChannelBackgrounds(runPeriod):
     channelBackground = {
-        'Hpp2l' : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'Z'     : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'WZ'    : ['T', 'TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'W'     : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'TT'    : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'Hpp3l' : ['T', 'TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'Hpp4l' : ['TT', 'Z', 'DB']
+        'Hpp2l'   : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'Z'       : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'WZ'      : ['T', 'TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'W'       : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'TT'      : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'Hpp3l'   : ['T', 'TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'LowMass' : ['T', 'TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'Hpp4l'   : ['TT', 'Z', 'DB']
     }   
     if runPeriod==13:
         channelBackground = {
-            'WZ'    : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
-            'W'     : ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'ZZ', 'WZ'],
-            'Z'     : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
-            'TT'    : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
-            'Hpp2l' : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
-            'Hpp3l' : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
-            'Hpp4l' : ['T', 'TT', 'Z', 'TTV', 'WW', 'ZZ', 'WZ']
+            'WZ'      : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
+            'W'       : ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'ZZ', 'WZ'],
+            'Z'       : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
+            'TT'      : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
+            'Hpp2l'   : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
+            'Hpp3l'   : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
+            'LowMass' : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
+            'Hpp4l'   : ['T', 'TT', 'Z', 'TTV', 'WW', 'ZZ', 'WZ']
         }
     return channelBackground

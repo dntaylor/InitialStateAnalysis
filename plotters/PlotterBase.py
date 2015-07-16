@@ -289,7 +289,7 @@ class PlotterBase(object):
             hist.SetMarkerColor(4)
         hist.GetXaxis().SetLimits(bin1[1],bin1[2])
         hist.GetYaxis().SetLimits(bin2[1],bin2[2])
-        hist.GetZaxis().SetRangeUser(zbin[1],zbin[2])
+        #hist.GetZaxis().SetRangeUser(zbin[1],zbin[2])
         return hist
 
     def getHist2D(self, sample, var1, var2, bin1, bin2, cut, **kwargs):
@@ -560,6 +560,10 @@ class PlotterBase(object):
         CMS_lumi.lumi_7TeV = "%0.1f fb^{-1}" % (float(self.intLumi)/1000.)
         CMS_lumi.lumi_8TeV = "%0.1f fb^{-1}" % (float(self.intLumi)/1000.)
         CMS_lumi.lumi_13TeV = "%0.1f fb^{-1}" % (float(self.intLumi)/1000.)
+        if self.intLumi < 1000:
+            CMS_lumi.lumi_7TeV = "%0.1f pb^{-1}" % (float(self.intLumi))
+            CMS_lumi.lumi_8TeV = "%0.1f pb^{-1}" % (float(self.intLumi))
+            CMS_lumi.lumi_13TeV = "%0.1f pb^{-1}" % (float(self.intLumi))
         CMS_lumi.CMS_lumi(self.plotpad if plotratio else self.canvas,self.period,position)
 
     def getLegend(self,plotdata,plotsig,plotratio,legendpos,mchist,datahist,sighist):

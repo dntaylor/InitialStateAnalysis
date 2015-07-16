@@ -348,6 +348,15 @@ class Plotter(PlotterBase):
             data.GetYaxis().SetTitle(yaxis)
             data.GetYaxis().SetTitleOffset(1)
 
+        if plotsig:
+            for signal in self.signal:
+                sig = self.getHist2D(signal, var1, var2, bin1, bin2, cut, zbin=zbin)
+                sig.SetTitle("")
+                sig.Draw("colz")
+                sig.GetXaxis().SetTitle(xaxis)
+                sig.GetYaxis().SetTitle(yaxis)
+                sig.GetYaxis().SetTitleOffset(1)
+
         # save everything
         self.canvas.cd()
         self.save(savename)

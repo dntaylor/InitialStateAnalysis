@@ -14,17 +14,18 @@ def sync(analysis,channel,period,**kwargs):
     blind = kwargs.pop('blind',True)
     doEfficiency = kwargs.pop('doEfficiency',False)
     doCutflow = kwargs.pop('doCutflow',False)
+    doYields = kwargs.pop('doYields',False)
+    doCounts = kwargs.pop('doCounts',False)
+    doCorrelation = kwargs.pop('doCorrelation',False)
     cut = kwargs.pop('cut','1')
-
-    # WZ only for now
-    if not (analysis == channel == 'WZ'): return
-
-    fs = ['eee','eem','mme','mmm']
+    mass = kwargs.pop('mass',500)
 
     print ''
     print '%s:%s:%iTeV' % (analysis, channel, period)
     print 'Selection to be used:'
     print cut
+    if analysis in ['Hpp3l','Hpp4l']:
+        print 'Mass %i' % mass
     print ''
 
     # sync on WZ sample
@@ -33,115 +34,126 @@ def sync(analysis,channel,period,**kwargs):
     saves = '%s_%s_%sTeV' % (analysis,channel,period)
     mergeDict = getMergeDict(period)
     nl = 3 if analysis == 'WZ' or analysis == 'Hpp3l' else 4
-    sigMap = getSigMap(nl,0)
-    channelBackground = {
-        'WZ' : ['T','TT', 'TTV', 'Z', 'ZZ','WZ'],
-        'Hpp3l' : ['T', 'TT', 'TTV','Z','DB'],
-        'Hpp4l' : ['T', 'TT', 'Z', 'TTV','DB']
-    }
+    finalStates, leptons = getChannels(nl)
+    sigMap = getSigMap(nl,mass)
+    channelBackground =  getChannelBackgrounds(period)
     plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=period,mergeDict=mergeDict)
     plotter.initializeBackgroundSamples([sigMap[period][x] for x in channelBackground[channel]])
-    intLumi = 1000
+    if analysis in ['Hpp3l', 'Hpp4l']: plotter.initializeSignalSamples([sigMap[period]['Sig']])
+    intLumi = getIntLumiMap()[period]
     plotter.setIntLumi(intLumi)
-    cutflow = {
-        'pre' : cut,
-        'bjet' : 'finalstate.bjetVeto30Medium==0',
-        'zpt' : '(z1.Pt1>20.&z1.Pt2>10.)',
-        'zmass' : 'z1.mass>60 & z1.mass<120',
-        'wpt' : 'w1.Pt1>20.',
-        'wdr' : 'w1.dR1_z1_1>0.1 & w1.dR1_z1_2>0.1',
-        'met' : 'w1.met>30.',
-        'm3l' : 'finalstate.Mass>100.'
-    }
-    cutflowMap = defineCutFlowMap('WZ',0,0)
-    cutflows = ['pre','zpt','zmass','wdr','wpt','met']
+    cutflowMap = defineCutFlowMap(analysis,finalStates,mass)
+    cutflow = {}
+    for c,l in zip(cutflowMap['cuts'],cutflowMap['labels_simple']):
+        cutflow[l] = c
+    cutflows = cutflowMap['labels_simple']
+    allMC = channelBackground[channel]
+    s = 'Sig' if analysis in ['Hpp3l', 'Hpp4l'] else 'WZ'
+    if analysis in ['Hpp3l', 'Hpp4l']: allMC += ['Sig']
 
-    print 'WZ event counts'
-    tempCut = cut
-    for chan in fs:
-        num = plotter.getNumEntries('%s&channel=="%s"' %(tempCut,chan), sigMap[period]['WZ'], doUnweighted=True)
-        print '%s: %i' % (chan, num)
-    print ''
+    if doCounts:
+        print '{0} event counts'.format(analysis)
+        tempCut = cut
+        for chan in finalStates:
+            num = plotter.getNumEntries('%s&channel=="%s"' %(tempCut,chan), sigMap[period][s], doUnweighted=True)
+            print '%s: %i' % (chan, num)
+        print ''
 
     # yields in each channel
-    print 'Yields (scaled to %i pb-1)' % intLumi
-    #theCut = '&'.join([cutflow[x] for x in cutflows])
-    print 'Selection applied: %s' % cut
-    for chan in fs:
-        print '%8s |    Channel |      Yield' % chan
-        for b in channelBackground[channel]:
-            val = plotter.getNumEntries('%s&channel=="%s"' %(cut,chan), sigMap[period][b])
-            print '         | %10s | %10.2f' %(b,val)
-        print ''
+    if doYields:
+        print 'Yields (scaled to %i pb-1)' % intLumi
+        #theCut = '&'.join([cutflow[x] for x in cutflows])
+        print 'Selection applied: %s' % cut
+        for chan in finalStates:
+            print '%8s |    Channel |      Yield' % chan
+            for b in allMC:
+                val = plotter.getNumEntries('%s&channel=="%s"' %(cut,chan), sigMap[period][b])
+                print '         | %10s | %10.2f' %(b,val)
+            print ''
 
     # cut flow
     if doCutflow:
         print 'Cutflows'
-        for chan in fs:
-            print '%8s |         WZ |         BG |        S/B' % chan
+        for chan in finalStates:
+            print '%15s |        Sig |         BG |        S/B' % chan
             for c in range(len(cutflows)):
-                wz = 0
+                sig = 0
                 bg = 0
                 theCut = '&'.join([cutflow[x] for x in cutflows[0:c+1]])
-                for b in channelBackground[channel]:
+                for b in allMC:
                     val = plotter.getNumEntries('%s&channel=="%s"' %(theCut,chan), sigMap[period][b])
-                    if b=='WZ': wz += val
+                    if b==s: sig += val
                     else: bg += val
-                print '%8s | %10.2f | %10.2f | %10.2f' %(cutflows[c],wz,bg,wz/bg)
+                print '%15s | %10.2f | %10.2f | %10.2f' %(cutflows[c],sig,bg,sig/bg)
             print ''
 
     # efficiency of cuts
     if doEfficiency:
         print 'Cut efficiencies'
-        wzPreCuts = {}
+        sigPreCuts = {}
         bgPreCuts = {}
-        wzFullCuts = {}
+        sigFullCuts = {}
         bgFullCuts = {}
-        for chan in fs:
-            wzPre = 0
+        for chan in finalStates:
+            sigPre = 0
             bgPre = 0
-            wzFull = 0
+            sigFull = 0
             bgFull = 0
             theFullCut = '&'.join([cutflow[x] for x in cutflows])
-            for b in channelBackground[channel]:
+            for b in allMC:
                 valPre = plotter.getNumEntries('%s&channel=="%s"' %(cut,chan), sigMap[period][b])
                 valFull = plotter.getNumEntries('%s&channel=="%s"' %(theFullCut,chan), sigMap[period][b])
-                if b=='WZ':
-                    wzPre += valPre
-                    wzFull += valFull
+                if b==s:
+                    sigPre += valPre
+                    sigFull += valFull
                 else:
                     bgPre += valPre
                     bgFull += valFull
-            wzPreCuts[chan] = wzPre
+            sigPreCuts[chan] = sigPre
             bgPreCuts[chan] = bgPre
-            wzFullCuts[chan] = wzFull
+            sigFullCuts[chan] = sigFull
             bgFullCuts[chan] = bgFull
 
         for c in cutflows[1:]:
-            print '%8s |  WZ Pre Eff |  BG Pre Eff | WZ Post Eff | BG Post Eff' % c
-            for chan in fs:
-                wzAllbut = 0
+            print '%15s |  Sg Pre Eff |  BG Pre Eff | Sg Post Eff | BG Post Eff' % c
+            for chan in finalStates:
+                sigAllbut = 0
                 bgAllbut = 0
-                wzOnly = 0
+                sigOnly = 0
                 bgOnly = 0
                 theCut = '&'.join([cutflow[x] for x in cutflows if x != c])
                 theOnlyCut = '%s&%s' % (cut, cutflow[c])
-                for b in channelBackground[channel]:
+                for b in allMC:
                     valAllbut = plotter.getNumEntries('%s&channel=="%s"' %(theCut,chan), sigMap[period][b])
                     valOnly = plotter.getNumEntries('%s&channel=="%s"' %(theOnlyCut,chan), sigMap[period][b])
-                    if b=='WZ':
-                        wzAllbut += valAllbut
-                        wzOnly += valOnly
+                    if b==s:
+                        sigAllbut += valAllbut
+                        sigOnly += valOnly
                     else:
                         bgAllbut += valAllbut
                         bgOnly += valOnly
-                wzEffPre = wzOnly/wzPreCuts[chan]
-                bgEffPre = bgOnly/bgPreCuts[chan]
-                wzEffPost = wzFullCuts[chan]/wzAllbut
-                bgEffPost = bgFullCuts[chan]/bgAllbut
-                print '%8s | %11.4f | %11.4f | %11.4f | %11.4f' % (chan, wzEffPre, bgEffPre, wzEffPost, bgEffPost)
+                sigEffPre = sigOnly/sigPreCuts[chan] if sigPreCuts[chan] else -1
+                bgEffPre = bgOnly/bgPreCuts[chan] if bgPreCuts[chan] else -1
+                sigEffPost = sigFullCuts[chan]/sigAllbut if sigAllbut else -1
+                bgEffPost = bgFullCuts[chan]/bgAllbut if bgAllbut else -1
+                print '%15s | %11.4f | %11.4f | %11.4f | %11.4f' % (chan, sigEffPre, bgEffPre, sigEffPost, bgEffPost)
             print ''
 
+    if doCorrelation:
+        print 'Correlation matrix'
+        for chan in finalStates:
+            print ' | '.join(['%15s'%(chan+' denom.')] + ['%15s' % x for x in cutflows[1:]])
+            for dc in cutflows[1:]:
+                row = []
+                for nc in cutflows[1:]:
+                    numCut = '%s & %s & %s' % (cut, cutflow[dc], cutflow[nc])
+                    denomCut = '%s & %s' % (cut, cutflow[dc])
+                    numSig = plotter.getNumEntries('%s&channel=="%s"' %(numCut,chan), sigMap[period][s])
+                    denomSig = plotter.getNumEntries('%s&channel=="%s"' %(denomCut,chan), sigMap[period][s])
+                    eff = numSig/denomSig if denomSig else -1
+                    row += [eff]
+                print ' | '.join(['%15s'%dc] + ['%15.4f' % x for x in row])
+            print ''
 
 
 def parse_command_line(argv):
@@ -150,9 +162,14 @@ def parse_command_line(argv):
     parser.add_argument('analysis', type=str, choices=['WZ','Hpp3l','Hpp4l'], help='Analysis to plot')
     parser.add_argument('channel', type=str, choices=['WZ','Hpp3l','Hpp4l','FakeRate'], help='Channel in analysis')
     parser.add_argument('period', type=int, choices=[7,8,13], help='Energy (TeV)')
+    parser.add_argument('-m','--mass',nargs='?',type=int,const=500,default=500)
     parser.add_argument('-rt','--runTau',action='store_true',help='Run Tau finalStates (not implemented)')
     parser.add_argument('-ub','--unblind',action='store_false',help='Unblind signal channel')
-    parser.add_argument('-db','--doBjetVeto',action='store_true',help='Add a bjet veto')
+    parser.add_argument('-dc','--doCounts',action='store_true',help='run sig counts')
+    parser.add_argument('-dcf','--doCutflow',action='store_true',help='run cutflow')
+    parser.add_argument('-de','--doEfficiency',action='store_true',help='run efficiencies')
+    parser.add_argument('-dy','--doYields',action='store_true',help='run yields')
+    parser.add_argument('-dco','--doCorrelation',action='store_true',help='run correlation')
     parser.add_argument('-c','--cut',type=str,default='select.passTight',help='Cut to be applied to plots (default = "select.passTight").')
     args = parser.parse_args(argv)
 
@@ -180,7 +197,17 @@ def main(argv=None):
     # e: medium CBID and iso<0.15
     # m: isTightMuon and iso<0.12
 
-    sync(args.analysis,args.channel,args.period,runTau=args.runTau,blind=args.unblind,cut=args.cut,doBjetVeto=args.doBjetVeto)
+    sync(args.analysis,args.channel,args.period,
+         runTau=args.runTau,
+         blind=args.unblind,
+         cut=args.cut,
+         mass=args.mass,
+         doEfficiency=args.doEfficiency,
+         doCutflow=args.doCutflow,
+         doYields=args.doYields,
+         doCounts=args.doCounts,
+         doCorrelation=args.doCorrelation
+    )
 
     return 0
 

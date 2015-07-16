@@ -263,9 +263,9 @@ class CutFlowPlotter(PlotterBase):
         frame.Draw()
 
         # legend
-        if not plotdata: data = 0
-        if not plotsig: sighist = 0
-        leg = self.getLegend(plotdata,plotsig,plotratio,legendpos,stack,datahist,sighist)
+        if not plotdata: dataHist = 0
+        if not plotsig: sigHist = 0
+        leg = self.getLegend(plotdata,plotsig,plotratio,legendpos,mc,dataHist,sigHist)
         leg.Draw()
 
         # save everything

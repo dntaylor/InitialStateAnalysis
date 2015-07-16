@@ -148,23 +148,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     saves = '%s_%s_%sTeV' % (analysis,channel,runPeriod)
     sigMap = getSigMap(nl,mass)
     intLumiMap = getIntLumiMap()
-    channelBackground = {
-        'Hpp2l' : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'HZZ', 'WW', 'WZ'],
-        'Z'     : ['T', 'TT', 'TTV', 'W', 'Z', 'Zlow', 'VVV', 'ZZ', 'HZZ', 'WW', 'WZ'],
-        'WZ'    : ['T', 'TT', 'TTV', 'Z', 'VVV', 'ZZ', 'HZZ', 'WW', 'WZ'],
-        'TT'    : ['T', 'TT', 'TTV', 'W', 'Z', 'Zlow', 'VVV', 'ZZ', 'HZZ', 'WW', 'WZ'],
-        #'TT'    : ['T', 'TT', 'TTV', 'W', 'Z', 'ZG', 'VVV', 'ZZ', 'HZZ', 'WW', 'WZ'],
-        'Hpp3l' : ['T', 'TT', 'TTV', 'Z', 'VVV', 'ZZ', 'HZZ', 'WW', 'WZ'],
-        #'Hpp3l' : ['T', 'TT', 'TTV', 'Z', 'ZG', 'VVV', 'ZZ', 'HZZ', 'WW', 'WZ'],
-        'Hpp4l' : ['TT', 'TTV', 'Z', 'VVV', 'ZZ', 'HZZ', 'WW', 'WZ']
-    }
-    if runPeriod==13:
-        channelBackground = {
-            'WZ'    : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
-            'TT'    : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
-            'Hpp3l' : ['T', 'TT', 'TTV', 'Z', 'DB'],
-            'Hpp4l' : ['T', 'TT', 'Z', 'TTV', 'DB']
-        }
+    channelBackground = getChannelBackgrounds(runPeriod)
 
     finalStates, leptons = getChannels(nl,runTau=runTau)
     if finalStatesToPlot=='all':
@@ -186,8 +170,8 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
 
 
     if analysis in ['Hpp3l'] and not blind:
-        plotter.plotMCDataSignalRatio2D('z1.mass','finalstate.mass', [70,0,140], [100,0,200], 'm3l_v_z1_mc', plotdata=0, plotmc=1, cut=myCut, xaxis='M(l^{+}l^{-})',yaxis='M(3l)')
-        plotter.plotMCDataSignalRatio2D('z1.mass','finalstate.mass', [70,0,140], [100,0,200], 'm3l_v_z1_data', plotdata=1, plotmc=0, cut=myCut, xaxis='M(l^{+}l^{-})',yaxis='M(3l)')
+        plotter.plotMCDataSignalRatio2D('z1.mass','finalstate.mass', [70,0,140], [100,0,200], 'm3l_v_z1_mc', plotdata=0, plotmc=1, plotsig=0, cut=myCut, xaxis='M(l^{+}l^{-})',yaxis='M(3l)')
+        plotter.plotMCDataSignalRatio2D('z1.mass','finalstate.mass', [70,0,140], [100,0,200], 'm3l_v_z1_data', plotdata=1, plotmc=0, plotsig=0, cut=myCut, xaxis='M(l^{+}l^{-})',yaxis='M(3l)')
 
     plotMode = 'plotMCDataRatio' if dataplot else 'plotMC'
     plotMethod = getattr(plotter,plotMode)
@@ -222,7 +206,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
                 plotMethodUnblind('z1.mass',[80,0,240],c+'/z1Mass_fullWindow_unblind',yaxis='Events/3.0 GeV',xaxis='M(l^{+}l^{-}) (Z1) (GeV)',legendpos=43,logy=0,cut=myCut+'&&channel=="%s"'%c,blinder=[112,99999])
 
     # setup signal overlay plots
-    if plotOverlay and useSignal:
+    if useSignal:
         plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_overlay',mergeDict=mergeDict,scaleFactor=scaleFactor)
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
         plotter.initializeSignalSamples([sigMap[runPeriod]['Sig']])
@@ -230,9 +214,14 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         plotter.setIntLumi(intLumiMap[runPeriod])
         plotMode = 'plotMCDataSignalRatio' if dataplot else 'plotMCSignalRatio'
         plotMethod = getattr(plotter,plotMode)
+        if analysis in ['Hpp3l']:
+            plotter.plotMCDataSignalRatio2D('h1.mass','h1.dPhi', [80,0,800], [32,0,3.2], 'h1mass_v_h1dphi_mc', plotdata=0, plotmc=1, plotsig=0, cut=myCut, xaxis='M(l^{+}l^{+})',yaxis='#Delta#phi(l^{+}l^{+})')
+            plotter.plotMCDataSignalRatio2D('h1.mass','h1.dPhi', [80,0,800], [32,0,3.2], 'h1mass_v_h1dphi_sig', plotdata=0, plotmc=0, plotsig=1, cut=myCut, xaxis='M(l^{+}l^{+})',yaxis='#Delta#phi(l^{+}l^{+})')
+    if plotOverlay and useSignal:
         # plot the signal overlay
         print "MKPLOTS:%s:%s:%iTeV: Plotting signal overlay discriminating variables" % (analysis, channel, runPeriod)
         plotDistributions(plotMethod,myCut,nl,isControl,savedir='overlay',signalscale=100,analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
+
 
     # plot shapes
     if plotShapes:
@@ -458,7 +447,7 @@ def parse_command_line(argv):
     parser = argparse.ArgumentParser(description="Plot a given channel and period")
 
     parser.add_argument('analysis', type=str, choices=['Z','WZ','WZ_W','Hpp2l','Hpp3l','Hpp4l'], help='Analysis to plot')
-    parser.add_argument('channel', type=str, choices=['Z','WZ','W','TT','Hpp2l','Hpp3l','Hpp4l','FakeRate'], help='Channel in analysis')
+    parser.add_argument('channel', type=str, choices=['Z','WZ','W','TT','Hpp2l','Hpp3l','Hpp4l','FakeRate','LowMass'], help='Channel in analysis')
     parser.add_argument('period', type=int, choices=[7,8,13], help='Energy (TeV)')
     parser.add_argument('-pf','--plotFinalStates',action='store_true',help='Plot individual final states')
     parser.add_argument('-pj','--plotJetBins',action='store_true',help='Plot jet bins')
