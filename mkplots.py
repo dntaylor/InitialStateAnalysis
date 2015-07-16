@@ -42,7 +42,26 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
         plotMethod('%s.Pt' %name,[40,0,200],savedir+'%sPt' %name,yaxis='Events/5.0 GeV',xaxis='p_{T}^{%s} (GeV)' %name,legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('%s.Eta' %name,[30,-3.0,3.0],savedir+'%sEta' %name,yaxis='Events',xaxis='#eta^{%s}' %name,legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod('%s.Phi' %name,[30,-3.14159,3.14159],savedir+'%sPhi' %name,yaxis='Events',xaxis='#phi^{%s}' %name,legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('%s.Iso' %name,[50,0,.5],savedir+'%sIso' %name,yaxis='Events',xaxis='Relative Isolation (%s)' %name,legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('%s.Iso' %name,[50,0,.5],savedir+'%sIso' %name,yaxis='Events',xaxis='Relative Isolation (%s)' %name,legendpos=43,logy=0,cut=myCut,**kwargs)    
+    names = {
+        'e': 'Elec',
+        'm': 'Mu',
+        't': 'Tau',
+    }
+    tex = {
+        'e': 'e',
+        'm': '#mu',
+        't': '#tau',
+    }
+    for l in ['e','m']:
+        name = names[l]
+        t = tex[l]
+        cuts = ['%s & %s' %(myCut,'l%iFlv=="%s"' %((x+1),l)) for x in range(nl)]
+        plotMethod(['l%i.Pt'  %(x+1) for x in range(nl)], [40,0,200],            savedir+'%sPt'  %name, yaxis='Events/5.0 GeV', xaxis='p_{T}^{%s} (GeV)' %t,        legendpos=43, logy=0, cut=cuts, overflow=True, **kwargs)
+        plotMethod(['l%i.Eta' %(x+1) for x in range(nl)], [30,-3.0,3.0],         savedir+'%sEta' %name, yaxis='Events',         xaxis='#eta^{%s}' %t,               legendpos=43, logy=0, cut=cuts, **kwargs)
+        plotMethod(['l%i.Phi' %(x+1) for x in range(nl)], [30,-3.14159,3.14159], savedir+'%sPhi' %name, yaxis='Events',         xaxis='#phi^{%s}' %t,               legendpos=43, logy=0, cut=cuts, **kwargs)
+        plotMethod(['l%i.Iso' %(x+1) for x in range(nl)], [50,0,.5],             savedir+'%sIso' %name, yaxis='Events',         xaxis='Relative Isolation (%s)' %t, legendpos=43, logy=0, cut=cuts, **kwargs)    
+
     # plot doubly charged higgs stuff
     if analysis in ['Hpp3l','Hpp4l'] or region in ['Hpp2l']:
         plotMethod('h1.mass',[24,0,600],savedir+'hppMass',yaxis='Events/25.0 GeV/c^{2}',xaxis='M(l^{+}l^{+}) (GeV/c^{2})',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)

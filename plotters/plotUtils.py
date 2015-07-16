@@ -386,19 +386,19 @@ def getMergeDict(period):
             'TTJetsSemiLepMGDecays': '1',
         }
         sampleMergeDict['ZJets']     = {
-            'DYJetsToLL_M-10To50filter_8TeV-madgraph'         : '1',
+            #'DYJetsToLL_M-10To50filter_8TeV-madgraph'         : '1',
             #'Z1jets_M50'                                      : '1',
             #'Z2jets_M50_S10'                                  : '1',
             #'Z3jets_M50'                                      : '1',
             #'Z4jets_M50'                                      : '1',
             #'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball': 'event.GenNUP==5',
-            'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball': '1',
-            #'DYJetsToLL_M-10To50filter_8TeV-madgraph_filtered'         : '1',
-            #'Z1jets_M50_filtered'                                      : '1',
-            #'Z2jets_M50_S10_filtered'                                  : '1',
-            #'Z3jets_M50_filtered'                                      : '1',
-            #'Z4jets_M50_filtered'                                      : '1',
-            #'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball_filtered': 'event.GenNUP==5',
+            #'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball': '1',
+            'DYJetsToLL_M-10To50filter_8TeV-madgraph_filtered'         : '1',
+            'Z1jets_M50_filtered'                                      : '1',
+            'Z2jets_M50_S10_filtered'                                  : '1',
+            'Z3jets_M50_filtered'                                      : '1',
+            'Z4jets_M50_filtered'                                      : '1',
+            'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball_filtered': 'event.GenNUP==5',
             #'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball_filtered': '1',
         }
         sampleMergeDict['WJets']     = {
