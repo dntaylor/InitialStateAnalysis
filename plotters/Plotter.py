@@ -8,6 +8,14 @@ class Plotter(PlotterBase):
         PlotterBase.__init__(self,analysis,**kwargs)
 
     # several aliases for fast plotting configuration
+    def plotSignal(self, variables, binning, savename, **kwargs):
+        '''Plot Monte Carlo'''
+        ps = kwargs.pop('plotsig', 1)
+        pd = kwargs.pop('plotdata', 0)
+        pr = kwargs.pop('plotratio', 0)
+        nb = kwargs.pop('nobg',1)
+        self.plotMCDataSignalRatio(variables, binning, savename, plotsig=ps, plotdata=pd, plotratio=pr, nobg=nb, **kwargs)
+
     def plotMC(self, variables, binning, savename, **kwargs):
         '''Plot Monte Carlo'''
         ps = kwargs.pop('plotsig', 0)
@@ -91,8 +99,10 @@ class Plotter(PlotterBase):
         nostack = kwargs.pop('nostack',False)
         normalize = kwargs.pop('normalize',False)
         blinder = kwargs.pop('blinder', [])
+        boxes = kwargs.pop('boxes',[])
         logy = kwargs.pop('logy', 1)
         logx = kwargs.pop('logx', 0)
+        nobg = kwargs.pop('nobg',0)
         plotsig = kwargs.pop('plotsig', 1)
         plotdata = kwargs.pop('plotdata', 1)
         plotratio = kwargs.pop('plotratio', 1)
@@ -144,9 +154,11 @@ class Plotter(PlotterBase):
             plotpad.SetLogy(logy)
             plotpad.SetLogx(logx)
             ratiopad.SetLogx(logx)
+            curPad = plotpad
         else:
             self.canvas.SetLogy(logy)
             self.canvas.SetLogx(logx)
+            curPad = self.canvas
 
         # hack to show both mc and data on same plot
         if plotdata:
@@ -155,39 +167,89 @@ class Plotter(PlotterBase):
         
 
         # plot monte carlo
-        stack = self.getMCStack(variables,binning,cut,overflow=overflow,underflow=underflow,nostack=nostack,normalize=normalize)
-        stack.SetTitle("")
-        stack.Draw("hist nostack") if nostack else stack.Draw("hist")
-        stack.GetXaxis().SetTitle(xaxis)
-        stack.GetYaxis().SetTitle(yaxis)
-        stack.GetYaxis().SetTitleOffset(1)
-        if len(xrange)==2:
-            stack.GetXaxis().SetRangeUser(xrange[0],xrange[1])
-        if ymin: stack.SetMinimum(ymin)
-        if ymax: stack.SetMaximum(ymax)
-        else:
-            newymax = max(datamax,stack.GetMaximum()) if plotdata else stack.GetMaximum()
-            if not nostack: stack.SetMaximum(1.25*newymax)
-        if plotratio:
-            stack.GetHistogram().GetXaxis().SetLabelOffset(999)
+        if not nobg:
+            stack = self.getMCStack(variables,binning,cut,overflow=overflow,underflow=underflow,nostack=nostack,normalize=normalize)
+            stack.SetTitle("")
+            stack.Draw("hist nostack") if nostack else stack.Draw("hist")
+            stack.GetXaxis().SetTitle(xaxis)
+            stack.GetYaxis().SetTitle(yaxis)
+            stack.GetYaxis().SetTitleOffset(1)
+            if len(xrange)==2:
+                stack.GetXaxis().SetRangeUser(xrange[0],xrange[1])
+            if ymin: stack.SetMinimum(ymin)
+            if ymax: 
+                y2 = ymax
+                stack.SetMaximum(ymax)
+            else:
+                newymax = max(datamax,stack.GetMaximum()) if plotdata else stack.GetMaximum()
+                y2 = 1.25*newymax
+                if not nostack: stack.SetMaximum(1.25*newymax)
+            if plotratio:
+                stack.GetHistogram().GetXaxis().SetLabelOffset(999)
 
-        # add errors
-        if not nostack:
-            staterr = self.get_stat_err(stack.GetStack().Last())
-            staterr.Draw("e2 same")
+            # add errors
+            if not nostack:
+                staterr = self.get_stat_err(stack.GetStack().Last())
+                staterr.Draw("e2 same")
 
         # plot signal
         if plotsig:
             sigLabels = {}
+            sighists = {}
+            sigcolors = [
+                ROOT.TColor.GetColor('#000000'),
+                #ROOT.TColor.GetColor('#1A0000'),
+                ROOT.TColor.GetColor('#330000'),
+                #ROOT.TColor.GetColor('#4C0000'),
+                ROOT.TColor.GetColor('#660000'),
+                ROOT.TColor.GetColor('#800000'),
+                ROOT.TColor.GetColor('#990000'),
+                ROOT.TColor.GetColor('#B20000'),
+                ROOT.TColor.GetColor('#CC0000'),
+                #ROOT.TColor.GetColor('#E60000'),
+                ROOT.TColor.GetColor('#FF0000'),
+                #ROOT.TColor.GetColor('#FF1919'),
+                ROOT.TColor.GetColor('#FF3333'),
+                #ROOT.TColor.GetColor('#FF4D4D'),
+                ROOT.TColor.GetColor('#FF6666'),
+                ROOT.TColor.GetColor('#FF8080'),
+                ROOT.TColor.GetColor('#FF9999'),
+                ROOT.TColor.GetColor('#FFB2B2'),
+                ROOT.TColor.GetColor('#FFCCCC'),
+            ]
+            colorCount = 0
             for signal in self.signal:
-                sighist = self.getHist(signal,variables,binning,cut,overflow=overflow,underflow=underflow,normalzie=normalize)
-                sighist.Scale(signalscale)
-                sighist.SetFillStyle(0)
-                sighist.SetLineWidth(2)
-                sighist.Draw('hist same')
+                sighists[signal] = self.getHist(signal,variables,binning,cut,normalize=normalize)
+                sighists[signal].Scale(signalscale)
+                sighists[signal].SetFillStyle(0)
+                sighists[signal].SetLineWidth(3)
+                if len(self.signal) > 1:
+                    sighists[signal].SetLineColor(sigcolors[colorCount])
+                    dataStyles[signal]['linecolor'] = sigcolors[colorCount]
+                    colorCount += 1
+                if nobg and colorCount < 2:
+                    sighists[signal].Draw('hist')
+                    newymax = max(datamax,sighists[signal].GetMaximum()) if plotdata else sighists[signal].GetMaximum()
+                    sighists[signal].SetMaximum(1.25*newymax)
+                    y2 = 1.25*newymax
+                else:
+                    sighists[signal].Draw('hist same')
+                if nobg and colorCount < 2:
+                    sighists[signal].GetXaxis().SetTitle(xaxis)
+                    sighists[signal].GetYaxis().SetTitle(yaxis)
+                    sighists[signal].GetYaxis().SetTitleOffset(1)
                 if signalscale != 1:
                     sigLabels[signal] = dataStyles[signal]['name']
                     dataStyles[signal]['name'] += ' (x%i)' % signalscale
+            #for signal in self.signal:
+            #    sighist = self.getHist(signal,variables,binning,cut,overflow=overflow,underflow=underflow,normalzie=normalize)
+            #    sighist.Scale(signalscale)
+            #    sighist.SetFillStyle(0)
+            #    sighist.SetLineWidth(2)
+            #    sighist.Draw('hist same')
+            #    if signalscale != 1:
+            #        sigLabels[signal] = dataStyles[signal]['name']
+            #        dataStyles[signal]['name'] += ' (x%i)' % signalscale
 
         # plot data
         if plotdata:
@@ -207,6 +269,24 @@ class Plotter(PlotterBase):
                 data.Draw("esamex0")
             self.dataHist = data
 
+        if boxes:
+            box = ROOT.TBox()
+            y1 = curPad.GetY1()
+            for b in boxes:
+                box.SetFillColor(b[2])
+                box.SetFillStyle(3002)
+                box.SetLineColor(b[2])
+                #if nobg:
+                #    box.DrawBox(b[0],0,b[1],y2)
+                #else:
+                #box.DrawBox(b[0],y1,b[1],1.55*y2)
+                if logy:
+                    box.DrawBox(b[0],0,b[1],1.55*467)
+                else:
+                    box.DrawBox(b[0],0,b[1],467)
+
+
+
         if plotratio:
             ratiopad.cd()
             mchist = stack.GetStack().Last().Clone("mchist%s" % savename)
@@ -220,7 +300,7 @@ class Plotter(PlotterBase):
                         ratioblind.SetBinContent(i,999)
                         ratioblind.SetBinError(i,0)
             if plotsig:
-                sig = sighist.Clone("sig%s" % savename)
+                sig = sighists[self.signal[0]].Clone("sig%s" % savename)
                 sig.Add(mchist)
                 ratiosig = self.get_ratio(sig,mchist,"ratiosig%s" % savename)
                 ratiosig.SetLineWidth(1)
@@ -249,31 +329,24 @@ class Plotter(PlotterBase):
                     ratio.Draw("e0 same")
             if plotsig: ratiosig.Draw("hist same")
 
+            if boxes:
+                for b in boxes:
+                    box.SetFillColor(b[2])
+                    box.SetFillStyle(3002)
+                    box.SetLineColor(b[2])
+                    box.DrawBox(b[0],0.5,b[1],1.5)
+
+
         if plotratio:
             plotpad.cd()
         else:
             self.canvas.cd()
-        # try better legend
-        #numEntries = len(self.backgrounds)+len(self.signal)+1 if plotdata else len(self.backgrounds)+len(self.signal)
-        #xstart = 0.65
-        #ystart = 0.77-numEntries*0.045
-        #xend = 0.95
-        #yend = 0.77
-        #if plotratio: yend *= 0.95
-        #leg = ROOT.TLegend(xstart,ystart,xend,yend,'','NDC')
-        #leg.SetTextFont(42)
-        #leg.SetTextSize(0.33/numEntries)
-        #leg.SetBorderSize(0)
-        #leg.SetFillColor(0)
-        #if plotdata: leg.AddEntry(data,'Data','ep')
-        #for hist in stack.GetHists():
-        #    leg.AddEntry(hist,hist.GetTitle(),'f')
-        #if plotsig: leg.AddEntry(sighist)
-        #leg.Draw()
+
         # legend
         if not plotdata: data = 0
-        if not plotsig: sighist = 0
-        leg = self.getLegend(plotdata,plotsig,plotratio,legendpos,stack,data,sighist)
+        if not plotsig: sighists = 0
+        if nobg: stack = 0
+        leg = self.getLegend(plotdata,plotsig,plotratio,legendpos,stack,data,sighists)
         leg.Draw()
 
         # draw cms lumi

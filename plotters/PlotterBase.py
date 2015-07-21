@@ -566,11 +566,12 @@ class PlotterBase(object):
             CMS_lumi.lumi_13TeV = "%0.1f pb^{-1}" % (float(self.intLumi))
         CMS_lumi.CMS_lumi(self.plotpad if plotratio else self.canvas,self.period,position)
 
-    def getLegend(self,plotdata,plotsig,plotratio,legendpos,mchist,datahist,sighist):
+    def getLegend(self,plotdata,plotsig,plotratio,legendpos,mchist,datahist,sighists):
 
-        numEntries = len(self.backgrounds)
-        if plotsig: numEntries+=1
-        if plotdata: numEntries+=1
+        numEntries = 0
+        if mchist: numEntries += len(self.backgrounds)
+        if plotsig: numEntries += len(sighists)
+        if plotdata: numEntries += 1
         # setup legend position
         if legendpos % 10 == 1:   # on the left
             xend = 0.45
@@ -592,13 +593,16 @@ class PlotterBase(object):
         # create and draw legend
         leg = ROOT.TLegend(xstart,ystart,xend,yend,'','NDC')
         leg.SetTextFont(42)
-        leg.SetTextSize(0.33/numEntries)
+        leg.SetTextSize(0.25/numEntries)
         leg.SetBorderSize(0)
         leg.SetFillColor(0)
         if plotdata: leg.AddEntry(datahist,'Data','ep')
-        for hist in mchist.GetHists():
-            leg.AddEntry(hist,hist.GetTitle(),'f')
-        if plotsig: leg.AddEntry(sighist,sighist.GetTitle(),'f')
+        if mchist:
+            for hist in mchist.GetHists():
+                leg.AddEntry(hist,hist.GetTitle(),'f')
+        if plotsig:
+            for s in self.signal:
+                leg.AddEntry(sighists[s],sighists[s].GetTitle(),'f')
         return leg
 
     def save(self, savename):

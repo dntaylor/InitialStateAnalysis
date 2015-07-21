@@ -69,7 +69,7 @@ for mode in ['ee100', 'em100', 'mm100', 'BP1', 'BP2', 'BP3', 'BP4']:
                 vals = [float(x) for x in text.split(':')]
             else:
                 vals = [0]*11
-            rowString += '$%6.2f \\pm %4.2f$ & $%6.2f \\pm %4.2f$   & $%6.2f \\pm %4.2f$ & $%6.2f \\pm %4.2f \\pm %4.2f$' % (vals[0], vals[1], vals[2], vals[3], vals[9], vals[10], vals[4], vals[5], vals[6])
+            rowString += '$%6.3g \\pm %6.3g$ & $%6.3g \\pm %6.3g$   & $%6.3g \\pm %6.3g$ & $%6.3g \\pm %6.3g \\pm %6.3g$' % (vals[0], vals[1], vals[2], vals[3], vals[9], vals[10], vals[4], vals[5], vals[6])
             #if fs=='4l':
             #    rowString += ' \\\\ \\hline'
             #else:

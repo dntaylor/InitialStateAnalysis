@@ -207,7 +207,7 @@ def getChannels(numLeptons,**kwargs):
     runTau = kwargs.pop('runTau',False)
     leptons = ['l%i' %(x+1) for x in range(numLeptons)]
     lepTypes = 'emt' if runTau else 'em'
-    lepPairs = [x[0]+x[1] for x in itertools.combinations_with_replacement(lepTypes,2)]
+    lepPairs = [x[0]+x[1] for x in itertools.product(lepTypes,repeat=2)]
     if numLeptons == 2:
         channels = [x[0]+x[1] for x in itertools.product(lepTypes,lepTypes)]
     elif numLeptons == 3:
@@ -284,7 +284,7 @@ def getMergeDict(period):
             #'WW_TuneCUETP8M1_13TeV-pythia8' : '1',
         }
         sampleMergeDict['WZJets'] = {
-            'WZTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8' : '1',
+            #'WZTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8' : '1',
             'WZTo3LNu_TuneCUETP8M1_13TeV-powheg-pythia8'     : '1',
             #'WZ_TuneCUETP8M1_13TeV-pythia8'                  : '1',
         }
@@ -482,6 +482,8 @@ def getSigMap(numLeptons,mass):
              'data': 'data'
         }
     }
+    for m in _3L_MASSES:
+        sigMap[8][m] = 'HPlusPlusHMinusHTo3L_M-%i_8TeV-calchep-pythia6' % m
     return sigMap
 
 def getIntLumiMap():
@@ -490,7 +492,7 @@ def getIntLumiMap():
         7 : 4900,
         8 : 19700,
         #13: 1000,
-        13: 6.95,
+        13: 5.59,
     }
     return intLumiMap
 
@@ -520,13 +522,13 @@ def getChannelStringsCuts(region,channels):
 def getChannelBackgrounds(runPeriod):
     channelBackground = {
         'Hpp2l'   : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'Z'       : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'WZ'      : ['T', 'TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'W'       : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
         'TT'      : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'Hpp3l'   : ['T', 'TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'LowMass' : ['T', 'TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
-        'Hpp4l'   : ['TT', 'Z', 'DB']
+        'Z'       : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'W'       : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'Hpp3l'   : ['TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WZ'],
+        'WZ'      : ['TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WZ'],
+        'LowMass' : ['TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WZ'],
+        'Hpp4l'   : ['TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WZ'],
     }   
     if runPeriod==13:
         channelBackground = {
@@ -535,8 +537,8 @@ def getChannelBackgrounds(runPeriod):
             'Z'       : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
             'TT'      : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
             'Hpp2l'   : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
-            'Hpp3l'   : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
-            'LowMass' : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
-            'Hpp4l'   : ['T', 'TT', 'Z', 'TTV', 'WW', 'ZZ', 'WZ']
+            'Hpp3l'   : ['TT', 'TTV', 'Z', 'ZZ', 'WZ'],
+            'LowMass' : ['TT', 'TTV', 'Z', 'ZZ', 'WZ'],
+            'Hpp4l'   : ['TT', 'Z', 'TTV', 'ZZ', 'WZ']
         }
     return channelBackground

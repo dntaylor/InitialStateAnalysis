@@ -237,12 +237,13 @@ class CutFlowPlotter(PlotterBase):
 
         if plotsig:
             sigLabels = {}
+            sigHists = {}
             for signal in self.signal:
-                sigHist = self.getSampleCutFlow_Preselection(signal) if isprecf else self.getSampleCutFlow(selections,cut,signal,sumEntries=not nosum)
-                sigHist.Scale(signalscale)
-                sigHist.SetFillStyle(0)
-                sigHist.SetLineWidth(2)
-                sigHist.Draw('hist same')
+                sigHists[signal] = self.getSampleCutFlow_Preselection(signal) if isprecf else self.getSampleCutFlow(selections,cut,signal,sumEntries=not nosum)
+                sigHists[signal].Scale(signalscale)
+                sigHists[signal].SetFillStyle(0)
+                sigHists[signal].SetLineWidth(2)
+                sigHists[signal].Draw('hist same')
                 if signalscale != 1:
                     sigLabels[signal] = dataStyles[signal]['name']
                     dataStyles[signal]['name'] += ' (x%i)' % signalscale
@@ -264,8 +265,8 @@ class CutFlowPlotter(PlotterBase):
 
         # legend
         if not plotdata: dataHist = 0
-        if not plotsig: sigHist = 0
-        leg = self.getLegend(plotdata,plotsig,plotratio,legendpos,mc,dataHist,sigHist)
+        if not plotsig: sigHists = 0
+        leg = self.getLegend(plotdata,plotsig,plotratio,legendpos,mc,dataHist,sigHists)
         leg.Draw()
 
         # save everything

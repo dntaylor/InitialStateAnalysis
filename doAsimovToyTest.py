@@ -19,7 +19,6 @@ def doDatacards(analysis,period,combineDir,bp):
     masses = _3L_MASSES if analysis == 'Hpp3l' else _4L_MASSES
     if period==13: masses = [500]
     for mass in masses:
-        print "BP: %s, Mass: %i" % (bp,mass)
         os.system('cd %s/%s/%i; pwd; eval `scramv1 runtime -sh`; combine -M MaxLikelihoodFit -t -1 --expectSignal 0 %s.txt; python $CMSSW_BASE/src/HiggsAnalysis/CombinedLimit/test/diffNuisances.py -a mlfit.root -g plots.root; combine -M MaxLikelihoodFit -t -1 --expectSignal 0 %s.txt; python $CMSSW_BASE/src/HiggsAnalysis/CombinedLimit/test/diffNuisances.py -a mlfit.root -g plots.root' % (combineDatacardDir, bp, mass, bp, bp))
 
 def parse_command_line(argv):

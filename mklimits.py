@@ -26,11 +26,14 @@ class Scales(object):
 
 def limit(analysis,period,mass,**kwargs):
     doChannels = kwargs.pop('doChannels',False)
+    doAlphaTest = kwargs.pop('doAlphaTest',False)
+    unblind = kwargs.pop('unblind',False)
     name = kwargs.pop('name','card')
+    bp = kwargs.pop('bp','')
     scale = kwargs.pop('scale',[1.0])
     directory = kwargs.pop('directory','')
     chans = kwargs.pop('channels',['1'])
-    mode = kwargs.pop('mode','mc')
+    mode = kwargs.pop('mode','sideband')
     scalefactor = kwargs.pop('scalefactor','event.pu_weight*event.lep_scale*event.trig_scale')
     logger.info("Processing mass-point %i" % mass)
 
@@ -50,29 +53,33 @@ def limit(analysis,period,mass,**kwargs):
                        'finalstate.sT>0.6*%f+130.' %mass,\
                        'h1.mass>0.9*%f & h1.mass<1.1*%f' %(mass,mass)],
              'labels' : ['Preselection','s_{T}','Mass window']
-        }
+        },
+        'AlphaTest' : {
+             'cuts' : ['1',\
+                       'finalstate.sT<400. & finalstate.sT>150.',\
+                       'z1.mass<110.'],
+             'labels' : ['Preselection','s_{T}','Z']
+        },
     }
 
-    nl = 3 if analysis=='Hpp3l' or analysis=='WZ' else 4
+    nl = 3 if analysis in ['Hpp3l', 'WZ'] else 4
     sigMap = getSigMap(nl,mass)
     intLumiMap = getIntLumiMap()
 
     cuts = '&&'.join(cutMap[analysis]['cuts'])
-    #if chans:
-    #    chanCut = '('+'||'.join(['channel=="%s"'%c for c in chans])+')'
+    if doAlphaTest: cuts = ' & '.join(cutMap['AlphaTest']['cuts'])
 
+    if doAlphaTest: unblind = True
     limits = Limits(analysis, period, cuts, './ntuples/%s_%iTeV_%s' % (analysis, period, analysis),
                     './datacards/%s_%itev/%s/%s' % (analysis, period, directory, mass),
                     channels=['dblh%s' % analysis], lumi=intLumiMap[period],
-                    blinded=True, bgMode=mode, scalefactor=scalefactor)
+                    blinded=not unblind, bgMode=mode, scalefactor=scalefactor)
 
     signal =  sigMap[period]['Sig']
     if mode=='mc':
-        add_systematics_mc(limits,mass,signal,name,chans,scale,period)
+        add_systematics_mc(limits,mass,signal,name,chans,scale,period,bp,doAlphaTest)
     elif mode=='sideband':
-        add_systematics_sideband(limits,mass,signal,name,chans,scale,period)
-    elif mode=='fakerate':
-        add_systematics_fakerate(limits,mass,signal,name,chans,scale,period)
+        add_systematics_sideband(limits,mass,signal,name,chans,scale,period,bp,doAlphaTest)
     else:
         return 0
 
@@ -123,11 +130,12 @@ def BP(analysis,period,mass,bp,**kwargs):
         thisScale = sf(c[:2],c[2:])
         if thisScale==0: continue
         chanCut = '('+'||'.join(['channel=="%s"'%x for x in chanMap[analysis][c]])+')'
+        limit(analysis,period,mass,bp=bp,name='%s_%s'%(bp,c),directory=bp,channels=[chanCut],scale=[thisScale],**kwargs)
         chanCuts += [chanCut]
         chanScales += [thisScale]
-    limit(analysis,period,mass,name=bp,directory=bp,channels=chanCuts,scale=chanScales,**kwargs)
+    limit(analysis,period,mass,bp=bp,name=bp,directory=bp,channels=chanCuts,scale=chanScales,**kwargs)
 
-def add_systematics_mc(limits,mass,signal,name,chans,sigscale,period):
+def add_systematics_mc(limits,mass,signal,name,chans,sigscale,period,bp,doAlphaTest):
     limits.add_group("hpp%i" % mass, signal, scale=sigscale, isSignal=True)
     if period==8: limits.add_group("dyjets", "Z*j*")
     if period==13: limits.add_group("dyjets", "DY*")
@@ -161,7 +169,7 @@ def add_systematics_mc(limits,mass,signal,name,chans,sigscale,period):
     }
     limits.add_systematics("lumi", "lnN", **lumi)
 
-    idSys = "%0.3f" %calculateLeptonSystematic(mass,name)
+    idSys = "%0.3f" %calculateLeptonSystematic(mass,bp)
 
     lepid = {
         'hpp%i' % mass: idSys,
@@ -203,7 +211,7 @@ def add_systematics_mc(limits,mass,signal,name,chans,sigscale,period):
     }
     limits.add_systematics("pdf", "lnN", **pdf)
 
-    limits.gen_card("%s_mc.txt" % name,mass=mass,cuts=chans)
+    limits.gen_card("%s_mc.txt" % name,mass=mass,cuts=chans,doAlphaTest=doAlphaTest)
 
 def calculateLeptonSystematic(mass,bp):
     analysis = 'Hpp3l'
@@ -285,7 +293,7 @@ def calculateLeptonSystematic(mass,bp):
     return sigSelSys+1
 
 
-def add_systematics_sideband(limits,mass,signal,name,chans,sigscale,period):
+def add_systematics_sideband(limits,mass,signal,name,chans,sigscale,period,bp,doAlphaTest):
     limits.add_group("hpp%i" % mass, signal, scale=sigscale, isSignal=True)
     limits.add_group("bg", "bg")
     limits.add_group("data", "data_R*", isData=True)
@@ -293,7 +301,7 @@ def add_systematics_sideband(limits,mass,signal,name,chans,sigscale,period):
     lumi = {'hpp%i' % mass: 1.026}
     limits.add_systematics("lumi", "lnN", **lumi)
 
-    idSys = calculateLeptonSystematic(mass,name)
+    idSys = calculateLeptonSystematic(mass,bp)
 
     allid = {'hpp%i' % mass: "%0.3f" %idSys}
     limits.add_systematics("id", "lnN", **allid)
@@ -301,28 +309,10 @@ def add_systematics_sideband(limits,mass,signal,name,chans,sigscale,period):
     sigmc = {'hpp%i' % mass: 1.15}
     limits.add_systematics("sigmc", "lnN", **sigmc)
 
-    alpha_pdf = {'bg': 1.05}
+    alpha_pdf = {'bg': 1.1}
     limits.add_systematics("alpha_pdf", "lnN", **alpha_pdf)
 
-    limits.gen_card("%s.txt" % name,mass=mass,cuts=chans)
-
-def add_systematics_fakerate(limits,mass,signal,name,chans,sigscale,period):
-    limits.add_group("hpp%i" % mass, signal, scale=sigscale, isSignal=True)
-    limits.add_group("data", "data_R*", isData=True)
-
-    lumi = {'hpp%i' % mass: 1.026,}
-    limits.add_systematics("lumi", "lnN", **lumi)
-
-    muid = {'hpp%i' % mass: 1.005,}
-    limits.add_systematics("muid", "lnN", **muid)
-
-    muiso = {'hpp%i' % mass: 1.002,}
-    limits.add_systematics("muiso", "lnN", **muiso)
-
-    sigmc = {'hpp%i' % mass: 1.15}
-    limits.add_systematics("sigmc", "lnN", **sigmc)
-
-    limits.gen_card("%s.txt" % name,mass=mass,cuts=chans)
+    limits.gen_card("%s.txt" % name, mass=mass, cuts=chans, doAlphaTest=doAlphaTest)
 
 def parse_command_line(argv):
     parser = argparse.ArgumentParser(description="Produce datacards")
@@ -331,9 +321,11 @@ def parse_command_line(argv):
     parser.add_argument('period', type=int, choices=[8, 13], help='Energy (TeV)')
     parser.add_argument('-m','--mass',nargs='?',type=int,const=500,default=500,help='Mass for signal')
     parser.add_argument('-am','--allMasses',action='store_true',help='Run over all masses for signal')
+    parser.add_argument('-da','--doAlphaTest',action='store_true',help='Run the alpha test')
+    parser.add_argument('-ub','--unblind',action='store_true',help='unblind')
     parser.add_argument('-bp','--branchingPoint',nargs='?',type=str,const='BP4',default='BP4',choices=['ee100','em100','mm100','BP1','BP2','BP3','BP4'],help='Choose branching point for H++')
     parser.add_argument('-ab','--allBranchingPoints',action='store_true',help='Run over all branching points for H++')
-    parser.add_argument('-bg','--bgMode',nargs='?',type=str,const='mc',default='mc',choices=['mc','sideband','fakerate'],help='Choose BG estimation')
+    parser.add_argument('-bg','--bgMode',nargs='?',type=str,const='mc',default='sideband',choices=['mc','sideband'],help='Choose BG estimation')
     parser.add_argument('-sf','--scaleFactor',type=str,default='event.pu_weight*event.lep_scale*event.trig_scale',help='Scale factor for MC.')
 
     args = parser.parse_args(argv)
@@ -353,15 +345,15 @@ def main(argv=None):
     elif args.allMasses and args.allBranchingPoints:
         for mass in masses:
             for bp in branchingPoints:
-                BP(args.region,args.period,mass,bp,mode=args.bgMode,scalefactor=args.scaleFactor)
+                BP(args.region,args.period,mass,bp,mode=args.bgMode,scalefactor=args.scaleFactor,doAlphaTest=args.doAlphaTest)
     elif args.allMasses:
         for mass in masses:
-            BP(args.region,args.period,mass,args.branchingPoint,mode=args.bgMode,scalefactor=args.scaleFactor)
+            BP(args.region,args.period,mass,args.branchingPoint,mode=args.bgMode,scalefactor=args.scaleFactor,doAlphaTest=args.doAlphaTest)
     elif args.allBranchingPoints:
         for bp in branchingPoints:
-            BP(args.region,args.period,args.mass,bp,mode=args.bgMode,scalefactor=args.scaleFactor)
+            BP(args.region,args.period,args.mass,bp,mode=args.bgMode,scalefactor=args.scaleFactor,doAlphaTest=args.doAlphaTest)
     else:
-        BP(args.region,args.period,args.mass,args.branchingPoint,mode=args.bgMode,scalefactor=args.scaleFactor)
+        BP(args.region,args.period,args.mass,args.branchingPoint,mode=args.bgMode,scalefactor=args.scaleFactor,doAlphaTest=args.doAlphaTest)
 
     return 0
 

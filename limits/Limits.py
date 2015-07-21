@@ -109,8 +109,11 @@ class Limits(object):
         mass = kwargs.pop('mass',500)
         cuts = kwargs.pop('cuts','1')
         period = kwargs.pop('period',8)
+        doAlphaTest = kwargs.pop('doAlphaTest',False)
         values = []
         weights = []
+
+        chans = cuts
 
         var = 'mass'
 
@@ -135,6 +138,7 @@ class Limits(object):
         # TODO: change for 4l
 
         myCut = '1'
+        #myCut = '(' + ' | '.join(cuts) + ')'
 
         plotter = self.getPlotter(self.analysis,self.period,mass,False,'plots_limits_temp',False)
 
@@ -142,8 +146,11 @@ class Limits(object):
         nSRDict = {}
         sbcut = '%s & %s & %s' %(myCut,sbCut,cuts)
         srcut = '%s & %s & %s & %s' %(myCut,srCut,fullCut, cuts)
-        print 'Sideband cut:', sbcut
-        print 'Signal region cut:', srcut
+        if doAlphaTest:
+            sbcut = '%s & finalstate.sT<150. & z1.mass<110. & h1.mass<130.' %(cuts)
+            srcut = '%s & finalstate.sT<400. & finalstate.sT>150. & z1.mass<110. & h1.mass<130.' %(cuts)
+        #print 'Sideband cut:', sbcut
+        #print 'Signal region cut:', srcut
         for background in plotter.backgrounds:
             nSBDict[background] = plotter.getNumEntries(sbcut,background,doError=True)
             nSRDict[background] = plotter.getNumEntries(srcut,background,doError=True)
@@ -194,7 +201,7 @@ class Limits(object):
         #print "nBGSR: %0.4f" % nBGSR
         #print "eBGSR: %0.4f" % eBGSR
         #if not self.blinded: print "nSRDa: %0.4f" % nSRData
-        strToSave = ":".join(["%0.4f" % x for x in [nSB,eSB,nSR,eSR,alpha,nSBData,eSBData,nBGSR,eBGSR]])
+        strToSave = ":".join(["%0.10f" % x for x in [nSB,eSB,nSR,eSR,alpha,nSBData,eSBData,nBGSR,eBGSR]])
         if self.blinded:
             strToSave += ':%0.4f' % 0
         else:
@@ -234,7 +241,7 @@ class Limits(object):
         if self.bgMode=='sideband':
             # add the systematics for the alpha
             alphaSys = {'bg':self.alpha}
-            self.add_systematics("alpha","gmN %i" %self.nSBData, **alphaSys)
+            self.add_systematics("alpha_%s" % file_name.split('.')[0],"gmN %i" %self.nSBData, **alphaSys)
             for key in self.sample_groups:
                 is_data = self.sample_groups[key]['isData']
                 if self.sample_groups[key]['isSig']:
@@ -257,6 +264,7 @@ class Limits(object):
 
         self.log.info("Saving card to file")
 
+        if doAlphaTest: file_name = 'alpha_' + file_name
         with open("%s/%s" % (self.out_dir, file_name), 'w') as outfile:
             outfile.write(self.datacard.dump())
 

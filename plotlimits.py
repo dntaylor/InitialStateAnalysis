@@ -12,7 +12,7 @@ def parse_command_line(argv):
     parser.add_argument('period', type=int, choices=[8, 13], help='Run period')
     parser.add_argument('-bp','--branchingPoint',nargs='?',type=str,const='',choices=['ee100','em100','mm100','BP1','BP2','BP3','BP4'],help='Choose branching point')
     parser.add_argument('-ab','--allBranchingPoints',action='store_true',help='Run over all branching points')
-
+    parser.add_argument('-bg','--bgMode',nargs='?',type=str,const='sideband',default='sideband',choices=['mc','sideband','comb'],help='Choose BG estimation')
 
     args = parser.parse_args(argv)
     return args
@@ -25,15 +25,17 @@ def main(argv=None):
 
     branchingPoints = ['ee100','em100','mm100','BP1','BP2','BP3','BP4']
 
+    datacardString = '' if args.bgMode == "sideband" else "_{0}".format(args.bgMode)
+
     if args.period == 7:
         print "7 TeV not implemented"
     elif args.allBranchingPoints:
         for bp in branchingPoints:
             print 'Plotting limit for %s' % bp
-            plot_limits(args.region,args.period,'limits_%s_%itev_%s'%(args.region,args.period,bp),branchingPoint=bp)
+            plot_limits(args.region,args.period,'limits_%s_%itev_%s%s'%(args.region,args.period,bp,datacardString),branchingPoint=bp,bgMode=args.bgMode)
     else:
         print 'Plotting limit for %s' % args.branchingPoint
-        plot_limits(args.region,args.period,'limits_%s_%itev_%s'%(args.region,args.period,args.branchingPoint),branchingPoint=args.branchingPoint)
+        plot_limits(args.region,args.period,'limits_%s_%itev_%s%s'%(args.region,args.period,args.branchingPoint,datacardString),branchingPoint=args.branchingPoint,bgMode=args.bgMode)
 
     return 0
 
