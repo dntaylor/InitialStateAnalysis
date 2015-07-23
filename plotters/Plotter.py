@@ -120,16 +120,7 @@ class Plotter(PlotterBase):
 
         if plotratio:
             self.canvas.SetCanvasSize(796,666)
-            #self.canvas.SetLeftMargin(0)
-            #self.canvas.SetRightMargin(0)
-            #self.canvas.SetTopMargin(0)
-            #self.canvas.SetBottomMargin(0)
-            #self.canvas.SetBorderMode(0)
             plotpad = ROOT.TPad("plotpad", "top pad", 0.0, 0.21, 1.0, 1.0)
-            #plotpad.SetFillColor(0)
-            #plotpad.SetBorderMode(0)
-            #plotpad.SetFrameFillStyle(0)
-            #plotpad.SetFrameBorderMode(0)
             plotpad.SetLeftMargin(self.L)
             plotpad.SetRightMargin(self.R)
             plotpad.SetTopMargin(0.0875)
@@ -144,9 +135,6 @@ class Plotter(PlotterBase):
             ratiopad.SetLeftMargin(self.L)
             ratiopad.SetRightMargin(self.R)
             ratiopad.SetFillColor(0)
-            #ratiopad.SetBorderMode(0)
-            #ratiopad.SetFrameFillStyle(0)
-            #ratiopad.SetFrameBorderMode(0)
             ratiopad.SetTickx(0)
             ratiopad.SetTicky(0)
             ratiopad.Draw()
@@ -194,7 +182,6 @@ class Plotter(PlotterBase):
 
         # plot signal
         if plotsig:
-            sigLabels = {}
             sighists = {}
             sigcolors = [
                 ROOT.TColor.GetColor('#000000'),
@@ -219,7 +206,7 @@ class Plotter(PlotterBase):
             ]
             colorCount = 0
             for signal in self.signal:
-                sighists[signal] = self.getHist(signal,variables,binning,cut,normalize=normalize)
+                sighists[signal] = self.getHist(signal,variables,binning,cut,normalize=normalize,overflow=overflow,underflow=underflow)
                 sighists[signal].Scale(signalscale)
                 sighists[signal].SetFillStyle(0)
                 sighists[signal].SetLineWidth(3)
@@ -239,17 +226,7 @@ class Plotter(PlotterBase):
                     sighists[signal].GetYaxis().SetTitle(yaxis)
                     sighists[signal].GetYaxis().SetTitleOffset(1)
                 if signalscale != 1:
-                    sigLabels[signal] = dataStyles[signal]['name']
-                    dataStyles[signal]['name'] += ' (x%i)' % signalscale
-            #for signal in self.signal:
-            #    sighist = self.getHist(signal,variables,binning,cut,overflow=overflow,underflow=underflow,normalzie=normalize)
-            #    sighist.Scale(signalscale)
-            #    sighist.SetFillStyle(0)
-            #    sighist.SetLineWidth(2)
-            #    sighist.Draw('hist same')
-            #    if signalscale != 1:
-            #        sigLabels[signal] = dataStyles[signal]['name']
-            #        dataStyles[signal]['name'] += ' (x%i)' % signalscale
+                    sighists[signal].SetTitle(dataStyles[signal]['name']+' (x%i)' % signalscale)
 
         # plot data
         if plotdata:
@@ -276,10 +253,6 @@ class Plotter(PlotterBase):
                 box.SetFillColor(b[2])
                 box.SetFillStyle(3002)
                 box.SetLineColor(b[2])
-                #if nobg:
-                #    box.DrawBox(b[0],0,b[1],y2)
-                #else:
-                #box.DrawBox(b[0],y1,b[1],1.55*y2)
                 if logy:
                     box.DrawBox(b[0],0,b[1],1.55*467)
                 else:
@@ -356,12 +329,6 @@ class Plotter(PlotterBase):
         self.canvas.cd()
         self.save(savename)
 
-        # reset signal names
-        if plotsig:
-            if signalscale != 1:
-                for signal in self.signal:
-                    dataStyles[signal]['name'] = sigLabels[signal]
-
         if plotratio:
             self.resetCanvas()
 
@@ -414,8 +381,6 @@ class Plotter(PlotterBase):
         if plotdata:
             data = self.getData2D(var1, var2, bin1, bin2, cut,zbin=zbin)
             data.SetTitle("")
-            #data.SetMarkerColor(2)
-            #data.SetMarkerSize(2)
             data.Draw("colz")
             data.GetXaxis().SetTitle(xaxis)
             data.GetYaxis().SetTitle(yaxis)

@@ -22,7 +22,6 @@ import CMS_lumi, tdrstyle
 from plotUtils import *
 
 ROOT.gROOT.SetBatch(ROOT.kTRUE)
-#ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
 ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 2001;")
 tdrstyle.setTDRStyle()
 
@@ -140,10 +139,6 @@ class PlotterBase(object):
         if 'data' in sample:
             lumifile = self.ntupleDir+'/%s.lumicalc.sum' % sample
         else:
-            #jsonfile = self.ntupleDir+'/%s.meta.json' % sample
-            #with open(jsonfile) as data_file:    
-            #    numJson = json.load(data_file)
-            #n_evts = numJson['n_evts']
             cutflowHist = self.samples[sample]['file'].Get('cutflow')
             n_evts = cutflowHist.GetBinContent(1)
             sample_xsec = self.xsecs[sample]
@@ -172,6 +167,10 @@ class PlotterBase(object):
         '''Set the integrated luminosity to scale MC to'''
         self.intLumi = intLumi
 
+    def setScaleFactor(self,scalefactor):
+        '''Set Scale factor'''
+        self.scaleFactor = scalefactor
+
     def getNumEntries(self,selection,sample,**kwargs):
         '''Return the lumi scaled number of entries passing a given cut.'''
         doError = kwargs.pop('doError',False)
@@ -189,7 +188,6 @@ class PlotterBase(object):
                     #if not scaleup: tree.Draw('event.pu_weight>>h%s()'%s,'event.lep_scale*event.trig_scale*(%s)' %selection,'goff')
                     if scaleup: tree.Draw('1>>h%s()'%s,'%s*(%s)' %("event.lep_scale_up*event.trig_scale*event.pu_weight",thisCut),'goff')
                     if not scaleup: tree.Draw('1>>h%s()'%s,'%s*(%s)' %(self.scaleFactor,thisCut),'goff')
-                    #tree.Draw('event.pu_weight>>h%s()'%s,'event.lep_scale*(%s)' %selection,'goff')
                     if not ROOT.gDirectory.Get("h%s" %s):
                         val = 0
                     else:
@@ -220,7 +218,6 @@ class PlotterBase(object):
                 #if not scaleup: tree.Draw('event.pu_weight>>h%s()'%sample,'event.lep_scale*event.trig_scale*(%s)' %selection,'goff')
                 if scaleup: tree.Draw('1>>h%s()'%sample,'%s*(%s)' %("event.lep_scale_up*event.trig_scale*event.pu_weight",selection),'goff')
                 if not scaleup: tree.Draw('1>>h%s()'%sample,'%s*(%s)' %(self.scaleFactor,selection),'goff')
-                #tree.Draw('event.pu_weight>>h%s()'%sample,'event.lep_scale*(%s)' %selection,'goff')
                 if not ROOT.gDirectory.Get("h%s" %sample):
                     val = 0
                 else:
@@ -272,7 +269,6 @@ class PlotterBase(object):
         '''Plot a single sample hist with two variables'''
         zbin = kwargs.pop('zbin',[10,0,10])
         drawString = "%s:%s>>h%s%s%s(%s)" % (var2,var1,sample,var1,var2,', '.join(str(x) for x in bin1+bin2))
-        #drawString = "%s:%s>>h%s%s%s" % (var2,var1,sample,var1,var2)
         if not cut: cut = '1'
         if 'data' not in sample:
             tree.Draw(drawString,'%s*(%s)' % (self.scaleFactor,cut),'goff')
@@ -334,7 +330,6 @@ class PlotterBase(object):
             drawString = "%s>>h%s%s()" % (variable, sample, variable)
         if not cut: cut = '1'
         if 'data' not in sample:
-            #tree.Draw(drawString,'(event.pu_weight*event.lep_scale*event.trig_scale)*('+cut+')','goff')
             tree.Draw(drawString,'%s*(%s)' % (self.scaleFactor,cut),'goff')
         else:
             tree.Draw(drawString,cut,'goff')
@@ -466,13 +461,6 @@ class PlotterBase(object):
 
     def getMCStack2D(self, var1, var2, bin1, bin2, cut, **kwargs):
         '''Return a stack of MC histograms'''
-        #mcstack = ROOT.THStack('hs%s%s' % (var1[0], var2[0]),'mc stack')
-        #for sample in self.backgrounds:
-        #    hist = self.getHist2D(sample, var1, var2, bin1, bin2, cut, **kwargs)
-        #    if not hist: continue
-        #    mcstack.Add(hist)
-        ##print 'And the full stack integral is %f.' % mcstack.GetStack().Last().Integral()
-        #return mcstack
         hists = ROOT.TList()
         for sample in self.backgrounds:
             hist = self.getHist2D(sample, var1, var2, bin1, bin2, cut, **kwargs)

@@ -19,19 +19,19 @@ def doDatacards(analysis,period,combineDir,bp,bgMode):
     combineDatacardDir = '%s/%s_%itev' % (combineDir, analysis, period)
     datacardLimitsDir = 'limitData/%s_%itev/%s' % (analysis, period, bp)
     masses = _3L_MASSES if analysis == 'Hpp3l' else _4L_MASSES
+    datacardString = '' if bgMode == "sideband" else "_{0}".format(bgMode)
     python_mkdir(combineDatacardDir)
     if analysis in combos:
         for mass in masses:
             dirsToCombine = ['datacards/%s_%itev/%s' % (a, period, bp) for a in combos[analysis]]
-            theCards = ['%s/%i/%s.txt' %(x,mass,bp) for x in dirsToCombine]
+            theCards = ['%s/%i/%s%s.txt' %(x,mass,bp,datacardString) for x in dirsToCombine]
             cardsToCombine = [x for x in theCards if os.path.isfile(x)]
-            outCard = '%s/%i/%s.txt' %(datacardDir,mass,bp)
+            outCard = '%s/%i/%s%s.txt' %(datacardDir,mass,bp,datacardString)
             python_mkdir('%s/%i' %(datacardDir,mass))
             print 'Creating combined card mass %i' % mass
             os.system('pushd %s;  eval `scramv1 runtime -sh`; popd; combineCards.py %s > %s' % (combineDatacardDir,' '.join(cardsToCombine),outCard))
             
     os.system('cp -r %s %s' %(datacardDir, combineDatacardDir))
-    datacardString = '' if bgMode == "sideband" else "_{0}".format(bgMode)
     if period==13: masses = [500]
     python_mkdir(datacardLimitsDir)
     for mass in masses:

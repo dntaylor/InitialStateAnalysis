@@ -130,6 +130,10 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
        Float_t JetBTag;\
        Float_t LepScaleLoose;\
        Float_t LepScaleTight;\
+       Float_t LepScaleLoose_up;\
+       Float_t LepScaleTight_up;\
+       Float_t LepScaleLoose_down;\
+       Float_t LepScaleTight_down;\
        Float_t LepFakeLoose;\
        Float_t LepFakeTight;\
        Int_t   Chg;\
@@ -164,7 +168,7 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
                     charName = 'g'
                     phoCount += 1
                     objCount = phoCount
-                structureDict['%s%i' % (charName, objCount)] = [objStruct, objStruct, 'Pt/F:Eta:Phi:Iso:Dxy:Dz:JetPt:JetBTag:LepScaleLoose:LepScaleTight:LepFakeLoose:LepFakeTight:Chg/I:PassLoose:PassTight:GenPdgId:MotherGenPdgId']
+                structureDict['%s%i' % (charName, objCount)] = [objStruct, objStruct, 'Pt/F:Eta:Phi:Iso:Dxy:Dz:JetPt:JetBTag:LepScaleLoose:LepScaleTight:LepScaleLoose_up:LepScaleTight_up:LepScaleLoose_down:LepScaleTight_down:LepFakeLoose:LepFakeTight:Chg/I:PassLoose:PassTight:GenPdgId:MotherGenPdgId']
                 structureDict['%s%iFlv' % (charName, objCount)] = [flvStruct, rt.AddressOf(flvStruct,'Flv'),'Flv/C']
                 structOrder += ['%s%i' % (charName, objCount)]
                 structOrder += ['%s%iFlv' % (charName, objCount)]
@@ -193,7 +197,7 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
                         Float_t metPhi;"
                 else:
                     objCount += 1
-                    strForBranch += "Pt{0}:Eta{0}:Phi{0}:Iso{0}:Dxy{0}:Dz{0}:JetPt{0}:JetBTag{0}:LepScaleLoose{0}:LepScaleTight{0}:LepFakeLoose{0}:LepFakeTight{0}:".format(objCount)
+                    strForBranch += "Pt{0}:Eta{0}:Phi{0}:Iso{0}:Dxy{0}:Dz{0}:JetPt{0}:JetBTag{0}:LepScaleLoose{0}:LepScaleTight{0}:LepScaleLoose{0}_up:LepScaleTight{0}_up:LepScaleLoose{0}_down:LepScaleTight{0}_down:LepFakeLoose{0}:LepFakeTight{0}:".format(objCount)
                     strToProcess += "\
                         Float_t Pt{0};\
                         Float_t Eta{0};\
@@ -205,6 +209,10 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
                         Float_t JetBTag{0};\
                         Float_t LepScaleLoose{0};\
                         Float_t LepScaleTight{0};\
+                        Float_t LepScaleLoose{0}_up;\
+                        Float_t LepScaleTight{0}_up;\
+                        Float_t LepScaleLoose{0}_down;\
+                        Float_t LepScaleTight{0}_down;\
                         Float_t LepFakeLoose{0};\
                         Float_t LepFakeTight{0};".format(objCount)
                     # do the deltaRs

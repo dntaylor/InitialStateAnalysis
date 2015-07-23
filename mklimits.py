@@ -169,7 +169,7 @@ def add_systematics_mc(limits,mass,signal,name,chans,sigscale,period,bp,doAlphaT
     }
     limits.add_systematics("lumi", "lnN", **lumi)
 
-    idSys = "%0.3f" %calculateLeptonSystematic(mass,bp)
+    idSys = "%0.3f" %calculateLeptonSystematic(mass,chans,sigscale)
 
     lepid = {
         'hpp%i' % mass: idSys,
@@ -213,7 +213,7 @@ def add_systematics_mc(limits,mass,signal,name,chans,sigscale,period,bp,doAlphaT
 
     limits.gen_card("%s_mc.txt" % name,mass=mass,cuts=chans,doAlphaTest=doAlphaTest)
 
-def calculateLeptonSystematic(mass,bp):
+def calculateLeptonSystematic(mass,chanCuts,chanScales):
     analysis = 'Hpp3l'
     region = 'Hpp3l'
     runPeriod = 8
@@ -235,49 +235,6 @@ def calculateLeptonSystematic(mass,bp):
     plotter.initializeDataSamples([sigMap[runPeriod]['data']])
     plotter.setIntLumi(intLumiMap[runPeriod])
 
-    chanMap = {
-        'Hpp3l': {
-             'names': ['ee','em','mm'],
-             'ee'   : ['eee','eem'],
-             'em'   : ['eme','emm','mee','mem'],
-             'mm'   : ['mme','mmm'],
-        },
-        'Hpp4l': {
-             'names': ['eeee','eeem','eemm','emem','emmm','mmmm'],
-             'eeee' : ['eeee'],
-             'eeem' : ['eeem','eeme','emee','meee'],
-             'eemm' : ['eemm','mmee'],
-             'emem' : ['emem','emme','meem','meme'],
-             'emmm' : ['emmm','memm','mmem','mmme'],
-             'mmmm' : ['mmmm'],
-        },
-    }
-    if bp == 'ee100':
-        s = Scales(1., 0., 0., 0., 0., 0.)
-    elif bp == 'em100':
-        s = Scales(0., 1., 0., 0., 0., 0.)
-    elif bp == 'mm100':
-        s = Scales(0., 0., 0., 1., 0., 0.)
-    elif bp == 'BP1':
-        s = Scales(0, 0.1, 0.1, 0.3, 0.38, 0.3)
-    elif bp == 'BP2':
-        s = Scales(0.5, 0, 0, 0.125, 0.25, 0.125)
-    elif bp == 'BP3':
-        s = Scales(0.34, 0, 0, 0.33, 0, 0.33)
-    elif bp == 'BP4':
-        s = Scales(1./6., 1./6., 1./6., 1./6., 1./6., 1./6.)
-    else:
-        print 'Unknown branching point: %s' %bp
-    sf = getattr(s,'scale_%s'%analysis)
-    chanCuts = []
-    chanScales = []
-    for c in chanMap[analysis]['names']:
-        thisScale = sf(c[:2],c[3:])
-        if thisScale==0: continue
-        chanCut = '('+'||'.join(['channel=="%s"'%x for x in chanMap[analysis][c]])+')'
-        chanCuts += [chanCut]
-        chanScales += [thisScale]
-
     fullCut = 'finalstate.mass>100&finalstate.sT>1.1*%f+60. & fabs(z1.mass-%f)>80. & h1.dPhi<%f/600.+1.95' %(mass,ZMASS,mass)
     finalSRCut = 'h1.mass>0.9*%f & h1.mass<1.1*%f' %(mass,mass)
 
@@ -292,6 +249,51 @@ def calculateLeptonSystematic(mass,bp):
 
     return sigSelSys+1
 
+#def calculateChannelLeptonSystematic(mass):
+#    analysis = 'Hpp3l'
+#    region = 'Hpp3l'
+#    runPeriod = 8
+#    nl = 3
+#    ntuples = 'ntuples/%s_%iTeV_%s' % (analysis,runPeriod,region)
+#    saves = '%s_%s_%sTeV' % (analysis,region,runPeriod)
+#    sigMap = getSigMap(nl,mass)
+#    intLumiMap = getIntLumiMap()
+#    mergeDict = getMergeDict(runPeriod)
+#    regionBackground = {
+#        'Hpp3l' : ['T','TT', 'TTV','W','Z','VVV','WW','ZZ','WZ'],
+#        'Hpp4l' : ['TT','Z','DB']
+#    }
+#    channels, leptons = getChannels(nl)
+#
+#    plotter = Plotter(analysis,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='systematics',mergeDict=mergeDict)
+#    plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in regionBackground[analysis]])
+#    plotter.initializeSignalSamples([sigMap[runPeriod]['Sig']])
+#    plotter.initializeDataSamples([sigMap[runPeriod]['data']])
+#    plotter.setIntLumi(intLumiMap[runPeriod])
+#
+#    fullCut = 'finalstate.mass>100&finalstate.sT>1.1*%f+60. & fabs(z1.mass-%f)>80. & h1.dPhi<%f/600.+1.95' %(mass,ZMASS,mass)
+#    finalSRCut = 'h1.mass>0.9*%f & h1.mass<1.1*%f' %(mass,mass)
+#
+#    scaleStrings = {
+#        0: 'h1.LepScaleTight1',
+#        1: 'h1.LepScaleTight2',
+#        2: 'h2.LepScaleTight1',
+#    }
+#
+#    scaleMap = {}
+#    for c in channels:
+#        scaleMap[c] = {}
+#        for l in ['e','m']:
+#            # get bg
+#            scaleFactorBase = "event.trig_scale*event.pu_weight"
+#            individualScales = "*".join([
+#            chanBG = plotter.getNumEntries('%s&%s&%s' %(c,fullCut,finalSRCut),plotter.signal[0])
+#            chanBG_scaled = plotter.getNumEntries('%s&%s&%s' %(c,fullCut,finalSRCut),plotter.signal[0])
+#            scaleMap[c][l] = (chanBG_scaled-chanBG)/chanBG + 1
+#
+#    return scaleMap
+
+
 
 def add_systematics_sideband(limits,mass,signal,name,chans,sigscale,period,bp,doAlphaTest):
     limits.add_group("hpp%i" % mass, signal, scale=sigscale, isSignal=True)
@@ -301,13 +303,13 @@ def add_systematics_sideband(limits,mass,signal,name,chans,sigscale,period,bp,do
     lumi = {'hpp%i' % mass: 1.026}
     limits.add_systematics("lumi", "lnN", **lumi)
 
-    idSys = calculateLeptonSystematic(mass,bp)
+    idSys = calculateLeptonSystematic(mass,chans,sigscale)
 
     allid = {'hpp%i' % mass: "%0.3f" %idSys}
     limits.add_systematics("id", "lnN", **allid)
 
     sigmc = {'hpp%i' % mass: 1.15}
-    limits.add_systematics("sigmc", "lnN", **sigmc)
+    limits.add_systematics("sig_mc_err", "lnN", **sigmc)
 
     alpha_pdf = {'bg': 1.1}
     limits.add_systematics("alpha_pdf", "lnN", **alpha_pdf)

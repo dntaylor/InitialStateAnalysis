@@ -431,11 +431,18 @@ class AnalyzerBase(object):
                         ntupleRow["%s.JetBTag%i" % (i,objCount)] = float(-9.)
                         if theObjects and orderedFinalObjects[objCount-1][0] in 'emt':
                             ntupleRow["%s.JetBTag%i" % (i,objCount)] = float(getattr(rtrow, "%sJetCSVBtag" % orderedFinalObjects[objCount-1])) if period=='8' else float(getattr(rtrow, "%sJetPFCISVBtag" % orderedFinalObjects[objCount-1]))
-                        ntupleRow["%s.LepScaleLoose%i" % (i,objCount)] = float(self.lepscaler.scale_factor(rtrow, orderedFinalObjects[objCount-1], loose=True)[0]) if theObjects else float(-1)
-                        ntupleRow["%s.LepScaleTight%i" % (i,objCount)] = float(self.lepscaler.scale_factor(rtrow, orderedFinalObjects[objCount-1], loose=False)[0]) if theObjects else float(-1)
-                        if self.period=='13':
-                            ntupleRow["%s.LepScaleLoose%i" % (i,objCount)] = float(1.)
-                            ntupleRow["%s.LepScaleTight%i" % (i,objCount)] = float(1.)
+                        if theObjects:
+                            looseScales = self.lepscaler.scale_factor(rtrow, orderedFinalObjects[objCount-1], loose=True) if self.period=='8' else [1,1,1]
+                            tightScales = self.lepscaler.scale_factor(rtrow, orderedFinalObjects[objCount-1], loose=False) if self.period=='8' else [1,1,1]
+                        else:
+                            looseScales = [-1,-1,-1]
+                            tightScales = [-1,-1,-1]
+                        ntupleRow["%s.LepScaleLoose%i" % (i,objCount)] = float(looseScales[0])
+                        ntupleRow["%s.LepScaleTight%i" % (i,objCount)] = float(tightScales[0])
+                        ntupleRow["%s.LepScaleLoose%i_up" % (i,objCount)] = float(looseScales[1])
+                        ntupleRow["%s.LepScaleTight%i_up" % (i,objCount)] = float(tightScales[1])
+                        ntupleRow["%s.LepScaleLoose%i_down" % (i,objCount)] = float(looseScales[2])
+                        ntupleRow["%s.LepScaleTight%i_down" % (i,objCount)] = float(tightScales[2])
                         ntupleRow["%s.Chg%i" % (i,objCount)] = float(getattr(rtrow, "%sCharge" % orderedFinalObjects[objCount-1])) if theObjects else float(-9)
                         ntupleRow["%s.PassLoose%i" % (i,objCount)] = float(self.ID(rtrow,orderedFinalObjects[objCount-1],**self.getIdArgs('Loose'))) if theObjects else float(-9)
                         ntupleRow["%s.PassTight%i" % (i,objCount)] = float(self.ID(rtrow,orderedFinalObjects[objCount-1],**self.getIdArgs('Tight'))) if theObjects else float(-9)
@@ -496,8 +503,14 @@ class AnalyzerBase(object):
                 ntupleRow["%s%i.JetBTag" % (charName,objCount)] = float(getattr(rtrow, "%sJetCSVBtag" % obj)) if self.period=='8' else float(getattr(rtrow, "%sJetPFCISVBtag" % obj))
                 ntupleRow["%s%i.Dxy" % (charName,objCount)] = float(getattr(rtrow, "%sPVDXY" % obj))
                 ntupleRow["%s%i.Dz" % (charName,objCount)] = float(getattr(rtrow, "%sPVDZ" % obj))
-            ntupleRow["%s%i.LepScaleLoose" % (charName,objCount)] = float(self.lepscaler.scale_factor(rtrow, obj, loose=True)[0]) if self.period=='8' else float(1.)
-            ntupleRow["%s%i.LepScaleTight" % (charName,objCount)] = float(self.lepscaler.scale_factor(rtrow, obj, loose=False)[0]) if self.period=='8' else float(1.)
+            looseScales = self.lepscaler.scale_factor(rtrow, obj, loose=True) if self.period=='8' else [1,1,1]
+            tightScales = self.lepscaler.scale_factor(rtrow, obj, loose=False) if self.period=='8' else [1,1,1]
+            ntupleRow["%s%i.LepScaleLoose" % (charName,objCount)] = float(looseScales[0])
+            ntupleRow["%s%i.LepScaleTight" % (charName,objCount)] = float(tightScales[0])
+            ntupleRow["%s%i.LepScaleLoose_up" % (charName,objCount)] = float(looseScales[1])
+            ntupleRow["%s%i.LepScaleTight_up" % (charName,objCount)] = float(tightScales[1])
+            ntupleRow["%s%i.LepScaleLoose_down" % (charName,objCount)] = float(looseScales[2])
+            ntupleRow["%s%i.LepScaleTight_down" % (charName,objCount)] = float(tightScales[2])
             ntupleRow["%s%i.Chg" % (charName,objCount)] = float(getattr(rtrow, "%sCharge" % obj))
             ntupleRow["%s%i.PassLoose" % (charName,objCount)] = float(self.ID(rtrow,obj,**self.getIdArgs('Loose')))
             ntupleRow["%s%i.PassTight" % (charName,objCount)] = float(self.ID(rtrow,obj,**self.getIdArgs('Tight')))
