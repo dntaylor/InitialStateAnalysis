@@ -16,10 +16,11 @@ ROOT.gROOT.SetBatch(ROOT.kTRUE)
 
 class Limits(object):
 
-    def __init__(self, analysis, period, base_selections, ntuple_dir, out_dir,
+    def __init__(self, analysis, region, period, base_selections, ntuple_dir, out_dir,
                  channels=[], lumi=25.0, blinded=True, bgMode='mc', scalefactor='event.pu_weight*event.lep_scale*event.trig_scale'):
         self.base_selections = base_selections
         self.analysis = analysis
+        self.region = region
         self.period = period
         self.out_dir = out_dir
         self.ntuple_dir = ntuple_dir
@@ -38,10 +39,10 @@ class Limits(object):
 
         os.system("mkdir -p %s" % self.out_dir)
 
-    def getPlotter(self,analysis,runPeriod,mass,runTau,plotName,doFakes):
+    def getPlotter(self,analysis,region,runPeriod,mass,runTau,plotName,doFakes):
         nl = 3 if analysis=='Hpp3l' or analysis=='WZ' else 4
-        ntuples = 'ntuples/%s_%iTeV_%s' % (analysis,runPeriod,analysis)
-        saves = '%s_%s_%iTeV' % (analysis,analysis,runPeriod)
+        ntuples = 'ntuples/%s_%iTeV_%s' % (analysis,runPeriod,region)
+        saves = '%s_%s_%iTeV' % (analysis,region,runPeriod)
         sigMap = getSigMap(nl,mass)
         intLumiMap = getIntLumiMap()
         mergeDict = getMergeDict(runPeriod)
@@ -53,7 +54,7 @@ class Limits(object):
         if runPeriod==13: regionBackground['Hpp4l'] = ['T','TT', 'TTV','Z','DB']
         channels, leptons = getChannels(nl,runTau=runTau)
     
-        plotter = Plotter(analysis,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName=plotName,mergeDict=mergeDict,scaleFactor=self.scalefactor)
+        plotter = Plotter(region,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName=plotName,mergeDict=mergeDict,scaleFactor=self.scalefactor)
         if not doFakes: plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in regionBackground[analysis]])
         if runPeriod==8: plotter.initializeDataSamples([sigMap[runPeriod]['data']])
         plotter.setIntLumi(intLumiMap[runPeriod])
@@ -89,7 +90,8 @@ class Limits(object):
         samplelumi = float(n_evts)/sample_xsec
         lumiscale = self.lumi/samplelumi
         val = 0
-        tree = tfile.Get(self.analysis)
+        tree = tfile.Get(self.region)
+        #print tree.GetEntries()
         tree.Draw('event.pu_weight>>h%s()'%sample,'event.trig_scale*event.lep_scale*(%s)' %cut,'goff')
         if not ROOT.gDirectory.Get("h%s" %sample): return [0,0]
         hist = ROOT.gDirectory.Get("h%s" %sample).Clone("hnew%s" %sample)
@@ -127,12 +129,15 @@ class Limits(object):
             cuts = '(' + '||'.join(cuts) + ')'
         m3l = 'finalstate.mass>100.'
         cuts = cuts + ' & ' + m3l 
+        if self.region=='WZ': cuts += ' & select.PassTight'
 
         # setup sideband stuff
         minMass = 12.
         maxMass = 800.
         srCut = '(h1.mass>0.9*%f & h1.mass<1.1*%f & h1.mass>%f & h1.mass<%f)' %(mass,mass,minMass,maxMass)
         sbCut = '((h1.mass<150. & h1.mass>%f) ||  (h1.mass>1.1*%f & h1.mass<%f))' %(minMass,mass,maxMass)
+        #srCut = '(h1.mass>0.9*%f & h1.mass<1.1*%f)' %(mass,mass)
+        #sbCut = '((h1.mass<0.9*%f & h1.mass>0.7*%f) ||  (h1.mass>1.1*%f & h1.mass<1.3*%f))' %(mass,mass,mass,mass)
         fullCut = 'finalstate.sT>1.1*%f+60. & fabs(z1.mass-%f)>80. & h1.dPhi<%f/600.+1.95' %(mass,ZMASS,mass)
         finalSRCut = 'h1.mass>0.9*%f & h1.mass<1.1*%f' %(mass,mass)
         # TODO: change for 4l
@@ -140,18 +145,21 @@ class Limits(object):
         myCut = '1'
         #myCut = '(' + ' | '.join(cuts) + ')'
 
-        plotter = self.getPlotter(self.analysis,self.period,mass,False,'plots_limits_temp',False)
+        plotter = self.getPlotter(self.analysis,self.region,self.period,mass,False,'plots_limits_temp',False)
+        #plotter.printInfo()
 
         nSBDict = {}
         nSRDict = {}
         sbcut = '%s & %s & %s' %(myCut,sbCut,cuts)
         srcut = '%s & %s & %s & %s' %(myCut,srCut,fullCut, cuts)
+        if self.region=='WZ': srcut = '%s & %s & %s' %(myCut,srCut, cuts)
         if doAlphaTest:
             sbcut = '%s & finalstate.sT<150. & z1.mass<110. & h1.mass<130.' %(cuts)
             srcut = '%s & finalstate.sT<400. & finalstate.sT>150. & z1.mass<110. & h1.mass<130.' %(cuts)
         #print 'Sideband cut:', sbcut
         #print 'Signal region cut:', srcut
         for background in plotter.backgrounds:
+            #print background
             nSBDict[background] = plotter.getNumEntries(sbcut,background,doError=True)
             nSRDict[background] = plotter.getNumEntries(srcut,background,doError=True)
         nSB = sum([x[0] for x in nSBDict.itervalues()])
@@ -169,6 +177,9 @@ class Limits(object):
             # switch to using preselection for more statistics
             nSBData, eSBData = plotter.getNumEntries(sbcut,*plotter.data,doError=True)
             nSRData, eSRData = plotter.getNumEntries(srcut,*plotter.data,doError=True)
+        if self.blinded:
+            nSRData = 0
+            eSRData = 1
         nBGSR = alpha*(nSBData)
         eBGSR = alpha*((nSBData) ** 0.5)
         self.alpha = alpha
@@ -201,11 +212,7 @@ class Limits(object):
         #print "nBGSR: %0.4f" % nBGSR
         #print "eBGSR: %0.4f" % eBGSR
         #if not self.blinded: print "nSRDa: %0.4f" % nSRData
-        strToSave = ":".join(["%0.10f" % x for x in [nSB,eSB,nSR,eSR,alpha,nSBData,eSBData,nBGSR,eBGSR]])
-        if self.blinded:
-            strToSave += ':%0.4f' % 0
-        else:
-            strToSave += ':%0.4f' % nSRData
+        strToSave = ":".join(["%0.10f" % x for x in [nSB,eSB,nSR,eSR,alpha,nSBData,eSBData,nBGSR,eBGSR,nSRData,eSRData]])
 
         with open(self.out_dir+'/alphavalues.txt', 'w') as file:
             file.write(strToSave)
@@ -248,7 +255,8 @@ class Limits(object):
                     self.datacard.add_sig(key, bgMap[key][0])
                 elif key=='bg': # don't add the mc bg
                     self.datacard.add_bkg(key, nBGSR)
-                elif is_data and not self.blinded:
+                #elif is_data and not self.blinded:
+                elif is_data:
                     self.datacard.set_observed(nSRData)
 
         if self.bgMode=='mc':
@@ -259,7 +267,8 @@ class Limits(object):
                         self.datacard.add_sig(key, bgMap[key][0])
                     elif key!='bg': # dont add the sideband bg
                         self.datacard.add_bkg(key, bgMap[key][0])
-                elif is_data and not self.blinded:
+                #elif is_data and not self.blinded:
+                elif is_data:
                     self.datacard.set_observed(nSRData)
 
         self.log.info("Saving card to file")

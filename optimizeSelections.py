@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-from plotters.plotUtils import _3L_MASSES, _4L_MASSES, ZMASS, getChannels, getSigMap, getIntLumiMap, python_mkdir
-from plotters.FakeRatePlotter import FakeRatePlotter
+from plotters.plotUtils import *
+from plotters.plotUtils import _3L_MASSES, _4L_MASSES, ZMASS
+from plotters.Plotter import Plotter
 from plotters import tdrstyle
 from math import sqrt
 import ROOT
@@ -26,17 +27,26 @@ def getVals(plotter,passCut,denomCut):
     val = sigPass/sqrt(bgPass) if bgPass else sigPass
     return (p,f,val)
 
+def getVal(plotter,cut):
+    bgPass = 0
+    for bg in plotter.backgrounds:
+        bgPass += plotter.getNumEntries(cut,bg,doError=True)[0]
+    sigPass = 0
+    for sig in plotter.signal:
+        sigPass += plotter.getNumEntries(cut,sig,doError=True)[0]
+    return (bgPass,sigPass)
+
+
 def initializePlotter(analysis, period, mass, plotName, nl, runTau):
     ntuples = 'ntuples/%s_%iTeV_%s' % (analysis,period,analysis)
     saves = '%s_%s_%iTeV' % (analysis,analysis,period)
     sigMap = getSigMap(nl,mass)
     intLumiMap = getIntLumiMap()
-    regionBackground = {
-        'Hpp3l' : ['T','TT', 'TTV','Z','DB'],
-        'Hpp4l' : ['T','TT', 'TTV','Z','DB']
-    }
+    regionBackground = getChannelBackgrounds(period)
     channels, leptons = getChannels(nl,runTau=runTau)
-    plotter = FakeRatePlotter(analysis,ntupleDir=ntuples,saveDir=saves,period=period,rootName=plotName)
+    mergeDict = getMergeDict(period)
+    scaleFactor = 'event.pu_weight*event.lep_scale*event.trig_scale'
+    plotter = Plotter(analysis,ntupleDir=ntuples,saveDir=saves,period=period,mergeDict=mergeDict,scaleFactor=scaleFactor,rootName=plotName)
     plotter.initializeBackgroundSamples([sigMap[period][x] for x in regionBackground[analysis]])
     plotter.initializeSignalSamples([sigMap[period]['Sig']])
     plotter.setIntLumi(intLumiMap[period])
@@ -45,11 +55,12 @@ def initializePlotter(analysis, period, mass, plotName, nl, runTau):
 def optimizeSelections(analysis, period):
     nl = 3 if analysis=='Hpp3l' else 4
 
-    hNumTaus = range(3)
+    hNumTaus = range(1)
     
-    masses = [500]
+    masses = _3L_MASSES
     mbinning = [17,175,1025]
     allMasses = range(200,1050,50)
+    allMasses = masses
     
     myCut = 'select.passTight'
     
@@ -117,7 +128,8 @@ def optimizeSelections(analysis, period):
         for plotType,binning in plotTypes.iteritems():
             if nl==3 and (plotType=='h2mass' or plotType=='z2mass'): continue
             vals[nTaus][plotType] = {}
-            for m in range(mbinning[0]):
+            #for m in range(mbinning[0]):
+            for m in range(len(allMasses)):
                 mass = allMasses[m]
                 vals[nTaus][plotType][m] = {}
                 if mass not in masses: continue
@@ -130,6 +142,7 @@ def optimizeSelections(analysis, period):
                 if plotType=='h2massUnder': denomCut += '&&h2.mass<%f' % mass
                 if plotType=='h2massOver' : denomCut += '&&h2.mass>%f' % mass
                 bins = [x*binning[2]/binning[0] for x in range(binning[0])]
+                bgDenom, sigDenom = getVal(plotter,denomCut)
                 for cut in range(binning[0]):
                     if plotType=='h1mass'     : passCut = 'fabs(h1.mass-%f)<%f&&%s' % (mass, bins[cut], denomCut)
                     if plotType=='h1massUnder': passCut = '%f-h1.mass<%f&&h1.mass<%f&&%s' % (mass, bins[cut], mass, denomCut)
@@ -143,7 +156,11 @@ def optimizeSelections(analysis, period):
                     if plotType=='dPhi2'      : passCut = 'fabs(h2.dPhi)<%f&&%s' % (bins[cut], denomCut)
                     if plotType=='met'        : passCut = 'finalstate.met>%f&&%s' % (bins[cut], denomCut)
                     if plotType=='st'         : passCut = 'finalstate.sT>%f&&%s' % (bins[cut], denomCut)
-                    vals[nTaus][plotType][m][cut] = getVals(plotter,passCut,denomCut)
+                    bgNum, sigNum = getVal(plotter,passCut)
+                    p = sigNum/sigDenom
+                    f = bgNum/bgDenom
+                    val = sigNum/sqrt(bgNum) if bgNum else sigNum
+                    vals[nTaus][plotType][m][cut] = (p,f,val)
 
             canvas = ROOT.TCanvas('%s_%i'%(plotType,nTaus),'%s_%i'%(plotType,nTaus),50,50,800,600)
             canvas.SetFillColor(0)
@@ -163,7 +180,8 @@ def optimizeSelections(analysis, period):
                 savedir = 'plots/%s_optimization_%iTeV/png' % (analysis, period)
                 python_mkdir(savedir)
                 savename = '%s/%s_%s_%i_%s.png' % (savedir, analysis, plotType, nTaus, valType)
-                for m in range(mbinning[0]):
+                #for m in range(mbinning[0]):
+                for m in range(len(allMasses)):
                     for c,cutVals in vals[nTaus][plotType][m].iteritems():
                         plot.SetBinContent(m+1,c+1,cutVals[v])
                 plot.GetYaxis().SetTitleOffset(1.)
@@ -179,5 +197,5 @@ def optimizeSelections(analysis, period):
                 canvas.Print(savename)
         
 
-optimizeSelections('Hpp3l',13)
-optimizeSelections('Hpp4l',13)
+optimizeSelections('Hpp3l',8)
+#optimizeSelections('Hpp4l',13)

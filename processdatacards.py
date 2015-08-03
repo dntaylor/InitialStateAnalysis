@@ -8,22 +8,22 @@ import argparse
 import glob
 from plotters.plotUtils import _3L_MASSES, _4L_MASSES, python_mkdir
 
-def doDatacards(analysis,period,combineDir,bp,bgMode):
+def doDatacards(analysis,region,period,combineDir,bp,bgMode):
     '''A function to move into the combined limits folder, run higgs combine tool on all datacards
        produced by the mklimits script, then copy the root files back here.'''
     # do the combination
     combos = {
         'HppComb': ['Hpp3l', 'Hpp4l'],
     }
-    datacardDir = 'datacards/%s_%itev/%s' % (analysis, period, bp)
-    combineDatacardDir = '%s/%s_%itev' % (combineDir, analysis, period)
-    datacardLimitsDir = 'limitData/%s_%itev/%s' % (analysis, period, bp)
+    datacardDir = 'datacards/%s_%itev_%s/%s' % (analysis, period, region, bp)
+    combineDatacardDir = '%s/%s_%itev_%s' % (combineDir, analysis, period, region)
+    datacardLimitsDir = 'limitData/%s_%itev_%s/%s' % (analysis, period, region, bp)
     masses = _3L_MASSES if analysis == 'Hpp3l' else _4L_MASSES
     datacardString = '' if bgMode == "sideband" else "_{0}".format(bgMode)
     python_mkdir(combineDatacardDir)
     if analysis in combos:
         for mass in masses:
-            dirsToCombine = ['datacards/%s_%itev/%s' % (a, period, bp) for a in combos[analysis]]
+            dirsToCombine = ['datacards/%s_%itev_%s/%s' % (a, period, a, bp) for a in combos[analysis]]
             theCards = ['%s/%i/%s%s.txt' %(x,mass,bp,datacardString) for x in dirsToCombine]
             cardsToCombine = [x for x in theCards if os.path.isfile(x)]
             outCard = '%s/%i/%s%s.txt' %(datacardDir,mass,bp,datacardString)
@@ -41,7 +41,8 @@ def doDatacards(analysis,period,combineDir,bp,bgMode):
 def parse_command_line(argv):
     parser = argparse.ArgumentParser(description="Produce datacards")
 
-    parser.add_argument('region', type=str, choices=['WZ','Hpp3l','Hpp4l','HppComb'], help='Analysis to run')
+    parser.add_argument('analysis', type=str, choices=['Hpp3l','Hpp4l','HppComb'], help='Analysis to run')
+    parser.add_argument('region', type=str, choices=['Hpp3l','Hpp4l','HppComb','WZ'], help='Analysis to run')
     parser.add_argument('period', type=int, choices=[7, 8, 13], help='Run period')
     parser.add_argument('combineDir', type=str, help='Directory of the Higgs Combine CMSSW src directory')
     parser.add_argument('-bp','--branchingPoint',nargs='?',type=str,const='BP4',default='BP4',choices=['ee100','em100','mm100','BP1','BP2','BP3','BP4'],help='Choose branching point')
@@ -64,9 +65,9 @@ def main(argv=None):
         print "7 TeV not implemented"
     elif args.allBranchingPoints:
         for bp in branchingPoints:
-            doDatacards(args.region,args.period,args.combineDir,bp,args.bgMode)
+            doDatacards(args.analysis,args.region,args.period,args.combineDir,bp,args.bgMode)
     else:
-        doDatacards(args.region,args.period,args.combineDir,args.branchingPoint,args.bgMode)
+        doDatacards(args.analysis,args.region,args.period,args.combineDir,args.branchingPoint,args.bgMode)
 
     return 0
 

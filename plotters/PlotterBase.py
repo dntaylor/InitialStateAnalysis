@@ -167,6 +167,11 @@ class PlotterBase(object):
         '''Set the integrated luminosity to scale MC to'''
         self.intLumi = intLumi
 
+    def printInfo(self):
+        if self.backgroundInitialized: print 'Backgrounds: ' + ' '.join(self.backgrounds)
+        if self.dataInitialized: print 'Data: ' + ' '.join(self.data)
+        if self.signalInitialized: print 'Signal: ' + ' '.join(self.signal)
+
     def setScaleFactor(self,scalefactor):
         '''Set Scale factor'''
         self.scaleFactor = scalefactor

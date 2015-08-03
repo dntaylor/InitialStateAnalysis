@@ -8,6 +8,7 @@ import argparse
 def parse_command_line(argv):
     parser = argparse.ArgumentParser(description="Plot limits")
 
+    parser.add_argument('analysis', type=str, choices=['Hpp3l','Hpp4l','HppComb'], help='Analysis to run')
     parser.add_argument('region', type=str, choices=['Hpp3l','Hpp4l','HppComb'], help='Analysis to run')
     parser.add_argument('period', type=int, choices=[8, 13], help='Run period')
     parser.add_argument('-bp','--branchingPoint',nargs='?',type=str,const='',choices=['ee100','em100','mm100','BP1','BP2','BP3','BP4'],help='Choose branching point')
@@ -32,10 +33,10 @@ def main(argv=None):
     elif args.allBranchingPoints:
         for bp in branchingPoints:
             print 'Plotting limit for %s' % bp
-            plot_limits(args.region,args.period,'limits_%s_%itev_%s%s'%(args.region,args.period,bp,datacardString),branchingPoint=bp,bgMode=args.bgMode)
+            plot_limits(args.analysis,args.region,args.period,'limits_%s_%itev_%s%s'%(args.region,args.period,bp,datacardString),branchingPoint=bp,bgMode=args.bgMode)
     else:
         print 'Plotting limit for %s' % args.branchingPoint
-        plot_limits(args.region,args.period,'limits_%s_%itev_%s%s'%(args.region,args.period,args.branchingPoint,datacardString),branchingPoint=args.branchingPoint,bgMode=args.bgMode)
+        plot_limits(args.analysis,args.region,args.period,'limits_%s_%itev_%s%s'%(args.region,args.period,args.branchingPoint,datacardString),branchingPoint=args.branchingPoint,bgMode=args.bgMode)
 
     return 0
 

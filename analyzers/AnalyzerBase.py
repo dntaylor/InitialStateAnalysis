@@ -135,6 +135,7 @@ class AnalyzerBase(object):
 
         # iterate over files
         for i, file_name in enumerate(self.file_names):
+            self.file_name = file_name
             print "%s %s %s: Processing %i/%i files" % (str(datetime.datetime.now()), self.channel, self.sample_name, i+1, len(self.file_names))
             sys.stdout.flush()
             if file_name.startswith('/store'): file_name = 'root://cmsxrootd.hep.wisc.edu//%s' % file_name
@@ -313,10 +314,12 @@ class AnalyzerBase(object):
         ntupleRow["event.lep_scale_down"] = float(scales['lepdown'])
         ntupleRow["event.trig_scale"] = float(scales['trig'])
         ntupleRow["event.pu_weight"] = float(scales['puweight'])
+        ntupleRow["event.gen_weight"] = float(scales['genweight'])
 
         channelString = ''
         for x in objects: channelString += x[0]
         ntupleRow["channel.channel"] = channelString
+        ntupleRow["genChannel.channel"] = self.getGenChannel(rtrow)
 
         ntupleRow["finalstate.mass"] = float(rtrow.Mass)
         ntupleRow["finalstate.sT"] = float(sum([getattr(rtrow, "%sPt" % x) for x in objects]))
@@ -612,19 +615,28 @@ class AnalyzerBase(object):
     def getScales(self,rtrow,objects,**lepargs):
         '''Return the scale factors in a dictionary'''
         scales = {
-            'lep'     : 1,
-            'lepup'   : 1,
-            'lepdown' : 1,
-            'trig'    : 1,
-            'puweight': 1,
+            'lep'      : 1,
+            'lepup'    : 1,
+            'lepdown'  : 1,
+            'trig'     : 1,
+            'puweight' : 1,
+            'genweight': 1,
         }
         if self.period=='8':
             lepscales = self.lepscaler.scale_factor(rtrow, *objects, **lepargs)
             trigscale = self.trigscaler.scale_factor(rtrow, *objects)
             puweight  = self.pu_weights.weight(rtrow)
+            genweight = 1
+            if hasattr(rtrow,'GenWeight'):
+                genweight = rtrow.GenWeight/abs(rtrow.GenWeight)
             scales['lep']      = lepscales[0]
             scales['lepup']    = lepscales[1]
             scales['lepdown']  = lepscales[2]
             scales['trig']     = trigscale
             scales['puweight'] = puweight
+            scales['genweight']= genweight
         return scales
+
+    def getGenChannel(self,rtrow):
+        '''Dummy return gen channel string'''
+        return 'a'

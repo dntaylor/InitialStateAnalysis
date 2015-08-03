@@ -62,9 +62,10 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
        Float_t lep_scale_down;\
        Float_t trig_scale;\
        Float_t pu_weight;\
+       Float_t gen_weight;\
     };");
     eventStruct = rt.structEvent_t()
-    structureDict['event'] = [eventStruct, eventStruct,'evt/I:run:lumi:nvtx:GenNUP:lep_scale/F:lep_scale_up:lep_scale_down:trig_scale:pu_weight']
+    structureDict['event'] = [eventStruct, eventStruct,'evt/I:run:lumi:nvtx:GenNUP:lep_scale/F:lep_scale_up:lep_scale_down:trig_scale:pu_weight:gen_weight']
     structOrder += ['event']
 
     rt.gROOT.ProcessLine(
@@ -74,6 +75,9 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
     channelStruct = rt.structChannel_t()
     structureDict['channel'] = [channelStruct, rt.AddressOf(channelStruct,'channel'),'channel/C']
     structOrder += ['channel']
+    genChannelStruct = rt.structChannel_t()
+    structureDict['genChannel'] = [genChannelStruct, rt.AddressOf(genChannelStruct,'channel'),'channel/C']
+    structOrder += ['genChannel']
 
     fsStrToProcess = "struct structFinalState_t {\
        Float_t mass;\

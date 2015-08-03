@@ -230,7 +230,7 @@ class CutFlowPlotter(PlotterBase):
         newymax = max(datamax,mc.GetMaximum()) if plotdata else mc.GetMaximum()
         mc.SetMaximum(1.2*newymax)
         if isprecf: mc.SetMinimum(1)
-        mc.SetMinimum(1)
+        mc.SetMinimum(1) if logy else mc.SetMinimum(0)
         if labels:
             for bin in range(numSelections):
                 mc.GetHistogram().GetXaxis().SetBinLabel(bin+1,labels[bin])

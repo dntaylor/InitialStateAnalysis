@@ -56,9 +56,10 @@ for mode in ['ee100', 'em100', 'mm100', 'BP1', 'BP2', 'BP3', 'BP4']:
     elementStrings = ''
     for mass in _3L_MASSES:
         #for fs in ['Hpp3l', 'Hpp4l']:
-        for fs in ['Hpp3l']:
+        #for fs in [('Hpp3l','WZ')]:
+        for fs in [('Hpp3l','Hpp3l')]:
             rowString = '        %i & ' % mass
-            filename = 'datacards/%s_8tev/%s/%i/alphavalues.txt' % (fs,mode,mass)
+            filename = 'datacards/%s_8tev_%s/%s/%i/alphavalues.txt' % (fs[0],fs[1],mode,mass)
             if os.path.isfile(filename):
                 file = open(filename)
                 text = file.read()

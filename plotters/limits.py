@@ -29,7 +29,7 @@ def save(savename,saveDir,canvas):
     #savefile.WriteTObject(self.canvas)
     #canvas.Clear()
 
-def plot_limits(analysis, period, savename, **kwargs):
+def plot_limits(analysis, region, period, savename, **kwargs):
     '''Plot limits and get exclusion limits'''
     datacardBaseDir = kwargs.pop('datacardBaseDir','datacards')
     limitDataBaseDir = kwargs.pop('limitDataBaseDir','limitData')
@@ -38,9 +38,9 @@ def plot_limits(analysis, period, savename, **kwargs):
     bp = kwargs.pop('branchingPoint','')
     bgMode = kwargs.pop('bgMode','sideband')
     
-    datacardDir = '%s/%s_%itev' % (datacardBaseDir, analysis, period)
+    datacardDir = '%s/%s_%itev_%s' % (datacardBaseDir, analysis, period, region)
     if bp: datacardDir += '/%s' % bp
-    limitDataDir = '%s/%s_%itev' % (limitDataBaseDir, analysis, period)
+    limitDataDir = '%s/%s_%itev_%s' % (limitDataBaseDir, analysis, period, region)
     if bp: limitDataDir += '/%s' % bp
 
     masses = _3L_MASSES if analysis == 'Hpp3l' else _4L_MASSES

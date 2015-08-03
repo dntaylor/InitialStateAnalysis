@@ -106,6 +106,24 @@ class AnalyzerHpp3l(AnalyzerBase):
         '''
         return (rtrow.elecVeto4l + rtrow.muonVeto4l == 0)
 
+    # override getGenChannel
+    def getGenChannel(self, rtrow):
+        if 'HPlusPlus' not in self.file_name: return 'aaa'
+        hpp = int(rtrow.hppDecay)
+        hmm = int(rtrow.hmmDecay)
+        hp = int(rtrow.hpDecay)
+        hm = int(rtrow.hmDecay)
+        lepMap = { '1':'e', '2':'m', '3':'t' }
+        if hpp and hm:
+            h3l = 100*hm + hpp
+        elif hmm and hp:
+            h3l = 100*hp + hmm
+        else:
+            print 'Error: ', hpp, hmm, hp, hm
+            return 'aaa'
+        return ''.join([lepMap[l] for l in reversed(str(h3l))])
+        
+
     ###########################
     ### Define preselection ###
     ###########################
