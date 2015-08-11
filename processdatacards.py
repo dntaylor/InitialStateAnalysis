@@ -8,7 +8,7 @@ import argparse
 import glob
 from plotters.plotUtils import _3L_MASSES, _4L_MASSES, python_mkdir
 
-def doDatacards(analysis,region,period,combineDir,bp,bgMode):
+def doDatacards(analysis,region,period,combineDir,bp,bgMode,do4l):
     '''A function to move into the combined limits folder, run higgs combine tool on all datacards
        produced by the mklimits script, then copy the root files back here.'''
     # do the combination
@@ -19,7 +19,9 @@ def doDatacards(analysis,region,period,combineDir,bp,bgMode):
     combineDatacardDir = '%s/%s_%itev_%s' % (combineDir, analysis, period, region)
     datacardLimitsDir = 'limitData/%s_%itev_%s/%s' % (analysis, period, region, bp)
     masses = _3L_MASSES if analysis == 'Hpp3l' else _4L_MASSES
+    if do4l: masses = _4L_MASSES
     datacardString = '' if bgMode == "sideband" else "_{0}".format(bgMode)
+    if do4l: datacardString += "_4l"
     python_mkdir(combineDatacardDir)
     if analysis in combos:
         for mass in masses:
@@ -45,9 +47,10 @@ def parse_command_line(argv):
     parser.add_argument('region', type=str, choices=['Hpp3l','Hpp4l','HppComb','WZ'], help='Analysis to run')
     parser.add_argument('period', type=int, choices=[7, 8, 13], help='Run period')
     parser.add_argument('combineDir', type=str, help='Directory of the Higgs Combine CMSSW src directory')
-    parser.add_argument('-bp','--branchingPoint',nargs='?',type=str,const='BP4',default='BP4',choices=['ee100','em100','mm100','BP1','BP2','BP3','BP4'],help='Choose branching point')
+    parser.add_argument('-bp','--branchingPoint',nargs='?',type=str,const='BP4',default='BP4',choices=['ee100','em100','mm100','et100','mt100','tt100','BP1','BP2','BP3','BP4'],help='Choose branching point')
     parser.add_argument('-ab','--allBranchingPoints',action='store_true',help='Run over all branching points')
-    parser.add_argument('-bg','--bgMode',nargs='?',type=str,const='sideband',default='sideband',choices=['mc','sideband','comb'],help='Choose BG estimation')
+    parser.add_argument('-bg','--bgMode',nargs='?',type=str,const='comb',default='comb',choices=['mc','sideband','comb'],help='Choose BG estimation')
+    parser.add_argument('-df','--do4l', action='store_true',help='Run the 4l lepton limits')
 
 
     args = parser.parse_args(argv)
@@ -59,15 +62,15 @@ def main(argv=None):
 
     args = parse_command_line(argv)
 
-    branchingPoints = ['ee100','em100','mm100','BP1','BP2','BP3','BP4']
+    branchingPoints = ['ee100','em100','mm100','et100','mt100','tt100','BP1','BP2','BP3','BP4']
 
     if args.period == 7:
         print "7 TeV not implemented"
     elif args.allBranchingPoints:
         for bp in branchingPoints:
-            doDatacards(args.analysis,args.region,args.period,args.combineDir,bp,args.bgMode)
+            doDatacards(args.analysis,args.region,args.period,args.combineDir,bp,args.bgMode,args.do4l)
     else:
-        doDatacards(args.analysis,args.region,args.period,args.combineDir,args.branchingPoint,args.bgMode)
+        doDatacards(args.analysis,args.region,args.period,args.combineDir,args.branchingPoint,args.bgMode,args.do4l)
 
     return 0
 

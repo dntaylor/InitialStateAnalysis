@@ -29,6 +29,7 @@ import sys
 from itertools import permutations, combinations
 import argparse
 import datetime
+import math
 
 from scale_factors import LeptonScaleFactors, TriggerScaleFactors
 from pu_weights import PileupWeights
@@ -326,6 +327,10 @@ class AnalyzerBase(object):
         metVar = 'pfMet' if self.period=='13' else 'type1_pfMet'
         ntupleRow["finalstate.met"] = float(getattr(rtrow, '%sEt' %metVar))
         ntupleRow["finalstate.metPhi"] = float(getattr(rtrow,'%sPhi' %metVar))
+        ntupleRow["finalstate.leadJetPt"] = float(rtrow.jet1Pt) if self.period=='13' else float(-1)
+        ntupleRow["finalstate.leadJetEta"] = float(rtrow.jet1Eta) if self.period=='13' else float(-10)
+        ntupleRow["finalstate.leadJetPhi"] = float(rtrow.jet1Phi) if self.period=='13' else float(-10)
+        ntupleRow["finalstate.leadJetPUMVA"] = float(rtrow.jet1PUMVA) if self.period=='13' else float(-1)
         ntupleRow["finalstate.jetVeto20"] = int(rtrow.jetVeto20)
         ntupleRow["finalstate.jetVeto30"] = int(rtrow.jetVeto30)
         ntupleRow["finalstate.jetVeto40"] = int(rtrow.jetVeto40)
@@ -454,6 +459,11 @@ class AnalyzerBase(object):
                         if not self.isData and theObjects:
                             ntupleRow["%s.GenPdgId%i" % (i,objCount)] = float(getattr(rtrow, "%sGenPdgId" % orderedFinalObjects[objCount-1]))
                             ntupleRow["%s.MotherGenPdgId%i" % (i,objCount)] = float(getattr(rtrow, "%sGenMotherPdgId" % orderedFinalObjects[objCount-1]))
+                        ntupleRow["%s.ChargeConsistent%i" % (i,objCount)] = -1
+                        if theObjects:
+                            l = orderedFinalObjects[objCount-1]
+                            if l[0]=='e':
+                                ntupleRow["%s.ChargeConsistent%i" % (i,objCount)] = int(getattr(rtrow,'%sChargeIdTight' %l) and getattr(rtrow,'%sChargeIdMed' %l) and getattr(rtrow,'%sChargeIdLoose' %l))
                         # manually add w z deltaRs
                         if i=='w1' and len(theObjects)==3:
                             oZ1 = ordered(theObjects[0],theObjects[2]) if theObjects else []
@@ -462,6 +472,13 @@ class AnalyzerBase(object):
                             ntupleRow["w1.dR1_z1_2"] = float(getattr(rtrow,"%s_%s_DR" % (oZ2[0],oZ2[1]))) if theObjects else float(-9)
                             ntupleRow["w1.mll_z1_1"] = float(getattr(rtrow,"%s_%s_Mass" % (oZ1[0],oZ1[1]))) if theObjects else float(-9)
                             ntupleRow["w1.mll_z1_2"] = float(getattr(rtrow,"%s_%s_Mass" % (oZ2[0],oZ2[1]))) if theObjects else float(-9)
+                        if i=='w1' and theObjects and self.period=='13':
+                            lEta = getattr(rtrow,'%sEta' %theObjects[-1])
+                            lPhi = getattr(rtrow,'%sPhi' %theObjects[-1])
+                            jEta = rtrow.jet1Eta
+                            jPhi = rtrow.jet1Phi
+                            dr = math.sqrt((lEta-jEta)**2 + (lPhi-jPhi)**2)
+                            ntupleRow["w1.dR1_leadJet"] = float(dr)
                         # do alternate IDs
                         for altId in self.alternateIds:
                             ntupleRow["%s.pass_%s_%i"%(i,altId,objCount)] = int(self.ID(rtrow,orderedFinalObjects[objCount-1],**self.alternateIdMap[altId]) if theObjects else float(-9))
@@ -523,6 +540,9 @@ class AnalyzerBase(object):
             if not self.isData and obj[0] in 'emt':
                 ntupleRow["%s%i.GenPdgId" % (charName,objCount)] = float(getattr(rtrow, "%sGenPdgId" % obj))
                 ntupleRow["%s%i.MotherGenPdgId" % (charName,objCount)] = float(getattr(rtrow, "%sGenMotherPdgId" % obj))
+            ntupleRow["%s%i.ChargeConsistent" % (charName,objCount)] = -1
+            if obj[0]=='e':
+                ntupleRow["%s%i.ChargeConsistent" % (charName,objCount)] = int(getattr(rtrow,'%sChargeIdTight' %obj) and getattr(rtrow,'%sChargeIdMed' %obj) and getattr(rtrow,'%sChargeIdLoose' %obj))
 
         return ntupleRow
 

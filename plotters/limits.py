@@ -37,6 +37,7 @@ def plot_limits(analysis, region, period, savename, **kwargs):
     blind = kwargs.pop('blind',True)
     bp = kwargs.pop('branchingPoint','')
     bgMode = kwargs.pop('bgMode','sideband')
+    do4l = kwargs.pop('do4l',False)
     
     datacardDir = '%s/%s_%itev_%s' % (datacardBaseDir, analysis, period, region)
     if bp: datacardDir += '/%s' % bp
@@ -44,10 +45,12 @@ def plot_limits(analysis, region, period, savename, **kwargs):
     if bp: limitDataDir += '/%s' % bp
 
     masses = _3L_MASSES if analysis == 'Hpp3l' else _4L_MASSES
+    if do4l: masses = _4L_MASSES
     if period==13: masses = [500]
     quartiles = np.empty((6, len(masses)), dtype=float)
 
     datacardString = '' if bgMode == "sideband" else "_{0}".format(bgMode)
+    if do4l: datacardString += '_4l'
 
     for j, mass in enumerate(masses):
         fname = os.path.join(limitDataDir, "higgsCombineTest.Asymptotic.mH%i%s.root" % (mass,datacardString))
@@ -99,7 +102,7 @@ def plot_limits(analysis, region, period, savename, **kwargs):
 
     expected.GetXaxis().SetLimits(masses[0],masses[-1])
     expected.GetXaxis().SetTitle('#Phi^{++} Mass (GeV)')
-    expected.GetYaxis().SetTitle('95% CLs Upper Limit on #sigma/#sigma_{SM}')
+    expected.GetYaxis().SetTitle('95% CLs Upper Limit on #sigma/#sigma_{model}')
     expected.GetYaxis().SetTitleOffset(1.)
     expected.GetYaxis().SetTitleSize(0.05)
 
@@ -130,18 +133,19 @@ def plot_limits(analysis, region, period, savename, **kwargs):
     CMS_lumi.lumi_13TeV = "%0.1f fb^{-1}" % (25.0)
     CMS_lumi.CMS_lumi(canvas,lumiperiod,11)
 
+    if do4l: savename += '_4l'
     save(savename,saveDir,canvas)
 
     y = 0
-    for x in range(masses[0],masses[-1]):
+    for x in range(1,1000):
         y = expected.Eval(x)
         if y > 1: break
     y = 0
-    for l in range(masses[0],masses[-1]):
+    for l in range(1,1000):
         y = oneSigma_low.Eval(l)
         if y > 1: break
     y = 0
-    for h in range(masses[0],masses[-1]):
+    for h in range(1,1000):
         y = oneSigma_high.Eval(h)
         if y > 1: break
 

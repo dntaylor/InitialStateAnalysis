@@ -108,8 +108,9 @@ class AnalyzerHpp3l(AnalyzerBase):
 
     # override getGenChannel
     def getGenChannel(self, rtrow):
+        # return channel in for ++-, --+, or ++--
         if 'HPlusPlus' not in self.file_name: return 'aaa'
-        hpp = int(rtrow.hppDecay)
+        hpp = int(rtrow.hppDecay) # order is reversed (11 = ee, 31 = et, 13 not possible)
         hmm = int(rtrow.hmmDecay)
         hp = int(rtrow.hpDecay)
         hm = int(rtrow.hmDecay)
@@ -118,6 +119,8 @@ class AnalyzerHpp3l(AnalyzerBase):
             h3l = 100*hm + hpp
         elif hmm and hp:
             h3l = 100*hp + hmm
+        elif hpp and hmm:
+            h3l = 100*hmm + hpp
         else:
             print 'Error: ', hpp, hmm, hp, hm
             return 'aaa'

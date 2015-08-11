@@ -40,6 +40,7 @@ def sync(analysis,channel,period,**kwargs):
     plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=period,mergeDict=mergeDict)
     plotter.initializeBackgroundSamples([sigMap[period][x] for x in channelBackground[channel]])
     if analysis in ['Hpp3l', 'Hpp4l']: plotter.initializeSignalSamples([sigMap[period]['Sig']])
+    plotter.initializeDataSamples([sigMap[period]['data']])
     intLumi = getIntLumiMap()[period]
     plotter.setIntLumi(intLumi)
     cutflowMap = defineCutFlowMap(analysis,finalStates,mass)
@@ -83,9 +84,35 @@ def sync(analysis,channel,period,**kwargs):
                 for b in allMC:
                     val = plotter.getNumEntries('%s&channel=="%s"' %(theCut,chan), sigMap[period][b])
                     if b==s: sig += val
+                    elif 'data' in b: pass
                     else: bg += val
                 print '%15s | %10.2f | %10.2f | %10.2f' %(cutflows[c],sig,bg,sig/bg)
             print ''
+
+    # electron charge id efficiency
+    bgNum = 0
+    bgDenom = 0
+    sigNum = 0
+    sigDenom = 0
+    dataNum = 0
+    dataDenom = 0
+    for b in allMC + ['data']:
+        val0 =  plotter.getNumEntries('%s & l1Flv=="e" & l1.ChargeConsistent==0' %cut, sigMap[period][b])
+        val0 += plotter.getNumEntries('%s & l2Flv=="e" & l2.ChargeConsistent==0' %cut, sigMap[period][b])
+        val0 += plotter.getNumEntries('%s & l3Flv=="e" & l3.ChargeConsistent==0' %cut, sigMap[period][b])
+        val1 =  plotter.getNumEntries('%s & l1Flv=="e" & l1.ChargeConsistent==1' %cut, sigMap[period][b])
+        val1 += plotter.getNumEntries('%s & l2Flv=="e" & l2.ChargeConsistent==1' %cut, sigMap[period][b])
+        val1 += plotter.getNumEntries('%s & l3Flv=="e" & l3.ChargeConsistent==1' %cut, sigMap[period][b])
+        if b==s:
+            sigNum += val1
+            sigDenom += val0 + val1
+        elif 'data' in b:
+            dataNum += val1
+            dataDenom += val0 + val1
+        else:
+            bgNum += val1
+            bgDenom += val0 + val1
+    print 'Sig Efficiency: %f, BG Efficiency: %f, Data Efficiency: %f' % (sigNum/sigDenom, bgNum/bgDenom, float(dataNum)/dataDenom)
 
     # efficiency of cuts
     if doEfficiency:
@@ -106,6 +133,7 @@ def sync(analysis,channel,period,**kwargs):
                 if b==s:
                     sigPre += valPre
                     sigFull += valFull
+                elif 'data' in b: pass
                 else:
                     bgPre += valPre
                     bgFull += valFull
@@ -129,6 +157,7 @@ def sync(analysis,channel,period,**kwargs):
                     if b==s:
                         sigAllbut += valAllbut
                         sigOnly += valOnly
+                    elif 'data' in b: pass
                     else:
                         bgAllbut += valAllbut
                         bgOnly += valOnly

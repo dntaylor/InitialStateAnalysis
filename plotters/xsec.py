@@ -47,8 +47,8 @@ xsecs[13] = {
     'DBLH_m500' : 0.001652 * PB, # from pythia
 
     # here we have all the samples for RunIISpring15DR (all from mcm unless otherwise noted)
-    'DYJetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8' : 18610   * PB,
-    'DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8'     :  5943.2 * PB,
+    'DYJetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8' : 18610 * PB,
+    'DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8'     :  6104 * PB,
 
     'QCD_Pt-15to20_MuEnrichedPt5_TuneCUETP8M1_13TeV_pythia8'    : 1273190000      * PB,
     'QCD_Pt-20to30_MuEnrichedPt5_TuneCUETP8M1_13TeV_pythia8'    :  558528000      * PB,
@@ -109,7 +109,7 @@ xsecs[13] = {
 
     'WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8' : 60781.5 * PB,
 
-    'WWTo2L2Nu_13TeV-powheg'        : 63.21 * (0.1086 * 3)**2 * PB,
+    'WWTo2L2Nu_13TeV-powheg'        : 10.48 * PB,
     'WWTo4Q_13TeV-powheg'           : 63.21 * (1 - 0.1086 * 3)**2 * PB,
     'WWToLNuQQ_13TeV-powheg'        : 63.21 * (0.1086 * 3) * (1 - 0.1086 * 3) * PB,
     'WW_TuneCUETP8M1_13TeV-pythia8' : 63.21 * PB,
@@ -118,7 +118,7 @@ xsecs[13] = {
     'WZTo3LNu_TuneCUETP8M1_13TeV-powheg-pythia8'     :  4.42965 * PB,
     'WZ_TuneCUETP8M1_13TeV-pythia8'                  : 22.82    * PB,
 
-    'ZZTo2L2Q_13TeV_amcatnloFXFX_madspin_pythia8' :  3.38  * PB,
+    'ZZTo2L2Q_13TeV_amcatnloFXFX_madspin_pythia8' :  4.07  * PB,
     'ZZTo4L_13TeV_powheg_pythia8'                 :  1.256 * PB,
     'ZZTo4Q_13TeV_amcatnloFXFX_madspin_pythia8'   :  6.842 * PB,
     'ZZ_TuneCUETP8M1_13TeV-pythia8'               : 10.32  * PB,

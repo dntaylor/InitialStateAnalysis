@@ -83,8 +83,12 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
        Float_t mass;\
        Float_t sT;\
        Float_t met;\
-       Float_t metPhi;"
-    fsStrForBranch = "mass/F:sT:met:metPhi:"
+       Float_t metPhi;\
+       Float_t leadJetPt;\
+       Float_t leadJetEta;\
+       Float_t leadJetPhi;\
+       Float_t leadJetPUMVA;"
+    fsStrForBranch = "mass/F:sT:met:metPhi:leadJetPt:leadJetEta:leadJetPhi:leadJetPUMVA:"
 
     if doVBF:
         fsStrToProcess += "Float_t vbfMass;\
@@ -145,6 +149,7 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
        Int_t   PassTight;\
        Int_t   GenPdgId;\
        Int_t   MotherGenPdgId;\
+       Int_t   ChargeConsistent;\
     };");
     rt.gROOT.ProcessLine(
     "struct structObjChar_t {\
@@ -172,7 +177,7 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
                     charName = 'g'
                     phoCount += 1
                     objCount = phoCount
-                structureDict['%s%i' % (charName, objCount)] = [objStruct, objStruct, 'Pt/F:Eta:Phi:Iso:Dxy:Dz:JetPt:JetBTag:LepScaleLoose:LepScaleTight:LepScaleLoose_up:LepScaleTight_up:LepScaleLoose_down:LepScaleTight_down:LepFakeLoose:LepFakeTight:Chg/I:PassLoose:PassTight:GenPdgId:MotherGenPdgId']
+                structureDict['%s%i' % (charName, objCount)] = [objStruct, objStruct, 'Pt/F:Eta:Phi:Iso:Dxy:Dz:JetPt:JetBTag:LepScaleLoose:LepScaleTight:LepScaleLoose_up:LepScaleTight_up:LepScaleLoose_down:LepScaleTight_down:LepFakeLoose:LepFakeTight:Chg/I:PassLoose:PassTight:GenPdgId:MotherGenPdgId:ChargeConsistent']
                 structureDict['%s%iFlv' % (charName, objCount)] = [flvStruct, rt.AddressOf(flvStruct,'Flv'),'Flv/C']
                 structOrder += ['%s%i' % (charName, objCount)]
                 structOrder += ['%s%iFlv' % (charName, objCount)]
@@ -233,21 +238,22 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
                     #                strToProcess += "Float_t dR%i_%s_%i;" % (objCount,k,oCount)
                     # manually add the W Z deltaRs for now
                     if key == 'w1':
-                        strForBranch += "dR1_z1_1:dR1_z1_2:mll_z1_1:mll_z1_2:"
-                        strToProcess += "Float_t dR1_z1_1; Float_t dR1_z1_2; Float_t mll_z1_1; Float_t mll_z1_2;"
+                        strForBranch += "dR1_z1_1:dR1_z1_2:mll_z1_1:mll_z1_2:dR1_leadJet:"
+                        strToProcess += "Float_t dR1_z1_1; Float_t dR1_z1_2; Float_t mll_z1_1; Float_t mll_z1_2; Float_t dR1_leadJet;"
             # do the alt IDs
             objCount = 0
             for obj in val:
                 if obj == 'n': continue
                 else:
                     objCount += 1
-                    strForBranch += "Chg{0}/I:PassLoose{0}:PassTight{0}:GenPdgId{0}:MotherGenPdgId{0}:".format(objCount)
+                    strForBranch += "Chg{0}/I:PassLoose{0}:PassTight{0}:GenPdgId{0}:MotherGenPdgId{0}:ChargeConsistent{0}:".format(objCount)
                     strToProcess += "\
                         Int_t   Chg{0};\
                         Int_t   PassLoose{0};\
                         Int_t   PassTight{0};\
                         Int_t   GenPdgId{0};\
-                        Int_t   MotherGenPdgId{0};".format(objCount)
+                        Int_t   MotherGenPdgId{0};\
+                        Int_t   ChargeConsistent{0};".format(objCount)
                     for altId in alternateIds:
                         strToProcess += "Int_t pass_{0}_{1};".format(altId, objCount)
                         strForBranch += "pass_{0}_{1}:".format(altId, objCount)

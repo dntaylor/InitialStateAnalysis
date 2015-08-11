@@ -17,7 +17,7 @@ class FakeRatePlotter(PlotterBase):
 
     def getFakeRate(self,passSelection, failSelection, ptBins, etaBins, ptVar, etaVar, savename):
         '''Get 2d histogram of fakerates'''
-        dataDriven = False # until we get data
+        dataDriven = True # until we get data
         fakeHist = ROOT.TH2F(savename,'',len(ptBins)-1,array('d',ptBins),len(etaBins)-1,array('d',etaBins))
         for p in range(len(ptBins)-1):
             for e in range(len(etaBins)-1):

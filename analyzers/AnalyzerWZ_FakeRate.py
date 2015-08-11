@@ -7,79 +7,91 @@ Author: Devin N. Taylor, UW-Madison
 
 from AnalyzerBase import *
 
-class AnalyzerWZ_QCD(AnalyzerBase):
+class AnalyzerWZ_FakeRate(AnalyzerBase):
     '''
-    An implementation of the AnalyzerBase class for use in WZ analysis.
-
-    Objects:
-        z: 2 leptons same flavor opposite sign
-        w: 1 lepton and met
-    Minimization function:
-        Z mass difference
-    Selection:
-        Trigger: double lepton triggers
-        Fiducial cut
-        Lepton id: tight muon, cbid medium electron + triggering MVA
-        Isolation: 0.12 (0.15) for muon (electron) with deltabeta (rho) corrections
-        Invariant mass > 100. GeV
-        Z selection: within 20. GeV of Z mass, leading lepton pt > 20.
-        W selection: met > 30. lepton pt > 20.
+    An implementation of the AnalyzerBase class for use in WZ fake rate analysis.
     '''
 
     def __init__(self, sample_name, file_list, out_file, period, **kwargs):
-        if not hasattr(self,'channel'): self.channel = 'QCD'
+        if not hasattr(self,'channel'): self.channel = 'FakeRate'
         self.period = period
-        self.final_states = ['ej','mj']
+        self.final_states = ['e','m']
         self.initial_states = ['w1'] # in order of leptons returned in choose_objects
         self.object_definitions = {
             'w1': ['em','n'],
         }
         self.lepargs = {'tight':True}
         self.cutflow_labels = []
-        #self.alternateIds, self.alternateIdMap = self.defineAlternateIds(period)
         self.doVBF = (period=='13')
-        super(AnalyzerWZ_QCD, self).__init__(sample_name, file_list, out_file, period)
+        super(AnalyzerWZ_FakeRate, self).__init__(sample_name, file_list, out_file, period)
 
     ###############################
     ### Define Object selection ###
     ###############################
     def choose_objects(self, rtrow):
         '''
-        highest pt lepton (eventually, match it to the trigger lepton)
+        Select lepton
         '''
-        cands = []
-        for l in permutations(self.objects):
+        leps = self.objects
+        return ([0.], leps)
 
-            if l[0][0]=='j': continue
-            lpt = getattr(rtrow,'%sPt' % l[0])
-            jpt = getattr(rtrow,'%sPt' % l[1])
-            cands.append((1./(lpt+jpt), l))
+    # override choose_alternative_objects
+    def choose_alternative_objects(self, rtrow, state):
+        '''
+        Select alternative candidate.
+        '''
+        # Z
+        if state == ['z1']:
+            bestZDiff = float('inf')
+            bestLeptons = []
 
-        if not len(cands): return 0
+            for l in permutations(self.objects):
+                if lep_order(l[0],l[1]):
+                    continue
 
-        # Sort by mass difference
-        cands.sort(key=lambda x: x[0])
-        pt, leps = cands[0]
+                m1 = getattr(rtrow,'%s_%s_Mass' % (l[0], l[1]))
 
-        return ([pt], leps)
+                if abs(m1-ZMASS) < bestZDiff:
+                    bestZDiff = abs(m1-ZMASS)
+                    ordList = [l[1], l[0]] if getattr(rtrow,'%sPt' % l[0]) < getattr(rtrow,'%sPt' % l[1]) else l
+                    bestLeptons = ordList
+
+            return bestLeptons
+
+    # overide good_to_store
+    # will store via trigger selection
+    #@staticmethod
+    def good_to_store(self,rtrow, cand1, cand2):
+        '''
+        Select the trigger object
+        '''
+        singleTrigMatch_leg1 = getattr(rtrow,'%sMatchesSingleE_leg1' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg1' %self.objCand[0])
+        singleTrigMatch_leg2 = getattr(rtrow,'%sMatchesSingleE_leg1' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg1' %self.objCand[0])
+        return singleTrigMatch_leg2 
 
     ###########################
     ### Define preselection ###
     ###########################
     def preselection(self,rtrow):
         cuts = CutSequence()
-        if self.isData: cuts.add(self.trigger)
+        cuts.add(self.trigger)
         cuts.add(self.fiducial)
         #cuts.add(self.ID_tight)
         #cuts.add(self.ID_loose)
         cuts.add(self.ID_veto)
+        cuts.add(self.zVeto)
+        cuts.add(self.wVeto)
+        cuts.add(self.jetSelection)
         return cuts
 
     def selection(self,rtrow):
         cuts = CutSequence()
-        if self.isData: cuts.add(self.trigger)
+        cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.ID_tight)
+        cuts.add(self.zVeto)
+        cuts.add(self.wVeto)
+        cuts.add(self.jetSelection)
         return cuts
 
     def getIdArgs(self,type):
@@ -132,12 +144,7 @@ class AnalyzerWZ_QCD(AnalyzerBase):
         return kwargs
 
     def trigger(self, rtrow):
-        if self.period == '8':
-            triggers = ["mu17ele8isoPass", "mu8ele17isoPass",
-                        "doubleETightPass", "doubleMuPass", "doubleMuTrkPass"]
-
-        if self.period == '13':
-            triggers = ['muEPass', 'doubleMuPass', 'doubleEPass', 'eMuPass']
+        triggers = ['singleE_leg2Pass', 'singleMu_leg2Pass']
 
         for t in triggers:
             if getattr(rtrow,t)>0:
@@ -173,6 +180,29 @@ class AnalyzerWZ_QCD(AnalyzerBase):
     def mass3l(self,rtrow):
         return rtrow.Mass > 100.
 
+    def zVeto(self,rtrow):
+        return getattr(rtrow,'%sNearestZMass' %self.objCand[0]) > 30
+
+    def wVeto(self,rtrow):
+        leps = self.objCand
+        if self.period=='8':
+            if rtrow.type1_pfMetEt > 20.: return False
+            if getattr(rtrow, "%sMtToPfMet_Ty1" % (leps[0])) > 20.: return False
+        else:
+            if rtrow.pfMetEt > 20.: return False
+            if getattr(rtrow, "%sMtToPFMET" % (leps[0])) > 20.: return False
+        return True
+
+    def jetSelection(self,rtrow):
+        leps = self.objCand
+        if rtrow.jet1Pt<20: return False # moderate leading jet pt requirement
+        lEta = getattr(rtrow,'%sEta' %leps[0])
+        lPhi = getattr(rtrow,'%sPhi' %leps[0])
+        jEta = rtrow.jet1Eta
+        jPhi = rtrow.jet1Phi
+        dr = math.sqrt((lEta-jEta)**2 + (lPhi-jPhi)**2)
+        return dr>1. # jet far from lepton
+
 ##########################
 ###### Command line ######
 ##########################
@@ -194,7 +224,7 @@ def main(argv=None):
 
     args = parse_command_line(argv)
 
-    if args.analyzer == 'QCD': analyzer = AnalyzerWZ_QCD(args.sample_name,args.file_list,args.out_file,args.period)
+    if args.analyzer == 'FakeRate': analyzer = AnalyzerWZ_FakeRate(args.sample_name,args.file_list,args.out_file,args.period)
     with analyzer as thisAnalyzer:
         thisAnalyzer.analyze()
 

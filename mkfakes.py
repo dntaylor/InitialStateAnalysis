@@ -29,6 +29,7 @@ def makeFakes(analysis,channel,runPeriod,**kwargs):
         'TT'   : 2,
         'WZ'   : 3,
         'WZ_W' : 3,
+        'WZ_FakeRate' : 3,
         'Hpp3l': 3,
         'Hpp4l': 4,
     }
@@ -58,10 +59,10 @@ def makeFakes(analysis,channel,runPeriod,**kwargs):
                     numer = '{0} & w1.Pass{1}1'.format(denom,p)
                     fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
                     if p=='Tight':
-                       fakeRegion += '_LooseProbe'
-                       denom += ' & w1.PassLoose1'
-                       numer += ' & w1.PassLoose1'
-                       fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
+                        fakeRegion += '_LooseProbe'
+                        denom += ' & w1.PassLoose1'
+                        numer += ' & w1.PassLoose1'
+                        fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
             # select w lepton pt, z veto, met
             #'W' : 'w1.Pt1>20. & (z1.mass<60. | z1.mass>120.) & finalstate.met>30. & w1.mass>30.',
             if analysis in ['WZ_W']:
@@ -71,13 +72,21 @@ def makeFakes(analysis,channel,runPeriod,**kwargs):
                     numer = '{0} & w2.Pass{1}1'.format(denom,p)
                     fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w2.Pt1', 'etaVar': 'w2.Eta1'}
                     if p=='Tight':
-                       fakeRegion += '_LooseProbe'
-                       denom += ' & w2.PassLoose1'
-                       numer += ' & w2.PassLoose1'
-                       fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w2.Pt1', 'etaVar': 'w2.Eta1'}
-
-            # veto Z, low met, w mass veto
-            #'QCD' : '(z1.mass<60. | z1.mass>120.) & finalstate.met<20. & w1.mass<20.',
+                        fakeRegion += '_LooseProbe'
+                        denom += ' & w2.PassLoose1'
+                        numer += ' & w2.PassLoose1'
+                        fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w2.Pt1', 'etaVar': 'w2.Eta1'}
+            # ntuple cuts: zVeto 60-120, met vet 20, w veto 20, jet pt > 20, jet dr > 1.0
+            if analysis in ['WZ_FakeRate']:
+                fakeRegion = 'FakeRateProbe{0}{1}'.format(lepName[f],p)
+                denom = 'l1Flv=="{0}"'.format(f)
+                numer = '{0} & w1.Pass{1}1'.format(denom,p)
+                fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
+                if p=='Tight':
+                    fakeRegion += '_LooseProbe'
+                    denom += ' & w1.PassLoose1'
+                    numer += ' & w1.PassLoose1'
+                    fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
 
     # setup selections
     ptBins = [10,20,40,100,1000]
@@ -127,8 +136,8 @@ def makeFakes(analysis,channel,runPeriod,**kwargs):
 def parse_command_line(argv):
     parser = argparse.ArgumentParser(description="Plot a given channel and period")
 
-    parser.add_argument('analysis', type=str, choices=['Z','WZ','WZ_W','Hpp2l','Hpp3l','Hpp4l'], help='Analysis to plot')
-    parser.add_argument('channel', type=str, choices=['Z','WZ','W','TT','Hpp2l','Hpp3l','Hpp4l','FakeRate'], help='Channel in analysis')
+    parser.add_argument('analysis', type=str, choices=['Z','WZ','WZ_W','WZ_FakeRate','Hpp2l','Hpp3l','Hpp4l'], help='Analysis to plot')
+    parser.add_argument('channel', type=str, choices=['Z','WZ','W','FakeRate','TT','Hpp2l','Hpp3l','Hpp4l','FakeRate'], help='Channel in analysis')
     parser.add_argument('period', type=int, choices=[7,8,13], help='Energy (TeV)')
     parser.add_argument('-c','--cut',type=str,default='1',help='Cut to be applied to plots.')
     parser.add_argument('-sf','--scaleFactor',type=str,default='event.pu_weight*event.lep_scale*event.trig_scale',help='Scale factor for plots.')

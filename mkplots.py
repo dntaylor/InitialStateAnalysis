@@ -10,6 +10,8 @@ from plotters.plotUtils import ZMASS, _3L_MASSES, _4L_MASSES
 import argparse
 import itertools
 import sys
+import pickle
+import json
 
 def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
     savedir = kwargs.pop('savedir','')
@@ -36,6 +38,10 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
     plotMethod('finalstate.mass',[40,0,400],savedir+'mass',yaxis='Events/10.0 GeV',xaxis='M_{3\\ell} (GeV)',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
     plotMethod('finalstate.mass',[150,0,300],savedir+'mass_zoom',yaxis='Events/2.0 GeV',xaxis='Mass (GeV)',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
     plotMethod('event.nvtx',[50,0,50],savedir+'puVertices',yaxis='Events',xaxis='Number PU Vertices',legendpos=43,logy=0,cut=myCut,**kwargs)
+    if analysis in ['WZ_FakeRate']:
+        plotMethod('finalstate.leadJetPt',[40,0,200],savedir+'JetPt',yaxis='Events/5.0 GeV',xaxis='p_{T}^{jet} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('finalstate.leadJetEta',[50,-5.0,5.0],savedir+'JetEta',yaxis='Events',xaxis='\\eta^{jet}',legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('finalstate.leadJetPhi',[30,-3.14159,3.14159],savedir+'JetPhi',yaxis='Events',xaxis='\\phi^{jet}',legendpos=43,logy=0,cut=myCut,**kwargs)
     # plot lepton kinematics
     for l in range(nl):
         name = 'l%i' % (l+1)
@@ -43,6 +49,7 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
         plotMethod('%s.Eta' %name,[30,-3.0,3.0],savedir+'%sEta' %name,yaxis='Events',xaxis='\\eta^{\\ell%i}' %(l+1),legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod('%s.Phi' %name,[30,-3.14159,3.14159],savedir+'%sPhi' %name,yaxis='Events',xaxis='\\phi^{\\ell%i}' %(l+1),legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod('%s.Iso' %name,[50,0,.5],savedir+'%sIso' %name,yaxis='Events',xaxis='Relative Isolation (\\ell%i)' %(l+1),legendpos=43,logy=0,cut=myCut,**kwargs)    
+        plotMethod('%s.ChargeConsistent' %name,[3,-1.5,1.5],savedir+'%sChargeId' %name,yaxis='Events',xaxis='Charge ID (\\ell%i)' %(l+1),legendpos=43,logy=0,cut=myCut,**kwargs)    
     names = {
         'e': 'Elec',
         'm': 'Mu',
@@ -61,6 +68,7 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
         plotMethod(['l%i.Eta' %(x+1) for x in range(nl)], [30,-3.0,3.0],         savedir+'%sEta' %name, yaxis='Events',         xaxis='\\eta^{%s}' %t,              legendpos=43, logy=0, cut=cuts, **kwargs)
         plotMethod(['l%i.Phi' %(x+1) for x in range(nl)], [30,-3.14159,3.14159], savedir+'%sPhi' %name, yaxis='Events',         xaxis='\\phi^{%s}' %t,              legendpos=43, logy=0, cut=cuts, **kwargs)
         plotMethod(['l%i.Iso' %(x+1) for x in range(nl)], [50,0,.5],             savedir+'%sIso' %name, yaxis='Events',         xaxis='Relative Isolation (%s)' %t, legendpos=43, logy=0, cut=cuts, **kwargs)    
+        plotMethod(['l%i.ChargeConsistent' %(x+1) for x in range(nl)], [3,-1.5,1.5], savedir+'%sChargeId' %name, yaxis='Events', xaxis='Charge ID (%s)' %t,         legendpos=43, logy=0, cut=cuts, **kwargs)    
 
     # plot doubly charged higgs stuff
     if analysis in ['Hpp3l','Hpp4l'] or region in ['Hpp2l']:
@@ -111,7 +119,7 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
         plotMethod('z2.Iso1',[50,0,0.5],    savedir+'z2LeadingIso',         yaxis='Events',         xaxis='Iso/p_{T} (Z2 Leading Lepton)',     legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('z2.Iso2',[50,0,0.5],    savedir+'z2SubleadingIso',      yaxis='Events',         xaxis='Iso/p_{T} (Z2 Subleading Lepton)',  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
     # plot W stuff
-    if analysis in ['Hpp3l', 'WZ', 'WZ_W']:
+    if analysis in ['Hpp3l', 'WZ', 'WZ_W', 'WZ_FakeRate']:
         plotMethod('w1.Pt',  [40,0,400],savedir+'w1Pt',      yaxis='Events/10.0 GeV',xaxis='p_{T}^{W} (GeV)',                           legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('w1.Pt1', [40,0,200],savedir+'w1LeptonPt',yaxis='Events/5.0 GeV', xaxis='p_{T}^{W Lepton} (GeV)',                    legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('w1.Iso1',[50,0,0.5],savedir+'w1Iso',     yaxis='Events',         xaxis='Iso/p_{T} (W Lepton)',                      legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
@@ -179,13 +187,30 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     dataplot = (isControl or not blind)
     mergeDict = getMergeDict(runPeriod)
 
-    customFinalStates = {
-        'Hpp3l': {
-            'ee': '(channel=="eee" | channel=="eem")',
-            'em': '(channel=="eme" | channel=="emm" | channel=="mee" | channel=="mem")',
-            'mm': '(channel=="mme" | channel=="mmm")',
-        }
+    genChannels = {
+        'ee': ['eee','eem','eet'],
+        'em': ['eme','emm','emt'],
+        'et': ['ete','etm','ett'],
+        'mm': ['mme','mmm','mmt'],
+        'mt': ['mte','mtm','mtt'],
+        'tt': ['tte','ttm','ttt'],
     }
+
+    recoChannels = {
+        'ee': ['eee','eem'],
+        'em': ['eme','emm','mee','mem'],
+        'mm': ['mme','mmm'],
+        'et': ['eee','eme','eem','emm','mee','mem'],
+        'mt': ['mee','mem','mme','mmm','eme','emm'],
+        'tt': ['eee','eem','eme','emm','mee','mem','mme','mmm'],
+    }
+
+    customFinalStates = {'Hpp3l':{}}
+
+    for c in genChannels:
+        genCut = '(' + ' | '.join(['genChannel=="%s"'%x for x in genChannels[c] + ['aaa']]) + ')'
+        recoCut = '(' + ' | '.join(['channel=="%s"'%x for x in recoChannels[c]]) + ')'
+        customFinalStates['Hpp3l'][c] = genCut + '& ' + recoCut
 
     # do variables on same plot
     if useSignal:
@@ -196,15 +221,32 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         plotter.setIntLumi(intLumiMap[runPeriod])
         plotMode = 'plotSignal'
         plotMethod = getattr(plotter,plotMode)
-        plotMethod('h1.mass',      [1000,0,1000],'signal/hppMass',          yaxis='A.U.',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})',     lumitext=33,cut=myCut,logy=0, normalize=1)
-        plotMethod('h1.dPhi',      [100,0,5],    'signal/hppDphi',          yaxis='A.U.',xaxis='\\Delta\\phi_{\\ell^{\\pm}\\ell^{\\pm}} (rad)',lumitext=33,logy=0,cut=myCut,normalize=1)
-        plotMethod('finalstate.sT',[500,0,2000], 'signal/sT',               yaxis='A.U.',xaxis='S_{T} (GeV/c^{2})',                            lumitext=33,logy=0,cut=myCut,overflow=True,normalize=1)
-        plotMethod('z1.mass',      [250,0,1000], 'signal/z1Mass_fullWindow',yaxis='A.U.',xaxis='M_{\\ell^{+}\\ell^{-}} (Z) (GeV)',             legendpos=43,logy=0,cut=myCut,overflow=True,normalize=1)
+        plotMethod('h1.mass',       [1000,0,1000],'signal/hppMass',          yaxis='A.U.',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})',     lumitext=33,cut=myCut,logy=0, normalize=1)
+        plotMethod('h1.dPhi',       [100,0,5],    'signal/hppDphi',          yaxis='A.U.',xaxis='\\Delta\\phi_{\\ell^{\\pm}\\ell^{\\pm}} (rad)',lumitext=33,logy=0,cut=myCut,normalize=1)
+        plotMethod('h1.dR',         [100,0,6.28], 'signal/hppDR',            yaxis='A.U.',xaxis='\\Delta R_{\\ell^{\\pm}\\ell^{\\pm}}',         lumitext=33,logy=0,cut=myCut,normalize=1)
+        plotMethod('finalstate.sT', [500,0,2000], 'signal/sT',               yaxis='A.U.',xaxis='S_{T} (GeV/c^{2})',                            lumitext=33,logy=0,cut=myCut,overflow=True,normalize=1)
+        plotMethod('z1.mass',       [250,0,1000], 'signal/z1Mass_fullWindow',yaxis='A.U.',xaxis='M_{\\ell^{+}\\ell^{-}} (Z) (GeV)',             legendpos=43,logy=0,cut=myCut,overflow=True,normalize=1)
+        plotMethod('finalstate.met',[200,0,1000], 'signal/met',              yaxis='A.U.',xaxis='E_{T}^{miss} (GeV/c^{2})',                     lumitext=33,logy=0,cut=myCut,overflow=True,normalize=1)
         #plotter.initializeSignalSamples([allSigMap[runPeriod][mass]])
         #plotter.setIntLumi(intLumiMap[runPeriod])
         #plotMode = 'plotSignal'
         #plotMethod = getattr(plotter,plotMode)
         #plotMethod('h1.mass',[400,300,700],'signal/hppMass_cut',yaxis='Events/0.1 GeV/c^{2}',xaxis='M_{\\ell^{+}\\ell^{+}} (GeV/c^{2})',lumitext=33,logy=0,cut=myCut,boxes=[[450,550,2]])
+        names = {
+            'e': 'Elec',
+            'm': 'Mu',
+            't': 'Tau',
+        }
+        tex = {
+            'e': 'e',
+            'm': '\\mu',
+            't': '\\tau',
+        }
+        for l in ['e','m']:
+            name = names[l]
+            t = tex[l]
+            cuts = ['%s & %s' %(myCut,'l%iFlv=="%s"' %((x+1),l)) for x in range(nl)]
+            plotMethod(['l%i.Pt'  %(x+1) for x in range(nl)], [100,0,1000], 'signal/%sPt'%name, yaxis='A.U.', xaxis='p_{T}^{%s} (GeV)' %t, legendpos=43, logy=0, cut=cuts, overflow=True, normalize=1)
 
 
 
@@ -437,6 +479,7 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
         'Z'    : 2,
         'TT'   : 2,
         'WZ_W' : 2,
+        'WZ_FakeRate' : 1,
         'WZ'   : 3,
         'Hpp3l': 3,
         'Hpp4l': 4,
@@ -489,6 +532,19 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
                        denom += ' & w2.PassLoose1'
                        numer += ' & w2.PassLoose1'
                        fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w2.Pt1', 'etaVar': 'w2.Eta1'}
+            # ntuple cuts: zVeto 60-120, met vet 20, w veto 20, jet pt > 20, jet dr > 1.0
+            if analysis in ['WZ_FakeRate']:
+               fakeRegion = 'FakeRateProbe{0}{1}'.format(lepName[f],p)
+               denom = 'l1Flv=="{0}"'.format(f)
+               numer = '{0} & w1.Pass{1}1'.format(denom,p)
+               fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
+               if p=='Tight':
+                  fakeRegion += '_LooseProbe'
+                  denom += ' & w1.PassLoose1'
+                  numer += ' & w1.PassLoose1'
+                  fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
+
+
 
     # setup selections
     ptBins = [10,20,40,100]
@@ -504,11 +560,16 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
         ptvar = fakeRegions['WZ'][fakeRegion]['ptVar']
         etavar = fakeRegions['WZ'][fakeRegion]['etaVar']
 
-        plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,rootName='{0}_fakeplots'.format(fakeRegion))
+        if 'Muon' in fakeRegion: # prescale 23 workaround
+            plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,rootName='{0}_fakeplots'.format(fakeRegion),scaleFactor='event.pu_weight*event.lep_scale*event.trig_scale*1./23.')
+        elif 'Elec' in fakeRegion: # prescale 10 workaround
+            plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,rootName='{0}_fakeplots'.format(fakeRegion),scaleFactor='event.pu_weight*event.lep_scale*event.trig_scale*1./23.')
+        else:
+            plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,rootName='{0}_fakeplots'.format(fakeRegion),scaleFactor='event.pu_weight*event.lep_scale*event.trig_scale')
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
-        #plotter.initializeDataSamples([sigMap[runPeriod]['data']])
+        plotter.initializeDataSamples([sigMap[runPeriod]['data']])
         plotter.setIntLumi(intLumiMap[runPeriod])
-        plotMode = 'plotMC'
+        plotMode = 'plotMCData'
         plotMethod = getattr(plotter,plotMode)
         print "MKPLOTS:%s:%s:%iTeV: Plotting discriminating variables: All Probes" % (analysis,channel, runPeriod)
         plotDistributions(plotMethod,denom,nl,isControl,analysis=analysis,savedir='fakeRate/{0}_all'.format(fakeRegion))
@@ -519,20 +580,20 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
 
         # now plot the fake rates
         print "MKPLOTS:%s:%s:%iTeV: Computing fake rates" % (analysis,channel, runPeriod)
-        plotter = FakeRatePlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='{0}_fakerates'.format(fakeRegion),mergeDict=mergeDict)
+        plotter = FakeRatePlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='{0}_fakerates'.format(fakeRegion),mergeDict=mergeDict,scaleFactor='event.pu_weight*event.lep_scale*event.trig_scale*1./23.')
         # this should be done in data... using mc until we get some!
         # subtract WZ, ZZ, ttbar contributions from data
         # only initialize Z... in MC?
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
-        #plotter.initializeDataSamples([sigMap[runPeriod]['data']])
+        plotter.initializeDataSamples([sigMap[runPeriod]['data']])
         plotter.setIntLumi(intLumiMap[runPeriod])
         plotter.plotFakeRate(numer, denom, 'fakeRate/{0}_fakerate'.format(fakeRegion), ptBins=ptBins, etaBins=etaBins[probe], logx=1, ptVar=ptvar, etaVar=etavar)
 
 def parse_command_line(argv):
     parser = argparse.ArgumentParser(description="Plot a given channel and period")
 
-    parser.add_argument('analysis', type=str, choices=['Z','WZ','WZ_W','Hpp2l','Hpp3l','Hpp4l'], help='Analysis to plot')
-    parser.add_argument('channel', type=str, choices=['Z','WZ','W','TT','Hpp2l','Hpp3l','Hpp4l','FakeRate','LowMass'], help='Channel in analysis')
+    parser.add_argument('analysis', type=str, choices=['Z','WZ','WZ_W','WZ_FakeRate','Hpp2l','Hpp3l','Hpp4l'], help='Analysis to plot')
+    parser.add_argument('channel', type=str, choices=['Z','WZ','W','FakeRate','TT','Hpp2l','Hpp3l','Hpp4l','FakeRate','LowMass'], help='Channel in analysis')
     parser.add_argument('period', type=int, choices=[7,8,13], help='Energy (TeV)')
     parser.add_argument('-pf','--plotFinalStates',action='store_true',help='Plot individual final states')
     parser.add_argument('-pj','--plotJetBins',action='store_true',help='Plot jet bins')

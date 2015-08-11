@@ -1,5 +1,3 @@
-#from __future__ import absolute_import
-
 import sys
 import os
 import glob
@@ -10,14 +8,15 @@ import ROOT
 from .datacard import Datacard
 import plotters.xsec as xsec
 from plotters.Plotter import Plotter
-from plotters.plotUtils import _3L_MASSES, _4L_MASSES, ZMASS, getChannels, getSigMap, getIntLumiMap, getMergeDict
+from plotters.plotUtils import _3L_MASSES, _4L_MASSES, ZMASS, getChannels, getSigMap, getIntLumiMap, getMergeDict, getChannelBackgrounds
 
 ROOT.gROOT.SetBatch(ROOT.kTRUE)
 
 class Limits(object):
 
     def __init__(self, analysis, region, period, base_selections, ntuple_dir, out_dir,
-                 channels=[], lumi=25.0, blinded=True, bgMode='mc', scalefactor='event.pu_weight*event.lep_scale*event.trig_scale'):
+                 channels=[], lumi=25.0, blinded=True, bgMode='mc', scalefactor='event.pu_weight*event.lep_scale*event.trig_scale',
+                 sbcut='1', srcut='1'):
         self.base_selections = base_selections
         self.analysis = analysis
         self.region = region
@@ -33,6 +32,8 @@ class Limits(object):
         self.xsecs = xsec.xsecs[period]
         self.bgMode = bgMode
         self.scalefactor = scalefactor
+        self.sbcut = sbcut
+        self.srcut = srcut
 
         self.log = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO)
@@ -46,12 +47,7 @@ class Limits(object):
         sigMap = getSigMap(nl,mass)
         intLumiMap = getIntLumiMap()
         mergeDict = getMergeDict(runPeriod)
-        regionBackground = {
-            'Hpp3l' : ['T','TT', 'TTV','Z','VVV','WW','ZZ','WZ'],
-            'Hpp4l' : ['T','TT', 'TTV','Z','VVV','WW','ZZ','WZ']
-        }
-        if runPeriod==13: regionBackground['Hpp3l'] = ['T','TT', 'TTV','Z','DB']
-        if runPeriod==13: regionBackground['Hpp4l'] = ['T','TT', 'TTV','Z','DB']
+        regionBackground = getChannelBackgrounds(runPeriod)
         channels, leptons = getChannels(nl,runTau=runTau)
     
         plotter = Plotter(region,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName=plotName,mergeDict=mergeDict,scaleFactor=self.scalefactor)
@@ -127,41 +123,17 @@ class Limits(object):
             cutMC_data = self.base_selections + '&&(' + '||'.join(cuts) + ')' # full selection for bg and data
             cutSig = [self.base_selections + '&&' + x for x in cuts]          # different selections or signal so it can be scaled
             cuts = '(' + '||'.join(cuts) + ')'
-        m3l = 'finalstate.mass>100.'
-        cuts = cuts + ' & ' + m3l 
         if self.region=='WZ': cuts += ' & select.PassTight'
 
-        # setup sideband stuff
-        minMass = 12.
-        maxMass = 800.
-        srCut = '(h1.mass>0.9*%f & h1.mass<1.1*%f & h1.mass>%f & h1.mass<%f)' %(mass,mass,minMass,maxMass)
-        sbCut = '((h1.mass<150. & h1.mass>%f) ||  (h1.mass>1.1*%f & h1.mass<%f))' %(minMass,mass,maxMass)
-        #srCut = '(h1.mass>0.9*%f & h1.mass<1.1*%f)' %(mass,mass)
-        #sbCut = '((h1.mass<0.9*%f & h1.mass>0.7*%f) ||  (h1.mass>1.1*%f & h1.mass<1.3*%f))' %(mass,mass,mass,mass)
-        fullCut = 'finalstate.sT>1.1*%f+60. & fabs(z1.mass-%f)>80. & h1.dPhi<%f/600.+1.95' %(mass,ZMASS,mass)
-        finalSRCut = 'h1.mass>0.9*%f & h1.mass<1.1*%f' %(mass,mass)
-        # TODO: change for 4l
-
         myCut = '1'
-        #myCut = '(' + ' | '.join(cuts) + ')'
 
         plotter = self.getPlotter(self.analysis,self.region,self.period,mass,False,'plots_limits_temp',False)
-        #plotter.printInfo()
 
         nSBDict = {}
         nSRDict = {}
-        sbcut = '%s & %s & %s' %(myCut,sbCut,cuts)
-        srcut = '%s & %s & %s & %s' %(myCut,srCut,fullCut, cuts)
-        if self.region=='WZ': srcut = '%s & %s & %s' %(myCut,srCut, cuts)
-        if doAlphaTest:
-            sbcut = '%s & finalstate.sT<150. & z1.mass<110. & h1.mass<130.' %(cuts)
-            srcut = '%s & finalstate.sT<400. & finalstate.sT>150. & z1.mass<110. & h1.mass<130.' %(cuts)
-        #print 'Sideband cut:', sbcut
-        #print 'Signal region cut:', srcut
         for background in plotter.backgrounds:
-            #print background
-            nSBDict[background] = plotter.getNumEntries(sbcut,background,doError=True)
-            nSRDict[background] = plotter.getNumEntries(srcut,background,doError=True)
+            nSBDict[background] = plotter.getNumEntries(self.sbcut,background,doError=True)
+            nSRDict[background] = plotter.getNumEntries(self.srcut,background,doError=True)
         nSB = sum([x[0] for x in nSBDict.itervalues()])
         eSB = sum([x[1]*x[1] for x in nSBDict.itervalues()]) ** 0.5
         nSR = sum([x[0] for x in nSRDict.itervalues()])
@@ -172,16 +144,13 @@ class Limits(object):
             nSBData, eSBData = (0., 0.)
             nSRData, eSRData = (0., 0.)
         else:
-            #nSBData, eSBData = plotter.getNumEntries('%s&%s&%s&%s' %(myCut,sbCut,fullCut,cuts),*plotter.data,doError=True)
-            #nSRData, eSRData = plotter.getNumEntries('%s&%s&%s&%s' %(myCut,finalSRCut,fullCut,cuts),*plotter.data,doError=True)
-            # switch to using preselection for more statistics
-            nSBData, eSBData = plotter.getNumEntries(sbcut,*plotter.data,doError=True)
-            nSRData, eSRData = plotter.getNumEntries(srcut,*plotter.data,doError=True)
+            nSBData, eSBData = plotter.getNumEntries(self.sbcut,*plotter.data,doError=True)
+            nSRData, eSRData = plotter.getNumEntries(self.srcut,*plotter.data,doError=True)
         if self.blinded:
             nSRData = 0
             eSRData = 1
-        nBGSR = alpha*(nSBData)
-        eBGSR = alpha*((nSBData) ** 0.5)
+        nBGSR = alpha*(nSBData+1)
+        eBGSR = alpha*((nSBData+1) ** 0.5)
         self.alpha = alpha
         self.nSBData = nSBData
         self.nBGSR = nBGSR
@@ -248,14 +217,13 @@ class Limits(object):
         if self.bgMode=='sideband':
             # add the systematics for the alpha
             alphaSys = {'bg':self.alpha}
-            self.add_systematics("alpha_%s" % file_name.split('.')[0],"gmN %i" %self.nSBData, **alphaSys)
+            self.add_systematics("alpha_%s" % file_name.split('.')[0],"gmN %i" %(self.nSBData+1), **alphaSys)
             for key in self.sample_groups:
                 is_data = self.sample_groups[key]['isData']
                 if self.sample_groups[key]['isSig']:
                     self.datacard.add_sig(key, bgMap[key][0])
                 elif key=='bg': # don't add the mc bg
                     self.datacard.add_bkg(key, nBGSR)
-                #elif is_data and not self.blinded:
                 elif is_data:
                     self.datacard.set_observed(nSRData)
 
@@ -267,7 +235,6 @@ class Limits(object):
                         self.datacard.add_sig(key, bgMap[key][0])
                     elif key!='bg': # dont add the sideband bg
                         self.datacard.add_bkg(key, bgMap[key][0])
-                #elif is_data and not self.blinded:
                 elif is_data:
                     self.datacard.set_observed(nSRData)
 

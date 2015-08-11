@@ -33,15 +33,15 @@ class Datacard(object):
         out += "jmax %2i number of backgrounds\n" % jmax
         out += "kmax %2i number of nuisance parameters\n" % kmax
 
-        out += "-" * 20 + "\n"
+        out += "-" * 30 + "\n"
 
         out += "bin 1\n"
         out += "observation %i\n" % self.observed
 
-        out += "-" * 20 + "\n"
+        out += "-" * 30 + "\n"
 
-        fmt = "{:<25}" + "{:^11}" * (1 + jmax) + "\n"
-        fmt_f = "{:<25}" + "{:^11.3e}" * (1 + jmax) + "\n"
+        fmt = "{:<35}" + "{:^11}" * (1 + jmax) + "\n"
+        fmt_f = "{:<35}" + "{:^11.3e}" * (1 + jmax) + "\n"
 
         row = ["1" for i in xrange(1+jmax)]
         out += fmt.format("bin", *row)
@@ -55,9 +55,9 @@ class Datacard(object):
         row = [self.signal[1]] + [x[1] for x in self.bkg]
         out += fmt_f.format("rate", *row)
 
-        out += "-" * 20 + "\n"
+        out += "-" * 30 + "\n"
 
-        fmt = "{:<20}" + "{:<5}" + "{:^11}" * (1 + jmax) + "\n"
+        fmt = "{:<30}" + "{:<5}" + "{:^11}" * (1 + jmax) + "\n"
 
         for syst in self.syst:
             names = [self.signal[0]] + [x[0] for x in self.bkg]

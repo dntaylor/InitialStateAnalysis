@@ -525,6 +525,7 @@ def getChannelBackgrounds(runPeriod):
         'TT'      : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
         'Z'       : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
         'W'       : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'FakeRate': ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
         'Hpp3l'   : ['TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WZ'],
         'WZ'      : ['TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WZ'],
         'LowMass' : ['TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WZ'],
@@ -534,6 +535,7 @@ def getChannelBackgrounds(runPeriod):
         channelBackground = {
             'WZ'      : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
             'W'       : ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'ZZ', 'WZ'],
+            'FakeRate': ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'ZZ', 'WZ'],
             'Z'       : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
             'TT'      : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
             'Hpp2l'   : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],

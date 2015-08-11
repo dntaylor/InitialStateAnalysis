@@ -4,7 +4,7 @@ import logging
 import sys
 import argparse
 import numpy as np
-from plotters.plotUtils import _3L_MASSES, _4L_MASSES, getSigMap, getIntLumiMap, getChannels, getMergeDict, ZMASS
+from plotters.plotUtils import _3L_MASSES, _4L_MASSES, getSigMap, getIntLumiMap, getChannels, getMergeDict, ZMASS, getChannelBackgrounds
 from plotters.Plotter import Plotter
 from multiprocessing import Pool
 
@@ -39,6 +39,10 @@ def limit(analysis,region,period,mass,**kwargs):
     chans = kwargs.pop('channels',['1'])
     mode = kwargs.pop('mode','sideband')
     scalefactor = kwargs.pop('scalefactor','event.pu_weight*event.lep_scale*event.trig_scale')
+    datacardDir = kwargs.pop('datacardDir','./datacards')
+    fullCut = kwargs.pop('fullCut','')
+    numTaus = kwargs.pop('numTaus',0)
+    do4l = kwargs.pop('do4l',False)
     logger.info("Processing mass-point %i" % mass)
 
     channels, leptons = getChannels(3 if analysis=='Hpp3l' or analysis=='WZ' else 4)
@@ -66,24 +70,81 @@ def limit(analysis,region,period,mass,**kwargs):
         },
     }
 
+    if numTaus == 1:
+        cutMap['Hpp3l'] = {
+            'cuts' : ['1',\
+                      'finalstate.sT>0.85*%f+125.' %mass,
+                      'fabs(z1.mass-%f)>80.' %ZMASS,
+                      'finalstate.met>20.',
+                      'fabs(h1.dPhi)<%f/200.+1.15' %mass,
+                      'h1.mass>0.5*%f & h1.mass<1.1*%f' %(mass,mass)],
+            'labels' : ['Preselection','s_{T}','Z Veto','MET','#Delta#phi','Mass window']
+        }
+    if numTaus == 2:
+        cutMap['Hpp3l'] = {
+            'cuts' : ['1',\
+                      '(finalstate.sT>%f-10||finalstate.sT>200.)' %mass,
+                      'fabs(z1.mass-%f)>50.' %ZMASS,
+                      'finalstate.met>20.',
+                      'fabs(h1.dPhi)<2.1',
+                      'h1.mass>0.5*%f-20. & h1.mass<1.1*%f' %(mass,mass)],
+            'labels' : ['Preselection','s_{T}','Z Veto','MET','#Delta#phi','Mass window']
+        }
+
     nl = 3 if analysis in ['Hpp3l', 'WZ'] else 4
-    sigMap = getSigMap(nl,mass)
+    sigMap = getSigMap(4,mass) if do4l else getSigMap(nl,mass)
     intLumiMap = getIntLumiMap()
 
     cuts = '&&'.join(cutMap[analysis]['cuts'])
     if doAlphaTest: cuts = ' & '.join(cutMap['AlphaTest']['cuts'])
 
+    # setup sideband stuff
+    chanCuts = '(' + ' | '.join(chans) + ')'
+    minMass = 12.
+    maxMass = 800.
+    srCut = '(h1.mass>0.9*%f & h1.mass<1.1*%f & h1.mass>%f & h1.mass<%f)' %(mass,mass,minMass,maxMass)
+    sbCut = '((h1.mass<150. & h1.mass>%f) ||  (h1.mass>1.1*%f & h1.mass<%f))' %(minMass,mass,maxMass)
+    if numTaus==1:
+        srCut = '(h1.mass>0.5*%f & h1.mass<1.1*%f & h1.mass>%f & h1.mass<%f)' %(mass,mass,minMass,maxMass)
+        theMass = min(150.,.5*mass)
+        sbCut = '((h1.mass<%f & h1.mass>%f) ||  (h1.mass>1.1*%f & h1.mass<%f))' %(theMass,minMass,mass,maxMass)
+    if numTaus==2:
+        srCut = '(h1.mass>0.5*%f-20. & h1.mass<1.1*%f & h1.mass>%f & h1.mass<%f)' %(mass,mass,minMass,maxMass)
+        theMass = min(150.,.5*mass-20.)
+        sbCut = '((h1.mass<%f & h1.mass>%f) ||  (h1.mass>1.1*%f & h1.mass<%f))' %(theMass,minMass,mass,maxMass)
+    #srCut = '(h1.mass>0.9*%f & h1.mass<1.1*%f)' %(mass,mass)
+    #sbCut = '((h1.mass<0.9*%f & h1.mass>0.7*%f) ||  (h1.mass>1.1*%f & h1.mass<1.3*%f))' %(mass,mass,mass,mass)
+    if not fullCut:
+        fullCut = 'finalstate.sT>1.1*%f+60. & fabs(z1.mass-%f)>80. & h1.dPhi<%f/600.+1.95' %(mass,ZMASS,mass)
+    finalSRCut = 'h1.mass>0.9*%f & h1.mass<1.1*%f' %(mass,mass)
+    if numTaus==1:
+        finalSRCut = 'h1.mass>0.5*%f & h1.mass<1.1*%f' %(mass,mass)
+    if numTaus==2:
+        finalSRCut = 'h1.mass>0.5*%f-20. & h1.mass<1.1*%f' %(mass,mass)
+    # TODO: change for 4l
+
+    myCut = '1'
+
+    sbcut = '%s & %s & %s' %(myCut,sbCut,chanCuts)
+    srcut = '%s & %s & %s & %s' %(myCut,srCut,fullCut, chanCuts)
+    base_selections = '%s & %s & %s' %(myCut, srCut, fullCut)
+    if region=='WZ': srcut = '%s & %s & %s' %(myCut,srCut, chanCuts)
+    if doAlphaTest:
+        sbcut = '%s & finalstate.sT<150. & z1.mass<110. & h1.mass<130.' %(chanCuts)
+        srcut = '%s & finalstate.sT<400. & finalstate.sT>150. & z1.mass<110. & h1.mass<130.' %(chanCuts)
+
     if doAlphaTest: unblind = True
-    limits = Limits(analysis,region, period, cuts, './ntuples/%s_%iTeV_%s' % (analysis, period, region),
-                    './datacards/%s_%itev_%s/%s/%s' % (analysis, period, region, directory, mass),
+    limits = Limits(analysis,region, period, base_selections, './ntuples/%s_%iTeV_%s' % (analysis, period, region),
+                    '%s/%s_%itev_%s/%s/%s' % (datacardDir, analysis, period, region, directory, mass),
                     channels=['dblh%s' % analysis], lumi=intLumiMap[period],
-                    blinded=not unblind, bgMode=mode, scalefactor=scalefactor)
+                    blinded=not unblind, bgMode=mode, scalefactor=scalefactor,
+                    sbcut=sbcut, srcut=srcut)
 
     signal =  sigMap[period]['Sig']
     if mode=='mc':
-        add_systematics_mc(limits,mass,signal,name,chans,scale,period,bp,doAlphaTest,doIndividualChannel)
+        add_systematics_mc(limits,mass,signal,name,chans,scale,period,bp,doAlphaTest,doIndividualChannel,do4l)
     elif mode=='sideband':
-        add_systematics_sideband(limits,mass,signal,name,chans,scale,period,bp,doAlphaTest,doIndividualChannel)
+        add_systematics_sideband(limits,mass,signal,name,chans,scale,period,bp,doAlphaTest,doIndividualChannel,do4l)
     else:
         return 0
 
@@ -97,36 +158,61 @@ def BPWrapper(args):
     scaleFactor = args[6]
     doAlphaTest = args[7]
     unblind = args[8]
-    BP(analysis,region,period,mass,bp,mode=bgMode,scalefactor=scaleFactor,doAlphaTest=doAlphaTest,unblind=unblind)
+    do4l = args[9]
+    BP(analysis,region,period,mass,bp,mode=bgMode,scalefactor=scaleFactor,doAlphaTest=doAlphaTest,unblind=unblind,do4l=do4l)
 
 def BP(analysis,region,period,mass,bp,**kwargs):
+    do4l = kwargs.pop('do4l',False)
     if bp == 'ee100':
         s = Scales(1., 0., 0., 0., 0., 0.)
+        allowedChannels = ['ee']
     elif bp == 'em100':
         s = Scales(0., 1., 0., 0., 0., 0.)
+        allowedChannels = ['em']
+    elif bp == 'et100':
+        s = Scales(0., 0., 1., 0., 0., 0.)
+        allowedChannels = ['et']
     elif bp == 'mm100':
         s = Scales(0., 0., 0., 1., 0., 0.)
+        allowedChannels = ['mm']
+    elif bp == 'mt100':
+        s = Scales(0., 0., 0., 0., 1., 0.)
+        allowedChannels = ['mt']
+    elif bp == 'tt100':
+        s = Scales(0., 0., 0., 0., 0., 1.)
+        allowedChannels = ['tt']
     elif bp == 'BP1':
         s = Scales(0, 0.1, 0.1, 0.3, 0.38, 0.3)
+        allowedChannels = ['em','et','mm','mt','tt']
     elif bp == 'BP2':
-        s = Scales(0.5, 0, 0, 0.125, 0.25, 0.125)
+        s = Scales(1./2., 0, 0, 1./8., 1./4., 1./8.)
+        allowedChannels = ['ee','em','mt','tt']
     elif bp == 'BP3':
-        s = Scales(0.34, 0, 0, 0.33, 0, 0.33)
+        s = Scales(1./3., 0, 0, 1./3., 0, 1./3.)
+        allowedChannels = ['ee','mm','tt']
     elif bp == 'BP4':
         s = Scales(1./6., 1./6., 1./6., 1./6., 1./6., 1./6.)
+        allowedChannels = ['ee','em','et','mm','mt','tt']
     else:
         print 'Unknown branching point: %s' %bp
     logger.info("Processing branching point %s" % bp)
     sf = getattr(s,'scale_%s'%analysis)
+    if do4l: sf = getattr(s,'scale_Hpp4l')
     chanMap = {
         'Hpp3l': {
-             'names': ['ee','em','mm'],
+             'names': ['ee','em','mm','et','mt','tt'],
              'ee'   : ['eee','eem'],
              'em'   : ['eme','emm','mee','mem'],
-             'mm'   : ['mme','mmm'],
+             'mm'   : ['mme','mmm'], 
+             'et'   : ['eee','eme','mee','eem','emm','mem'],
+             'mt'   : ['eme','emm','mee','mem','mme','mmm'],
+             'tt'   : ['eee','eem','eme','emm','mee','mem','mme','mmm'],
              'eegen': ['eee','eem','eet'],
              'emgen': ['eme','emm','emt'],
              'mmgen': ['mme','mmm','mmt'],
+             'etgen': ['ete','etm','ett'],
+             'mtgen': ['mte','mtm','mtt'],
+             'ttgen': ['tte','ttm','ttt'],
         },
         'Hpp4l': {
              'names': ['eeee','eeem','eemm','emem','emmm','mmmm'],
@@ -138,29 +224,41 @@ def BP(analysis,region,period,mass,bp,**kwargs):
              'mmmm' : ['mmmm'],
         },
     }
-    #for c in chanMap[analysis]['names']:
-    #    thisScale = sf(c[:2],c[3:])
-    #    if thisScale==0: continue
-    #    limit(analysis,period,mass,name=c,directory=bp,channels=chanMap[analysis][c],scale=thisScale,**kwargs)
+
+    if do4l:
+        chanMap['Hpp3l']['eegen'] = ['eeee','eeem','eeet','eemm','eemt','eett','emee','etee','mmee','mtee','ttee']
+        chanMap['Hpp3l']['emgen'] = ['emee','emem','emet','emmm','emmt','emtt','eeem','etem','mmem','mtem','ttem']
+        chanMap['Hpp3l']['etgen'] = ['etee','etem','etet','etmm','etmt','ettt','eeet','emet','mmet','mtet','ttet']
+        chanMap['Hpp3l']['mmgen'] = ['mmee','mmem','mmet','mmmm','mmmt','mmtt','eemm','emmm','etmm','mtmm','ttmm']
+        chanMap['Hpp3l']['mtgen'] = ['mtee','mtem','mtet','mtmm','mtmt','mttt','eemt','emmt','etmt','mmmt','ttmt']
+        chanMap['Hpp3l']['ttgen'] = ['ttee','ttem','ttet','ttmm','ttmt','tttt','eett','emtt','ettt','mmtt','mttt']
 
     chanCuts = []
     chanScales = []
     for c in chanMap[analysis]['names']:
-        thisScale = sf(c[:2],c[2:])
-        if thisScale==0: continue
-        chanCut = '('+' | '.join(['channel=="%s"'%x for x in chanMap[analysis][c]])+')'
-        chanCut += ' & (' + ' | '.join(['genChannel=="%s"'%x for x in chanMap[analysis][c+'gen']+['aaa']]) + ')'
-        limit(analysis,region,period,mass,bp=bp,name='%s_%s'%(bp,c),directory=bp,channels=[chanCut],scale=[thisScale],**kwargs)
-        # now do individual channels
+        if c not in allowedChannels: continue # channel not present in BP
+        numTaus = c.count('t')
         for theChan in chanMap[analysis][c]:
+            #thisScale = sf(c[:2],c[2:])
+            #if thisScale==0: continue
+            thisName = '%s_%s_%s'%(bp,c,theChan)
+            if do4l: thisName += '_4l'
+            # the reco level cut
             thisChanCut = 'channel=="%s"' % theChan
-            thisChanCut += ' & (' + ' | '.join(['genChannel=="%s"'%x for x in chanMap[analysis][c+'gen']+['aaa']]) + ')'
-            limit(analysis,region,period,mass,bp=bp,name='%s_%s'%(bp,theChan),directory=bp,channels=[thisChanCut],scale=[thisScale],doIndividualChannel=True,**kwargs)
-        chanCuts += [chanCut]
-        chanScales += [thisScale]
-    limit(analysis,region,period,mass,bp=bp,name=bp,directory=bp,channels=chanCuts,scale=chanScales,**kwargs)
+            # the gen level cuts for reweighting
+            genChannelCuts = ['%s & genChannel=="%s"' %(thisChanCut, x) for x in chanMap[analysis][c+'gen'] + ['aaa']]
+            genChannelScales = [sf(ch[:2],ch[2:]) for ch in chanMap[analysis][c+'gen']] + [1]
+            theCuts = []
+            theScales = []
+            for s,g in zip(genChannelScales,genChannelCuts):
+                if not s>0: continue # no contribution to channel
+                theCuts += [g]
+                theScales += [s]
+            if not theScales: continue # no contributions at all
+            # produce the data card
+            limit(analysis,region,period,mass,bp=bp,name=thisName,directory=bp,channels=theCuts,scale=theScales,doIndividualChannel=True,analysisChannel=c,numTaus=numTaus,do4l=do4l,**kwargs)
 
-def add_systematics_mc(limits,mass,signal,name,chans,sigscale,period,bp,doAlphaTest,doIndividualChannel):
+def add_systematics_mc(limits,mass,signal,name,chans,sigscale,period,bp,doAlphaTest,doIndividualChannel,do4l):
     limits.add_group("hpp%i" % mass, signal, scale=sigscale, isSignal=True)
     if period==8: limits.add_group("dyjets", "Z*j*")
     if period==13: limits.add_group("dyjets", "DY*")
@@ -197,7 +295,7 @@ def add_systematics_mc(limits,mass,signal,name,chans,sigscale,period,bp,doAlphaT
 
     if doIndividualChannel:
         chanNames = [name[-3:]]
-        scaleMap = calculateChannelLeptonSystematic(mass,chanNames)
+        scaleMap = calculateChannelLeptonSystematic(mass,chanNames,do4l=do4l)
         esys = "%0.3f" %scaleMap[chanNames[0]]['e']
         eid = {
             'hpp%i' % mass: esys,
@@ -234,7 +332,7 @@ def add_systematics_mc(limits,mass,signal,name,chans,sigscale,period,bp,doAlphaT
         limits.add_systematics('mid', 'lnN', **mid)
     else:
 
-        idSys = "%0.3f" %calculateLeptonSystematic(mass,chans,sigscale)
+        idSys = "%0.3f" %calculateLeptonSystematic(mass,chans,sigscale,do4l=do4l)
 
         lepid = {
             'hpp%i' % mass: idSys,
@@ -278,14 +376,15 @@ def add_systematics_mc(limits,mass,signal,name,chans,sigscale,period,bp,doAlphaT
 
     limits.gen_card("%s_mc.txt" % name,mass=mass,cuts=chans,doAlphaTest=doAlphaTest)
 
-def calculateLeptonSystematic(mass,chanCuts,chanScales):
+def calculateLeptonSystematic(mass,chanCuts,chanScales,**kwargs):
+    do4l = kwargs.pop('do4l',False)
     analysis = 'Hpp3l'
     region = 'Hpp3l'
     runPeriod = 8
     nl = 3
     ntuples = 'ntuples/%s_%iTeV_%s' % (analysis,runPeriod,region)
     saves = '%s_%s_%sTeV' % (analysis,region,runPeriod)
-    sigMap = getSigMap(nl,mass)
+    sigMap = getSigMap(4,mass) if do4l else getSigMap(nl,mass)
     intLumiMap = getIntLumiMap()
     mergeDict = getMergeDict(runPeriod)
     regionBackground = {
@@ -314,14 +413,15 @@ def calculateLeptonSystematic(mass,chanCuts,chanScales):
 
     return sigSelSys+1
 
-def calculateChannelLeptonSystematic(mass,chans):
+def calculateChannelLeptonSystematic(mass,chans,**kwargs):
+    do4l = kwargs.pop('do4l',False)
     analysis = 'Hpp3l'
     region = 'Hpp3l'
     runPeriod = 8
     nl = 3
     ntuples = 'ntuples/%s_%iTeV_%s' % (analysis,runPeriod,region)
     saves = '%s_%s_%sTeV' % (analysis,region,runPeriod)
-    sigMap = getSigMap(nl,mass)
+    sigMap = getSigMap(4,mass) if do4l else getSigMap(nl,mass)
     intLumiMap = getIntLumiMap()
     mergeDict = getMergeDict(runPeriod)
     regionBackground = {
@@ -346,17 +446,13 @@ def calculateChannelLeptonSystematic(mass,chans):
     }
 
     scaleMap = {}
-    #print 'Generating scale map'
     for c in chans:
-        #print 'Channel: %s' %c
         scaleMap[c] = {}
         for l in ['e','m']:
-            #print 'Scale for %s' %l
             # get bg
             scaleFactorBase = "event.trig_scale*event.pu_weight"
             individualScales = "*".join([scaleStrings[x[0]] for x in enumerate(c)])
             theScale = "*".join([scaleFactorBase]+[individualScales])
-            #print 'Scale: %s' % theScale
             plotter.setScaleFactor(theScale)
             chanBG = plotter.getNumEntries('channel=="%s"&%s&%s' %(c,fullCut,finalSRCut),plotter.signal[0])
             individualScales = "*".join([scaleStrings[x[0]] for x in enumerate(c) if x[1]!=l])
@@ -364,18 +460,15 @@ def calculateChannelLeptonSystematic(mass,chans):
             theScale = scaleFactorBase
             if individualScales: theScale += '*'+individualScales
             if individualScales_up: theScale += '*'+individualScales_up
-            #print 'Scaleup: %s' % theScale
             plotter.setScaleFactor(theScale)
             chanBG_scaled = plotter.getNumEntries('channel=="%s"&%s&%s' %(c,fullCut,finalSRCut),plotter.signal[0])
-            #print chanBG, chanBG_scaled
             scaleMap[c][l] = (chanBG_scaled-chanBG)/chanBG + 1
 
-    #print scaleMap
     return scaleMap
 
 
 
-def add_systematics_sideband(limits,mass,signal,name,chans,sigscale,period,bp,doAlphaTest,doIndividualChannel):
+def add_systematics_sideband(limits,mass,signal,name,chans,sigscale,period,bp,doAlphaTest,doIndividualChannel,do4l):
     limits.add_group("hpp%i" % mass, signal, scale=sigscale, isSignal=True)
     limits.add_group("bg", "bg")
     limits.add_group("data", "data_R*", isData=True)
@@ -385,15 +478,14 @@ def add_systematics_sideband(limits,mass,signal,name,chans,sigscale,period,bp,do
 
     if doIndividualChannel:
         chanNames = [name[-3:]]
-        #print 'Do chans'
-        #print chanNames
-        scaleMap = calculateChannelLeptonSystematic(mass,chanNames)
+        if do4l: chanNames = [name[-6:-3]]
+        scaleMap = calculateChannelLeptonSystematic(mass,chanNames,do4l=do4l)
         eid = {'hpp%i' % mass: "%0.3f" %scaleMap[chanNames[0]]['e']}
         mid = {'hpp%i' % mass: "%0.3f" %scaleMap[chanNames[0]]['m']}
         limits.add_systematics('eid', 'lnN', **eid)
         limits.add_systematics('mid', 'lnN', **mid)
     else:
-        idSys = calculateLeptonSystematic(mass,chans,sigscale)
+        idSys = calculateLeptonSystematic(mass,chans,sigscale,do4l=do4l)
 
         allid = {'hpp%i' % mass: "%0.3f" %idSys}
         limits.add_systematics("id", "lnN", **allid)
@@ -417,10 +509,11 @@ def parse_command_line(argv):
     parser.add_argument('-m','--mass',nargs='?',type=int,const=500,default=500,help='Mass for signal')
     parser.add_argument('-am','--allMasses',action='store_true',help='Run over all masses for signal')
     parser.add_argument('-da','--doAlphaTest',action='store_true',help='Run the alpha test')
+    parser.add_argument('-df','--do4l', action='store_true',help='Run the 4l lepton limits')
     parser.add_argument('-ub','--unblind',action='store_true',help='unblind')
-    parser.add_argument('-bp','--branchingPoint',nargs='?',type=str,const='BP4',default='BP4',choices=['ee100','em100','mm100','BP1','BP2','BP3','BP4'],help='Choose branching point for H++')
+    parser.add_argument('-bp','--branchingPoint',nargs='?',type=str,const='BP4',default='BP4',choices=['ee100','em100','mm100','et100','mt100','tt100','BP1','BP2','BP3','BP4'],help='Choose branching point for H++')
     parser.add_argument('-ab','--allBranchingPoints',action='store_true',help='Run over all branching points for H++')
-    parser.add_argument('-bg','--bgMode',nargs='?',type=str,const='mc',default='sideband',choices=['mc','sideband'],help='Choose BG estimation')
+    parser.add_argument('-bg','--bgMode',nargs='?',type=str,const='sideband',default='sideband',choices=['mc','sideband'],help='Choose BG estimation')
     parser.add_argument('-sf','--scaleFactor',type=str,default='event.pu_weight*event.lep_scale*event.trig_scale',help='Scale factor for MC.')
 
     args = parser.parse_args(argv)
@@ -432,21 +525,26 @@ def main(argv=None):
 
     args = parse_command_line(argv)
 
-    branchingPoints = ['ee100','em100','mm100','BP1','BP2','BP3','BP4']
+    branchingPoints = ['ee100','em100','mm100','et100','mt100','tt100','BP1','BP2','BP3','BP4']
     masses = _3L_MASSES if args.analysis=='Hpp3l' else _4L_MASSES
+    if args.do4l: masses = _4L_MASSES
 
     if not args.allMasses: masses = [args.mass]
     if not args.allBranchingPoints: branchingPoints = [args.branchingPoint]
 
     poolArgs = [[m,b] for m in masses for b in branchingPoints]
 
-    p = Pool(8)
-    try:
-        p.map_async(BPWrapper, [(args.analysis,args.region,args.period,job[0],job[1],args.bgMode,args.scaleFactor,args.doAlphaTest,args.unblind) for job in poolArgs]).get(999999)
-    except KeyboardInterrupt:
-        p.terminate()
-        print 'limits cancelled'
-        sys.exit(1)
+    if len(poolArgs)==1:
+        job = poolArgs[0]
+        BPWrapper((args.analysis,args.region,args.period,job[0],job[1],args.bgMode,args.scaleFactor,args.doAlphaTest,args.unblind,args.do4l))
+    else:
+        p = Pool(8)
+        try:
+            p.map_async(BPWrapper, [(args.analysis,args.region,args.period,job[0],job[1],args.bgMode,args.scaleFactor,args.doAlphaTest,args.unblind,args.do4l) for job in poolArgs]).get(999999)
+        except KeyboardInterrupt:
+            p.terminate()
+            print 'limits cancelled'
+            sys.exit(1)
     
 
     #for mass in masses:
