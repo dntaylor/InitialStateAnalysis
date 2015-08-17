@@ -4,6 +4,7 @@ from plotters.plotUtils import _3L_MASSES, _4L_MASSES, ZMASS
 from plotters.Plotter import Plotter
 from plotters import tdrstyle
 from math import sqrt
+from array import array
 import ROOT
 
 ROOT.gROOT.SetBatch(ROOT.kTRUE)
@@ -52,14 +53,16 @@ def initializePlotter(analysis, period, mass, plotName, nl, runTau):
     plotter.setIntLumi(intLumiMap[period])
     return plotter
 
+
+
 def optimizeSelections(analysis, period):
     nl = 3 if analysis=='Hpp3l' else 4
 
     hNumTaus = range(3)
     
     masses = _3L_MASSES
-    mbinning = [17,175,1025]
-    allMasses = range(200,1050,50)
+    extMasses = [150] + masses + [800]
+    mbinning = [float(extMasses[x]+extMasses[x+1])/2. for x in range(len(masses)+1)]
     allMasses = masses
     
     myCut = 'select.passTight'
@@ -89,20 +92,20 @@ def optimizeSelections(analysis, period):
     }
 
     plotTypes = {
-        'h1mass'     : [50,0,500],
-        'h1massUnder': [50,0,500],
-        'h1massOver' : [50,0,500],
-        #'h2mass'     : [50,0,500],
-        #'h2massUnder': [50,0,500],
-        #'h2massOver' : [50,0,500],
-        'z1mass'     : [20,0,100],
-        #'z2mass'     : [20,0,100],
-        'dPhi1'      : [32,0,3.2],
-        #'dPhi2'      : [32,0,3.2],
-        'dR1'        : [60,0,6.],
-        #'dR2'        : [60,0,6.],
-        'met'        : [20,0,100],
-        'st'         : [150,0,1500],
+        'h1mass'     : [50,0.,500.],
+        'h1massUnder': [50,0.,500.],
+        'h1massOver' : [50,0.,500.],
+        #'h2mass'     : [50,0.,500.],
+        #'h2massUnder': [50,0.,500.],
+        #'h2massOver' : [50,0.,500.],
+        #'z1mass'     : [20,0.,100.],
+        #'z2mass'     : [20,0.,100.],
+        'dPhi1'      : [32,0.,3.2],
+        #'dPhi2'      : [32,0.,3.2],
+        'dR1'        : [40,1.,5.],
+        #'dR2'        : [60,0.,6.],
+        #'met'        : [20,0.,100.],
+        'st'         : [150,0.,1500.],
     }
 
     axisLabels = {
@@ -142,20 +145,20 @@ def optimizeSelections(analysis, period):
     vals = {}
     valTypes = ['p','f','sOverSqrtB']
     
-    for nTaus in hNumTaus:
-        vals[nTaus] = {}
-        genSelect = '(' + ' | '.join(['genChannel=="%s"'%x for y in tauFlavor[nTaus] for x in genChannels[y] + ['aaa']]) + ')'
-        recoSelect = '(' + ' | '.join(['channel=="%s"'%x for y in tauFlavor[nTaus] for x in recoChannels[y]]) + ')'
+    for m in range(len(allMasses)):
+        mass = allMasses[m]
+        vals[m] = {}
+        if mass not in masses: continue
+        plotter = initializePlotter(analysis, period, mass, 'optimize%i'%mass, nl, True)
+        for nTaus in hNumTaus:
+            vals[m][nTaus] = {}
+            genSelect = '(' + ' | '.join(['genChannel=="%s"'%x for y in tauFlavor[nTaus] for x in genChannels[y] + ['aaa']]) + ')'
+            recoSelect = '(' + ' | '.join(['channel=="%s"'%x for y in tauFlavor[nTaus] for x in recoChannels[y]]) + ')'
 
-        for plotType,binning in plotTypes.iteritems():
-            if nl==3 and (plotType=='h2mass' or plotType=='z2mass' or plotType=='dR2'): continue
-            vals[nTaus][plotType] = {}
-            #for m in range(mbinning[0]):
-            for m in range(len(allMasses)):
-                mass = allMasses[m]
-                vals[nTaus][plotType][m] = {}
-                if mass not in masses: continue
-                plotter = initializePlotter(analysis, period, mass, 'optimize%i'%mass, nl, True)
+            for plotType,binning in plotTypes.iteritems():
+                if nl==3 and (plotType=='h2mass' or plotType=='z2mass' or plotType=='dR2'): continue
+                vals[m][nTaus][plotType] = {}
+                bins = [binning[1] + float(x*(binning[2]-binning[1]))/binning[0] for x in range(binning[0]+1)]
                 print 'Optimize %s %i TeV %s %i Taus %i GeV' %(analysis,period,plotType,nTaus,mass)
 
                 denomCut = myCut + '&&' + recoSelect
@@ -163,7 +166,6 @@ def optimizeSelections(analysis, period):
                 if plotType=='h1massOver' : denomCut += '&&h1.mass>%f' % mass
                 if plotType=='h2massUnder': denomCut += '&&h2.mass<%f' % mass
                 if plotType=='h2massOver' : denomCut += '&&h2.mass>%f' % mass
-                bins = [x*binning[2]/binning[0] for x in range(binning[0])]
                 bgDenom, sigDenom = getVal(plotter,denomCut,genSelect)
                 for cut in range(binning[0]):
                     if plotType=='h1mass'     : passCut = 'fabs(h1.mass-%f)<%f&&%s' % (mass, bins[cut], denomCut)
@@ -185,29 +187,34 @@ def optimizeSelections(analysis, period):
                     f = bgNum/bgDenom
                     if not bgNum: bgNum = 0.0001
                     val = sigNum/sqrt(bgNum)
-                    vals[nTaus][plotType][m][cut] = (p,f,val)
+                    vals[m][nTaus][plotType][cut] = (p,f,val)
 
-            canvas = ROOT.TCanvas('%s_%i'%(plotType,nTaus),'%s_%i'%(plotType,nTaus),50,50,800,600)
-            canvas.SetFillColor(0)
-            canvas.SetBorderMode(0)
-            canvas.SetFrameFillStyle(0)
-            canvas.SetFrameBorderMode(0)
-            canvas.SetLeftMargin(0.12)
-            canvas.SetRightMargin(0.14)
-            canvas.SetTopMargin(0.08)
-            canvas.SetBottomMargin(0.12)
-
-            for v in range(2):
+    for v in range(2):
+        for nTaus in hNumTaus:
+            for plotType,binning in plotTypes.iteritems():
+                if nl==3 and (plotType=='h2mass' or plotType=='z2mass' or plotType=='dR2'): continue
+                bins = [binning[1] + float(x*(binning[2]-binning[1]))/binning[0] for x in range(binning[0]+1)]
                 valType = valTypes[v]
+                canvas = ROOT.TCanvas('%s_%i'%(plotType,nTaus),'%s_%i'%(plotType,nTaus),50,50,800,600)
+                canvas.SetFillColor(0)
+                canvas.SetBorderMode(0)
+                canvas.SetFrameFillStyle(0)
+                canvas.SetFrameBorderMode(0)
+                canvas.SetLeftMargin(0.12)
+                canvas.SetRightMargin(0.14)
+                canvas.SetTopMargin(0.08)
+                canvas.SetBottomMargin(0.12)
+
+                massBins = array('d',mbinning)
+                effBins = array('d',bins)
                 plot = ROOT.TH2F('%s_%i_%s' %(plotType,nTaus,valType),\
                                  '%s_%i_%s; H^{#pm#pm} Mass (GeV); %s'%(plotType,nTaus,valType,axisLabels[plotType]),\
-                                 *mbinning+binning)
+                                 len(masses),massBins,binning[0],effBins)
                 savedir = 'plots/%s_optimization_%iTeV/png' % (analysis, period)
                 python_mkdir(savedir)
                 savename = '%s/%s_%s_%i_%s.png' % (savedir, analysis, plotType, nTaus, valType)
-                #for m in range(mbinning[0]):
                 for m in range(len(allMasses)):
-                    for c,cutVals in vals[nTaus][plotType][m].iteritems():
+                    for c,cutVals in vals[m][nTaus][plotType].iteritems():
                         plot.SetBinContent(m+1,c+1,cutVals[v])
                 plot.GetYaxis().SetTitleOffset(1.)
                 if v<2: plot.GetZaxis().SetRangeUser(0.,1.)
@@ -215,7 +222,7 @@ def optimizeSelections(analysis, period):
                 if plotType in sevenTeVFunctions:
                     funcs = {}
                     for func in sevenTeVFunctions[plotType][nTaus]:
-                        funcs[func] = ROOT.TF1("7TeV_%i_%s"%(nTaus,plotType),func,mbinning[1],mbinning[2])
+                        funcs[func] = ROOT.TF1("7TeV_%i_%s"%(nTaus,plotType),func,mbinning[0],mbinning[-1])
                         funcs[func].SetLineColor(ROOT.kBlack)
                         funcs[func].SetLineWidth(3)
                         funcs[func].Draw("lsame")

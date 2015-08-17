@@ -66,7 +66,7 @@ class AnalyzerWZ_FakeRate(AnalyzerBase):
         Select the trigger object
         '''
         singleTrigMatch_leg1 = getattr(rtrow,'%sMatchesSingleE_leg1' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg1' %self.objCand[0])
-        singleTrigMatch_leg2 = getattr(rtrow,'%sMatchesSingleE_leg1' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg1' %self.objCand[0])
+        singleTrigMatch_leg2 = getattr(rtrow,'%sMatchesSingleE_leg2' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg2' %self.objCand[0])
         return singleTrigMatch_leg2 
 
     ###########################
@@ -80,6 +80,7 @@ class AnalyzerWZ_FakeRate(AnalyzerBase):
         #cuts.add(self.ID_loose)
         cuts.add(self.ID_veto)
         cuts.add(self.zVeto)
+        cuts.add(self.jPsiVeto)
         cuts.add(self.wVeto)
         cuts.add(self.jetSelection)
         return cuts
@@ -90,6 +91,7 @@ class AnalyzerWZ_FakeRate(AnalyzerBase):
         cuts.add(self.fiducial)
         cuts.add(self.ID_tight)
         cuts.add(self.zVeto)
+        cuts.add(self.jPsiVeto)
         cuts.add(self.wVeto)
         cuts.add(self.jetSelection)
         return cuts
@@ -181,7 +183,10 @@ class AnalyzerWZ_FakeRate(AnalyzerBase):
         return rtrow.Mass > 100.
 
     def zVeto(self,rtrow):
-        return getattr(rtrow,'%sNearestZMass' %self.objCand[0]) > 30
+        return getattr(rtrow,'%sNearestZMass' %self.objCand[0]) > 30.
+
+    def jPsiVeto(self,rtrow):
+        return getattr(rtrow,'%sLowestMll' %self.objCand[0]) > 20.
 
     def wVeto(self,rtrow):
         leps = self.objCand

@@ -176,6 +176,18 @@ class PlotterBase(object):
         '''Set Scale factor'''
         self.scaleFactor = scalefactor
 
+    def getSignalEntries(self,selection,**kwargs):
+        result = 0
+        for sig in self.signal:
+            result += self.getNumEntries(selection,sig,**kwargs)
+        return result
+
+    def getBackgroundEntries(self,selection,**kwargs):
+        result = 0
+        for bg in self.backgrounds:
+            result += self.getNumEntries(selection,bg,**kwargs)
+        return result
+
     def getNumEntries(self,selection,sample,**kwargs):
         '''Return the lumi scaled number of entries passing a given cut.'''
         doError = kwargs.pop('doError',False)
