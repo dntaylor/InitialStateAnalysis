@@ -53,6 +53,8 @@ def main(argv=None):
         '8' : ['Run2012A', 'Run2012B', 'Run2012C', 'Run2012D'],
         '13': ['Run2015B']
     }
+    ntuple, branches = buildNtuple({'a':''},['a'],args.channel,[''])
+    event = branches['event']
     for dataset in datasets[args.period]:
         print 'Merging dataset %s' % dataset
         # get the trees
@@ -64,8 +66,6 @@ def main(argv=None):
         events = set()
         numToSubtract = 0
         numEntries = tchain.GetEntries()
-        ntuple, branches = buildNtuple({'a':''},['a'],args.channel,[''])
-        event = branches['event']
         tchain.SetBranchAddress('event',rt.AddressOf(event,'evt'))
         # clone tree
         tfile = rt.TFile('%s/data_%s.root' % (ntupledir,dataset), 'recreate')
