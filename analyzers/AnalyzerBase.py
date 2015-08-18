@@ -460,7 +460,7 @@ class AnalyzerBase(object):
                             ntupleRow["%s.GenPdgId%i" % (i,objCount)] = float(getattr(rtrow, "%sGenPdgId" % orderedFinalObjects[objCount-1]))
                             ntupleRow["%s.MotherGenPdgId%i" % (i,objCount)] = float(getattr(rtrow, "%sGenMotherPdgId" % orderedFinalObjects[objCount-1]))
                         ntupleRow["%s.ChargeConsistent%i" % (i,objCount)] = -1
-                        if theObjects:
+                        if theObjects and period=='8':
                             l = orderedFinalObjects[objCount-1]
                             if l[0]=='e':
                                 ntupleRow["%s.ChargeConsistent%i" % (i,objCount)] = int(getattr(rtrow,'%sChargeIdTight' %l) and getattr(rtrow,'%sChargeIdMed' %l) and getattr(rtrow,'%sChargeIdLoose' %l))
@@ -541,7 +541,7 @@ class AnalyzerBase(object):
                 ntupleRow["%s%i.GenPdgId" % (charName,objCount)] = float(getattr(rtrow, "%sGenPdgId" % obj))
                 ntupleRow["%s%i.MotherGenPdgId" % (charName,objCount)] = float(getattr(rtrow, "%sGenMotherPdgId" % obj))
             ntupleRow["%s%i.ChargeConsistent" % (charName,objCount)] = -1
-            if obj[0]=='e':
+            if obj[0]=='e' and self.period=='8':
                 ntupleRow["%s%i.ChargeConsistent" % (charName,objCount)] = int(getattr(rtrow,'%sChargeIdTight' %obj) and getattr(rtrow,'%sChargeIdMed' %obj) and getattr(rtrow,'%sChargeIdLoose' %obj))
 
         return ntupleRow

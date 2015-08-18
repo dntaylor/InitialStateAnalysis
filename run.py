@@ -78,7 +78,7 @@ def get_sample_names(analysis,period,samples):
             'Hpp2l'      : 'N/A',
             'WZ'         : '2015-08-03-13TeV-WZ',
             'WZ_W'       : '2015-08-03-13TeV-2l',
-            'WZ_FakeRate': '2015-08-16-13TeV-1l',
+            'WZ_FakeRate': '2015-08-17-13TeV-1l',
             'Hpp3l'      : '2015-03-30-13TeV-3l',
             'Hpp4l'      : '2015-03-30-13TeV-4l',
         },
