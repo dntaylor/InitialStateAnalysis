@@ -167,9 +167,9 @@ def submitFwkliteJob(sampledir,args):
     farmoutString = 'farmoutAnalysisJobs --infer-cmssw-path --fwklite --input-file-list=%s' % (input_name)
     farmoutString += ' --submit-dir=%s --output-dag-file=%s --output-dir=%s' % (submit_dir, dag_dir, output_dir)
     if period == '8':
-        farmoutString += ' --extra-usercode-files=src/InitialStateAnalysis/Analyzers/python --input-files-per-job=20 %s %s' % (jobName, bash_name)
+        farmoutString += ' --input-files-per-job=20 %s %s' % (jobName, bash_name)
     else:
-        farmoutString += ' --extra-usercode-files=src/InitialStateAnalysis/Analyzers/python --input-files-per-job=10 %s %s' % (jobName, bash_name)
+        farmoutString += ' --input-files-per-job=10 %s %s' % (jobName, bash_name)
 
     print 'Submitting %s' % sample_name
     os.system(farmoutString)
