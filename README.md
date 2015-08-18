@@ -9,25 +9,26 @@ interesting variables in an output ntuple for further selection.
 Installation
 ------------
 
-ISA can run independent of CMSSW and only requires python 2.7 (or argparse with python 2.6)
-and ROOT. The setup script is unecessary at the moment. To run limits you must create a 
-`CMSSW_7_1_5` release. Note: lepton scale factors do have some dependence on FSA. These are
-currently disabled.
+ISA requires HiggsCombine tool to produce limits and ROOT.
+```
+cmsrel CMSSW_7_4_9
+cd CMSSW_7_4_9/src
+cmsenv
+git cms-init
+cd recipe
+./recipe.sh
+cd $CMSSW_BASE/src
+scram b -j 16
+```
 
 Analyzing data
 --------------
-The primary analyzer is accessed via the [run.py](run.py) command. This command has paths to ntuples stored
+The primary analyzer is accessed via the [run.py](Analyzers/scripts/run.py) command. This command has paths to ntuples stored
 for convenient access. For example, to run the TT channel of the WZ analysis over all MC samples:
 
 ```
-# Usage: ./run.py [analysis] [channel] [period] samples (unix wildcards allowed)
-./run.py WZ TT 13 W* T* DY* Z*
-```
-
-One can also run the analyzer directly via:
-
-```
-./analyzers/AnalyzerWZ.py /path/to/sample/directory/ output.root 13
+# Usage: run.py [analysis] [channel] [period] samples (unix wildcards allowed)
+run.py WZ WZ 13 W* T* DY* Z*
 ```
 
 Jobs can be submitted to the cluster using the `--submit` option:
@@ -39,40 +40,38 @@ Jobs can be submitted to the cluster using the `--submit` option:
 Plotting
 --------
 
-Plotting can be accomplished via the [mkplots.py](mkplots.py) command:
+Plotting can be accomplished via the [mkplots.py](Plotters/scripts/mkplots.py) command:
 
 ```
-# Usage: ./mkplots.py [analysis] [channel] [period] [options]
-./mkplots.py Hpp3l Hpp3l 13
+# Usage: mkplots.py [analysis] [channel] [period] [options]
+mkplots.py Hpp3l Hpp3l 13
 ```
 
 Limits
 ------
 
-Limits can be run via [mklimits.py](mklimits.py). This produces datacards able to be read by the 
-`HiggsAnalysis/CombinedLimit` module. Documentation and how to setup a release can be found 
-<a href="https://twiki.cern.ch/twiki/bin/viewauth/CMS/SWGuideHiggsAnalysisCombinedLimit#For_end_users_that_don_t_need_to">here</a>. 
-This requires a `CMSSW_7_1_5` release (or greater in 71X, not 70X or 72X).
+Limits can be run via [mklimits.py](Limits/scripts/mklimits.py). This produces datacards able to be read by the 
+`HiggsAnalysis/CombinedLimit` module.
 
-The [mklimits.py](mklimits.py) script can produce limits using three different methods: a purely MC driven
-method that estimates background from MC samples (default), a data-driven method with a user defined
+The [mklimits.py](Limits/scripts/mklimits.py) script can produce limits using three different methods: a purely MC driven
+method that estimates background from MC samples, a data-driven method with a user defined
 sideband and signal region, and a fakerate method (requires the fakerate option on the ntuple production, TODO).
 
 ```
-# Usage: ./mklimits [analysis] [period] [options]
-./mklimits.py Hpp4l 13
+# Usage: mklimits [analysis] [region] [period] [options]
+mklimits.py Hpp3l Hpp3l 13
 ```
 
-The datacards can then be processed with the [processdatacards.py](processdatacards.py) script:
+The datacards can then be processed with the [processdatacards.py](Limits/scripts/processdatacards.py) script:
 
 ```
-# Usage: ./processdatacards.py [analysis] [period] [HiggsCombine CMSSW Release base] [options]
-./processdatacards.py Hpp4l 13 /cms/dntaylor/ISA/CMSSW_7_1_5/src/
+# Usage: processdatacards.py [analysis] [region] [period] [options]
+processdatacards.py Hpp3l Hpp3l 13
 ```
 
-And finally, the limits can be plotted with [plotlimits.py](plotlimits.py):
+And finally, the limits can be plotted with [plotlimits.py](Plotters/scripts/plotlimits.py):
 
 ```
-# Usage: ./plotlimits.py [analysis] [period] [options]
-./plotlimits.py Hpp3l 13 -bp ee100
+# Usage: plotlimits.py [analysis] [region] [period] [options]
+plotlimits.py Hpp3l Hpp3l 13 -bp ee100
 ```
