@@ -11,6 +11,7 @@ import glob
 import pwd
 import argparse
 import errno
+import socket
 import signal
 
 from multiprocessing import Pool
@@ -128,7 +129,10 @@ def submitFwkliteJob(sampledir,args):
     period = args.period
     sample_name = os.path.basename(sampledir)
 
-    sample_dir = '/nfs_scratch/%s/%s/%s' % (pwd.getpwuid(os.getuid())[0], jobName, sample_name)
+    if 'uwlogin' in socket.gethostname():
+        sample_dir = '/scratch/%s/%s/%s' % (pwd.getpwuid(os.getuid())[0], jobName, sample_name)
+    else:
+        sample_dir = '/nfs_scratch/%s/%s/%s' % (pwd.getpwuid(os.getuid())[0], jobName, sample_name)
 
     # create submit dir
     submit_dir = '%s/submit' % (sample_dir)
@@ -154,7 +158,7 @@ def submitFwkliteJob(sampledir,args):
 
     # create bash script
     bash_name = '%s/%s_%s_%s_%s.sh' % (dag_dir+'inputs', analysis, channel, period, sample_name)
-    bashScript = '#!/bin/bash\npython $CMSSW_BASE/src/InitialStateAnalysis/analyzers/Analyzer%s.py %s %s $INPUT $OUTPUT %s\n' % (analysis, channel, sample_name, period)
+    bashScript = '#!/bin/bash\npython $CMSSW_BASE/src/InitialStateAnalysis/Analyzers/python/Analyzer%s.py %s %s $INPUT $OUTPUT %s\n' % (analysis, channel, sample_name, period)
     with open(bash_name,'w') as file:
         file.write(bashScript)
     os.system('chmod +x %s' % bash_name)
@@ -163,9 +167,9 @@ def submitFwkliteJob(sampledir,args):
     farmoutString = 'farmoutAnalysisJobs --infer-cmssw-path --fwklite --input-file-list=%s' % (input_name)
     farmoutString += ' --submit-dir=%s --output-dag-file=%s --output-dir=%s' % (submit_dir, dag_dir, output_dir)
     if period == '8':
-        farmoutString += ' --extra-usercode-files=src/InitialStateAnalysis/analyzers --input-files-per-job=20 %s %s' % (jobName, bash_name)
+        farmoutString += ' --extra-usercode-files=src/InitialStateAnalysis/Analyzers/python --input-files-per-job=20 %s %s' % (jobName, bash_name)
     else:
-        farmoutString += ' --extra-usercode-files=src/InitialStateAnalysis/analyzers --input-files-per-job=10 %s %s' % (jobName, bash_name)
+        farmoutString += ' --extra-usercode-files=src/InitialStateAnalysis/Analyzers/python --input-files-per-job=10 %s %s' % (jobName, bash_name)
 
     print 'Submitting %s' % sample_name
     os.system(farmoutString)
