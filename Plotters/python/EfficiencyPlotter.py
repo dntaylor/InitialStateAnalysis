@@ -158,7 +158,7 @@ class EfficiencyPlotter(PlotterBase):
 
         numSelections = len(selections)
         bgEff = self.getEfficiencyCutflow(self.backgrounds,selections)
-        bgEff.SetLineColor(ROOT.EColor.kBlue)
+        bgEff.SetLineColor(ROOT.kBlue)
         bgEff.SetMarkerStyle(0)
         bgEff.Draw('hist')
         bgEff.GetYaxis().SetTitle('Efficiency')
@@ -169,25 +169,25 @@ class EfficiencyPlotter(PlotterBase):
             for bin in range(numSelections):
                 bgEff.GetXaxis().SetBinLabel(bin+1,labels[bin])
         bgEffRel = self.getEfficiencyCutflow(self.backgrounds,selections,effMode='relative')
-        bgEffRel.SetLineColor(ROOT.EColor.kBlue)
+        bgEffRel.SetLineColor(ROOT.kBlue)
         bgEffRel.SetLineStyle(2)
         bgEffRel.SetMarkerStyle(0)
         bgEffRel.Draw('same')
 
         if plotsig:
             sigEff = self.getEfficiencyCutflow(self.signal,selections)
-            sigEff.SetLineColor(ROOT.EColor.kRed)
+            sigEff.SetLineColor(ROOT.kRed)
             sigEff.SetMarkerStyle(0)
             sigEff.Draw('hist same')
             sigEffRel = self.getEfficiencyCutflow(self.signal,selections,effMode='relative')
-            sigEffRel.SetLineColor(ROOT.EColor.kRed)
+            sigEffRel.SetLineColor(ROOT.kRed)
             sigEffRel.SetLineStyle(2)
             sigEffRel.SetMarkerStyle(0)
             sigEffRel.Draw('same')
 
         if plotdata: 
             dataEff = self.getEfficiencyCutflow(self.data,selections)
-            dataEff.SetLineColor(ROOT.EColor.kBlack)
+            dataEff.SetLineColor(ROOT.kBlack)
             dataEff.Draw('esamex0')
 
         # draw cms lumi

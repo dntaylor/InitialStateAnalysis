@@ -10,6 +10,7 @@ import sys
 import glob
 import pwd
 import argparse
+import logging
 
 sys.argv.append('-b')
 import ROOT as rt

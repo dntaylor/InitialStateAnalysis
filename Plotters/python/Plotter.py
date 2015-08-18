@@ -233,7 +233,7 @@ class Plotter(PlotterBase):
             data = self.getData(variables, binning, cut, overflow=overflow, underflow=underflow, normalize=normalize)
             data.SetMarkerStyle(20)
             data.SetMarkerSize(1.0)
-            data.SetLineColor(ROOT.EColor.kBlack)
+            data.SetLineColor(ROOT.kBlack)
             if len(blinder)==2:
                 datablind = data.Clone("datablind")
                 start = datablind.FindBin(blinder[0])

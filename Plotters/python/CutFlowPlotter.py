@@ -252,7 +252,7 @@ class CutFlowPlotter(PlotterBase):
             dataHist = self.getDataCutFlow_Preselection() if isprecf else self.getDataCutFlow(selections,cut,sumEntries=not nosum)
             dataHist.SetMarkerStyle(20)
             dataHist.SetMarkerSize(1.0)
-            dataHist.SetLineColor(ROOT.EColor.kBlack)
+            dataHist.SetLineColor(ROOT.kBlack)
             dataHist.Draw('esamex0')
 
         # draw cms lumi

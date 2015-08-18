@@ -160,7 +160,7 @@ class ShapePlotter(PlotterBase):
         self.canvas.SetLogy(logy)
         self.canvas.SetLogx(logx)
 
-        colors = [ROOT.EColor.kRed, ROOT.EColor.kBlue, ROOT.EColor.kGreen, ROOT.EColor.kBlack]
+        colors = [ROOT.kRed, ROOT.kBlue, ROOT.kGreen, ROOT.kBlack]
 
         legend = ROOT.TLegend(0.65, 0.6, 0.85, 0.88)
         legend.SetFillColor(0)
