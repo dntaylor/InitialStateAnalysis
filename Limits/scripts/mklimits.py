@@ -493,8 +493,14 @@ def add_systematics_sideband(limits,mass,signal,name,chans,sigscale,period,bp,do
     sigmc = {'hpp%i' % mass: 1.15}
     limits.add_systematics("sig_mc_err", "lnN", **sigmc)
 
+    if doIndividualChannel:
+        alpha_str = name[-3:]
+        if do4l: alpha_str = name[-6:-3]
+    else:
+        alpha_str = 'pdf'
+
     alpha_pdf = {'bg': 1.1}
-    limits.add_systematics("alpha_pdf", "lnN", **alpha_pdf)
+    limits.add_systematics("alpha_%s" %alpha_str, "lnN", **alpha_pdf)
 
     limits.gen_card("%s.txt" % name, mass=mass, cuts=chans, doAlphaTest=doAlphaTest)
 
