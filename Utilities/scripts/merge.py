@@ -27,6 +27,7 @@ def parse_command_line(argv):
     parser.add_argument('channel', type=str, choices=['Z','WZ','W','FakeRate','TT','Hpp2l','Hpp3l','LowMass','Hpp4l','FakeRate','DataDriven'], help='Channel to run for given analysis')
     parser.add_argument('period', type=str, choices=['7','8','13'], help='Energy (TeV)')
     parser.add_argument('jobName',nargs='?',type=str,const='',help='Job Name for condor submission')
+    parser.add_argument('-l','--log',nargs='?',type=str,const='INFO',default='INFO',choices=['INFO','DEBUG','WARNING','ERROR','CRITICAL'],help='Log level for logger')
     args = parser.parse_args(argv)
 
     return args
@@ -36,6 +37,10 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     args = parse_command_line(argv)
+
+    loglevel = getattr(logging,args.log)
+    logging.basicConfig(format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', level=loglevel, datefmt='%Y-%m-%d %H:%M:%S')
+    logger = logging.getLogger(__name__)
 
     # merge individual samples
     ntupledir = 'ntuples/%s_%sTeV_%s' % (args.analysis, args.period, args.channel)
@@ -56,7 +61,7 @@ def main(argv=None):
     ntuple, branches = buildNtuple({'a':''},['a'],args.channel,[''])
     event = branches['event']
     for dataset in datasets[args.period]:
-        print 'Merging dataset %s' % dataset
+        logger.info('Merging dataset %s' % dataset)
         # get the trees
         tchain = rt.TChain()
         datafiles = glob.glob('%s/data_*_%s_*.root' % (ntupledir, dataset))

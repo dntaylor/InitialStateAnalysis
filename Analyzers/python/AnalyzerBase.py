@@ -30,6 +30,7 @@ from itertools import permutations, combinations
 import argparse
 import datetime
 import math
+import logging
 
 from scale_factors import LeptonScaleFactors, TriggerScaleFactors
 from pu_weights import PileupWeights
@@ -86,7 +87,10 @@ class AnalyzerBase(object):
     The basic analyzer class. Inheritor classes must define
         TODO
     '''
-    def __init__(self, sample_name, file_list, out_file, period):
+    def __init__(self, sample_name, file_list, out_file, period, **kwargs):
+        loglevel = kwargs.pop('loglevel','INFO')
+        self.loglevel = getattr(logging,loglevel)
+        logging.basicConfig(format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', level=self.loglevel, datefmt='%Y-%m-%d %H:%M:%S')
         self.sample_name = sample_name
         self.isData = ('data' in self.sample_name)
         if isinstance(file_list, basestring): # the list is a file
@@ -125,7 +129,9 @@ class AnalyzerBase(object):
         '''
         The primary analyzer loop.
         '''
-        print "%s %s %s: Analyzing" % (str(datetime.datetime.now()), self.channel, self.sample_name)
+        logger = logging.getLogger(__name__)
+
+        logger.info('%s %s Analyzing' %(self.channel, self.sample_name))
         eventMap = {}
         bestCandMap = {}
         cutflowMap = {}
@@ -137,7 +143,7 @@ class AnalyzerBase(object):
         # iterate over files
         for i, file_name in enumerate(self.file_names):
             self.file_name = file_name
-            print "%s %s %s: Processing %i/%i files" % (str(datetime.datetime.now()), self.channel, self.sample_name, i+1, len(self.file_names))
+            logger.info('%s %s Processing %i/%i files', self.channel, self.sample_name, i+1, len(self.file_names))
             sys.stdout.flush()
             if file_name.startswith('/store'): file_name = 'root://cmsxrootd.hep.wisc.edu//%s' % file_name
 
@@ -145,7 +151,7 @@ class AnalyzerBase(object):
 
             # iterate over final states
             for fs in self.final_states:
-                if len(self.file_names)<10: print "%s %s: %s" % (self.channel, self.sample_name, fs)
+                if len(self.file_names)<10: logger.info('%s %s %s' % (self.channel, self.sample_name, fs))
                 tree = rtFile.Get("%s/final/Ntuple" % fs)
                 if self.period=='8':
                     metatree = rtFile.Get("%s/metaInfo" % fs)
@@ -169,7 +175,7 @@ class AnalyzerBase(object):
                 for r in range(numRows):
                     rtrow.GetEntry(r)
                     if numFSEvents % 10000 == 0:
-                        if len(self.file_names)==1: print "%s %s %s: %s %i/%i entries" % (str(datetime.datetime.now()), self.channel, self.sample_name, fs, numFSEvents, totalFSEvents)
+                        if len(self.file_names)==1: logger.info('%s %s %s %i/%i entries' % (self.channel, self.sample_name, fs, numFSEvents, totalFSEvents))
                         sys.stdout.flush()
                     numFSEvents += 1
 
@@ -213,7 +219,7 @@ class AnalyzerBase(object):
             self.file.cd()
             for key in eventsToWrite:
                 if key in eventsWritten:
-                    print "%s %s %s: Error: attempted to write previously written event" % (str(datetime.datetime.now()), self.channel, self.sample_name)
+                    logger.warning('%s %s Attempted to write previously written event' % (self.channel, self.sample_name))
                 else:
                     self.write_row(eventMap[key])
                     self.ntuple.Fill()
@@ -221,10 +227,10 @@ class AnalyzerBase(object):
             eventMap = {}
             eventsToWrite = set()
 
-        print "%s %s %s: Filled Tree (%i events)" % (str(datetime.datetime.now()), self.channel, self.sample_name, len(eventsWritten))
+        logger.info('%s %s Filled Tree (%i events)' % (self.channel, self.sample_name, len(eventsWritten)))
 
         # now we store the total processed events
-        print "%s %s %s: Processed %i events" % (str(datetime.datetime.now()), self.channel, self.sample_name, numEvts)
+        logger.info('%s %s Processed %i events' % (self.channel, self.sample_name, numEvts))
 
         ## and the cutflow
         cutflowVals = []

@@ -24,7 +24,7 @@ class AnalyzerLABEL(AnalyzerBase):
         define in getIdArgs
     '''
 
-    def __init__(self, sample_location, out_file, period):
+    def __init__(self, sample_location, out_file, period, **kwargs):
         # TODO: fill out parameters for analysis
         self.channel = 'LABEL'
         self.final_states = [] # FSA final states
@@ -33,7 +33,7 @@ class AnalyzerLABEL(AnalyzerBase):
         self.object_definitions = { # definition of initial_states above, can use 'em', 'emt', 'g' (photon), 'j', 'n' (met)
         }
         self.cutflow_labels = [] # optional, length must match preselection cuts
-        super(AnalyzerLABEL, self).__init__(sample_location, out_file, period)
+        super(AnalyzerLABEL, self).__init__(sample_location, out_file, period, **kwargs)
 
     ###############################
     ### Define Object selection ###

@@ -12,6 +12,7 @@ import itertools
 import sys
 import pickle
 import json
+import logging
 
 def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
     savedir = kwargs.pop('savedir','')
@@ -143,6 +144,7 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
 
 def plotRegion(analysis,channel,runPeriod,**kwargs):
     '''A function to simplify plotting multiple channels and run periods.'''
+    logger = logging.getLogger(__name__)
     blind = kwargs.pop('blind',True)
     mass = kwargs.pop('mass',500)
     runTau = kwargs.pop('runTau',False)
@@ -158,10 +160,10 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     scaleFactor = kwargs.pop('scaleFactor','event.pu_weight*event.lep_scale*event.trig_scale')
     useSignal = analysis in ['Hpp3l','Hpp4l']
     for key, value in kwargs.iteritems():
-        print "Unrecognized parameter '" + key + "' = " + str(value)
+        logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
         return 0
 
-    if useSignal: print "MKPLOTS:%s:%s:%iTeV: Mass: %i" % (analysis,channel,runPeriod,mass)
+    if useSignal: logger.info("%s:%s:%iTeV: Mass: %i" % (analysis,channel,runPeriod,mass))
     isControl = analysis != channel
     numleps = {
         'Hpp2l': 2,
@@ -183,7 +185,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         fsToPlot = finalStates
     else:
         fsToPlot = finalStatesToPlot.split(',')
-    print 'MKPLOTS:%s:%s:%iTeV: Cuts to be applied: %s' % (analysis, channel, runPeriod, myCut)
+    logger.info('%s:%s:%iTeV: Cuts to be applied: %s' % (analysis, channel, runPeriod, myCut))
     dataplot = (isControl or not blind)
     mergeDict = getMergeDict(runPeriod)
 
@@ -214,7 +216,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
 
     # do variables on same plot
     if useSignal:
-        print "MKPLOTS:%s:%s:%iTeV: Plotting signal" % (analysis, channel, runPeriod)
+        logger.info("%s:%s:%iTeV: Plotting signal" % (analysis, channel, runPeriod))
         plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_signal',mergeDict=mergeDict,scaleFactor=scaleFactor)
         masses = _3L_MASSES if nl==3 else _4L_MASSES
         plotter.initializeSignalSamples([sigMap[runPeriod][x] for x in masses])
@@ -284,24 +286,24 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
 
     plotMode = 'plotMCDataRatio' if dataplot else 'plotMC'
     plotMethod = getattr(plotter,plotMode)
-    print "MKPLOTS:%s:%s:%iTeV: Plotting discriminating variables" % (analysis,channel, runPeriod)
+    logger.info("%s:%s:%iTeV: Plotting discriminating variables" % (analysis,channel, runPeriod))
     plotDistributions(plotMethod,myCut,nl,isControl,analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
 
     # each channel
     if plotFinalStates:
-        print "MKPLOTS:%s:%s:%iTeV: Plotting individual finalStates" % (analysis, channel, runPeriod)
+        logger.info("%s:%s:%iTeV: Plotting individual finalStates" % (analysis, channel, runPeriod))
         for c in fsToPlot:
-            print "MKPLOTS:%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c)
+            logger.info("%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c))
             plotDistributions(plotMethod,myCut+'&&channel=="%s"'%c,nl,isControl,savedir=c,analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
         if analysis in customFinalStates:
             for c in customFinalStates[analysis]:
                sel = customFinalStates[analysis][c]
-               print "MKPLOTS:%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c)
+               logger.info("%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c))
                plotDistributions(plotMethod,'%s & %s'%(myCut,sel),nl,isControl,savedir=c,analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
 
     # some partially blind plots for h++
     if runPeriod==8 and not dataplot and analysis in ['Hpp3l']:
-        print "MKPLOTS:%s:%s:%iTeV: Plotting partially blinded variables" % (analysis, channel, runPeriod)
+        logger.info("%s:%s:%iTeV: Plotting partially blinded variables" % (analysis, channel, runPeriod))
         plotter.initializeDataSamples([sigMap[runPeriod]['data']])
         plotter.setIntLumi(intLumiMap[runPeriod])
         plotModeUnblind = 'plotMCDataRatio'
@@ -311,9 +313,9 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         plotMethodUnblind('z1.mass',      [42,70,112],'z1Mass_unblind',           yaxis='Events/1.0 GeV',       xaxis='M_{\\ell^{+}\\ell^{-}} (Z) (GeV)',        legendpos=43,logy=0,cut=myCut,blinder=[112,99999])
         plotMethodUnblind('z1.mass',      [80,0,240], 'z1Mass_fullWindow_unblind',yaxis='Events/3.0 GeV',       xaxis='M_{\\ell^{+}\\ell^{-}} (Z) (GeV)',        legendpos=43,logy=0,cut=myCut,blinder=[112,99999])
         if plotFinalStates:
-            print "MKPLOTS:%s:%s:%iTeV: Plotting individual finalStates" % (analysis, channel, runPeriod)
+            logger.info("%s:%s:%iTeV: Plotting individual finalStates" % (analysis, channel, runPeriod))
             for c in fsToPlot:
-                print "MKPLOTS:%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c)
+                logger.info("%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c))
                 plotMethodUnblind('h1.mass',      [24,0,600], c+'/hppMass_unblind',          yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})',lumitext=33,logy=1,cut=myCut+'&&channel=="%s"'%c,overflow=True,blinder=[150,99999])
                 plotMethodUnblind('finalstate.sT',[50,0,500], c+'/sT_unblind',               yaxis='Events/10.0 GeV/c^{2}',xaxis='S_{T} (GeV/c^{2})',                       lumitext=33,logy=0,cut=myCut+'&&channel=="%s"'%c,overflow=True,blinder=[200,99999])
                 plotMethodUnblind('z1.mass',      [42,70,112],c+'/z1Mass_unblind',           yaxis='Events/1.0 GeV',xaxis='M_{\\ell^{+}\\ell^{-}} (Z) (GeV)',               legendpos=43,logy=0,cut=myCut+'&&channel=="%s"'%c,blinder=[112,99999])
@@ -333,13 +335,13 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
             plotter.plotMCDataSignalRatio2D('h1.mass','h1.dPhi', [80,0,800], [32,0,3.2], 'h1mass_v_h1dphi_sig', plotdata=0, plotmc=0, plotsig=1, cut=myCut, xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}}',yaxis='#Delta#phi_{\\ell^{\\pm}\\ell^{\\pm}}')
     if plotOverlay and useSignal:
         # plot the signal overlay
-        print "MKPLOTS:%s:%s:%iTeV: Plotting signal overlay discriminating variables" % (analysis, channel, runPeriod)
+        logger.info("%s:%s:%iTeV: Plotting signal overlay discriminating variables" % (analysis, channel, runPeriod))
         plotDistributions(plotMethod,myCut,nl,isControl,savedir='overlay',signalscale=100,analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
 
 
     # plot shapes
     if plotShapes:
-        print "MKPLOTS:%s:%s:%iTeV: Plotting shapes" % (analysis, channel, runPeriod)
+        logger.info("%s:%s:%iTeV: Plotting shapes" % (analysis, channel, runPeriod))
         plotter = ShapePlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_shapes',mergeDict=mergeDict,scaleFactor=scaleFactor)
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
         if useSignal: plotter.initializeSignalSamples([sigMap[runPeriod]['Sig']])
@@ -351,7 +353,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         if dataplot: plotter.plotData('z1.mass',['channel=="eee"','channel=="eme"'],[42,70,112],'zMass_data_ee',yaxis='Normalized',xaxis='M_{\\ell^{+}\\ell^{-}} (GeV)',logy=0,cut=myCut,cutNames=['eee','eme'])
 
     # plot cut flows (each cut)
-    print "MKPLOTS:%s:%s:%iTeV: Plotting cut flow" % (analysis, channel, runPeriod)
+    logger.info("%s:%s:%iTeV: Plotting cut flow" % (analysis, channel, runPeriod))
     cutFlowMap = {}
     cutFlowMap[channel] = defineCutFlowMap(channel,finalStates,mass)
     #print cutFlowMap
@@ -366,20 +368,20 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     plotMethod = getattr(plotter,plotMode)
     if plotCutFlow:
         for i in range(len(cutFlowMap[channel]['cuts'])):
-            print 'MKPLOTS:%s:%s:%iTeV: Plotting cut flow selections %s' % (analysis, channel, runPeriod, cutFlowMap[channel]['labels_simple'][i])
+            logger.ingo('%s:%s:%iTeV: Plotting cut flow selections %s' % (analysis, channel, runPeriod, cutFlowMap[channel]['labels_simple'][i]))
             thisCut = '&&'.join(cutFlowMap[channel]['cuts'][:i+1])
             plotDistributions(plotMethod,'%s&%s'%(myCut,thisCut),nl,isControl,savedir='cutflow/%s'%cutFlowMap[channel]['labels_simple'][i],analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
             if plotFinalStates:
-                print "MKPLOTS:%s:%s:%iTeV: Plotting individual finalStates" % (analysis, channel, runPeriod)
+                logger.info("%s:%s:%iTeV: Plotting individual finalStates" % (analysis, channel, runPeriod))
                 for c in fsToPlot:
-                    print "MKPLOTS:%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c)
+                    logger.info("%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c))
                     plotDistributions(plotMethod,'%s&channel=="%s"&%s'%(myCut,c,thisCut),nl,isControl,savedir='cutflow/%s/%s' %(cutFlowMap[channel]['labels_simple'][i],c),analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
             thisCut = cutFlowMap[channel]['cuts'][i]
             plotDistributions(plotMethod,'%s&%s'%(myCut,thisCut),nl,isControl,savedir='cutflow/%s_only'%cutFlowMap[channel]['labels_simple'][i],analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
             if plotFinalStates:
-                print "MKPLOTS:%s:%s:%iTeV: Plotting individual finalStates" % (analysis, channel, runPeriod)
+                logger.info("%s:%s:%iTeV: Plotting individual finalStates" % (analysis, channel, runPeriod))
                 for c in fsToPlot:
-                    print "MKPLOTS:%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c)
+                    logger.info("%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c))
                     plotDistributions(plotMethod,'%s&channel=="%s"&%s'%(myCut,c,thisCut),nl,isControl,savedir='cutflow/%s_only/%s' %(cutFlowMap[channel]['labels_simple'][i],c),analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
 
     # plot cut flows on same plot
@@ -394,12 +396,12 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     plotMethod([x+'&&'+myCut for x in cutFlowMap[channel]['cuts']],'cutFlow',labels=cutFlowMap[channel]['labels'],lumitext=33,logy=1)
     if plotFinalStates:
         for c in fsToPlot:
-            print "MKPLOTS:%s:%s:%iTeV: Plotting cut flow  %s" % (analysis, channel, runPeriod, c)
+            logger.info("%s:%s:%iTeV: Plotting cut flow  %s" % (analysis, channel, runPeriod, c))
             plotMethod(['%s&&channel=="%s"&&%s' %(x,c,myCut) for x in cutFlowMap[channel]['cuts']],'%s/cutFlow'%c,labels=cutFlowMap[channel]['labels'],lumitext=33,logy=1)
         if analysis in customFinalStates:
             for c in customFinalStates[analysis]:
                sel = customFinalStates[analysis][c]
-               print "MKPLOTS:%s:%s:%iTeV: Plotting cut flow  %s" % (analysis, channel, runPeriod, c)
+               logger.info("%s:%s:%iTeV: Plotting cut flow  %s" % (analysis, channel, runPeriod, c))
                plotMethod(['%s&& %s &&%s' %(x,sel,myCut) for x in cutFlowMap[channel]['cuts']],'%s/cutFlow'%c,labels=cutFlowMap[channel]['labels'],lumitext=33,logy=1)
 
 
@@ -423,7 +425,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
 
     # plot efficiencies
     #if analysis in ['WZ']:
-    #    print "MKPLOTS:%s:%s:%iTeV: Plotting efficiency" % (analysis, channel, runPeriod)
+    #    logger.info("%s:%s:%iTeV: Plotting efficiency" % (analysis, channel, runPeriod))
     #    plotter = EfficiencyPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_efficiency',mergeDict=mergeDict,scaleFactor=scaleFactor)
     #    plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel] if x != 'WZ'])
     #    plotter.initializeSignalSamples([sigMap[runPeriod]['WZ']])
@@ -434,7 +436,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     #    plotMethod([x+'&&'+myCut for x in cutFlowMap[channel]['cuts']],'efficiency',labels=cutFlowMap[channel]['labels'],lumitext=33)
     #    if plotFinalStates:
     #        for c in fsToPlot:
-    #            print "MKPLOTS:%s:%s:%iTeV: Plotting efficiency  %s" % (analysis, channel, runPeriod, c)
+    #            logger.info("%s:%s:%iTeV: Plotting efficiency  %s" % (analysis, channel, runPeriod, c))
     #            plotMethod(['%s&&channel=="%s"&&%s' %(x,c,myCut) for x in cutFlowMap[channel]['cuts']],'%s/efficiency'%c,labels=cutFlowMap[channel]['labels'],lumitext=33,logy=0)
 
     #    # plot cut flows overlays
@@ -448,12 +450,13 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     #    plotMethod([x+'&&'+myCut for x in cutFlowMap[channel]['cuts']],'cutFlow_overlay',labels=cutFlowMap[channel]['labels'],lumitext=33,logy=0)
     #    if plotFinalStates:
     #        for c in fsToPlot:
-    #            print "MKPLOTS:%s:%s:%iTeV: Plotting cut flow overlay  %s" % (analysis, channel, runPeriod, c)
+    #            logger.info("%s:%s:%iTeV: Plotting cut flow overlay  %s" % (analysis, channel, runPeriod, c))
     #            plotMethod(['%s&&channel=="%s"&&%s' %(x,c,myCut) for x in cutFlowMap[channel]['cuts']],'%s/cutFlow_overlay'%c,labels=cutFlowMap[channel]['labels'],lumitext=33,logy=0)
 
 
 def plotFakeRate(analysis,channel,runPeriod,**kwargs):
     '''Plot fake rate for an analysis.'''
+    logger = logging.getLogger(__name__)
     blind = kwargs.pop('blind',True)
     mass = kwargs.pop('mass',500)
     runTau = kwargs.pop('runTau',False)
@@ -469,10 +472,10 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
     scaleFactor = kwargs.pop('scaleFactor','event.pu_weight*event.lep_scale*event.trig_scale')
     useSignal = analysis in ['Hpp3l','Hpp4l']
     for key, value in kwargs.iteritems():
-        print "Unrecognized parameter '" + key + "' = " + str(value)
+        logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
         return 0
 
-    if useSignal: print "MKPLOTS:%s:%s:%iTeV: Mass: %i" % (analysis,channel,runPeriod,mass)
+    if useSignal: logger.info("%s:%s:%iTeV: Mass: %i" % (analysis,channel,runPeriod,mass))
     isControl = analysis != channel
     numleps = {
         'Hpp2l': 2,
@@ -496,7 +499,7 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
         fsToPlot = finalStates
     else:
         fsToPlot = finalStatesToPlot.split(',')
-    print 'MKPLOTS:%s:%s:%iTeV: Cuts to be applied: %s' % (analysis, channel, runPeriod, myCut)
+    logger.info('%s:%s:%iTeV: Cuts to be applied: %s' % (analysis, channel, runPeriod, myCut))
     dataplot = (isControl or not blind)
     mergeDict = getMergeDict(runPeriod)
 
@@ -553,7 +556,7 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
         'm': [0,1.2,2.4],
     }
     for fakeRegion in fakeRegions['WZ']:
-        print "MKPLOTS:%s:%s:%iTeV: Fake Region: %s" % (analysis,channel, runPeriod, fakeRegion)
+        logger.info("%s:%s:%iTeV: Fake Region: %s" % (analysis,channel, runPeriod, fakeRegion))
         denom = fakeRegions['WZ'][fakeRegion]['denom']
         numer = fakeRegions['WZ'][fakeRegion]['numer']
         probe = fakeRegions['WZ'][fakeRegion]['probe']
@@ -571,15 +574,15 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
         plotter.setIntLumi(intLumiMap[runPeriod])
         plotMode = 'plotMCData'
         plotMethod = getattr(plotter,plotMode)
-        print "MKPLOTS:%s:%s:%iTeV: Plotting discriminating variables: All Probes" % (analysis,channel, runPeriod)
+        logger.info("%s:%s:%iTeV: Plotting discriminating variables: All Probes" % (analysis,channel, runPeriod))
         plotDistributions(plotMethod,denom,nl,isControl,analysis=analysis,savedir='fakeRate/{0}_all'.format(fakeRegion))
-        print "MKPLOTS:%s:%s:%iTeV: Plotting discriminating variables: Passing" % (analysis,channel, runPeriod)
+        logger.info("%s:%s:%iTeV: Plotting discriminating variables: Passing" % (analysis,channel, runPeriod)))
         plotDistributions(plotMethod,numer,nl,isControl,analysis=analysis,savedir='fakeRate/{0}_prompts'.format(fakeRegion))
-        print "MKPLOTS:%s:%s:%iTeV: Plotting discriminating variables: Failing" % (analysis,channel, runPeriod)
+        logger.info("%s:%s:%iTeV: Plotting discriminating variables: Failing" % (analysis,channel, runPeriod))
         plotDistributions(plotMethod,'{0} & !({1})'.format(denom,numer),nl,isControl,analysis=analysis,savedir='fakeRate/{0}_fakes'.format(fakeRegion))
 
         # now plot the fake rates
-        print "MKPLOTS:%s:%s:%iTeV: Computing fake rates" % (analysis,channel, runPeriod)
+        logger.info("%s:%s:%iTeV: Computing fake rates" % (analysis,channel, runPeriod))
         plotter = FakeRatePlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='{0}_fakerates'.format(fakeRegion),mergeDict=mergeDict,scaleFactor='event.pu_weight*event.lep_scale*event.trig_scale*1./23.')
         # this should be done in data... using mc until we get some!
         # subtract WZ, ZZ, ttbar contributions from data
@@ -611,6 +614,7 @@ def parse_command_line(argv):
     parser.add_argument('-fs','--finalStates',type=str,default='all',help='Only run given channels (ie: "eee,emm")')
     parser.add_argument('-c','--cut',type=str,default='1',help='Cut to be applied to plots.')
     parser.add_argument('-sf','--scaleFactor',type=str,default='event.pu_weight*event.lep_scale*event.trig_scale',help='Scale factor for plots.')
+    parser.add_argument('-l','--log',nargs='?',type=str,const='INFO',default='INFO',choices=['INFO','DEBUG','WARNING','ERROR','CRITICAL'],help='Log level for logger')
     args = parser.parse_args(argv)
 
     return args
@@ -621,6 +625,10 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     args = parse_command_line(argv)
+
+    loglevel = getattr(logging,args.log)
+    logging.basicConfig(format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', level=loglevel, datefmt='%Y-%m-%d %H:%M:%S')
+    logger = logging.getLogger(__name__)
 
     massLists = {
         13 : {
@@ -639,7 +647,7 @@ def main(argv=None):
     }
 
     if args.period == 7:
-        print "7 TeV not implemented"
+        logger.warning("7 TeV not implemented")
     elif args.doFakeRate:
         plotFakeRate(args.analysis,args.channel,args.period,mass=args.mass)
     else:

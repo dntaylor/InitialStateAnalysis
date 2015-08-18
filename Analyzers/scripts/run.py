@@ -13,6 +13,7 @@ import argparse
 import errno
 import socket
 import signal
+import logging
 
 from multiprocessing import Pool
 
@@ -27,7 +28,7 @@ from InitialStateAnalysis.Analyzers.AnalyzerHpp4l import AnalyzerHpp4l
 
 def run_analyzer(args):
     '''Run the analysis'''
-    analysis, channel, sample_name, filelist, outfile, period = args
+    analysis, channel, sample_name, filelist, outfile, period, loglevel = args
     analyzerMap = {
         'Z'       : {
                     'Z'       : AnalyzerZ,
@@ -57,7 +58,7 @@ def run_analyzer(args):
                     },
     }
     theAnalyzer = analyzerMap[analysis][channel]
-    with theAnalyzer(sample_name,filelist,outfile,period) as analyzer:
+    with theAnalyzer(sample_name,filelist,outfile,period,loglevel=loglevel) as analyzer:
         analyzer.analyze()
 
 def get_sample_names(analysis,period,samples):
@@ -92,8 +93,9 @@ def get_sample_names(analysis,period,samples):
 
     return root_dir, sample_names
 
-def run_ntuples(analysis, channel, period, samples):
+def run_ntuples(analysis, channel, period, samples, loglevel):
     '''Run a given analyzer for the H++ analysis'''
+    logger = logging.getLogger(__name__)
     ntup_dir = './ntuples/%s_%sTeV_%s' % (analysis, period, channel)
     python_mkdir(ntup_dir)
     root_dir, sample_names = get_sample_names(analysis,period,samples)
@@ -106,15 +108,15 @@ def run_ntuples(analysis, channel, period, samples):
 
     if len(sample_names)==1: # only one, its a test, dont use map
         name = sample_names[0]
-        run_analyzer((analysis, channel, name, filelists[name], "%s/%s.root" % (ntup_dir, name), period))
+        run_analyzer((analysis, channel, name, filelists[name], "%s/%s.root" % (ntup_dir, name), period, loglevel))
         return 0
 
     p = Pool(8)
     try:
-        p.map_async(run_analyzer, [(analysis, channel, name, filelists[name], "%s/%s.root" % (ntup_dir, name), period) for name in sample_names]).get(999999)
+        p.map_async(run_analyzer, [(analysis, channel, name, filelists[name], "%s/%s.root" % (ntup_dir, name), period, loglevel) for name in sample_names]).get(999999)
     except KeyboardInterrupt:
         p.terminate()
-        print 'Analyzer cancelled'
+        logger.info('Analyzer cancelled')
         sys.exit(1)
    
     return 0
@@ -123,6 +125,7 @@ def submitFwkliteJob(sampledir,args):
     '''
     Submit a job using farmoutAnalysisJobs --fwklite
     '''
+    logger = logging.getLogger(__name__)
     jobName = args.jobName
     analysis = args.analysis
     channel = args.channel
@@ -137,7 +140,7 @@ def submitFwkliteJob(sampledir,args):
     # create submit dir
     submit_dir = '%s/submit' % (sample_dir)
     if os.path.exists(submit_dir):
-        print 'Submission directory exists for %s %s.' % (jobName, sample_name)
+        logger.warning('Submission directory exists for %s %s.' % (jobName, sample_name))
         return
 
     # create dag dir
@@ -171,7 +174,7 @@ def submitFwkliteJob(sampledir,args):
     else:
         farmoutString += ' --input-files-per-job=10 %s %s' % (jobName, bash_name)
 
-    print 'Submitting %s' % sample_name
+    logger.info('Submitting %s' % sample_name)
     os.system(farmoutString)
 
     return
@@ -186,6 +189,7 @@ def parse_command_line(argv):
     parser.add_argument('sample_names', nargs='+',help='Sample names w/ UNIX wildcards')
     parser.add_argument('-s','--submit',action='store_true',help='Submit jobs to condor')
     parser.add_argument('-jn','--jobName',nargs='?',type=str,const='',help='Job Name for condor submission')
+    parser.add_argument('-l','--log',nargs='?',type=str,const='INFO',default='INFO',choices=['INFO','DEBUG','WARNING','ERROR','CRITICAL'],help='Log level for logger')
     args = parser.parse_args(argv)
 
     return args
@@ -196,17 +200,21 @@ def main(argv=None):
 
     args = parse_command_line(argv)
 
+    loglevel = getattr(logging,args.log)
+    logging.basicConfig(format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', level=loglevel, datefmt='%Y-%m-%d %H:%M:%S')
+    logger = logging.getLogger(__name__)
+
     if args.period == '7':
-        print "7 TeV not implemented"
+        logger.warning("7 TeV not implemented")
     else:
-        print "Running %s:%s %s TeV analyzer" %(args.analysis, args.channel, args.period)
+        logger.info("Running %s:%s %s TeV analyzer" %(args.analysis, args.channel, args.period))
         if args.submit:
             root_dir, sample_names = get_sample_names(args.analysis, args.period, args.sample_names)
             for sample in sample_names:
                 sampledir = '%s/%s' % (root_dir, sample)
                 submitFwkliteJob(sampledir,args)
         else:
-            run_ntuples(args.analysis, args.channel, args.period, args.sample_names)
+            run_ntuples(args.analysis, args.channel, args.period, args.sample_names, args.log)
 
     return 0
 

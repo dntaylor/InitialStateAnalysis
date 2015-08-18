@@ -23,7 +23,7 @@ class AnalyzerWZ_FakeRate(AnalyzerBase):
         self.lepargs = {'tight':True}
         self.cutflow_labels = []
         self.doVBF = (period=='13')
-        super(AnalyzerWZ_FakeRate, self).__init__(sample_name, file_list, out_file, period)
+        super(AnalyzerWZ_FakeRate, self).__init__(sample_name, file_list, out_file, period, **kwargs)
 
     ###############################
     ### Define Object selection ###

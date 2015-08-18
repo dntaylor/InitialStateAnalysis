@@ -40,7 +40,7 @@ class AnalyzerWZ_W(AnalyzerBase):
         self.lepargs = {'tight':True}
         self.cutflow_labels = []
         self.doVBF = (period=='13')
-        super(AnalyzerWZ_W, self).__init__(sample_name, file_list, out_file, period)
+        super(AnalyzerWZ_W, self).__init__(sample_name, file_list, out_file, period, **kwargs)
 
     ###############################
     ### Define Object selection ###

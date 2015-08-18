@@ -48,7 +48,7 @@ class AnalyzerHpp4l(AnalyzerBase):
             self.object_definitions['z2'] = ['emt', 'emt']
         self.lepargs = {'loose':True}
         self.cutflow_labels = ['Trigger','Fiducial','Trigger Threshold','ID','QCD Suppression']
-        super(AnalyzerHpp4l, self).__init__(sample_name, file_list, out_file, period)
+        super(AnalyzerHpp4l, self).__init__(sample_name, file_list, out_file, period, **kwargs)
 
     ###############################
     ### Define Object selection ###

@@ -21,7 +21,7 @@ class AnalyzerZ(AnalyzerBase):
         }
         self.cutflow_labels = ['Trigger','Fiducial','ID','Z Selection','W Selection']
         self.doVBF = (period=='13')
-        super(AnalyzerZ, self).__init__(sample_name, file_list, out_file, period)
+        super(AnalyzerZ, self).__init__(sample_name, file_list, out_file, period,**kwargs)
 
     ###############################
     ### Define Object selection ###
