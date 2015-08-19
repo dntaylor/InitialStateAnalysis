@@ -31,6 +31,7 @@ class PlotterBase(object):
     def __init__(self,analysis,**kwargs):
         '''Initialize the plotter (optionally make the plots blinded).'''
         # get kwargs
+        loglevel = kwargs.pop('loglevel','INFO')
         self.loglevel = getattr(logging,loglevel)
         logging.basicConfig(format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', level=self.loglevel, datefmt='%Y-%m-%d %H:%M:%S')
         self.logger = logging.getLogger(__name__)
@@ -200,15 +201,13 @@ class PlotterBase(object):
         doDataDriven = kwargs.pop('doDataDriven',False) # a custom weight (for datadriven background)
         totalVal = 0
         totalErr2 = 0
+        scalefactor = "event.lep_scale_up*event.trig_scale*event.pu_weight" if scaleup else self.scaleFactor
         if sample in self.sampleMergeDict:
             for s in self.sampleMergeDict[sample]:
                 tree = self.samples[s]['file'].Get(self.analysis)
                 if 'data' not in s and not unweighted:
                     thisCut = selection + ' & ' + self.sampleMergeDict[sample][s]
-                    #if scaleup: tree.Draw('event.pu_weight>>h%s()'%s,'event.lep_scale_up*event.trig_scale*(%s)' %selection,'goff')
-                    #if not scaleup: tree.Draw('event.pu_weight>>h%s()'%s,'event.lep_scale*event.trig_scale*(%s)' %selection,'goff')
-                    if scaleup: tree.Draw('1>>h%s()'%s,'%s*(%s)' %("event.lep_scale_up*event.trig_scale*event.pu_weight",thisCut),'goff')
-                    if not scaleup: tree.Draw('1>>h%s()'%s,'%s*(%s)' %(self.scaleFactor,thisCut),'goff')
+                    tree.Draw('1>>h%s()'%s,'%s*(%s)' %(scalefactor,thisCut),'goff')
                     if not ROOT.gDirectory.Get("h%s" %s):
                         val = 0
                     else:
@@ -235,10 +234,7 @@ class PlotterBase(object):
         else:
             tree = self.samples[sample]['file'].Get(self.analysis)
             if 'data' not in sample and not unweighted:
-                #if scaleup: tree.Draw('event.pu_weight>>h%s()'%sample,'event.lep_scale_up*event.trig_scale*(%s)' %selection,'goff')
-                #if not scaleup: tree.Draw('event.pu_weight>>h%s()'%sample,'event.lep_scale*event.trig_scale*(%s)' %selection,'goff')
-                if scaleup: tree.Draw('1>>h%s()'%sample,'%s*(%s)' %("event.lep_scale_up*event.trig_scale*event.pu_weight",selection),'goff')
-                if not scaleup: tree.Draw('1>>h%s()'%sample,'%s*(%s)' %(self.scaleFactor,selection),'goff')
+                tree.Draw('1>>h%s()'%sample,'%s*(%s)' %(scalefactor,selection),'goff')
                 if not ROOT.gDirectory.Get("h%s" %sample):
                     val = 0
                 else:
@@ -282,17 +278,16 @@ class PlotterBase(object):
         htmp = ROOT.TH1F(tempName, hist.GetTitle(), nx, array('d',xbins))
         htmp.Sumw2()
         for i in range(nx):
-            #htmp.Fill(htmp.GetBinCenter(i+1), hist.GetBinContent(i+1))
             htmp.SetBinContent(i+1, hist.GetBinContent(i+1))
             htmp.SetBinError(i+1, hist.GetBinError(i+1))
-        #htmp.Fill(hist.GetBinLowEdge(1)-1, hist.GetBinContent(0))
         htmp.SetBinContent(0, hist.GetBinContent(0))
         htmp.SetBinError(0, hist.GetBinError(0))
         htmp.SetEntries(hist.GetEntries())
         return htmp
 
-    def getSingleVarHist2D(self,tree,sample,var1,var2,bin1,bin2,cut,**kwargs):
+    def getSingleVarHist2D(self,sample,var1,var2,bin1,bin2,cut,**kwargs):
         '''Plot a single sample hist with two variables'''
+        tree = self.samples[sample]['file'].Get(self.analysis)
         zbin = kwargs.pop('zbin',[10,0,10])
         drawString = "%s:%s>>h%s%s%s(%s)" % (var2,var1,sample,var1,var2,', '.join(str(x) for x in bin1+bin2))
         if not cut: cut = '1'
@@ -321,21 +316,19 @@ class PlotterBase(object):
         for v in range(len(var1)):
             if sample in self.sampleMergeDict:
                 for s in self.sampleMergeDict[sample]:
-                    tree = self.samples[s]['file'].Get(self.analysis)
                     if len(var1) != len(cut):
                         thisCut = cut + ' & ' + self.sampleMergeDict[sample][s]
-                        hist = self.getSingleVarHist2D(tree,s,var1[v],var2[v],bin1,bin2,thisCut,**kwargs)
+                        hist = self.getSingleVarHist2D(s,var1[v],var2[v],bin1,bin2,thisCut,**kwargs)
                     else:
                         thisCut = cut[v] + ' & ' + self.sampleMergeDict[sample][s]
-                        hist = self.getSingleVarHist2D(tree,s,var1[v],var2[v],bin1,bin2,thisCut,**kwargs)
+                        hist = self.getSingleVarHist2D(s,var1[v],var2[v],bin1,bin2,thisCut,**kwargs)
                     if hist:
                         hists.Add(hist)
             else:
-                tree = self.samples[sample]['file'].Get(self.analysis)
                 if len(var1) != len(cut):
-                    hist = self.getSingleVarHist2D(tree,sample,var1[v],var2[v],bin1,bin2,cut,**kwargs)
+                    hist = self.getSingleVarHist2D(sample,var1[v],var2[v],bin1,bin2,cut,**kwargs)
                 else:
-                    hist = self.getSingleVarHist2D(tree,sample,var1[v],var2[v],bin1,bin2,cut[v],**kwargs)
+                    hist = self.getSingleVarHist2D(sample,var1[v],var2[v],bin1,bin2,cut[v],**kwargs)
                 if hist:
                     hists.Add(hist)
         if hists.IsEmpty():
@@ -347,8 +340,9 @@ class PlotterBase(object):
         return hist
 
 
-    def getSingleVarHist(self,tree,sample,variable,binning,cut):
+    def getSingleVarHist(self,sample,variable,binning,cut):
         '''Single variable, single sample hist'''
+        tree = self.samples[sample]['file'].Get(self.analysis)
         self.j += 1
         if len(binning) == 3: # standard drawing
             drawString = "%s>>h%s%s(%s)" % (variable, sample, variable, ", ".join(str(x) for x in binning))
@@ -386,21 +380,19 @@ class PlotterBase(object):
         for v in range(len(variables)):
             if sample in self.sampleMergeDict:
                 for s in self.sampleMergeDict[sample]:
-                    tree = self.samples[s]['file'].Get(self.analysis)
                     if len(variables) != len(cut):
                         thisCut = cut + ' & ' + self.sampleMergeDict[sample][s]
-                        hist = self.getSingleVarHist(tree,s,variables[v],binning,thisCut)
+                        hist = self.getSingleVarHist(s,variables[v],binning,thisCut)
                     else:
                         thisCut = cut[v] + ' & ' + self.sampleMergeDict[sample][s]
-                        hist = self.getSingleVarHist(tree,s,variables[v],binning,thisCut)
+                        hist = self.getSingleVarHist(s,variables[v],binning,thisCut)
                     if hist:
                         hists.Add(hist)
             else:
-                tree = self.samples[sample]['file'].Get(self.analysis)
                 if len(variables) != len(cut):
-                    hist = self.getSingleVarHist(tree,sample,variables[v],binning,cut)
+                    hist = self.getSingleVarHist(sample,variables[v],binning,cut)
                 else:
-                    hist = self.getSingleVarHist(tree,sample,variables[v],binning,cut[v])
+                    hist = self.getSingleVarHist(sample,variables[v],binning,cut[v])
                 if hist:
                     hists.Add(hist)
         if hists.IsEmpty():
