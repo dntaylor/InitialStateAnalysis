@@ -15,7 +15,7 @@ import os
 import ROOT
 
 ROOT.gROOT.SetBatch(ROOT.kTRUE)
-ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
+ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 2001;")
 
 def generate(analysis, channel, period, **kwargs):
     '''
@@ -31,16 +31,21 @@ def generate(analysis, channel, period, **kwargs):
           Variable1
           ...
     '''
+    logger = logging.getLogger(__name__)
     cut = kwargs.pop('cut','1')
-    filename = kwargs.pop('filename','variables')
     scaleFactor = kwargs.pop('scaleFactor','event.pu_weight*event.lep_scale*event.trig_scale')
-    print 'MKFLAT:%s:%s:%iTeV: Running with selection %s' % (analysis, channel, period, cut)
-    rootPath = 'rootfiles/%s_%s_%iTeV' % (analysis,channel, period)
+    force = kwargs.pop('force','False')
+
+    if force: logger.info('%s:%s:%iTeV: Forcing reprocessing' % (analysis, channel, period))
+
+    # get hashes
+    cut, cuthash = hashcut(cut)
+    scaleFactor, scalefactorhash = hashscalefactor(scaleFactor)
+
+    logger.info('%s:%s:%iTeV: Running with selection %s' % (analysis, channel, period, cut))
+    rootPath = 'rootfiles/%s_%s_%iTeV/%s/%s' % (analysis,channel, period,cuthash,scalefactorhash)
     python_mkdir(rootPath)
-    savefilename = '%s/%s.root' %(rootPath,filename)
-    print 'MKFLAT:%s:%s:%iTeV: Will save in %s' % (analysis, channel, period, savefilename)
-    # potentially hash the cut, and the input ntuples so it doesnt get recalculated???
-    savefile = ROOT.TFile(savefilename,'recreate')
+
     selectionDict = {
         # name             : (variable,                        binning,     selection),
         'sT'               : (['finalstate.sT'],               [40,0,1000], cut),
@@ -101,7 +106,7 @@ def generate(analysis, channel, period, **kwargs):
             selectionDict['%sPhi%s'%(name,f.upper())] = (['%s.Phi' %name], [30,-3.14159,3.14159], thisCut)
             selectionDict['%sIso%s'%(name,f.upper())] = (['%s.Iso' %name], [50,0,.5],             thisCut)
 
-
+    # setup plotter
     channels, leptons = getChannels(nl)
     ntuples = 'ntuples/%s_%sTeV_%s' % (analysis,period,channel)
     saves = '%s_%s_%sTeV' % (analysis,channel,period)
@@ -117,29 +122,30 @@ def generate(analysis, channel, period, **kwargs):
     plotter.setIntLumi(intLumiMap[period])
     histNames = bgSamples
     if dataSamples: histNames += ['data']
-    adir = savefile.mkdir(channel)
-    adir.cd()
-    print 'MKFLAT:%s:%s:%iTeV: Creating analysis directory' % (analysis, channel, period)
-    for c in channels:
-        cdir = adir.mkdir(c)
-        cdir.cd()
-        print 'MKFLAT:%s:%s:%iTeV: Channel %s' % (analysis, channel, period, c)
-        for name, (variable, binning, selection) in selectionDict.iteritems():
-            vdir = cdir.mkdir(name)
-            vdir.cd()
-            print 'MKFLAT:%s:%s:%iTeV: Variable %s' % (analysis, channel, period, name)
-            chanSelection = selection + ' & channel=="%s"' %c
-            for histName in histNames:
-                hist = plotter.getData(variable,binning,chanSelection,True) if histName == 'data' else\
-                       plotter.getHist(histName,variable,binning,chanSelection,True)
-                if not hist: continue
-                hist.SetName(histName)
-                hist.Write()
-            cdir.cd()
+
+    for sample in allSamples:
+        logger.info('%s:%s:%iTeV: Sample %s' % (analysis, channel, period, sample))
+        infilename = '%s/%s.root' % (ntuples,sample)
+        filehash = hashfile(infilename)
+        savedir = '%s/%s' % (rootPath,sample)
+        python_mkdir(savedir)
+        savefilename = '%s/%s.root' %(savedir,filehash)
+        if os.path.isfile(savefilename) and not force: continue # already exists, don't need to do anything
+        savefile = ROOT.TFile(savefilename,'recreate')
+        adir = savefile.mkdir(channel)
         adir.cd()
-    print 'MKFLAT:%s:%s:%iTeV: Finished' % (analysis, channel, period)
+        for name, (variable, binning, selection) in selectionDict.iteritems():
+            logger.debug('%s:%s:%iTeV: Variable %s' % (analysis, channel, period, name))
+            hist = plotter.getHist(sample,variable,binning,selection,True)
+            if not hist: continue
+            hist.SetName(name)
+            hist.Write()
+            adir.cd()
+    logger.info('%s:%s:%iTeV: Finished' % (analysis, channel, period))
     savefile.Close()
     return 0
+
+
 
 
 def parse_command_line(argv):
@@ -149,7 +155,8 @@ def parse_command_line(argv):
     parser.add_argument('channel', type=str, choices=['WZ','Hpp3l','Hpp4l','FakeRate'], help='Channel in analysis')
     parser.add_argument('period', type=int, choices=[7,8,13], help='Energy (TeV)')
     parser.add_argument('-c','--cut',type=str,default='select.passTight',help='Cut to be applied to plots (default = "select.passTight").')
-    parser.add_argument('-fn','--filename',type=str,default='variables',help='Filename of output (default = "variables").')
+    parser.add_argument('-l','--log',nargs='?',type=str,const='INFO',default='INFO',choices=['INFO','DEBUG','WARNING','ERROR','CRITICAL'],help='Log level for logger')
+    parser.add_argument('-f','--force',action='store_true',help='Force reprocessing')
 
     args = parser.parse_args(argv)
 
@@ -162,7 +169,11 @@ def main(argv=None):
 
     args = parse_command_line(argv)
 
-    generate(args.analysis, args.channel, args.period, cut=args.cut, filename=args.filename)
+    loglevel = getattr(logging,args.log)
+    logging.basicConfig(format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', level=loglevel, datefmt='%Y-%m-%d %H:%M:%S')
+    logger = logging.getLogger(__name__)
+
+    generate(args.analysis, args.channel, args.period, cut=args.cut, force=args.force)
 
     return 0
 
