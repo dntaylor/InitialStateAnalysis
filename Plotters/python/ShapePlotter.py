@@ -23,7 +23,7 @@ class ShapePlotter(PlotterBase):
         elif plotType == 'Signal' and signal:
             shape = histMethod(signal,variables,binning,thisCut)
         else:
-            print 'Error, invalid plot type.'
+            self.logger.warning('Error, invalid plot type.')
             return 0
         integral = shape.Integral()
         if integral: shape.Scale(1./integral)
@@ -128,7 +128,7 @@ class ShapePlotter(PlotterBase):
         if not xmax and len(xrange)==2: xmax = xrange[1]
         if xmin or xmax: xrange = [xmin, xmax]
         for key, value in kwargs.iteritems():
-            print "Unrecognized parameter '" + key + "' = " + str(value)
+            self.logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
 
         if type(variables) is not list: variables = [variables]
 
@@ -186,7 +186,7 @@ class ShapePlotter(PlotterBase):
             if plotsig:
                 plotType = 'Signal'
                 lineStyle = 8
-                print 'Signal plotting not supported'
+                self.logger.warning('Signal plotting not supported')
                 return 0
             shape = self.getShape(variables,binning,thisCut,plotType)
             shape.SetFillColor(color)

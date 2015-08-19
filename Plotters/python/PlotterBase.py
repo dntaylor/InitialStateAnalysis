@@ -14,6 +14,7 @@ import glob
 import ROOT
 import json
 import math
+import logging
 from array import array
 
 from xsec import xsecs
@@ -30,6 +31,9 @@ class PlotterBase(object):
     def __init__(self,analysis,**kwargs):
         '''Initialize the plotter (optionally make the plots blinded).'''
         # get kwargs
+        self.loglevel = getattr(logging,loglevel)
+        logging.basicConfig(format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', level=self.loglevel, datefmt='%Y-%m-%d %H:%M:%S')
+        self.logger = logging.getLogger(__name__)
         saveDir = kwargs.pop('saveDir','')
         ntupleDir = kwargs.pop('ntupleDir','ntuples')
         period = kwargs.pop('period',13)
@@ -38,7 +42,7 @@ class PlotterBase(object):
         mergeDict = kwargs.pop('mergeDict',{})
         scaleFactor = kwargs.pop('scaleFactor','event.pu_weight*event.lep_scale*event.trig_scale')
         for key, value in kwargs.iteritems():
-            print "Unrecognized parameter '" + key + "' = " + str(value)
+            self.logger.warning("Unrecognized parameter '%s' = %s" %(key,str(value)))
 
         # first, setup our canvas
         self.W = 800
@@ -89,7 +93,7 @@ class PlotterBase(object):
 
     def reset(self):
         '''Reset the plotter class'''
-        print "Resetting the PlotterBase class"
+        self.logger.info("Resetting the PlotterBase class")
         self.backgroundInitialized = False
         self.backgrounds = []
         self.dataInitialized = False
@@ -143,8 +147,8 @@ class PlotterBase(object):
             n_evts = cutflowHist.GetBinContent(1)
             sample_xsec = self.xsecs[sample]
             self.samples[sample]['lumi'] = float(n_evts)/sample_xsec
-            #print 'Initializing MC sample %s with %i events and xsec %f to lumi %f.'\
-            #      % (sample, n_evts, sample_xsec, self.samples[sample]['lumi'])
+            self.logger.debug('Initializing MC sample %s with %i events and xsec %f to lumi %f.'\
+                  % (sample, n_evts, sample_xsec, self.samples[sample]['lumi']))
 
     def initializeSamples(self,sampleList):
         '''Initialize a list of samples to the sample dictionary.'''
@@ -158,7 +162,7 @@ class PlotterBase(object):
     def calculateIntLumi(self):
         '''Calculate the integrated luminosity to scale the Monte Carlo'''
         if not self.dataInitialized: 
-            print "No data initialized, default to 25 fb-1"
+            self.logger.info("No data initialized, default to 25 fb-1")
             self.intLumi = 25000.
             return
         self.intLumi = 25000.
@@ -168,9 +172,9 @@ class PlotterBase(object):
         self.intLumi = intLumi
 
     def printInfo(self):
-        if self.backgroundInitialized: print 'Backgrounds: ' + ' '.join(self.backgrounds)
-        if self.dataInitialized: print 'Data: ' + ' '.join(self.data)
-        if self.signalInitialized: print 'Signal: ' + ' '.join(self.signal)
+        if self.backgroundInitialized: self.logger.info('Backgrounds: ' + ' '.join(self.backgrounds))
+        if self.dataInitialized: self.logger.info('Data: ' + ' '.join(self.data))
+        if self.signalInitialized: self.logger.info('Signal: ' + ' '.join(self.signal))
 
     def setScaleFactor(self,scalefactor):
         '''Set Scale factor'''
@@ -365,14 +369,13 @@ class PlotterBase(object):
         if 'data' not in sample: # if it is mc, scale to intLumi
             lumi = self.samples[sample]['lumi']
             theScale = float(self.intLumi)/lumi
-            #print 'Scaling sample %s to %f with sample lumi of %f and scale factor %f.'\
-            #      % (sample, self.intLumi, lumi, theScale)
-            #print 'The old integral was %f' % hist.Integral()
+            self.logger.debug('Scaling sample %s to %f with sample lumi of %f and scale factor %f.'\
+                  % (sample, self.intLumi, lumi, theScale))
+            self.logger.debug('The old integral was %f' % hist.Integral())
             hist.Scale(theScale)
-            #print 'The new integral is %s' % hist.Integral()
+            self.logger.debug('The new integral is %s' % hist.Integral())
         else:
-            #print 'For data sample %s the integral is %f.' % (sample, hist.Integral())
-            pass
+            self.logger.debug('For data sample %s the integral is %f.' % (sample, hist.Integral()))
             
         return hist
 
@@ -405,9 +408,9 @@ class PlotterBase(object):
         hist = hists[0].Clone("hmerged%s%s" % (sample, variables[0]))
         hist.Reset()
         hist.Merge(hists)
-        #print 'The total integral for %s after merging is %f.' % (sample, hist.Integral())
+        self.logger.debug('The total integral for %s after merging is %f.' % (sample, hist.Integral()))
         hist = self.getOverflowUnderflow(hist,**kwargs)
-        #print 'After overflow it is %f.' % (hist.Integral())
+        self.logger.debug('After overflow it is %f.' % (hist.Integral()))
         hist.Sumw2()
         if normalize:
             integral = hist.Integral()
@@ -504,7 +507,7 @@ class PlotterBase(object):
                 hist.SetFillStyle(0)
                 hist.SetLineWidth(2)
             mcstack.Add(hist)
-        #print 'And the full stack integral is %f.' % mcstack.GetStack().Last().Integral()
+        self.logger.debug('And the full stack integral is %f.' % mcstack.GetStack().Last().Integral())
         return mcstack
 
     def get_stat_err(self, hist):

@@ -114,7 +114,7 @@ class Plotter(PlotterBase):
         if not xmax and len(xrange)==2: xmax = xrange[1]
         if xmin or xmax: xrange = [xmin, xmax]
         for key, value in kwargs.iteritems():
-            print "Unrecognized parameter '" + key + "' = " + str(value)
+            self.logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
 
         if type(variables) is not list: variables = [variables]
 
@@ -361,7 +361,7 @@ class Plotter(PlotterBase):
         if not xmax and len(xrange)==2: xmax = xrange[1]
         if xmin or xmax: xrange = [xmin, xmax]
         for key, value in kwargs.iteritems():
-            print "Unrecognized parameter '" + key + "' = " + str(value)
+            self.logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
 
         if type(var1) is not list: var1 = [var1]
         if type(var2) is not list: var2 = [var2]

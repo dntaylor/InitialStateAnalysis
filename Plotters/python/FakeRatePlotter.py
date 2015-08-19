@@ -71,7 +71,7 @@ class FakeRatePlotter(PlotterBase):
         xaxis = kwargs.pop('xaxis','p_{T} (GeV)')
         yaxis = kwargs.pop('yaxis','#eta')
         for key, value in kwargs.iteritems():
-            print "Unrecognized parameter '" + key + "' = " + str(value)
+            self.logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
 
         self.canvas.SetLogy(logy)
         self.canvas.SetLogx(logx)
