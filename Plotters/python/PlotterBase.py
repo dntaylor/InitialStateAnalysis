@@ -276,9 +276,14 @@ class PlotterBase(object):
         xbins[nx]=xbins[nx-1]+hist.GetBinWidth(nx)
         tempName = hist.GetName()+'OU%i' % self.j
         htmp = ROOT.TH1F(tempName, hist.GetTitle(), nx, array('d',xbins))
+        htmp.Sumw2()
         for i in range(nx):
-            htmp.Fill(htmp.GetBinCenter(i+1), hist.GetBinContent(i+1))
-        htmp.Fill(hist.GetBinLowEdge(1)-1, hist.GetBinContent(0))
+            #htmp.Fill(htmp.GetBinCenter(i+1), hist.GetBinContent(i+1))
+            htmp.SetBinContent(i+1, hist.GetBinContent(i+1))
+            htmp.SetBinError(i+1, hist.GetBinError(i+1))
+        #htmp.Fill(hist.GetBinLowEdge(1)-1, hist.GetBinContent(0))
+        htmp.SetBinContent(0, hist.GetBinContent(0))
+        htmp.SetBinError(0, hist.GetBinError(0))
         htmp.SetEntries(hist.GetEntries())
         return htmp
 
