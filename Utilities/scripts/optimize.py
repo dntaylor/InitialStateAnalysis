@@ -4,10 +4,10 @@ import os
 import logging
 import sys
 import argparse
-from InitialStateAnalyis.Plotters.Plotter import Plotter
-from InitialStateAnalyis.Plotters.Optimizer import Optimizer
-from InitialStateAnalyis.Plotters.plotUtils import *
-from InitialStateAnalyis.Plotters.plotUtils import ZMASS, _3L_MASSES, _4L_MASSES
+from InitialStateAnalysis.Plotters.Plotter import Plotter
+from InitialStateAnalysis.Plotters.Optimizer import Optimizer
+from InitialStateAnalysis.Plotters.plotUtils import *
+from InitialStateAnalysis.Plotters.plotUtils import ZMASS, _3L_MASSES, _4L_MASSES
 
 def initializePlotter(analysis, period, mass, plotName, nl, runTau):
     ntuples = 'ntuples/%s_%iTeV_%s' % (analysis,period,analysis)
@@ -63,14 +63,14 @@ def optimize(analysis, period, mass):
 
     optimizer = initializeOptimizer(analysis, period, mass, 'optimize.root', 'select.PassTight & %s' % recoSelect, genSelect)
     
-    #optimizer.addCut('st',    'finalstate.sT >',            100., 1500., 10.)
-    #optimizer.addCut('dR',    'h1.dR <',                    1.,   5.,    0.1)
-    #optimizer.addCut('zmass', 'fabs(z1.mass-%f) >' % ZMASS, 0.,   100.,  5.)
-    #optimizer.addCut('hmass', 'fabs(h1.mass-%f) <' % mass,  0.,   200.,  5.)
-    optimizer.addCut('st',    'finalstate.sT >',            100., 1500., 200.)
-    optimizer.addCut('dR',    'h1.dR <',                    1.,   5.,    1.)
-    optimizer.addCut('zmass', 'fabs(z1.mass-%f) >' % ZMASS, 0.,   100.,  20.)
-    optimizer.addCut('hmass', 'fabs(h1.mass-%f) <' % mass,  0.,   200.,  40.)
+    optimizer.addCut('st',    'finalstate.sT >',            100., 1500., 10.)
+    optimizer.addCut('dR',    'h1.dR <',                    1.,   5.,    0.05)
+    optimizer.addCut('zmass', 'fabs(z1.mass-%f) >' % ZMASS, 0.,   100.,  5.)
+    optimizer.addCut('hmass', 'fabs(h1.mass-%f) <' % mass,  0.,   200.,  5.)
+    #optimizer.addCut('st',    'finalstate.sT >',            100., 1500., 200.)
+    #optimizer.addCut('dR',    'h1.dR <',                    1.,   5.,    1.)
+    #optimizer.addCut('zmass', 'fabs(z1.mass-%f) >' % ZMASS, 0.,   100.,  20.)
+    #optimizer.addCut('hmass', 'fabs(h1.mass-%f) <' % mass,  0.,   200.,  40.)
 
     print 'Optimizing %i' % mass
     optimizer.optimize()
@@ -95,7 +95,10 @@ def main(argv=None):
 
     args = parse_command_line(argv)
 
-    optimize(args.analysis, args.period, args.mass)
+    masses = [args.mass]
+    if args.allMasses: masses = _3L_MASSES
+    for mass in masses:
+        optimize(args.analysis, args.period, mass)
 
 if __name__ == "__main__":
     main()

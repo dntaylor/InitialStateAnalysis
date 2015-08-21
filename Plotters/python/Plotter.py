@@ -118,6 +118,8 @@ class Plotter(PlotterBase):
 
         if type(variables) is not list: variables = [variables]
 
+        ROOT.gDirectory.Delete('h*') # clear histogram memory
+
         if plotratio:
             self.canvas.SetCanvasSize(796,666)
             plotpad = ROOT.TPad("plotpad", "top pad", 0.0, 0.21, 1.0, 1.0)
@@ -365,6 +367,8 @@ class Plotter(PlotterBase):
 
         if type(var1) is not list: var1 = [var1]
         if type(var2) is not list: var2 = [var2]
+
+        ROOT.gDirectory.Delete('h*') # clear histogram memory
 
         self.canvas.SetRightMargin(0.14)
 

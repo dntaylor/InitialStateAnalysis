@@ -79,10 +79,17 @@ class Optimizer(object):
             mini.Minimize()
         # get efficiencies
         for cut in self.cuts:
-            print cut
-            cutRange = [cut['min']+x*cut['step'] for x in range(int(cut['max']-cut['min']/cut['step']))]
-            effs = [self.plotter.getSignalEntries('%s & %s %f' %(sigSel, cut['func'], cutVal))/self.plotter.getSignalEntries(sigSel) for cutVal in cutRange]
-            print effs
+            #print cut
+            cutRange = [cut['min']+x*cut['step'] for x in range(int((cut['max']-cut['min'])/cut['step']))]
+            effs = []
+            for cutVal in cutRange:
+                num = self.plotter.getSignalEntries('%s & %s %f' %(sigSel, cut['func'], cutVal))
+                denom = self.plotter.getSignalEntries(sigSel)
+                eff = num/denom
+                effs += [eff]
+                #print '  %f: %f' %(cutVal, eff)
+            #effs = [self.plotter.getSignalEntries('%s & %s %f' %(sigSel, cut['func'], cutVal))/self.plotter.getSignalEntries(sigSel) for cutVal in cutRange]
+            #print effs
             effCutoffs = [0.7,0.8,0.9,0.95,0.99,0.999]
             if effs[0]>effs[-1]: # reversed list
                 for c in effCutoffs:

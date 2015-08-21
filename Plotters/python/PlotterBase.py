@@ -32,9 +32,8 @@ class PlotterBase(object):
         '''Initialize the plotter (optionally make the plots blinded).'''
         # get kwargs
         loglevel = kwargs.pop('loglevel','INFO')
-        self.loglevel = getattr(logging,loglevel)
-        logging.basicConfig(format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', level=self.loglevel, datefmt='%Y-%m-%d %H:%M:%S')
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(getattr(logging,loglevel))
         saveDir = kwargs.pop('saveDir','')
         ntupleDir = kwargs.pop('ntupleDir','ntuples')
         period = kwargs.pop('period',13)
@@ -44,6 +43,8 @@ class PlotterBase(object):
         scaleFactor = kwargs.pop('scaleFactor','event.pu_weight*event.lep_scale*event.trig_scale')
         for key, value in kwargs.iteritems():
             self.logger.warning("Unrecognized parameter '%s' = %s" %(key,str(value)))
+
+        ROOT.gDirectory.Delete('h*') # clear histogram memory
 
         # first, setup our canvas
         self.W = 800
@@ -94,6 +95,7 @@ class PlotterBase(object):
 
     def reset(self):
         '''Reset the plotter class'''
+        ROOT.gDirectory.Delete('h*') # clear histogram memory
         self.logger.info("Resetting the PlotterBase class")
         self.backgroundInitialized = False
         self.backgrounds = []
@@ -193,6 +195,26 @@ class PlotterBase(object):
             result += self.getNumEntries(selection,bg,**kwargs)
         return result
 
+    def getIndividualSampleEntries(self,sample,selection,scalefactor,**kwargs):
+        tree = self.samples[sample]['file'].Get(self.analysis)
+        tree.Draw('1>>h%s%i(1,0,2)'%(sample,self.j),'%s*(%s)' %(scalefactor,selection),'goff')
+        if not ROOT.gDirectory.Get("h%s%i" %(sample,self.j)):
+            self.logger.debug('%s: No entries'%sample)
+            val = 0
+        else:
+            hist = ROOT.gDirectory.Get("h%s%i" %(sample,self.j)).Clone("hnew%s%i" %(sample,self.j))
+            hist.Sumw2()
+            val = hist.Integral()
+            self.logger.debug('%s: Entries: %f'%(sample,val))
+        err = val ** 0.5
+        if 'data' in sample: return val, err
+        lumi = self.samples[sample]['lumi']
+        val = val * self.intLumi/lumi
+        err = err * self.intLumi/lumi
+        self.logger.debug('%s: Lumi scaled: %f'%(sample,val))
+        return val, err
+
+
     def getNumEntries(self,selection,sample,**kwargs):
         '''Return the lumi scaled number of entries passing a given cut.'''
         doError = kwargs.pop('doError',False)
@@ -202,63 +224,23 @@ class PlotterBase(object):
         totalVal = 0
         totalErr2 = 0
         scalefactor = "event.lep_scale_up*event.trig_scale*event.pu_weight" if scaleup else self.scaleFactor
+        if 'data' in sample:
+            scalefactor = '1'
+            if doDataDriven: scalefactor = 'event.datadriven_weight'
+        self.j += 1
+        self.logger.debug('Cut: %s'%selection)
         if sample in self.sampleMergeDict:
             for s in self.sampleMergeDict[sample]:
-                tree = self.samples[s]['file'].Get(self.analysis)
-                if 'data' not in s and not unweighted:
-                    thisCut = selection + ' & ' + self.sampleMergeDict[sample][s]
-                    tree.Draw('1>>h%s()'%s,'%s*(%s)' %(scalefactor,thisCut),'goff')
-                    if not ROOT.gDirectory.Get("h%s" %s):
-                        val = 0
-                    else:
-                        hist = ROOT.gDirectory.Get("h%s" %s).Clone("hnew%s" %s)
-                        hist.Sumw2()
-                        val = hist.Integral()
-                    err = val ** 0.5
-                    lumi = self.samples[s]['lumi']
-                    val = val * self.intLumi/lumi
-                    err = err * self.intLumi/lumi
-                else:
-                    val = tree.GetEntries(selection)
-                    if doDataDriven:
-                        tree.Draw('event.datadriven_weight>>h%s()'%s,selection,'goff')
-                        if not ROOT.gDirectory.Get("h%s" %s):
-                            val = 0
-                        else:
-                            hist = ROOT.gDirectory.Get("h%s" %s).Clone("hnew%s" %s)
-                            hist.Sumw2()
-                            val = hist.Integral()
-                    err = val ** 0.5
+                thisCut = selection + ' & ' + self.sampleMergeDict[sample][s] if 'data' not in s else selection
+                val, err = self.getIndividualSampleEntries(s,thisCut,scalefactor)
                 totalVal += val
                 totalErr2 += err*err
         else:
-            tree = self.samples[sample]['file'].Get(self.analysis)
-            if 'data' not in sample and not unweighted:
-                tree.Draw('1>>h%s()'%sample,'%s*(%s)' %(scalefactor,selection),'goff')
-                if not ROOT.gDirectory.Get("h%s" %sample):
-                    val = 0
-                else:
-                    hist = ROOT.gDirectory.Get("h%s" %sample).Clone("hnew%s" %sample)
-                    hist.Sumw2()
-                    val = hist.Integral()
-                err = val ** 0.5
-                lumi = self.samples[sample]['lumi']
-                val = val * self.intLumi/lumi
-                err = err * self.intLumi/lumi
-            else:
-                val = tree.GetEntries(selection)
-                if doDataDriven:
-                    tree.Draw('event.datadriven_weight>>h%s()'%sample,selection,'goff')
-                    if not ROOT.gDirectory.Get("h%s" %sample):
-                        val = 0
-                    else:
-                        hist = ROOT.gDirectory.Get("h%s" %sample).Clone("hnew%s" %sample)
-                        hist.Sumw2()
-                        val = hist.Integral()
-                err = val ** 0.5
+            val, err = self.getIndividualSampleEntries(sample,selection,scalefactor)
             totalVal += val
             totalErr2 += err*err
         totalErr = totalErr2 ** 0.5
+        self.logger.debug('Total Integrated: %f'%(totalVal))
         if doError: return totalVal, totalErr
         return totalVal
 
@@ -346,7 +328,7 @@ class PlotterBase(object):
         self.j += 1
         if len(binning) == 3: # standard drawing
             drawString = "%s>>h%s%s(%s)" % (variable, sample, variable, ", ".join(str(x) for x in binning))
-        else: # we will need to rebin
+        else: # we will need to rebin TODO: this might cause issue in root6, double check later
             drawString = "%s>>h%s%s()" % (variable, sample, variable)
         if not cut: cut = '1'
         if 'data' not in sample:

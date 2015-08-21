@@ -17,6 +17,7 @@ def sync(analysis,channel,period,**kwargs):
     doYields = kwargs.pop('doYields',False)
     doCounts = kwargs.pop('doCounts',False)
     doCorrelation = kwargs.pop('doCorrelation',False)
+    doChargeId = kwargs.pop('doChargeId',False)
     cut = kwargs.pop('cut','1')
     mass = kwargs.pop('mass',500)
 
@@ -90,29 +91,105 @@ def sync(analysis,channel,period,**kwargs):
             print ''
 
     # electron charge id efficiency
-    bgNum = 0
-    bgDenom = 0
-    sigNum = 0
-    sigDenom = 0
-    dataNum = 0
-    dataDenom = 0
-    for b in allMC + ['data']:
-        val0 =  plotter.getNumEntries('%s & l1Flv=="e" & l1.ChargeConsistent==0' %cut, sigMap[period][b])
-        val0 += plotter.getNumEntries('%s & l2Flv=="e" & l2.ChargeConsistent==0' %cut, sigMap[period][b])
-        val0 += plotter.getNumEntries('%s & l3Flv=="e" & l3.ChargeConsistent==0' %cut, sigMap[period][b])
-        val1 =  plotter.getNumEntries('%s & l1Flv=="e" & l1.ChargeConsistent==1' %cut, sigMap[period][b])
-        val1 += plotter.getNumEntries('%s & l2Flv=="e" & l2.ChargeConsistent==1' %cut, sigMap[period][b])
-        val1 += plotter.getNumEntries('%s & l3Flv=="e" & l3.ChargeConsistent==1' %cut, sigMap[period][b])
-        if b==s:
-            sigNum += val1
-            sigDenom += val0 + val1
-        elif 'data' in b:
-            dataNum += val1
-            dataDenom += val0 + val1
-        else:
-            bgNum += val1
-            bgDenom += val0 + val1
-    print 'Sig Efficiency: %f, BG Efficiency: %f, Data Efficiency: %f' % (sigNum/sigDenom, bgNum/bgDenom, float(dataNum)/dataDenom)
+    if doChargeId:
+        print 'Charge ID efficiency'
+        bgNum = 0.
+        bgNum_err_2 = 0.
+        bgDenom = 0.
+        bgDenom_err_2 = 0.
+        sigNum = 0.
+        sigNum_err_2 = 0.
+        sigDenom = 0.
+        sigDenom_err_2 = 0.
+        dataNum = 0.
+        dataNum_err_2 = 0.
+        dataDenom = 0.
+        dataDenom_err_2 = 0.
+        for b in allMC + ['data']:
+            val01, err01 = plotter.getNumEntries('%s & l1Flv=="e" & l1.ChargeConsistent==0' %cut, sigMap[period][b], doError=True)
+            val02, err02 = plotter.getNumEntries('%s & l2Flv=="e" & l2.ChargeConsistent==0' %cut, sigMap[period][b], doError=True)
+            val03, err03 = plotter.getNumEntries('%s & l3Flv=="e" & l3.ChargeConsistent==0' %cut, sigMap[period][b], doError=True)
+            val11, err11 = plotter.getNumEntries('%s & l1Flv=="e" & l1.ChargeConsistent==1' %cut, sigMap[period][b], doError=True)
+            val12, err12 = plotter.getNumEntries('%s & l2Flv=="e" & l2.ChargeConsistent==1' %cut, sigMap[period][b], doError=True)
+            val13, err13 = plotter.getNumEntries('%s & l3Flv=="e" & l3.ChargeConsistent==1' %cut, sigMap[period][b], doError=True)
+            val0 = val01+val02+val03
+            val1 = val11+val12+val13
+            err0_2 = err01**2 + err02**2 + err03**2
+            err1_2 = err11**2 + err12**2 + err13**2
+            if b==s:
+                sigNum += val1
+                sigNum_err_2 += err1_2
+                sigDenom += val0 + val1
+                sigDenom_err_2 += err0_2 + err1_2
+            elif 'data' in b:
+                dataNum += val1
+                dataNum_err_2 += err1_2
+                dataDenom += val0 + val1
+                dataDenom_err_2 += err0_2 + err1_2
+            else:
+                bgNum += val1
+                bgNum_err_2 += err1_2
+                bgDenom += val0 + val1
+                bgDenom_err_2 += err0_2 + err1_2
+        sigEff = sigNum/sigDenom
+        sigErr = (sigNum_err_2/sigNum**2 + sigDenom_err_2/sigDenom**2)**0.5 * sigEff
+        bgEff = bgNum/bgDenom
+        bgErr = (bgNum_err_2/bgNum**2 + bgDenom_err_2/bgDenom**2)**0.5 * bgEff
+        dataEff = float(dataNum)/dataDenom
+        dataErr = (dataNum_err_2/dataNum**2 + dataDenom_err_2/dataDenom**2)**0.5 * dataEff
+        print 'Sig Efficiency: %f +/- %f, BG Efficiency: %f +/- %f, Data Efficiency: %f +/- %f' % (sigEff, sigErr, bgEff, bgErr, dataEff, dataErr)
+        ptBins = [20.,30.,40.,60.,100.,1000.]
+        for p in range(len(ptBins)-1):
+            bgNum = 0.
+            bgNum_err_2 = 0.
+            bgDenom = 0.
+            bgDenom_err_2 = 0.
+            sigNum = 0.
+            sigNum_err_2 = 0.
+            sigDenom = 0.
+            sigDenom_err_2 = 0.
+            dataNum = 0.
+            dataNum_err_2 = 0.
+            dataDenom = 0.
+            dataDenom_err_2 = 0.
+            ptlow = ptBins[p]
+            pthigh = ptBins[p+1]
+            for b in allMC + ['data']:
+                val01, err01 = plotter.getNumEntries('%s && l1Flv=="e" && l1.ChargeConsistent==0 && l1.Pt > %f && l1.Pt < %f' %(cut,ptlow,pthigh), sigMap[period][b], doError=True)
+                val02, err02 = plotter.getNumEntries('%s && l2Flv=="e" && l2.ChargeConsistent==0 && l2.Pt > %f && l2.Pt < %f' %(cut,ptlow,pthigh), sigMap[period][b], doError=True)
+                val03, err03 = plotter.getNumEntries('%s && l3Flv=="e" && l3.ChargeConsistent==0 && l3.Pt > %f && l3.Pt < %f' %(cut,ptlow,pthigh), sigMap[period][b], doError=True)
+                val11, err11 = plotter.getNumEntries('%s && l1Flv=="e" && l1.ChargeConsistent==1 && l1.Pt > %f && l1.Pt < %f' %(cut,ptlow,pthigh), sigMap[period][b], doError=True)
+                val12, err12 = plotter.getNumEntries('%s && l2Flv=="e" && l2.ChargeConsistent==1 && l2.Pt > %f && l2.Pt < %f' %(cut,ptlow,pthigh), sigMap[period][b], doError=True)
+                val13, err13 = plotter.getNumEntries('%s && l3Flv=="e" && l3.ChargeConsistent==1 && l3.Pt > %f && l3.Pt < %f' %(cut,ptlow,pthigh), sigMap[period][b], doError=True)
+                val0 = val01+val02+val03
+                val1 = val11+val12+val13
+                err0_2 = err01**2 + err02**2 + err03**2
+                err1_2 = err11**2 + err12**2 + err13**2
+                if b==s:
+                    sigNum += val1
+                    sigNum_err_2 += err1_2
+                    sigDenom += val0 + val1
+                    sigDenom_err_2 += err0_2 + err1_2
+                elif 'data' in b:
+                    dataNum += val1
+                    dataNum_err_2 += err1_2
+                    dataDenom += val0 + val1
+                    dataDenom_err_2 += err0_2 + err1_2
+                else:
+                    bgNum += val1
+                    bgNum_err_2 += err1_2
+                    bgDenom += val0 + val1
+                    bgDenom_err_2 += err0_2 + err1_2
+            sigEff = sigNum/sigDenom
+            sigErr = (sigNum_err_2/sigNum**2 + sigDenom_err_2/sigDenom**2)**0.5 * sigEff
+            bgEff = bgNum/bgDenom
+            bgErr = (bgNum_err_2/bgNum**2 + bgDenom_err_2/bgDenom**2)**0.5 * bgEff
+            dataEff = float(dataNum)/dataDenom
+            dataErr = (dataNum_err_2/dataNum**2 + dataDenom_err_2/dataDenom**2)**0.5 * dataEff
+            sf = dataEff/bgEff
+            sfErr = ((dataErr/dataEff)**2 + (bgErr/bgEff)**2)**0.5 * sf
+            print 'Pt range: [%i, %i], Sig Efficiency: %f +/- %f, BG Efficiency: %f +/- %f, Data Efficiency: %f +/- %f, Data/BG: %f +/- %f' % (int(ptlow),int(pthigh),sigEff,sigErr,bgEff,bgErr,dataEff,dataErr,sf,sfErr)
+        print ''
 
     # efficiency of cuts
     if doEfficiency:
@@ -121,6 +198,10 @@ def sync(analysis,channel,period,**kwargs):
         bgPreCuts = {}
         sigFullCuts = {}
         bgFullCuts = {}
+        allSigPre = 0
+        allBgPre = 0
+        allSigFull = 0
+        allBgFull = 0
         for chan in finalStates:
             sigPre = 0
             bgPre = 0
@@ -141,9 +222,22 @@ def sync(analysis,channel,period,**kwargs):
             bgPreCuts[chan] = bgPre
             sigFullCuts[chan] = sigFull
             bgFullCuts[chan] = bgFull
+            allSigPre += sigPre
+            allBgPre += bgPre
+            allSigFull += sigFull
+            allBgFull += bgFull
+        sigPreCuts['all'] = allSigPre
+        bgPreCuts['all'] = allBgPre
+        sigFullCuts['all'] = allSigFull
+        bgFullCuts['all'] = allBgFull
+
 
         for c in cutflows[1:]:
             print '%15s |  Sg Pre Eff |  BG Pre Eff | Sg Post Eff | BG Post Eff' % c
+            allSigAllbut = 0
+            allBgAllbut = 0
+            allSigOnly = 0
+            allBgOnly = 0
             for chan in finalStates:
                 sigAllbut = 0
                 bgAllbut = 0
@@ -161,11 +255,21 @@ def sync(analysis,channel,period,**kwargs):
                     else:
                         bgAllbut += valAllbut
                         bgOnly += valOnly
+                allSigAllbut += sigAllbut
+                allBgAllbut += bgAllbut
+                allSigOnly += sigOnly
+                allBgOnly += bgOnly
                 sigEffPre = sigOnly/sigPreCuts[chan] if sigPreCuts[chan] else -1
                 bgEffPre = bgOnly/bgPreCuts[chan] if bgPreCuts[chan] else -1
                 sigEffPost = sigFullCuts[chan]/sigAllbut if sigAllbut else -1
                 bgEffPost = bgFullCuts[chan]/bgAllbut if bgAllbut else -1
                 print '%15s | %11.4f | %11.4f | %11.4f | %11.4f' % (chan, sigEffPre, bgEffPre, sigEffPost, bgEffPost)
+            chan = 'all'
+            sigEffPre = allSigOnly/sigPreCuts[chan] if sigPreCuts[chan] else -1
+            bgEffPre = allBgOnly/bgPreCuts[chan] if bgPreCuts[chan] else -1
+            sigEffPost = sigFullCuts[chan]/allSigAllbut if allSigAllbut else -1
+            bgEffPost = bgFullCuts[chan]/allBgAllbut if allBgAllbut else -1
+            print '%15s | %11.4f | %11.4f | %11.4f | %11.4f' % (chan, sigEffPre, bgEffPre, sigEffPost, bgEffPost)
             print ''
 
     if doCorrelation:

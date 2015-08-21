@@ -45,7 +45,7 @@ def recurseList(index,items):
     result = []
     nextindex = index
     for i,item in enumerate(items):
-        if i<nextindex: continue # no considered in this sub list
+        if i<nextindex: continue # not considered in this sub list
         if item=='(':            # new sub list
             subresult, nextindex = recurseList(i+1,items)
             result += [subresult]
@@ -68,9 +68,47 @@ def split(data):
     if data.count('(') != data.count(')'):
         logger.error('Unmatched parentheses in %s' % data)
         return []
+    # split at ( and )
     items = re.split('(\(|\)|&&|\|\|)',data)
+    # remove empty elements
     items = [x for x in items if x]
+    # recombine functional forms (e.g. a(b)<c)
+    prevItem = ''
+    newItems = []
+    functionDepth = 0
+    for i,currItem in enumerate(items):
+       if currItem in ['&&', '||']:         # logical break
+           newItems += [prevItem]
+           prevItem = currItem
+       elif currItem in ['(']:
+           if i==0:                         # start of cut
+               prevItem = currItem
+           elif prevItem in ['&&', '||', '('] and not functionDepth:   # this is a real start
+               newItems += [prevItem]
+               prevItem = currItem
+           else:                            # this is the opening of a function
+               prevItem += currItem
+               functionDepth += 1
+       elif currItem in [')']:
+           if functionDepth:                # end of function
+               prevItem += currItem
+               functionDepth -= 1
+           else:                            # real end
+               newItems += [prevItem]
+               prevItem = currItem
+       elif functionDepth:                  # add to prev
+           prevItem += currItem
+       else:                                # something new
+           if prevItem in ['&&', '||', '(', ')']:
+               newItems += [prevItem]
+               prevItem = currItem
+           else:                            # continue item
+               prevItem += currItem
+    newItems += [prevItem]
+    items = newItems
+    # nest parantheses
     nestedItems = recurseList(0,items)
+    # sort
     sortedItems = sortList(nestedItems)
     return sortedItems
 

@@ -28,8 +28,8 @@ class CutFlowPlotter(PlotterBase):
         hist = ROOT.TH1F('h%sCutFlow' % sample, 'CutFlow', len(selections),0,len(selections))
         valList = []
         for bin in range(len(selections)):
-            cutString = cut + '&' + selections[bin] if not sumEntries else\
-                        cut + ' & ' + ' & '.join(selections[:bin+1])
+            cutString = cut + ' && ' + selections[bin] if not sumEntries else\
+                        cut + ' && ' + ' && '.join(selections[:bin+1])
             val = self.getNumEntries(cutString,sample)
             #val = self.getNumEntries(selections[:bin+1],sample)
             valList += [val]
@@ -206,6 +206,8 @@ class CutFlowPlotter(PlotterBase):
         isprelim = kwargs.pop('isprelim', 1)
         for key, value in kwargs.iteritems():
             self.logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
+
+        ROOT.gDirectory.Delete('h*') # clear histogram memory
 
         self.cutFlowFile = self.plotDir+'/'+savename.replace('/','_')+'.txt'
         cutString = '{0: <20}'.format(self.analysis)

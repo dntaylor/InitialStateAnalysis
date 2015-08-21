@@ -73,6 +73,8 @@ class FakeRatePlotter(PlotterBase):
         for key, value in kwargs.iteritems():
             self.logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
 
+        ROOT.gDirectory.Delete('h*') # clear histogram memory
+
         self.canvas.SetLogy(logy)
         self.canvas.SetLogx(logx)
         self.canvas.SetRightMargin(0.14)

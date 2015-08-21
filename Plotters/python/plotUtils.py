@@ -26,6 +26,7 @@ def defineCutFlowMap(region,channels,mass):
         'zveto' : 'fabs(z1.mass-%f)>80.' %ZMASS,
         'met' : None,
         'dphi' : 'fabs(hN.dPhi)<%f/600.+1.95' %mass,
+        'dr' : 'hN.dR<%f/1400.+2.43' %mass,
         'mass' : 'hN.mass>0.9*%f&&hN.mass<1.1*%f' %(mass,mass)
     }
     regionMap['Hpp3l'][1] = {
@@ -33,6 +34,7 @@ def defineCutFlowMap(region,channels,mass):
         'zveto' : 'fabs(z1.mass-%f)>80.' %ZMASS,
         'met' : 'finalstate.met>20.',
         'dphi' : 'fabs(hN.dPhi)<%f/200.+1.15' %mass,
+        'dr' : 'hN.dR<%f/1400.+2.43' %mass, # TODO optimize
         'mass' : 'hN.mass>0.5*%f&&hN.mass<1.1*%f' %(mass,mass)
     }
     regionMap['Hpp3l'][2] = {
@@ -40,6 +42,7 @@ def defineCutFlowMap(region,channels,mass):
         'zveto' : 'fabs(z1.mass-%f)>50.' %ZMASS,
         'met' : 'finalstate.met>20.',
         'dphi' : 'fabs(hN.dPhi)<2.1',
+        'dr' : 'hN.dR<%f/1400.+2.43' %mass, # TODO optimize
         'mass' : 'hN.mass>0.5*%f-20.&&hN.mass<1.1*%f' %(mass,mass)
     }
     regionMap['Hpp4l'][0] = {
@@ -87,7 +90,9 @@ def defineCutFlowMap(region,channels,mass):
         #cutMap['labels'] = ['Preselection','s_{T}','Z Veto','E_{T}^{miss}','#Delta#phi','Mass window']
         #cutMap['labels_simple'] = ['Preselection','sT','Z Veto','MET','dPhi','Mass window']
         cutMap['labels'] = ['Preselection','s_{T}','Z Veto','#Delta#phi','Mass window']
+        cutMap['labels'] = ['Preselection','s_{T}','Z Veto','#Delta R','Mass window']
         cutMap['labels_simple'] = ['Preselection','sT','Z Veto','dPhi','Mass window']
+        cutMap['labels_simple'] = ['Preselection','sT','Z Veto','dR','Mass window']
         cutMap['preselection'] = ['All events', 'Three Lepton', 'Trigger', 'Fiducial',\
                                   'Trigger threshold', 'Lepton ID', 'Isolation', 'QCD Rejection',\
                                   'Lepton Charge', '4th Lepton Veto']
@@ -96,6 +101,7 @@ def defineCutFlowMap(region,channels,mass):
                  'zveto' : '',
                  'met' : '',
                  'dphi' : '',
+                 'dr' : '',
                  'mass' : '' }
     elif region == 'Hpp4l':
         cutMap['labels'] = ['Preselection','s_{T}','Z Veto','#Delta#phi','Mass window']
@@ -198,6 +204,7 @@ def defineCutFlowMap(region,channels,mass):
     if region == 'Hpp3l':
         #cutMap['cuts'] = [cuts['pre'], cuts['st'], cuts['zveto'], cuts['met'], cuts['dphi'], cuts['mass']]
         cutMap['cuts'] = [cuts['pre'], cuts['st'], cuts['zveto'], cuts['dphi'], cuts['mass']]
+        cutMap['cuts'] = [cuts['pre'], cuts['st'], cuts['zveto'], cuts['dr'], cuts['mass']]
     if region == 'Hpp4l':
         cutMap['cuts'] = [cuts['pre'], cuts['st'], cuts['zveto'], cuts['dphi'], cuts['mass']]
     return cutMap

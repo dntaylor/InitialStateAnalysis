@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+import argparse
+import itertools
+import sys
+import pickle
+import json
+import logging
 from InitialStateAnalysis.Plotters.Plotter import Plotter
 from InitialStateAnalysis.Plotters.ShapePlotter import ShapePlotter
 from InitialStateAnalysis.Plotters.CutFlowPlotter import CutFlowPlotter
@@ -7,12 +13,6 @@ from InitialStateAnalysis.Plotters.EfficiencyPlotter import EfficiencyPlotter
 from InitialStateAnalysis.Plotters.FakeRatePlotter import FakeRatePlotter
 from InitialStateAnalysis.Plotters.plotUtils import *
 from InitialStateAnalysis.Plotters.plotUtils import ZMASS, _3L_MASSES, _4L_MASSES
-import argparse
-import itertools
-import sys
-import pickle
-import json
-import logging
 
 def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
     savedir = kwargs.pop('savedir','')
@@ -159,6 +159,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     normalize = kwargs.pop('normalize',False)
     scaleFactor = kwargs.pop('scaleFactor','event.pu_weight*event.lep_scale*event.trig_scale')
     useSignal = analysis in ['Hpp3l','Hpp4l']
+    loglevel = kwargs.pop('loglevel','INFO')
     for key, value in kwargs.iteritems():
         logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
         return 0
@@ -217,7 +218,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     # do variables on same plot
     if useSignal:
         logger.info("%s:%s:%iTeV: Plotting signal" % (analysis, channel, runPeriod))
-        plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_signal',mergeDict=mergeDict,scaleFactor=scaleFactor)
+        plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_signal',mergeDict=mergeDict,scaleFactor=scaleFactor,loglevel=loglevel)
         masses = _3L_MASSES if nl==3 else _4L_MASSES
         plotter.initializeSignalSamples([sigMap[runPeriod][x] for x in masses])
         plotter.setIntLumi(intLumiMap[runPeriod])
@@ -253,7 +254,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
 
 
     # Plotting discriminating variables
-    plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,scaleFactor=scaleFactor,rootName='plots_2d')
+    plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,scaleFactor=scaleFactor,rootName='plots_2d',loglevel=loglevel)
     plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
     if useSignal: plotter.initializeSignalSamples([sigMap[runPeriod]['Sig']])
     if dataplot: plotter.initializeDataSamples([sigMap[runPeriod]['data']])
@@ -276,7 +277,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         plotter.plotMCDataSignalRatio2D('finalstate.sT', 'event.nvtx',[40,0,1000],[50,0,50],'sT_v_pu_mc',      xaxis='S_{T} (GeV/c^{2})',                            yaxis='Number PU Vertices',cut=myCut, plotdata=0, plotmc=1, plotsig=0)
         plotter.plotMCDataSignalRatio2D('finalstate.met','event.nvtx',[40,0,200], [50,0,50],'met_v_pu_mc',     xaxis='E_{T}^{miss} (GeV)',                           yaxis='Number PU Vertices',cut=myCut, plotdata=0, plotmc=1, plotsig=0)
 
-    plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,scaleFactor=scaleFactor)
+    plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,scaleFactor=scaleFactor,loglevel=loglevel)
     if useSignal:
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]+['Sig']])
     else:
@@ -323,7 +324,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
 
     # setup signal overlay plots
     if useSignal:
-        plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_overlay',mergeDict=mergeDict,scaleFactor=scaleFactor)
+        plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_overlay',mergeDict=mergeDict,scaleFactor=scaleFactor,loglevel=loglevel)
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
         plotter.initializeSignalSamples([sigMap[runPeriod]['Sig']])
         if dataplot: plotter.initializeDataSamples([sigMap[runPeriod]['data']])
@@ -342,7 +343,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     # plot shapes
     if plotShapes:
         logger.info("%s:%s:%iTeV: Plotting shapes" % (analysis, channel, runPeriod))
-        plotter = ShapePlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_shapes',mergeDict=mergeDict,scaleFactor=scaleFactor)
+        plotter = ShapePlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_shapes',mergeDict=mergeDict,scaleFactor=scaleFactor,loglevel=loglevel)
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
         if useSignal: plotter.initializeSignalSamples([sigMap[runPeriod]['Sig']])
         if dataplot: plotter.initializeDataSamples([sigMap[runPeriod]['data']])
@@ -357,7 +358,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     cutFlowMap = {}
     cutFlowMap[channel] = defineCutFlowMap(channel,finalStates,mass)
     #print cutFlowMap
-    plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_cutFlowSelections',mergeDict=mergeDict,scaleFactor=scaleFactor)
+    plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_cutFlowSelections',mergeDict=mergeDict,scaleFactor=scaleFactor,loglevel=loglevel)
     if useSignal:
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]+['Sig']])
     else:
@@ -368,7 +369,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     plotMethod = getattr(plotter,plotMode)
     if plotCutFlow:
         for i in range(len(cutFlowMap[channel]['cuts'])):
-            logger.ingo('%s:%s:%iTeV: Plotting cut flow selections %s' % (analysis, channel, runPeriod, cutFlowMap[channel]['labels_simple'][i]))
+            logger.info('%s:%s:%iTeV: Plotting cut flow selections %s' % (analysis, channel, runPeriod, cutFlowMap[channel]['labels_simple'][i]))
             thisCut = '&&'.join(cutFlowMap[channel]['cuts'][:i+1])
             plotDistributions(plotMethod,'%s&%s'%(myCut,thisCut),nl,isControl,savedir='cutflow/%s'%cutFlowMap[channel]['labels_simple'][i],analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
             if plotFinalStates:
@@ -385,7 +386,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
                     plotDistributions(plotMethod,'%s&channel=="%s"&%s'%(myCut,c,thisCut),nl,isControl,savedir='cutflow/%s_only/%s' %(cutFlowMap[channel]['labels_simple'][i],c),analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
 
     # plot cut flows on same plot
-    plotter = CutFlowPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_cutflow',mergeDict=mergeDict,scaleFactor=scaleFactor)
+    plotter = CutFlowPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_cutflow',mergeDict=mergeDict,scaleFactor=scaleFactor,loglevel=loglevel)
     plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
     if useSignal: plotter.initializeSignalSamples([sigMap[runPeriod]['Sig']])
     if dataplot: plotter.initializeDataSamples([sigMap[runPeriod]['data']])
@@ -410,7 +411,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     plotMode = 'plotCutFlowMCData' if dataplot else 'plotCutFlowMC'
     plotMethod = getattr(plotter,plotMode)
     plotMethod([myCut]+['%s&&%s' %(x,myCut) for x in plotChannelCuts],'individualChannels',labels=['Total']+plotChannelStrings,nosum=True,lumitext=33,logy=0)
-    plotter = CutFlowPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_cutflowSelectionsChannels',mergeDict=mergeDict,scaleFactor=scaleFactor)
+    plotter = CutFlowPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_cutflowSelectionsChannels',mergeDict=mergeDict,scaleFactor=scaleFactor,loglevel=loglevel)
     if useSignal:
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]+['Sig']])
     else:
@@ -426,7 +427,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     # plot efficiencies
     #if analysis in ['WZ']:
     #    logger.info("%s:%s:%iTeV: Plotting efficiency" % (analysis, channel, runPeriod))
-    #    plotter = EfficiencyPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_efficiency',mergeDict=mergeDict,scaleFactor=scaleFactor)
+    #    plotter = EfficiencyPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_efficiency',mergeDict=mergeDict,scaleFactor=scaleFactor,loglevel=loglevel)
     #    plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel] if x != 'WZ'])
     #    plotter.initializeSignalSamples([sigMap[runPeriod]['WZ']])
     #    if dataplot: plotter.initializeDataSamples([sigMap[runPeriod]['data']])
@@ -440,7 +441,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     #            plotMethod(['%s&&channel=="%s"&&%s' %(x,c,myCut) for x in cutFlowMap[channel]['cuts']],'%s/efficiency'%c,labels=cutFlowMap[channel]['labels'],lumitext=33,logy=0)
 
     #    # plot cut flows overlays
-    #    plotter = CutFlowPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_cutflow_overlay',mergeDict=mergeDict,scaleFactor=scaleFactor)
+    #    plotter = CutFlowPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_cutflow_overlay',mergeDict=mergeDict,scaleFactor=scaleFactor,loglevel=loglevel)
     #    plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel] if x not in ['WZ']])
     #    plotter.initializeSignalSamples([sigMap[runPeriod]['WZ']])
     #    if dataplot: plotter.initializeDataSamples([sigMap[runPeriod]['data']])
@@ -649,9 +650,9 @@ def main(argv=None):
     if args.period == 7:
         logger.warning("7 TeV not implemented")
     elif args.doFakeRate:
-        plotFakeRate(args.analysis,args.channel,args.period,mass=args.mass)
+        plotFakeRate(args.analysis,args.channel,args.period,mass=args.mass,loglevel=args.log)
     else:
-        plotRegion(args.analysis,args.channel,args.period,plotFinalStates=args.plotFinalStates,runTau=args.runTau,blind=args.unblind,mass=args.mass,plotJetBins=args.plotJetBins,plotOverlay=args.plotOverlay,plotShapes=args.plotShapes,plotCutFlow=args.plotCutFlow,myCut=args.cut,finalStates=args.finalStates,nostack=args.nostack,normalize=args.normalize,scaleFactor=args.scaleFactor)
+        plotRegion(args.analysis,args.channel,args.period,plotFinalStates=args.plotFinalStates,runTau=args.runTau,blind=args.unblind,mass=args.mass,plotJetBins=args.plotJetBins,plotOverlay=args.plotOverlay,plotShapes=args.plotShapes,plotCutFlow=args.plotCutFlow,myCut=args.cut,finalStates=args.finalStates,nostack=args.nostack,normalize=args.normalize,scaleFactor=args.scaleFactor,loglevel=args.log)
 
     return 0
 
