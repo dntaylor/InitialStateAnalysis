@@ -11,6 +11,7 @@ from InitialStateAnalysis.Plotters.ShapePlotter import ShapePlotter
 from InitialStateAnalysis.Plotters.CutFlowPlotter import CutFlowPlotter
 from InitialStateAnalysis.Plotters.EfficiencyPlotter import EfficiencyPlotter
 from InitialStateAnalysis.Plotters.FakeRatePlotter import FakeRatePlotter
+from InitialStateAnalysis.Plotters.CorrelationPlotter import CorrelationPlotter
 from InitialStateAnalysis.Plotters.plotUtils import *
 from InitialStateAnalysis.Plotters.plotUtils import ZMASS, _3L_MASSES, _4L_MASSES
 
@@ -189,6 +190,8 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     logger.info('%s:%s:%iTeV: Cuts to be applied: %s' % (analysis, channel, runPeriod, myCut))
     dataplot = (isControl or not blind)
     mergeDict = getMergeDict(runPeriod)
+    cutFlowMap = {}
+    cutFlowMap[channel] = defineCutFlowMap(channel,finalStates,mass)
 
     genChannels = {
         'ee': ['eee','eem','eet'],
@@ -214,6 +217,18 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         genCut = '(' + ' | '.join(['genChannel=="%s"'%x for x in genChannels[c] + ['aaa']]) + ')'
         recoCut = '(' + ' | '.join(['channel=="%s"'%x for x in recoChannels[c]]) + ')'
         customFinalStates['Hpp3l'][c] = genCut + '& ' + recoCut
+
+    # plotting correlation
+    plotter = CorrelationPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,scaleFactor=scaleFactor,rootName='plots_correlation',loglevel=loglevel)
+    plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
+    if useSignal: plotter.initializeSignalSamples([sigMap[runPeriod]['Sig']])
+    if dataplot: plotter.initializeDataSamples([sigMap[runPeriod]['data']])
+    plotter.setIntLumi(intLumiMap[runPeriod])
+
+    logger.info('%s:%s:%iTeV: Plotting correlation' % (analysis, channel, runPeriod))
+    plotMethod = getattr(plotter,'plotCorrelation')
+    plotMethod(cutFlowMap[channel]['cuts'][1:], 'correlation/mc', cut=myCut, labels=cutFlowMap[channel]['labels'][1:], plottype='mc')
+    if useSignal: plotMethod(cutFlowMap[channel]['cuts'][1:], 'correlation/sig', cut=myCut, labels=cutFlowMap[channel]['labels'][1:], plottype='sig')
 
     # do variables on same plot
     if useSignal:
@@ -250,6 +265,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
             t = tex[l]
             cuts = ['%s & %s' %(myCut,'l%iFlv=="%s"' %((x+1),l)) for x in range(nl)]
             plotMethod(['l%i.Pt'  %(x+1) for x in range(nl)], [100,0,1000], 'signal/%sPt'%name, yaxis='A.U.', xaxis='p_{T}^{%s} (GeV)' %t, legendpos=43, logy=0, cut=cuts, overflow=True, normalize=1)
+
 
 
 
@@ -355,9 +371,6 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
 
     # plot cut flows (each cut)
     logger.info("%s:%s:%iTeV: Plotting cut flow" % (analysis, channel, runPeriod))
-    cutFlowMap = {}
-    cutFlowMap[channel] = defineCutFlowMap(channel,finalStates,mass)
-    #print cutFlowMap
     plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_cutFlowSelections',mergeDict=mergeDict,scaleFactor=scaleFactor,loglevel=loglevel)
     if useSignal:
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]+['Sig']])

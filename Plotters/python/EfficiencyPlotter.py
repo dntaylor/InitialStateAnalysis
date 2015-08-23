@@ -152,7 +152,7 @@ class EfficiencyPlotter(PlotterBase):
         isprecf = kwargs.pop('isprecf',False)
         isprelim = kwargs.pop('isprelim', 1)
         for key, value in kwargs.iteritems():
-            print "Unrecognized parameter '" + key + "' = " + str(value)
+            self.logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
 
         self.canvas.SetLogy(logy)
 
