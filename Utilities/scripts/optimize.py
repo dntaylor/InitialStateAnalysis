@@ -9,29 +9,30 @@ from InitialStateAnalysis.Plotters.Optimizer import Optimizer
 from InitialStateAnalysis.Plotters.plotUtils import *
 from InitialStateAnalysis.Plotters.plotUtils import ZMASS, _3L_MASSES, _4L_MASSES
 
-def initializePlotter(analysis, period, mass, plotName, nl, runTau):
+def initializePlotter(analysis, period, plotName, nl, runTau):
     ntuples = 'ntuples/%s_%iTeV_%s' % (analysis,period,analysis)
     saves = '%s_%s_%iTeV' % (analysis,analysis,period)
-    sigMap = getSigMap(nl,mass)
+    sigMap = getSigMap(nl,500)
     intLumiMap = getIntLumiMap()
     regionBackground = getChannelBackgrounds(period)
     channels, leptons = getChannels(nl,runTau=runTau)
     mergeDict = getMergeDict(period)
     scaleFactor = 'event.pu_weight*event.lep_scale*event.trig_scale'
+    masses = _3L_MASSES if nl==3 else _4L_MASSES
     plotter = Plotter(analysis,ntupleDir=ntuples,saveDir=saves,period=period,mergeDict=mergeDict,scaleFactor=scaleFactor,rootName=plotName)
     plotter.initializeBackgroundSamples([sigMap[period][x] for x in regionBackground[analysis]])
-    plotter.initializeSignalSamples([sigMap[period]['Sig']])
+    plotter.initializeSignalSamples([sigMap[period][x] for x in masses])
     plotter.setIntLumi(intLumiMap[period])
     return plotter
 
-def initializeOptimizer(analysis, period, mass, plotName, preselection, sigSelection):
+def initializeOptimizer(analysis, period, plotName, preselection, sigSelection):
     nl = 3
-    plotter = initializePlotter(analysis, period, mass, plotName, nl, True)
+    plotter = initializePlotter(analysis, period, plotName, nl, True)
     optimizer = Optimizer(plotter)
     optimizer.setSelection(preselection,signalSelection=sigSelection)
     return optimizer
 
-def optimize(analysis, period, mass):
+def optimize(analysis, period):
     tauFlavor = {
         0: ['ee','em','mm'],
         1: ['et','mt'],
@@ -61,19 +62,23 @@ def optimize(analysis, period, mass):
     genSelect = '(' + ' | '.join(['genChannel=="%s"'%x for y in tauFlavor[nTaus] for x in genChannels[y]]) + ')'
     recoSelect = '(' + ' | '.join(['channel=="%s"'%x for y in tauFlavor[nTaus] for x in recoChannels[y]]) + ')'
 
-    optimizer = initializeOptimizer(analysis, period, mass, 'optimize.root', 'select.PassTight & %s' % recoSelect, genSelect)
+    optimizer = initializeOptimizer(analysis, period, 'optimize.root', 'select.PassTight & %s' % recoSelect, genSelect)
     
-    optimizer.addCut('st',    'finalstate.sT >',            100., 1500., 10.)
-    optimizer.addCut('dR',    'h1.dR <',                    1.,   5.,    0.05)
-    optimizer.addCut('zmass', 'fabs(z1.mass-%f) >' % ZMASS, 0.,   100.,  5.)
-    optimizer.addCut('hmass', 'fabs(h1.mass-%f) <' % mass,  0.,   200.,  5.)
-    #optimizer.addCut('st',    'finalstate.sT >',            100., 1500., 200.)
-    #optimizer.addCut('dR',    'h1.dR <',                    1.,   5.,    1.)
-    #optimizer.addCut('zmass', 'fabs(z1.mass-%f) >' % ZMASS, 0.,   100.,  20.)
-    #optimizer.addCut('hmass', 'fabs(h1.mass-%f) <' % mass,  0.,   200.,  40.)
+    optimizer.addCut('st',         'finalstate.sT >',            100., 1500., 10.)
+    optimizer.addCut('dR',         'h1.dR <',                      1.,    5.,  0.05)
+    optimizer.addCut('zmass',      'fabs(z1.mass-%f) >' % ZMASS,   0.,  100.,  5.)
+    optimizer.addCut('hmass',      'fabs(h1.mass-MASS) <',         0.,  400.,  5.)
+    optimizer.addCut('hmassUnder', 'h1.mass <',                    0., 1000., 10.)
+    optimizer.addCut('hmassOver',  'h1.mass >',                    0., 1000., 10.)
+    #optimizer.addCut('st',         'finalstate.sT >',            100., 1500., 200.)
+    #optimizer.addCut('dR',         'h1.dR <',                      1.,    5.,  1.)
+    #optimizer.addCut('zmass',      'fabs(z1.mass-%f) >' % ZMASS,   0.,  100.,  20.)
+    #optimizer.addCut('hmass',      'fabs(h1.mass-MASS) <',         0.,  400.,  100.)
+    #optimizer.addCut('hmassUnder', 'h1.mass <',                    0., 1000., 200.)
+    #optimizer.addCut('hmassOver',  'h1.mass >',                    0., 1000., 200.)
 
-    print 'Optimizing %i' % mass
-    optimizer.optimize()
+    print 'Optimizing'
+    optimizer.optimize(masses=_3L_MASSES)
 
 def parse_command_line(argv):
     parser = argparse.ArgumentParser(description="Produce datacards")
@@ -95,10 +100,7 @@ def main(argv=None):
 
     args = parse_command_line(argv)
 
-    masses = [args.mass]
-    if args.allMasses: masses = _3L_MASSES
-    for mass in masses:
-        optimize(args.analysis, args.period, mass)
+    optimize(args.analysis, args.period)
 
 if __name__ == "__main__":
     main()

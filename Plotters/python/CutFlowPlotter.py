@@ -247,8 +247,8 @@ class CutFlowPlotter(PlotterBase):
                 sigHists[signal].SetLineWidth(2)
                 sigHists[signal].Draw('hist same')
                 if signalscale != 1:
-                    sigLabels[signal] = dataStyles[signal]['name']
-                    dataStyles[signal]['name'] += ' (x%i)' % signalscale
+                    sigLabels[signal] = self.dataStyles[signal]['name']
+                    self.dataStyles[signal]['name'] += ' (x%i)' % signalscale
 
         if plotdata: 
             dataHist = self.getDataCutFlow_Preselection() if isprecf else self.getDataCutFlow(selections,cut,sumEntries=not nosum)
@@ -289,7 +289,7 @@ class CutFlowPlotter(PlotterBase):
         if plotsig:
             if signalscale != 1:
                 for signal in self.signal:
-                    dataStyles[signal]['name'] = sigLabels[signal]
+                    self.dataStyles[signal]['name'] = sigLabels[signal]
 
 
 

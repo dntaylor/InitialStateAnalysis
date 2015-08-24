@@ -23,6 +23,11 @@ def doDatacards(analysis,region,period,bp,bgMode,do4l):
     datacardString = '' if bgMode == "sideband" else "_{0}".format(bgMode)
     if do4l: datacardString += "_4l"
     python_mkdir(combineDatacardDir)
+    # merge Hpp3l
+    for mass in masses:
+        os.system('pushd {1}/{2}; combineCards.py {0}_[emt][emt]_[em][em][em].txt > {0}_comb.txt'.format(bp,datacardDir,mass))
+        os.system('pushd {1}/{2}; combineCards.py {0}_[emt][emt]_[em][em][em]_4l.txt > {0}_comb_4l.txt'.format(bp,datacardDir,mass))
+    # merge for combine
     if analysis in combos:
         for mass in masses:
             dirsToCombine = ['datacards/%s_%itev_%s/%s' % (a, period, a, bp) for a in combos[analysis]]

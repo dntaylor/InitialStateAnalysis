@@ -422,8 +422,23 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     # setup individual channel cuts on same plot
     plotChannelStrings, plotChannelCuts = getChannelStringsCuts(channel,finalStates)
     plotMode = 'plotCutFlowMCData' if dataplot else 'plotCutFlowMC'
+    if useSignal: plotMode = 'plotCutFlowMCDataSignal' if dataplot else 'plotCutFlowMCSignal'
     plotMethod = getattr(plotter,plotMode)
-    plotMethod([myCut]+['%s&&%s' %(x,myCut) for x in plotChannelCuts],'individualChannels',labels=['Total']+plotChannelStrings,nosum=True,lumitext=33,logy=0)
+    plotMethod([myCut]+['%s&&%s' %(x,myCut) for x in plotChannelCuts],'individualChannels',labels=['Total']+plotChannelStrings,nosum=True,lumitext=33,logy=0,signalscale=1000)
+    if plotFinalStates:
+        logger.info("%s:%s:%iTeV: Plotting individual finalStates" % (analysis, channel, runPeriod))
+        if analysis in customFinalStates:
+            plotGenChannelStrings, plotGenChannelCuts = getGenChannelStringsCuts(channel,customFinalStates[analysis])
+            for c in fsToPlot:
+                logger.info("%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c))
+                plotMethod(['%s&&channel=="%s"'%(myCut,c)]+['%s&&%s&&channel=="%s"' %(x,myCut,c) for x in plotGenChannelCuts],'%s/individualGenChannels'%c,labels=['Total']+plotGenChannelStrings,nosum=True,lumitext=33,logy=0,signalscale=1000)
+        if analysis in customFinalStates:
+            for c in customFinalStates[analysis]:
+               sel = customFinalStates[analysis][c]
+               logger.info("%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c))
+               plotMethod(['%s&&%s' %(myCut,sel)]+['%s&&%s&&%s' %(x,myCut,sel) for x in plotChannelCuts],'%s/individualChannels'%c,labels=['Total']+plotChannelStrings,nosum=True,lumitext=33,logy=0,signalscale=1000)
+
+
     plotter = CutFlowPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_cutflowSelectionsChannels',mergeDict=mergeDict,scaleFactor=scaleFactor,loglevel=loglevel)
     if useSignal:
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]+['Sig']])

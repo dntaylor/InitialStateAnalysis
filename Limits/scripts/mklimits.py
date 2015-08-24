@@ -6,6 +6,7 @@ import argparse
 import numpy as np
 from InitialStateAnalysis.Plotters.plotUtils import _3L_MASSES, _4L_MASSES, getSigMap, getIntLumiMap, getChannels, getMergeDict, ZMASS, getChannelBackgrounds
 from InitialStateAnalysis.Plotters.Plotter import Plotter
+from InitialStateAnalysis.Plotters.plotUtils import *
 from multiprocessing import Pool
 
 logger = logging.getLogger(__name__)
@@ -37,6 +38,8 @@ def limit(analysis,region,period,mass,**kwargs):
     scale = kwargs.pop('scale',[1.0])
     directory = kwargs.pop('directory','')
     chans = kwargs.pop('channels',['1'])
+    recoChans = kwargs.pop('recoChannels',['1'])
+    genChans = kwargs.pop('genChannels',['1'])
     mode = kwargs.pop('mode','sideband')
     scalefactor = kwargs.pop('scalefactor','event.pu_weight*event.lep_scale*event.trig_scale')
     datacardDir = kwargs.pop('datacardDir','./datacards')
@@ -45,6 +48,14 @@ def limit(analysis,region,period,mass,**kwargs):
     do4l = kwargs.pop('do4l',False)
     logger.info("Processing mass-point %i" % mass)
 
+    higgsChans = []
+    for genChan in genChans:
+        higgs = genChan[:2]
+        if higgs not in higgsChans: higgsChans += [higgs]
+    genCutMap = {}
+    for genChan in higgsChans:
+        genCutMap[genChan] = getChannelCutFlowMap(analysis,genChan,mass=mass)
+
     channels, leptons = getChannels(3 if analysis=='Hpp3l' or analysis=='WZ' else 4)
     #cutMap = defineCutFlowMap(analysis,channels,mass)
     cutMap = {
@@ -52,9 +63,11 @@ def limit(analysis,region,period,mass,**kwargs):
              'cuts' : ['1',\
                        'finalstate.sT>1.1*%f+60.' %mass,\
                        'fabs(z1.mass-%f)>80.' %ZMASS,\
-                       'h1.dPhi<%f/600.+1.95' %mass,\
+                       #'h1.dPhi<%f/600.+1.95' %mass,\
+                       'h1.dR<%f/1400.+2.43' %mass,\
                        'h1.mass>0.9*%f & h1.mass<1.1*%f' %(mass,mass)],
-             'labels' : ['Preselection','s_{T}','Z Veto','#Delta#phi','Mass window']
+             #'labels' : ['Preselection','s_{T}','Z Veto','#Delta#phi','Mass window']
+             'labels' : ['Preselection','s_{T}','Z Veto','#Delta R','Mass window']
         },
         'Hpp4l' : {
              'cuts' : ['1',\
@@ -76,9 +89,11 @@ def limit(analysis,region,period,mass,**kwargs):
                       'finalstate.sT>0.85*%f+125.' %mass,
                       'fabs(z1.mass-%f)>80.' %ZMASS,
                       'finalstate.met>20.',
-                      'fabs(h1.dPhi)<%f/200.+1.15' %mass,
+                      #'fabs(h1.dPhi)<%f/200.+1.15' %mass,
+                      'h1.dR<%f/1400.+2.43' %mass,\
                       'h1.mass>0.5*%f & h1.mass<1.1*%f' %(mass,mass)],
-            'labels' : ['Preselection','s_{T}','Z Veto','MET','#Delta#phi','Mass window']
+            #'labels' : ['Preselection','s_{T}','Z Veto','MET','#Delta#phi','Mass window']
+            'labels' : ['Preselection','s_{T}','Z Veto','MET','#Delta R','Mass window']
         }
     if numTaus == 2:
         cutMap['Hpp3l'] = {
@@ -86,9 +101,11 @@ def limit(analysis,region,period,mass,**kwargs):
                       '(finalstate.sT>%f-10||finalstate.sT>200.)' %mass,
                       'fabs(z1.mass-%f)>50.' %ZMASS,
                       'finalstate.met>20.',
-                      'fabs(h1.dPhi)<2.1',
+                      #'fabs(h1.dPhi)<2.1',
+                      'h1.dR<%f/1400.+2.43' %mass,\
                       'h1.mass>0.5*%f-20. & h1.mass<1.1*%f' %(mass,mass)],
-            'labels' : ['Preselection','s_{T}','Z Veto','MET','#Delta#phi','Mass window']
+            #'labels' : ['Preselection','s_{T}','Z Veto','MET','#Delta#phi','Mass window']
+            'labels' : ['Preselection','s_{T}','Z Veto','MET','#Delta R','Mass window']
         }
 
     nl = 3 if analysis in ['Hpp3l', 'WZ'] else 4
@@ -100,20 +117,29 @@ def limit(analysis,region,period,mass,**kwargs):
 
     # setup sideband stuff
     chanCuts = '(' + ' | '.join(chans) + ')'
-    minMass = 12.
-    maxMass = 800.
-    srCut = '(h1.mass>0.9*%f & h1.mass<1.1*%f & h1.mass>%f & h1.mass<%f)' %(mass,mass,minMass,maxMass)
-    sbCut = '((h1.mass<150. & h1.mass>%f) ||  (h1.mass>1.1*%f & h1.mass<%f))' %(minMass,mass,maxMass)
+    # old way
+    #minMass = 12.
+    #maxMass = 800.
+    #srCut = '(h1.mass>0.9*%f & h1.mass<1.1*%f & h1.mass>%f & h1.mass<%f)' %(mass,mass,minMass,maxMass)
+    #sbCut = '((h1.mass<150. & h1.mass>%f) ||  (h1.mass>1.1*%f & h1.mass<%f))' %(minMass,mass,maxMass)
+    #if numTaus==1:
+    #    srCut = '(h1.mass>0.5*%f & h1.mass<1.1*%f & h1.mass>%f & h1.mass<%f)' %(mass,mass,minMass,maxMass)
+    #    theMass = min(150.,.5*mass)
+    #    sbCut = '((h1.mass<%f & h1.mass>%f) ||  (h1.mass>1.1*%f & h1.mass<%f))' %(theMass,minMass,mass,maxMass)
+    #if numTaus==2:
+    #    srCut = '(h1.mass>0.5*%f-20. & h1.mass<1.1*%f & h1.mass>%f & h1.mass<%f)' %(mass,mass,minMass,maxMass)
+    #    theMass = min(150.,.5*mass-20.)
+    #    sbCut = '((h1.mass<%f & h1.mass>%f) ||  (h1.mass>1.1*%f & h1.mass<%f))' %(theMass,minMass,mass,maxMass)
+
+    # new way
+    srCut = '(h1.mass>0.9*%f & h1.mass<1.1*%f)' %(mass,mass)
+    sbCut = '((h1.mass<0.9*%f & h1.mass>0.7*%f) ||  (h1.mass>1.1*%f & h1.mass<1.3*%f))' %(mass,mass,mass,mass)
     if numTaus==1:
-        srCut = '(h1.mass>0.5*%f & h1.mass<1.1*%f & h1.mass>%f & h1.mass<%f)' %(mass,mass,minMass,maxMass)
-        theMass = min(150.,.5*mass)
-        sbCut = '((h1.mass<%f & h1.mass>%f) ||  (h1.mass>1.1*%f & h1.mass<%f))' %(theMass,minMass,mass,maxMass)
+        srCut = '(h1.mass>0.5*%f & h1.mass<1.1*%f)' %(mass,mass)
+        sbCut = '((h1.mass<0.5*%f & h1.mass>0.3*%f) ||  (h1.mass>1.1*%f & h1.mass<1.3*%f))' %(mass,mass,mass,mass)
     if numTaus==2:
-        srCut = '(h1.mass>0.5*%f-20. & h1.mass<1.1*%f & h1.mass>%f & h1.mass<%f)' %(mass,mass,minMass,maxMass)
-        theMass = min(150.,.5*mass-20.)
-        sbCut = '((h1.mass<%f & h1.mass>%f) ||  (h1.mass>1.1*%f & h1.mass<%f))' %(theMass,minMass,mass,maxMass)
-    #srCut = '(h1.mass>0.9*%f & h1.mass<1.1*%f)' %(mass,mass)
-    #sbCut = '((h1.mass<0.9*%f & h1.mass>0.7*%f) ||  (h1.mass>1.1*%f & h1.mass<1.3*%f))' %(mass,mass,mass,mass)
+        srCut = '(h1.mass>0.5*%f-20. & h1.mass<1.1*%f)' %(mass,mass)
+        sbCut = '((h1.mass<0.5*%f-20. & h1.mass>0.3*%f) ||  (h1.mass>1.1*%f & h1.mass<1.3*%f))' %(mass,mass,mass,mass)
     if not fullCut:
         fullCut = 'finalstate.sT>1.1*%f+60. & fabs(z1.mass-%f)>80. & h1.dPhi<%f/600.+1.95' %(mass,ZMASS,mass)
     finalSRCut = 'h1.mass>0.9*%f & h1.mass<1.1*%f' %(mass,mass)
@@ -245,8 +271,10 @@ def BP(analysis,region,period,mass,bp,**kwargs):
             if do4l: thisName += '_4l'
             # the reco level cut
             thisChanCut = 'channel=="%s"' % theChan
+            recoChans = [theChan]
             # the gen level cuts for reweighting
             genChannelCuts = ['%s & genChannel=="%s"' %(thisChanCut, x) for x in chanMap[analysis][c+'gen'] + ['aaa']]
+            genChans = chanMap[analysis][c+'gen'] + ['aaa']
             genChannelScales = [sf(ch[:2],ch[2:]) for ch in chanMap[analysis][c+'gen']] + [1]
             theCuts = []
             theScales = []
@@ -256,7 +284,7 @@ def BP(analysis,region,period,mass,bp,**kwargs):
                 theScales += [s]
             if not theScales: continue # no contributions at all
             # produce the data card
-            limit(analysis,region,period,mass,bp=bp,name=thisName,directory=bp,channels=theCuts,scale=theScales,doIndividualChannel=True,analysisChannel=c,numTaus=numTaus,do4l=do4l,**kwargs)
+            limit(analysis,region,period,mass,bp=bp,name=thisName,directory=bp,channels=theCuts,scale=theScales,doIndividualChannel=True,analysisChannel=c,numTaus=numTaus,do4l=do4l,recoChannels=recoChans,genChannels=genChans,**kwargs)
 
 def add_systematics_mc(limits,mass,signal,name,chans,sigscale,period,bp,doAlphaTest,doIndividualChannel,do4l):
     limits.add_group("hpp%i" % mass, signal, scale=sigscale, isSignal=True)

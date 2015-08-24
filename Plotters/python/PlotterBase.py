@@ -184,15 +184,31 @@ class PlotterBase(object):
         self.scaleFactor = scalefactor
 
     def getSignalEntries(self,selection,**kwargs):
+        signal = kwargs.pop('signal','')
+        doError = kwargs.pop('doError',False)
         result = 0
-        for sig in self.signal:
-            result += self.getNumEntries(selection,sig,**kwargs)
+        err2 = 0
+        if signal: # plot individual signal
+             result,err = self.getNumEntries(selection,signal,doError=True,**kwargs)
+        else:
+            for sig in self.signal:
+                temp = self.getNumEntries(selection,sig,doError=True**kwargs)
+                result += temp[0]
+                err2 += temp[1]**2
+            err = err2 ** 0.5
+        if doError: return result, err
         return result
 
     def getBackgroundEntries(self,selection,**kwargs):
+        doError = kwargs.pop('doError',False)
         result = 0
+        err2 = 0
         for bg in self.backgrounds:
-            result += self.getNumEntries(selection,bg,**kwargs)
+            temp = self.getNumEntries(selection,bg,doError=True,**kwargs)
+            result += temp[0]
+            err2 += temp[1]**2
+        err = err2**0.5
+        if doError: return result, err
         return result
 
     def getIndividualSampleEntries(self,sample,selection,scalefactor,**kwargs):

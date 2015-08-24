@@ -18,6 +18,71 @@ def python_mkdir(dir):
             pass
         else: raise
 
+def getChannelCutFlowMap(region,channel,**kwargs):
+    mass = kwargs.pop('mass',500) # for higgs
+    regionMap = { 'Hpp3l' : {}, 'Hpp4l' : {}, 'WZ' : {}, 'Z' : {}, 'TT' : {}, }
+    regionMap['Hpp3l'][0] = {
+        'st' : 'finalstate.sT>1.1*%f+60.' %mass,
+        'zveto' : 'fabs(z1.mass-%f)>80.' %ZMASS,
+        'met' : None,
+        'dphi' : 'fabs(hN.dPhi)<%f/600.+1.95' %mass,
+        'dr' : 'hN.dR<%f/1400.+2.43' %mass,
+        'mass' : 'hN.mass>0.9*%f&&hN.mass<1.1*%f' %(mass,mass)
+    }
+    regionMap['Hpp3l'][1] = {
+        'st' : 'finalstate.sT>0.85*%f+125.' %mass,
+        'zveto' : 'fabs(z1.mass-%f)>80.' %ZMASS,
+        'met' : 'finalstate.met>20.',
+        'dphi' : 'fabs(hN.dPhi)<%f/200.+1.15' %mass,
+        'dr' : 'hN.dR<%f/1400.+2.43' %mass, # TODO optimize
+        'mass' : 'hN.mass>0.5*%f&&hN.mass<1.1*%f' %(mass,mass)
+    }
+    regionMap['Hpp3l'][2] = {
+        'st' : '(finalstate.sT>%f-10||finalstate.sT>200.)' %mass,
+        'zveto' : 'fabs(z1.mass-%f)>50.' %ZMASS,
+        'met' : 'finalstate.met>20.',
+        'dphi' : 'fabs(hN.dPhi)<2.1',
+        'dr' : 'hN.dR<%f/1400.+2.43' %mass, # TODO optimize
+        'mass' : 'hN.mass>0.5*%f-20.&&hN.mass<1.1*%f' %(mass,mass)
+    }
+    regionMap['Hpp4l'][0] = {
+        'st' : 'finalstate.sT>0.6*%f+130.' %mass,
+        'zveto' : None,
+        'dphi' : None,
+        'mass' : 'hN.mass>0.9*%f&&hN.mass<1.1*%f' %(mass,mass)
+    }
+    regionMap['Hpp4l'][1] = {
+        'st' : '(finalstate.sT>%f+100.||finalstate.sT>400.)' %mass,
+        'zveto' : 'fabs(z1.mass-%f)>10.&&fabs(z2.mass-%f)>10.' %(ZMASS,ZMASS),
+        'dphi' : None,
+        'mass' : 'hN.mass>0.5*%f&&hN.mass<1.1*%f' %(mass,mass)
+    }
+    regionMap['Hpp4l'][2] = {
+        'st' : 'finalstate.sT>120.',
+        'zveto' : 'fabs(z1.mass-%f)>50.&&fabs(z2.mass-%f)>50.' %(ZMASS,ZMASS),
+        'dphi' : 'fabs(hN.dPhi)<2.5',
+        'mass' : None
+    }
+
+    cutMap = {}
+    if region == 'Hpp3l':
+        numTaus = channel[:2].count('t')
+        theMap = regionMap['Hpp3l'][numTaus]
+        cuts = {}
+        for cut in theMap:
+            if theMap[cut]:
+                cuts[cut] = theMap[cut].replace('hN','h1')
+        cuts['pre'] = '1'
+        #cutMap['cuts'] = [cuts['pre'], cuts['st'], cuts['zveto'], cuts['met'], cuts['dphi'], cuts['mass']]
+        #cutMap['cuts'] = [cuts['pre'], cuts['st'], cuts['zveto'], cuts['dphi'], cuts['mass']]
+        cutMap['cuts'] = [cuts['pre'], cuts['st'], cuts['zveto'], cuts['dr'], cuts['mass']]
+        cutMap['labels'] = ['Preselection','s_{T}','Z Veto','#Delta R','Mass window']
+    if region == 'Hpp4l':
+        cutMap['cuts'] = [cuts['pre'], cuts['st'], cuts['zveto'], cuts['dphi'], cuts['mass']]
+        cutMap['labels'] = ['Preselection','s_{T}','Z Veto','#Delta#phi','Mass window']
+    return cutMap
+
+
 def defineCutFlowMap(region,channels,mass):
     # define regions (based on number of taus in higgs candidate)
     regionMap = { 'Hpp3l' : {}, 'Hpp4l' : {}, 'WZ' : {}, 'Z' : {}, 'TT' : {}, }
@@ -489,8 +554,12 @@ def getSigMap(numLeptons,mass):
              'data': 'data'
         }
     }
-    for m in _3L_MASSES:
-        sigMap[8][m] = 'HPlusPlusHMinusHTo3L_M-%i_8TeV-calchep-pythia6' % m
+    if numLeptons==3:
+        for m in _3L_MASSES:
+            sigMap[8][m] = 'HPlusPlusHMinusHTo3L_M-%i_8TeV-calchep-pythia6' % m
+    if numLeptons==4:
+        for m in _4L_MASSES:
+            sigMap[8][m] = 'HPlusPlusHMinusMinusHTo4L_M-%i_8TeV-pythia6' % m
     return sigMap
 
 def getIntLumiMap():
@@ -525,6 +594,22 @@ def getChannelStringsCuts(region,channels):
     if region in ['WZ']: plotChannelStrings = channelStringsWZ
     if region in ['Z']: plotChannelStrings = channelStringsZ
     return plotChannelStrings, plotChannelCuts
+
+def getGenChannelStringsCuts(region,genChannels):
+    channelCharMap = {'e':'e', 'm':'#mu', 't':'#tau'}
+    channelStrings = []
+    channelCuts = []
+    for channel in genChannels:
+        channelString = ''
+        for c in channel:
+            channelString += channelCharMap[c]
+        channelStrings += [channelString]
+        theGenChannels = [channel+c for c in ['e','m','t']]
+        genCut = '(' + '||'.join(['genChannel=="%s"' %x for x in theGenChannels]) + ')'
+        channelCuts += [genCut]
+    return channelStrings, channelCuts
+            
+    
 
 def getChannelBackgrounds(runPeriod):
     channelBackground = {
