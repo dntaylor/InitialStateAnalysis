@@ -65,7 +65,7 @@ def optimize(analysis, period):
         
         optimizer.addCut('st',         'finalstate.sT >',            100., 1500., 10.)
         optimizer.addCut('dR',         'h1.dR <',                      1.,    5.,  0.05)
-        optimizer.addCut('zmass',      'fabs(z1.mass-%f) >' % ZMASS,   0.,  100.,  5.)
+        optimizer.addCut('zmass',      'fabs(z1.mass-%f) >' % ZMASS,   0.,  200.,  5.)
         optimizer.addCut('hmass',      'fabs(h1.mass-MASS) <',         0.,  400.,  5.)
         optimizer.addCut('hmassUnder', 'h1.mass <',                    0., 1000., 10.)
         optimizer.addCut('hmassOver',  'h1.mass >',                    0., 1000., 10.)
