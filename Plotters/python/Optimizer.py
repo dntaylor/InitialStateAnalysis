@@ -11,6 +11,9 @@ import pickle
 import logging
 import sys
 from multiprocessing import Pool
+from InitialStateAnalysis.Plotters.Plotter import Plotter
+from InitialStateAnalysis.Plotters.plotUtils import *
+from InitialStateAnalysis.Plotters.plotUtils import ZMASS, _3L_MASSES, _4L_MASSES
 
 class FunctionOptimizer( ROOT.TPyMultiGenFunction ):
     '''Multi-variable optimizer'''
@@ -47,6 +50,7 @@ class Optimizer(object):
 
     def setSelection(self,selection,**kwargs):
         '''Set preselection for both background and signal.'''
+        self.numTaus = kwargs.pop('numTaus',0)
         signalSelection = kwargs.pop('signalSelection','1')
         backgroundSelection = kwargs.pop('backgroundSelection','1')
         self.selection = selection
@@ -115,58 +119,87 @@ class Optimizer(object):
                         print '%s: Eff=%f: %f' % (cut['name'],c,val)
 
         optimizationVals = {}
+        jobs = []
         for cut in self.cuts:
-            optimizationVals[cut['name']] = {}
             for mass in masses:
-                optimizationVals[cut['name']][mass] = self.getIndividualMassCut(cut,mass,sigSel,bgSel)
-        with open('optimize.pkl','wb') as file:
-            pickle.dump(optimizationVals,file)
+                jobs += [(cut,mass,self.numTaus,sigSel,bgSel)]
 
+        #theWrapper(jobs[0])
 
-    def getIndividualMassCut(self,cut,mass,sigSel,bgSel):
-        optimizationVals = {}
-        cutname = cut['name']
-        print '%s:%i' % (cutname,mass)
-        cutRange = [cut['min']+x*cut['step'] for x in range(int((cut['max']-cut['min'])/cut['step']))]
-        thisFunc = cut['func'].replace('MASS',str(mass))
-        sigSample = 'HPlusPlusHMinusHTo3L_M-%i_8TeV-calchep-pythia6' % mass
-        print '%s:%s Passing signal' % (cutname,mass)
-        sigpass = [self.plotter.getSignalEntries('%s & %s %f' %(sigSel, thisFunc, cutVal),signal=sigSample,doError=True) for cutVal in cutRange]
-        print '%s:%s All signal' % (cutname,mass)
-        sigall = self.plotter.getSignalEntries(sigSel,signal=sigSample,doError=True)
-        print '%s:%s Passing background' % (cutname,mass)
-        bgpass = [self.plotter.getBackgroundEntries('%s & %s %f' %(bgSel, thisFunc, cutVal),doError=True) for cutVal in cutRange]
-        print '%s:%s All background' % (cutname,mass)
-        bgall = self.plotter.getBackgroundEntries(bgSel,doError=True)
-        sigEff = []
-        bgEff = []
-        significance1 = []
-        significance2 = []
-        significance3 = []
-        for s,b in zip(sigpass,bgpass):
-            sigEffVal = s[0]/sigall[0] if sigall[0] else -1.
-            sigEffErr = sigEffVal * (s[1]**2/s[0]**2 + sigall[1]**2/sigall[0]**2)**0.5 if sigall[0] and s[0] else -1.
-            sigEff += [[sigEffVal, sigEffErr]]
-            bgEffVal = b[0]/bgall[0] if bgall[0] else -1.
-            bgEffErr = bgEffVal * (b[1]**2/b[0]**2 + bgall[1]**2/bgall[0]**2)**0.5 if b[0] and bgall[0] else -1.
-            bgEff += [[bgEffVal, bgEffErr]]
-            significance1Val = s[0]/b[0]**0.5 if b[0] else -1.
-            significance1Err = significance1Val * (s[1]**2/s[0]**2 + 0.5**2 * b[1]**2/b[0]**2)**0.5 if s[0] and b[0] else -1.
-            significance1 += [[significance1Val, significance1Err]]
-            significance2Val = s[0]/(s[0] + b[0])**0.5 if (s[0]+b[0]) else -1.
-            significance2Err = significance2Val * (s[1]**2/s[0]**2 + 0.5**2 * (s[1]**2 + b[1]**2)/(s[0] + b[0])**2)**0.5 if s[0] and (s[0]+b[0]) else -1.
-            significance2 += [[significance2Val, significance2Err]]
-            significance3Val = (s[0]+b[0])**0.5 - b[0]**0.5
-            significance3Err = 0.5 * ((s[1]**2+b[1]**2)/(s[0]+b[0]) + b[1]**2/b[0])**0.5 if (s[0]+b[0]) and b[0] else -1.
-            significance3 += [[significance3Val, significance3Err]]
-        optimizationVals['cuts'] = cutRange
-        optimizationVals['sigPass'] = sigpass
-        optimizationVals['bgPass'] = bgpass
-        optimizationVals['sigAll'] = sigall
-        optimizationVals['bgAll'] = bgall
-        optimizationVals['sigEff'] = sigEff
-        optimizationVals['bgEff'] = bgEff
-        optimizationVals['significance1'] = significance1
-        optimizationVals['significance2'] = significance2
-        optimizationVals['significance3'] = significance3
-        return optimizationVals
+        p = Pool(8)
+        try:
+            p.map_async(theWrapper, jobs).get(999999)
+        except KeyboardInterrupt:
+            p.terminate()
+            print 'Cancelled'
+            sys.exit(1)
+
+def initializePlotter(analysis, period, plotName, nl, runTau):
+    ntuples = 'ntuples/%s_%iTeV_%s' % (analysis,period,analysis)
+    saves = '%s_%s_%iTeV' % (analysis,analysis,period)
+    sigMap = getSigMap(nl,500)
+    intLumiMap = getIntLumiMap()
+    regionBackground = getChannelBackgrounds(period)
+    channels, leptons = getChannels(nl,runTau=runTau)
+    mergeDict = getMergeDict(period)
+    scaleFactor = 'event.pu_weight*event.lep_scale*event.trig_scale'
+    masses = _3L_MASSES if nl==3 else _4L_MASSES
+    plotter = Plotter(analysis,ntupleDir=ntuples,saveDir=saves,period=period,mergeDict=mergeDict,scaleFactor=scaleFactor,rootName=plotName)
+    plotter.initializeBackgroundSamples([sigMap[period][x] for x in regionBackground[analysis]])
+    plotter.initializeSignalSamples([sigMap[period][x] for x in masses])
+    plotter.setIntLumi(intLumiMap[period])
+    return plotter
+
+def theWrapper(args):
+    getIndividualMassCut(args[0],args[1],args[2],args[3],args[4])
+
+def getIndividualMassCut(cut,mass,numTaus,sigSel,bgSel):
+    plotter = initializePlotter('Hpp3l',8,'tempPlots.root',3,True)
+    optimizationVals = {}
+    cutname = cut['name']
+    print '%s:%i' % (cutname,mass)
+    cutRange = [cut['min']+x*cut['step'] for x in range(int((cut['max']-cut['min'])/cut['step']))]
+    thisFunc = cut['func'].replace('MASS',str(mass))
+    sigSample = 'HPlusPlusHMinusHTo3L_M-%i_8TeV-calchep-pythia6' % mass
+    print '%s:%s Passing signal' % (cutname,mass)
+    sigpass = [plotter.getSignalEntries('%s & %s %f' %(sigSel, thisFunc, cutVal),signal=sigSample,doError=True) for cutVal in cutRange]
+    print '%s:%s All signal' % (cutname,mass)
+    sigall = plotter.getSignalEntries(sigSel,signal=sigSample,doError=True)
+    print '%s:%s Passing background' % (cutname,mass)
+    bgpass = [plotter.getBackgroundEntries('%s & %s %f' %(bgSel, thisFunc, cutVal),doError=True) for cutVal in cutRange]
+    print '%s:%s All background' % (cutname,mass)
+    bgall = plotter.getBackgroundEntries(bgSel,doError=True)
+    sigEff = []
+    bgEff = []
+    significance1 = []
+    significance2 = []
+    significance3 = []
+    for s,b in zip(sigpass,bgpass):
+        sigEffVal = s[0]/sigall[0] if sigall[0] else -1.
+        sigEffErr = sigEffVal * (s[1]**2/s[0]**2 + sigall[1]**2/sigall[0]**2)**0.5 if sigall[0] and s[0] else -1.
+        sigEff += [[sigEffVal, sigEffErr]]
+        bgEffVal = b[0]/bgall[0] if bgall[0] else -1.
+        bgEffErr = bgEffVal * (b[1]**2/b[0]**2 + bgall[1]**2/bgall[0]**2)**0.5 if b[0] and bgall[0] else -1.
+        bgEff += [[bgEffVal, bgEffErr]]
+        significance1Val = s[0]/b[0]**0.5 if b[0] else -1.
+        significance1Err = significance1Val * (s[1]**2/s[0]**2 + 0.5**2 * b[1]**2/b[0]**2)**0.5 if s[0] and b[0] else -1.
+        significance1 += [[significance1Val, significance1Err]]
+        significance2Val = s[0]/(s[0] + b[0])**0.5 if (s[0]+b[0]) else -1.
+        significance2Err = significance2Val * (s[1]**2/s[0]**2 + 0.5**2 * (s[1]**2 + b[1]**2)/(s[0] + b[0])**2)**0.5 if s[0] and (s[0]+b[0]) else -1.
+        significance2 += [[significance2Val, significance2Err]]
+        significance3Val = (s[0]+b[0])**0.5 - b[0]**0.5
+        significance3Err = 0.5 * ((s[1]**2+b[1]**2)/(s[0]+b[0]) + b[1]**2/b[0])**0.5 if (s[0]+b[0]) and b[0] else -1.
+        significance3 += [[significance3Val, significance3Err]]
+    optimizationVals['cuts'] = cutRange
+    optimizationVals['sigPass'] = sigpass
+    optimizationVals['bgPass'] = bgpass
+    optimizationVals['sigAll'] = sigall
+    optimizationVals['bgAll'] = bgall
+    optimizationVals['sigEff'] = sigEff
+    optimizationVals['bgEff'] = bgEff
+    optimizationVals['significance1'] = significance1
+    optimizationVals['significance2'] = significance2
+    optimizationVals['significance3'] = significance3
+    python_mkdir('pickles')
+    with open('pickles/optimize_%iTau_%s_%i.pkl' %(numTaus,cutname,mass),'wb') as file:
+        pickle.dump(optimizationVals,file)

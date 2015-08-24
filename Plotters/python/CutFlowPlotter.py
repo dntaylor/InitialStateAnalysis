@@ -221,8 +221,15 @@ class CutFlowPlotter(PlotterBase):
 
         # hack to show both mc and data on same plot
         if plotdata:
-            data = self.getDataCutFlow_Preselection(printString=False) if isprecf else self.getDataCutFlow(selections,cut,sumEntries=not nosum,printString=False)
-            datamax = data.GetMaximum()
+            dataHist = self.getDataCutFlow_Preselection(printString=False) if isprecf else self.getDataCutFlow(selections,cut,sumEntries=not nosum,printString=False)
+            datamax = dataHist.GetMaximum()
+        if plotsig:
+            sigHists = {}
+            sigmax = 0.
+            for signal in self.signal:
+                sigHists[signal] = self.getSampleCutFlow_Preselection(signal) if isprecf else self.getSampleCutFlow(selections,cut,signal,sumEntries=not nosum)
+                sigHists[signal].Scale(signalscale)
+                sigmax = max(sigmax,sigHists[signal].GetMaximum())
 
         numSelections = len(selections)
         mc = self.getMCStackCutFlow_Preselection() if isprecf else self.getMCStackCutFlow(selections,cut,sumEntries=not nosum)
@@ -230,6 +237,7 @@ class CutFlowPlotter(PlotterBase):
         mc.GetYaxis().SetTitle('Events')
         mc.GetYaxis().SetTitleOffset(1)
         newymax = max(datamax,mc.GetMaximum()) if plotdata else mc.GetMaximum()
+        newymax = max(sigmax,newymax) if plotsig else newymax
         mc.SetMaximum(1.2*newymax)
         if isprecf: mc.SetMinimum(1)
         mc.SetMinimum(1) if logy else mc.SetMinimum(0)
@@ -238,20 +246,18 @@ class CutFlowPlotter(PlotterBase):
                 mc.GetHistogram().GetXaxis().SetBinLabel(bin+1,labels[bin])
 
         if plotsig:
-            sigLabels = {}
-            sigHists = {}
+            #sigHists = {}
             for signal in self.signal:
-                sigHists[signal] = self.getSampleCutFlow_Preselection(signal) if isprecf else self.getSampleCutFlow(selections,cut,signal,sumEntries=not nosum)
-                sigHists[signal].Scale(signalscale)
+                #sigHists[signal] = self.getSampleCutFlow_Preselection(signal) if isprecf else self.getSampleCutFlow(selections,cut,signal,sumEntries=not nosum)
+                #sigHists[signal].Scale(signalscale)
                 sigHists[signal].SetFillStyle(0)
                 sigHists[signal].SetLineWidth(2)
-                sigHists[signal].Draw('hist same')
                 if signalscale != 1:
-                    sigLabels[signal] = self.dataStyles[signal]['name']
-                    self.dataStyles[signal]['name'] += ' (x%i)' % signalscale
+                    sigHists[signal].SetTitle(self.dataStyles[signal]['name'] + ' (x%i)' % signalscale)
+                sigHists[signal].Draw('hist same')
 
         if plotdata: 
-            dataHist = self.getDataCutFlow_Preselection() if isprecf else self.getDataCutFlow(selections,cut,sumEntries=not nosum)
+            #dataHist = self.getDataCutFlow_Preselection() if isprecf else self.getDataCutFlow(selections,cut,sumEntries=not nosum)
             dataHist.SetMarkerStyle(20)
             dataHist.SetMarkerSize(1.0)
             dataHist.SetLineColor(ROOT.kBlack)
@@ -284,12 +290,3 @@ class CutFlowPlotter(PlotterBase):
             bgNum = sum([float(x.split()[-1]) for x in lines[1:-1]])
             sNum = float(lines[-2].split()[-1]) if plotdata else float(lines[-1].split()[-1])
             sOverRootBG = sNum/math.sqrt(bgNum) if bgNum else 9999999.
-
-        # reset signal names
-        if plotsig:
-            if signalscale != 1:
-                for signal in self.signal:
-                    self.dataStyles[signal]['name'] = sigLabels[signal]
-
-
-

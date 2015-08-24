@@ -25,11 +25,11 @@ def initializePlotter(analysis, period, plotName, nl, runTau):
     plotter.setIntLumi(intLumiMap[period])
     return plotter
 
-def initializeOptimizer(analysis, period, plotName, preselection, sigSelection):
+def initializeOptimizer(analysis, period, plotName, preselection, sigSelection, numTaus):
     nl = 3
     plotter = initializePlotter(analysis, period, plotName, nl, True)
     optimizer = Optimizer(plotter)
-    optimizer.setSelection(preselection,signalSelection=sigSelection)
+    optimizer.setSelection(preselection,signalSelection=sigSelection,numTaus=numTaus)
     return optimizer
 
 def optimize(analysis, period):
@@ -57,28 +57,27 @@ def optimize(analysis, period):
         'tt': ['eee','eem','eme','emm','mee','mem','mme','mmm'],
     }
 
-    nTaus = 0
+    for nTaus in range(3):
+        genSelect = '(' + ' || '.join(['genChannel=="%s"'%x for y in tauFlavor[nTaus] for x in genChannels[y]]) + ')'
+        recoSelect = '(' + ' || '.join(['channel=="%s"'%x for y in tauFlavor[nTaus] for x in recoChannels[y]]) + ')'
 
-    genSelect = '(' + ' | '.join(['genChannel=="%s"'%x for y in tauFlavor[nTaus] for x in genChannels[y]]) + ')'
-    recoSelect = '(' + ' | '.join(['channel=="%s"'%x for y in tauFlavor[nTaus] for x in recoChannels[y]]) + ')'
+        optimizer = initializeOptimizer(analysis, period, 'optimize.root', 'select.PassTight & %s' % recoSelect, genSelect, nTaus)
+        
+        optimizer.addCut('st',         'finalstate.sT >',            100., 1500., 10.)
+        optimizer.addCut('dR',         'h1.dR <',                      1.,    5.,  0.05)
+        optimizer.addCut('zmass',      'fabs(z1.mass-%f) >' % ZMASS,   0.,  100.,  5.)
+        optimizer.addCut('hmass',      'fabs(h1.mass-MASS) <',         0.,  400.,  5.)
+        optimizer.addCut('hmassUnder', 'h1.mass <',                    0., 1000., 10.)
+        optimizer.addCut('hmassOver',  'h1.mass >',                    0., 1000., 10.)
+        #optimizer.addCut('st',         'finalstate.sT >',            100., 1500., 200.)
+        #optimizer.addCut('dR',         'h1.dR <',                      1.,    5.,  1.)
+        #optimizer.addCut('zmass',      'fabs(z1.mass-%f) >' % ZMASS,   0.,  100.,  20.)
+        #optimizer.addCut('hmass',      'fabs(h1.mass-MASS) <',         0.,  400.,  100.)
+        #optimizer.addCut('hmassUnder', 'h1.mass <',                    0., 1000., 200.)
+        #optimizer.addCut('hmassOver',  'h1.mass >',                    0., 1000., 200.)
 
-    optimizer = initializeOptimizer(analysis, period, 'optimize.root', 'select.PassTight & %s' % recoSelect, genSelect)
-    
-    optimizer.addCut('st',         'finalstate.sT >',            100., 1500., 10.)
-    optimizer.addCut('dR',         'h1.dR <',                      1.,    5.,  0.05)
-    optimizer.addCut('zmass',      'fabs(z1.mass-%f) >' % ZMASS,   0.,  100.,  5.)
-    optimizer.addCut('hmass',      'fabs(h1.mass-MASS) <',         0.,  400.,  5.)
-    optimizer.addCut('hmassUnder', 'h1.mass <',                    0., 1000., 10.)
-    optimizer.addCut('hmassOver',  'h1.mass >',                    0., 1000., 10.)
-    #optimizer.addCut('st',         'finalstate.sT >',            100., 1500., 200.)
-    #optimizer.addCut('dR',         'h1.dR <',                      1.,    5.,  1.)
-    #optimizer.addCut('zmass',      'fabs(z1.mass-%f) >' % ZMASS,   0.,  100.,  20.)
-    #optimizer.addCut('hmass',      'fabs(h1.mass-MASS) <',         0.,  400.,  100.)
-    #optimizer.addCut('hmassUnder', 'h1.mass <',                    0., 1000., 200.)
-    #optimizer.addCut('hmassOver',  'h1.mass >',                    0., 1000., 200.)
-
-    print 'Optimizing'
-    optimizer.optimize(masses=_3L_MASSES)
+        print 'Optimizing'
+        optimizer.optimize(masses=_3L_MASSES)
 
 def parse_command_line(argv):
     parser = argparse.ArgumentParser(description="Produce datacards")
