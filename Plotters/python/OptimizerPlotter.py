@@ -20,6 +20,16 @@ def plotOptimization(variable,numTaus,nl):
         with open(filename,'rb') as f:
             optVals[mass] = pickle.load(f)
 
+    functions = {
+        'hmassUnder' : [['x-0.9*x'],['x-x/2'],['x-(x/2-20)']],
+        'hmassOver'  : [['1.1*x-x'],['1.1*x-x'],['1.1*x-x']],
+        'zmass'      : [['80'],['80'],['50']],
+        'dPhi'       : [['x/600+1.95'],['x/200+1.15'],['2.1']],
+        'dR'         : [['x/1400.+2.43'],['x/1400.+2.43'],['x/1400.+2.43']],
+        'met'        : [['0'],['20'],['40']],
+        'st'         : [['1.1*x+60'],['0.85*x+125'],['x-10','200']]
+    }
+
     canvas = ROOT.TCanvas('c','c',50,50,800,600)
     canvas.SetFillColor(0)
     canvas.SetBorderMode(0)
@@ -45,6 +55,7 @@ def plotOptimization(variable,numTaus,nl):
             for b,val in enumerate(optVals[mass][plotType]):
                 hist.SetBinContent(m+1,b+1,val[0])
                 hist.SetBinError(m+1,b+1,val[1])
+        hist.GetXaxis().SetTitle('M(\\ell^{\\pm}\\ell^{\\pm}) (GeV/c^2)')
         hist.Draw('colz goff')
         # draw a fit line
         if 'significance' in plotType:
@@ -84,6 +95,15 @@ def plotOptimization(variable,numTaus,nl):
             maxVal.Draw('same')
             down.Draw('same')
             up.Draw('same')
+
+        if variable in functions:
+            funcs = {}
+            for func in functions[variable][numTaus]:
+                funcs[func] = ROOT.TF1("7TeV_%s"%(plotType),func,extMasses[0],extMasses[-1])
+                funcs[func].SetLineColor(ROOT.kBlack)
+                funcs[func].SetLineWidth(3)
+                funcs[func].Draw("lsame")
+
 
         savedir = 'plots/Hpp3l_Hpp3l_8TeV/png/optimization'
         python_mkdir(savedir)

@@ -9,9 +9,6 @@ from InitialStateAnalysis.Plotters.Plotter import Plotter
 from InitialStateAnalysis.Plotters.plotUtils import *
 from multiprocessing import Pool
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
-
 class Scales(object):
     def __init__(self, br_ee, br_em, br_et, br_mm, br_mt, br_tt):
         self.a_3l = np.array([br_ee, br_em, br_et, br_mm, br_mt, br_tt], dtype=float)
@@ -46,7 +43,7 @@ def limit(analysis,region,period,mass,**kwargs):
     fullCut = kwargs.pop('fullCut','')
     numTaus = kwargs.pop('numTaus',0)
     do4l = kwargs.pop('do4l',False)
-    logger.info("Processing mass-point %i" % mass)
+    logging.info("Processing BP %s mass-point %i" % (bp,mass))
 
     higgsChans = []
     for genChan in genChans:
@@ -132,14 +129,14 @@ def limit(analysis,region,period,mass,**kwargs):
     #    sbCut = '((h1.mass<%f & h1.mass>%f) ||  (h1.mass>1.1*%f & h1.mass<%f))' %(theMass,minMass,mass,maxMass)
 
     # new way
-    srCut = '(h1.mass>0.9*%f & h1.mass<1.1*%f)' %(mass,mass)
-    sbCut = '((h1.mass<0.9*%f & h1.mass>0.7*%f) ||  (h1.mass>1.1*%f & h1.mass<1.3*%f))' %(mass,mass,mass,mass)
+    srCut = '(h1.mass>0.9*%f && h1.mass<1.1*%f)' %(mass,mass)
+    sbCut = '((h1.mass<0.9*%f && h1.mass>12.) ||  (h1.mass>1.1*%f & h1.mass<800.))' %(mass,mass)
     if numTaus==1:
         srCut = '(h1.mass>0.5*%f & h1.mass<1.1*%f)' %(mass,mass)
-        sbCut = '((h1.mass<0.5*%f & h1.mass>0.3*%f) ||  (h1.mass>1.1*%f & h1.mass<1.3*%f))' %(mass,mass,mass,mass)
+        sbCut = '((h1.mass<0.5*%f & h1.mass>12.) ||  (h1.mass>1.1*%f & h1.mass<800.))' %(mass,mass)
     if numTaus==2:
         srCut = '(h1.mass>0.5*%f-20. & h1.mass<1.1*%f)' %(mass,mass)
-        sbCut = '((h1.mass<0.5*%f-20. & h1.mass>0.3*%f) ||  (h1.mass>1.1*%f & h1.mass<1.3*%f))' %(mass,mass,mass,mass)
+        sbCut = '((h1.mass<0.5*%f-20. & h1.mass>12.) ||  (h1.mass>1.1*%f & h1.mass<800.))' %(mass,mass)
     if not fullCut:
         fullCut = 'finalstate.sT>1.1*%f+60. & fabs(z1.mass-%f)>80. & h1.dPhi<%f/600.+1.95' %(mass,ZMASS,mass)
     finalSRCut = 'h1.mass>0.9*%f & h1.mass<1.1*%f' %(mass,mass)
@@ -221,7 +218,6 @@ def BP(analysis,region,period,mass,bp,**kwargs):
         allowedChannels = ['ee','em','et','mm','mt','tt']
     else:
         print 'Unknown branching point: %s' %bp
-    logger.info("Processing branching point %s" % bp)
     sf = getattr(s,'scale_%s'%analysis)
     if do4l: sf = getattr(s,'scale_Hpp4l')
     chanMap = {
@@ -549,6 +545,7 @@ def parse_command_line(argv):
     parser.add_argument('-ab','--allBranchingPoints',action='store_true',help='Run over all branching points for H++')
     parser.add_argument('-bg','--bgMode',nargs='?',type=str,const='sideband',default='sideband',choices=['mc','sideband'],help='Choose BG estimation')
     parser.add_argument('-sf','--scaleFactor',type=str,default='event.pu_weight*event.lep_scale*event.trig_scale',help='Scale factor for MC.')
+    parser.add_argument('-l','--log',nargs='?',type=str,const='INFO',default='INFO',choices=['INFO','DEBUG','WARNING','ERROR','CRITICAL'],help='Log level for logger')
 
     args = parser.parse_args(argv)
     return args
@@ -558,6 +555,10 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     args = parse_command_line(argv)
+
+    loglevel = getattr(logging,args.log)
+    logging.basicConfig(format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', level=loglevel, datefmt='%Y-%m-%d %H:%M:%S')
+    logger = logging.getLogger(__name__)
 
     branchingPoints = ['ee100','em100','mm100','et100','mt100','tt100','BP1','BP2','BP3','BP4']
     masses = _3L_MASSES if args.analysis=='Hpp3l' else _4L_MASSES
