@@ -20,13 +20,14 @@ def doDatacards(analysis,region,period,bp,bgMode,do4l):
     datacardLimitsDir = 'limitData/%s_%itev_%s/%s' % (analysis, period, region, bp)
     masses = _3L_MASSES if analysis == 'Hpp3l' else _4L_MASSES
     if do4l: masses = _4L_MASSES
+    if period==13: masses = [500]
     datacardString = '' if bgMode == "sideband" else "_{0}".format(bgMode)
     if do4l: datacardString += "_4l"
     python_mkdir(combineDatacardDir)
     # merge Hpp3l
     for mass in masses:
-        os.system('pushd {1}/{2}; combineCards.py {0}_[emt][emt]_[em][em][em].txt > {0}_comb.txt'.format(bp,datacardDir,mass))
-        os.system('pushd {1}/{2}; combineCards.py {0}_[emt][emt]_[em][em][em]_4l.txt > {0}_comb_4l.txt'.format(bp,datacardDir,mass))
+        if not do4l: os.system('pushd {1}/{2}; combineCards.py {0}_[em][em][em].txt > {0}_comb.txt'.format(bp,datacardDir,mass))
+        if do4l: os.system('pushd {1}/{2}; combineCards.py {0}_[em][em][em]_4l.txt > {0}_comb_4l.txt'.format(bp,datacardDir,mass))
     # merge for combine
     if analysis in combos:
         for mass in masses:
@@ -39,7 +40,6 @@ def doDatacards(analysis,region,period,bp,bgMode,do4l):
             os.system('combineCards.py %s > %s' % (combineDatacardDir,' '.join(cardsToCombine),outCard))
             
     os.system('cp -r %s %s' %(datacardDir, combineDatacardDir))
-    if period==13: masses = [500]
     python_mkdir(datacardLimitsDir)
     for mass in masses:
         os.system('cd %s/%s/%i; combine -m %i -M Asymptotic %s%s.txt' % (combineDatacardDir, bp, mass, mass, bp, datacardString))

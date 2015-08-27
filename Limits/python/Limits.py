@@ -36,7 +36,6 @@ class Limits(object):
         self.srcut = srcut
 
         self.log = logging.getLogger(__name__)
-        logging.basicConfig(level=logging.INFO)
 
         os.system("mkdir -p %s" % self.out_dir)
 
@@ -73,8 +72,14 @@ class Limits(object):
             'scale': scale,
             'isSig': is_sig,
             'isData': is_data}
+        message = 'Added %s with scales %s' % (group_name, str(scale))
+        if is_sig: message += ' (signal)'
+        if is_data: message += ' (data)'
+        self.log.debug(message)
+        self.log.debug('Samples: %s' % str(self.sample_groups[group_name]['sample_names']))
 
     def add_systematics(self, syst_name, syst_type, **kwargs):
+        self.log.debug('Adding systematic %s type %s' % (syst_name, syst_type))
         self.datacard.add_syst(syst_name, syst_type, **kwargs)
 
     def get_var_weights(self, sample, var, cut, scale):
@@ -88,7 +93,7 @@ class Limits(object):
         val = 0
         tree = tfile.Get(self.region)
         #print tree.GetEntries()
-        tree.Draw('event.pu_weight>>h%s()'%sample,'event.trig_scale*event.lep_scale*(%s)' %cut,'goff')
+        tree.Draw('1>>h%s(1,0,2)'%sample,'%s*(%s)' %(self.scalefactor,cut),'goff')
         if not ROOT.gDirectory.Get("h%s" %sample): return [0,0]
         hist = ROOT.gDirectory.Get("h%s" %sample).Clone("hnew%s" %sample)
         hist.Sumw2()
@@ -116,14 +121,14 @@ class Limits(object):
         var = 'mass'
 
         if isinstance(cuts, str):
-            cut = self.base_selections + '&&' + cuts
+            cut = self.base_selections + ' && ' + cuts
             cutMC_data = cut
             cutSig = cut
         else:
-            cutMC_data = self.base_selections + '&&(' + '||'.join(cuts) + ')' # full selection for bg and data
-            cutSig = [self.base_selections + '&&' + x for x in cuts]          # different selections or signal so it can be scaled
-            cuts = '(' + '||'.join(cuts) + ')'
-        if self.region=='WZ': cuts += ' & select.PassTight'
+            cutMC_data = self.base_selections + ' && (' + ' || '.join(cuts) + ')' # full selection for bg and data
+            cutSig = [self.base_selections + ' && ' + x for x in cuts]          # different selections or signal so it can be scaled
+            cuts = '(' + ' || '.join(cuts) + ')'
+        if self.region=='WZ': cuts += ' && select.PassTight'
 
         myCut = '1'
 
@@ -197,9 +202,17 @@ class Limits(object):
                for sample_name in self.sample_groups[key]["sample_names"]:
                    if type(scale) is list:
                        for s,c in zip(scale,cutSig):
-                           wgts.append(self.get_var_weights(sample_name,var,c,s))
+                           self.log.debug("Scale applied: %f" % s)
+                           self.log.debug("Cut applied: %s" % c)
+                           thisWeight = self.get_var_weights(sample_name,var,c,s)
+                           self.log.debug("Weight: %f +/- %f" % (thisWeight[0],thisWeight[1]))
+                           wgts.append(thisWeight)
                    else:
-                       wgts.append(self.get_var_weights(sample_name,var,cutMC_data,scale))
+                       self.log.debug("Scale applied: %f" % scale)
+                       self.log.debug("Cut applied: %s" % cutMC_data)
+                       thisWeight = self.get_var_weights(sample_name,var,cutMC_data,scale)
+                       self.log.debug("Weight: %f +/- %f" % (thisWeight[0],thisWeight[1]))
+                       wgts.append(thisWeight)
                bgMap[key] = [sum([x[0] for x in wgts]), sum([x[1]**2 for x in wgts])**0.5]
 
         mcVal = 0.

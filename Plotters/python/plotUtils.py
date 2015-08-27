@@ -18,50 +18,99 @@ def python_mkdir(dir):
             pass
         else: raise
 
+def getChannelSidebandSignalRegion(region,channel,**kwargs):
+    mass = kwargs.pop('mass',500) # for higgs
+    regionMap = {'Hpp3l':{}, 'Hpp4l':{}}
+    regionMap['Hpp3l'][0] = {
+        'sr' : 'hN.mass>0.9*%f && hN.mass<1.1*%f' %(mass,mass),
+        'sb' : '((hN.mass<0.9*%f && hN.mass>12.) ||  (hN.mass>1.1*%f && hN.mass<800.))' %(mass,mass)
+    }
+    regionMap['Hpp3l'][1] = {
+        'sr' : 'hN.mass>0.5*%f && hN.mass<1.1*%f' %(mass,mass),
+        'sb' : '((hN.mass<0.5*%f && hN.mass>12.) ||  (hN.mass>1.1*%f && hN.mass<800.))' %(mass,mass)
+    }
+    regionMap['Hpp3l'][2] = {
+        'sr' : 'hN.mass>0.5*%f && hN.mass<1.1*%f' %(mass,mass),
+        'sb' : '((hN.mass<0.5*%f-20. && hN.mass>12.) ||  (hN.mass>1.1*%f && hN.mass<800.))' %(mass,mass)
+    }
+    regionMap['Hpp4l'][0] = {
+        'sr' : 'hN.mass>0.9*%f && hN.mass<1.1*%f' %(mass,mass),
+        #'sb' : '((hN.mass<0.9*%f && hN.mass>12.) ||  (hN.mass>1.1*%f && hN.mass<800.))' %(mass,mass)
+        'sb' : '(hN.mass>12. && hN.mass<800. && !(hN.mass>0.9*%f && hN.mass<1.1*%f))' %(mass,mass)
+    }
+    regionMap['Hpp4l'][1] = {
+        'sr' : 'hN.mass>0.5*%f && hN.mass<1.1*%f' %(mass,mass),
+        #'sb' : '((hN.mass<0.5*%f && hN.mass>12.) ||  (hN.mass>1.1*%f && hN.mass<800.))' %(mass,mass)
+        'sb' : '(hN.mass>12. && hN.mass<800. && !(hN.mass>0.5*%f && hN.mass<1.1*%f))' %(mass,mass)
+    }
+    regionMap['Hpp3l'][2] = {
+        'sr' : 'hN.mass>0.5*%f && hN.mass<1.1*%f' %(mass,mass),
+        #'sb' : '((hN.mass<0.5*%f-20. && hN.mass>12.) ||  (hN.mass>1.1*%f && hN.mass<800.))' %(mass,mass)
+        'sb' : '(hN.mass>12. && hN.mass<800. && !(hN.mass>0.5*%f-20. && hN.mass<1.1*%f))' %(mass,mass)
+    }
+    if region == 'Hpp3l':
+        numTaus = channel[:2].count('t')
+        theMap = regionMap['Hpp3l'][numTaus]
+        cutMap = {'srcut': theMap['sr'].replace('hN','h1'), 'sbcut': theMap['sb'].replace('hN','h1')}
+    if region == 'Hpp4l':
+        h1Taus = channel[:2].count('t')
+        h2Taus = channel[2:].count('t')
+        h1Map = regionMap['Hpp4l'][h1Taus]
+        h2Map = regionMap['Hpp4l'][h2Taus]
+        cutMap = {
+            'srcut': h1Map['sr'].replace('hN','h1') + ' && ' + h2Map['sr'].replace('hN','h2'),
+            'sbcut': h1Map['sb'].replace('hN','h1') + ' && ' + h2Map['sb'].replace('hN','h2'),
+        }
+    return cutMap
+
+
 def getChannelCutFlowMap(region,channel,**kwargs):
     mass = kwargs.pop('mass',500) # for higgs
     regionMap = { 'Hpp3l' : {}, 'Hpp4l' : {}, 'WZ' : {}, 'Z' : {}, 'TT' : {}, }
     regionMap['Hpp3l'][0] = {
         'st' : 'finalstate.sT>1.1*%f+60.' %mass,
-        'zveto' : 'fabs(z1.mass-%f)>80.' %ZMASS,
+        'zveto' : 'abs(z1.mass-%f)>80.' %ZMASS,
         'met' : None,
-        'dphi' : 'fabs(hN.dPhi)<%f/600.+1.95' %mass,
+        'dphi' : 'abs(hN.dPhi)<%f/600.+1.95' %mass,
         'dr' : 'hN.dR<%f/1400.+2.43' %mass,
-        'mass' : 'hN.mass>0.9*%f&&hN.mass<1.1*%f' %(mass,mass)
+        'mass' : 'hN.mass>0.9*%f&&hN.mass<1.1*%f' %(mass,mass),
     }
     regionMap['Hpp3l'][1] = {
         'st' : 'finalstate.sT>0.85*%f+125.' %mass,
-        'zveto' : 'fabs(z1.mass-%f)>80.' %ZMASS,
+        'zveto' : 'abs(z1.mass-%f)>80.' %ZMASS,
         'met' : 'finalstate.met>20.',
-        'dphi' : 'fabs(hN.dPhi)<%f/200.+1.15' %mass,
+        'dphi' : 'abs(hN.dPhi)<%f/200.+1.15' %mass,
         'dr' : 'hN.dR<%f/1400.+2.43' %mass, # TODO optimize
-        'mass' : 'hN.mass>0.5*%f&&hN.mass<1.1*%f' %(mass,mass)
+        'mass' : 'hN.mass>0.5*%f&&hN.mass<1.1*%f' %(mass,mass),
     }
     regionMap['Hpp3l'][2] = {
         'st' : '(finalstate.sT>%f-10||finalstate.sT>200.)' %mass,
-        'zveto' : 'fabs(z1.mass-%f)>50.' %ZMASS,
+        'zveto' : 'abs(z1.mass-%f)>50.' %ZMASS,
         'met' : 'finalstate.met>20.',
-        'dphi' : 'fabs(hN.dPhi)<2.1',
+        'dphi' : 'abs(hN.dPhi)<2.1',
         'dr' : 'hN.dR<%f/1400.+2.43' %mass, # TODO optimize
-        'mass' : 'hN.mass>0.5*%f-20.&&hN.mass<1.1*%f' %(mass,mass)
+        'mass' : 'hN.mass>0.5*%f-20.&&hN.mass<1.1*%f' %(mass,mass),
     }
     regionMap['Hpp4l'][0] = {
         'st' : 'finalstate.sT>0.6*%f+130.' %mass,
         'zveto' : None,
         'dphi' : None,
-        'mass' : 'hN.mass>0.9*%f&&hN.mass<1.1*%f' %(mass,mass)
+        'dr' : None,
+        'mass' : 'hN.mass>0.9*%f&&hN.mass<1.1*%f' %(mass,mass),
     }
     regionMap['Hpp4l'][1] = {
         'st' : '(finalstate.sT>%f+100.||finalstate.sT>400.)' %mass,
-        'zveto' : 'fabs(z1.mass-%f)>10.&&fabs(z2.mass-%f)>10.' %(ZMASS,ZMASS),
+        'zveto' : 'abs(z1.mass-%f)>10.&&abs(z2.mass-%f)>10.' %(ZMASS,ZMASS),
         'dphi' : None,
-        'mass' : 'hN.mass>0.5*%f&&hN.mass<1.1*%f' %(mass,mass)
+        'dr' : None,
+        'mass' : 'hN.mass>0.5*%f&&hN.mass<1.1*%f' %(mass,mass),
     }
     regionMap['Hpp4l'][2] = {
         'st' : 'finalstate.sT>120.',
-        'zveto' : 'fabs(z1.mass-%f)>50.&&fabs(z2.mass-%f)>50.' %(ZMASS,ZMASS),
-        'dphi' : 'fabs(hN.dPhi)<2.5',
-        'mass' : None
+        'zveto' : 'abs(z1.mass-%f)>50.&&abs(z2.mass-%f)>50.' %(ZMASS,ZMASS),
+        'dphi' : 'abs(hN.dPhi)<2.5',
+        'dr' : 'hN.dR<%f/1400.+2.43' %mass, # TODO optimize
+        'mass' : 'hN.mass>0.5*%f-20.&&hN.mass<1.1*%f' %(mass,mass),
     }
 
     cutMap = {}
@@ -72,14 +121,32 @@ def getChannelCutFlowMap(region,channel,**kwargs):
         for cut in theMap:
             if theMap[cut]:
                 cuts[cut] = theMap[cut].replace('hN','h1')
+            else:
+                cuts[cut] = '1'
         cuts['pre'] = '1'
         #cutMap['cuts'] = [cuts['pre'], cuts['st'], cuts['zveto'], cuts['met'], cuts['dphi'], cuts['mass']]
         #cutMap['cuts'] = [cuts['pre'], cuts['st'], cuts['zveto'], cuts['dphi'], cuts['mass']]
         cutMap['cuts'] = [cuts['pre'], cuts['st'], cuts['zveto'], cuts['dr'], cuts['mass']]
         cutMap['labels'] = ['Preselection','s_{T}','Z Veto','#Delta R','Mass window']
     if region == 'Hpp4l':
-        cutMap['cuts'] = [cuts['pre'], cuts['st'], cuts['zveto'], cuts['dphi'], cuts['mass']]
-        cutMap['labels'] = ['Preselection','s_{T}','Z Veto','#Delta#phi','Mass window']
+        h1Taus = channel[:2].count('t')
+        h2Taus = channel[2:].count('t')
+        h1Map = regionMap['Hpp4l'][h1Taus]
+        h2Map = regionMap['Hpp4l'][h2Taus]
+        cuts = {}
+        for cut in h1Map:
+            thisCut = []
+            if h1Map[cut]:
+                thisCut += [h1Map[cut].replace('hN','h1')]
+            if h2Map[cut]:
+                thisCut += [h2Map[cut].replace('hN','h2')]
+            if thisCut:
+                cuts[cut] = ' && '.join(thisCut)
+            else:
+                cuts[cut] = '1'
+        cuts['pre'] = '1'
+        cutMap['cuts'] = [cuts['pre'], cuts['st'], cuts['zveto'], cuts['dr'], cuts['mass']]
+        cutMap['labels'] = ['Preselection','s_{T}','Z Veto','#Delta R','Mass window']
     return cutMap
 
 
