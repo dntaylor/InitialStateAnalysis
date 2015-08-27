@@ -46,7 +46,7 @@ class AnalyzerHpp4l(AnalyzerBase):
             self.object_definitions['h2'] = ['emt', 'emt']
             self.object_definitions['z1'] = ['emt', 'emt']
             self.object_definitions['z2'] = ['emt', 'emt']
-        self.lepargs = {'loose':True}
+        self.lepargs = {'tight':True}
         self.cutflow_labels = ['Trigger','Fiducial','Trigger Threshold','ID','QCD Suppression']
         super(AnalyzerHpp4l, self).__init__(sample_name, file_list, out_file, period, **kwargs)
 
@@ -111,6 +111,26 @@ class AnalyzerHpp4l(AnalyzerBase):
 
             return bestLeptons
 
+    # override getGenChannel
+    def getGenChannel(self, rtrow):
+        # return channel in for ++-, --+, or ++--
+        if 'HPlusPlus' not in self.file_name: return 'aaa'
+        hpp = int(rtrow.hppDecay) # order is reversed (11 = ee, 31 = et, 13 not possible)
+        hmm = int(rtrow.hmmDecay)
+        hp = int(rtrow.hpDecay)
+        hm = int(rtrow.hmDecay)
+        lepMap = { '1':'e', '2':'m', '3':'t' }
+        if hpp and hm:
+            h3l = 100*hm + hpp
+        elif hmm and hp:
+            h3l = 100*hp + hmm
+        elif hpp and hmm:
+            h3l = 100*hmm + hpp
+        else:
+            print 'Error: ', hpp, hmm, hp, hm
+            return 'aaa'
+        return ''.join([lepMap[l] for l in reversed(str(h3l))])
+
 
     ###########################
     ### Define preselection ###
@@ -121,7 +141,8 @@ class AnalyzerHpp4l(AnalyzerBase):
         cuts.add(self.fiducial)
         cuts.add(self.overlap)
         cuts.add(self.trigger_threshold)
-        cuts.add(self.ID_loose)
+        #cuts.add(self.ID_loose)
+        cuts.add(self.ID_tight) # put it to WZ for now... 
         cuts.add(self.qcd_rejection)
         return cuts
 
@@ -173,8 +194,6 @@ class AnalyzerHpp4l(AnalyzerBase):
                 kwargs['isoCut']['m'] = 0.4
         return kwargs
 
-
-
     def trigger(self, rtrow):
         triggers = ["mu17ele8isoPass", "mu8ele17isoPass",
                     "doubleETightPass", "doubleMuPass", "doubleMuTrkPass"]
@@ -214,7 +233,7 @@ class AnalyzerHpp4l(AnalyzerBase):
     def trigger_threshold(self, rtrow):
         pts = [getattr(rtrow, "%sPt" % l) for l in self.objects]
         pts.sort(reverse=True)
-        return pts[0] > 25.0 and pts[1] > 15.0
+        return pts[0] > 20.0 and pts[1] > 10.0
 
     def qcd_rejection(self, rtrow):
         qcd_pass = [getattr(rtrow, "%s_%s_Mass" % (l[0], l[1])) > 12.0
