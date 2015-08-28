@@ -72,13 +72,14 @@ def get_sample_names(analysis,period,samples):
             'WZ_W'       : 'N/A',
             'WZ_FakeRate': 'N/A',
             'Hpp3l'      : '2015-06-01-8TeV',
-            'Hpp4l'      : 'N/A', 
+            'Hpp4l'      : '2015-08-26-8TeV-4l', 
         },
         '13': {
             'Z'          : 'N/A',
             'TT'         : 'N/A',
             'Hpp2l'      : 'N/A',
-            'WZ'         : '2015-08-03-13TeV-WZ',
+            #'WZ'         : '2015-08-03-13TeV-WZ', # last 50ns with old CBIDs
+            'WZ'         : '2015-08-27-13TeV-WZ',
             'WZ_W'       : '2015-08-03-13TeV-2l',
             'WZ_FakeRate': '2015-08-17-13TeV-1l',
             'Hpp3l'      : '2015-03-30-13TeV-3l',

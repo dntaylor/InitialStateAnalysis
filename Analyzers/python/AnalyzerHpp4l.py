@@ -70,7 +70,12 @@ class AnalyzerHpp4l(AnalyzerBase):
             massdiff = abs(mass1-mass2)
 
             if SS1 and SS2 and OS:
-                cands.append([massdiff,list(l)]) # minimization is by mass diff
+                #order by pt
+                l0 = l[0] if getattr(rtrow,'%sPt' % l[0]) > getattr(rtrow,'%sPt' % l[1]) else l[1]
+                l1 = l[1] if getattr(rtrow,'%sPt' % l[0]) > getattr(rtrow,'%sPt' % l[1]) else l[0]
+                l2 = l[2] if getattr(rtrow,'%sPt' % l[2]) > getattr(rtrow,'%sPt' % l[3]) else l[3]
+                l3 = l[3] if getattr(rtrow,'%sPt' % l[2]) > getattr(rtrow,'%sPt' % l[3]) else l[2]
+                cands.append([massdiff,[l0,l1,l2,l3]]) # minimization is by mass diff
 
         if not len(cands): return 0
 

@@ -250,7 +250,7 @@ dataStyles['SingleTop'] = {
     'fillstyle': 1001,
 }
 
-for mass in [110, 130, 170, 200, 250, 300, 350, 400, 450, 500, 600, 700]:
+for mass in [110, 130, 150, 170, 200, 250, 300, 350, 400, 450, 500, 600, 700]:
     dataStyles['DBLH_m%i' % mass] = {
         'legendstyle' : 'f',
         'drawstyle' : 'hist',

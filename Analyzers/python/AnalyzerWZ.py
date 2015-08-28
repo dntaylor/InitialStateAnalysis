@@ -141,7 +141,7 @@ class AnalyzerWZ(AnalyzerBase):
         if self.isData: cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.ID_tight)
-        cuts.add(self.mass3l)
+        #cuts.add(self.mass3l)
         cuts.add(self.zSelection)
         cuts.add(self.wSelection)
         return cuts

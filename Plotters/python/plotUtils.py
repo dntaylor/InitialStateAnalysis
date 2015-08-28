@@ -181,18 +181,21 @@ def defineCutFlowMap(region,channels,mass):
         'st' : 'finalstate.sT>0.6*%f+130.' %mass,
         'zveto' : None,
         'dphi' : None,
+        'dr' : 'hN.dR<%f/1400.+2.43' %mass, # TODO optimize
         'mass' : 'hN.mass>0.9*%f&&hN.mass<1.1*%f' %(mass,mass)
     }
     regionMap['Hpp4l'][1] = {
         'st' : '(finalstate.sT>%f+100.||finalstate.sT>400.)' %mass,
         'zveto' : 'fabs(z1.mass-%f)>10.&&fabs(z2.mass-%f)>10.' %(ZMASS,ZMASS),
         'dphi' : None,
+        'dr' : 'hN.dR<%f/1400.+2.43' %mass, # TODO optimize
         'mass' : 'hN.mass>0.5*%f&&hN.mass<1.1*%f' %(mass,mass)
     }
     regionMap['Hpp4l'][2] = {
         'st' : 'finalstate.sT>120.',
         'zveto' : 'fabs(z1.mass-%f)>50.&&fabs(z2.mass-%f)>50.' %(ZMASS,ZMASS),
         'dphi' : 'fabs(hN.dPhi)<2.5',
+        'dr' : 'hN.dR<%f/1400.+2.43' %mass, # TODO optimize
         'mass' : None
     }
     regionMap['WZ'][0] = {
@@ -221,9 +224,9 @@ def defineCutFlowMap(region,channels,mass):
     if region == 'Hpp3l':
         #cutMap['labels'] = ['Preselection','s_{T}','Z Veto','E_{T}^{miss}','#Delta#phi','Mass window']
         #cutMap['labels_simple'] = ['Preselection','sT','Z Veto','MET','dPhi','Mass window']
-        cutMap['labels'] = ['Preselection','s_{T}','Z Veto','#Delta#phi','Mass window']
+        #cutMap['labels'] = ['Preselection','s_{T}','Z Veto','#Delta#phi','Mass window']
         cutMap['labels'] = ['Preselection','s_{T}','Z Veto','#Delta R','Mass window']
-        cutMap['labels_simple'] = ['Preselection','sT','Z Veto','dPhi','Mass window']
+        #cutMap['labels_simple'] = ['Preselection','sT','Z Veto','dPhi','Mass window']
         cutMap['labels_simple'] = ['Preselection','sT','Z Veto','dR','Mass window']
         cutMap['preselection'] = ['All events', 'Three Lepton', 'Trigger', 'Fiducial',\
                                   'Trigger threshold', 'Lepton ID', 'Isolation', 'QCD Rejection',\
@@ -236,8 +239,12 @@ def defineCutFlowMap(region,channels,mass):
                  'dr' : '',
                  'mass' : '' }
     elif region == 'Hpp4l':
-        cutMap['labels'] = ['Preselection','s_{T}','Z Veto','#Delta#phi','Mass window']
-        cutMap['labels_simple'] = ['Preselection','sT','Z Veto','dPhi','Mass window']
+        #cutMap['labels'] = ['Preselection','s_{T}','Z Veto','#Delta#phi','Mass window']
+        #cutMap['labels'] = ['Preselection','s_{T}','Z Veto','#Delta R','Mass window']
+        cutMap['labels'] = ['Preselection','s_{T}','Mass window']
+        #cutMap['labels_simple'] = ['Preselection','sT','Z Veto','dPhi','Mass window']
+        #cutMap['labels_simple'] = ['Preselection','sT','Z Veto','dR','Mass window']
+        cutMap['labels_simple'] = ['Preselection','sT','Mass window']
         cutMap['preselection'] = ['All events', 'Four Lepton', 'Trigger', 'Fiducial',\
                                   'Trigger threshold', 'Lepton ID', 'Isolation', 'QCD Rejection',\
                                   'Lepton Charge']
@@ -245,6 +252,7 @@ def defineCutFlowMap(region,channels,mass):
                  'st' : '',
                  'zveto' : '',
                  'dphi' : '',
+                 'dr' : '',
                  'mass' : '' }
     elif region == 'WZ':
         cutMap['preselection'] = ['All events','Three lepton','Trigger','Fiducial','4th lepton veto']
@@ -335,10 +343,12 @@ def defineCutFlowMap(region,channels,mass):
 
     if region == 'Hpp3l':
         #cutMap['cuts'] = [cuts['pre'], cuts['st'], cuts['zveto'], cuts['met'], cuts['dphi'], cuts['mass']]
-        cutMap['cuts'] = [cuts['pre'], cuts['st'], cuts['zveto'], cuts['dphi'], cuts['mass']]
+        #cutMap['cuts'] = [cuts['pre'], cuts['st'], cuts['zveto'], cuts['dphi'], cuts['mass']]
         cutMap['cuts'] = [cuts['pre'], cuts['st'], cuts['zveto'], cuts['dr'], cuts['mass']]
     if region == 'Hpp4l':
-        cutMap['cuts'] = [cuts['pre'], cuts['st'], cuts['zveto'], cuts['dphi'], cuts['mass']]
+        #cutMap['cuts'] = [cuts['pre'], cuts['st'], cuts['zveto'], cuts['dphi'], cuts['mass']]
+        #cutMap['cuts'] = [cuts['pre'], cuts['st'], cuts['zveto'], cuts['dr'], cuts['mass']]
+        cutMap['cuts'] = [cuts['pre'], cuts['st'], cuts['mass']]
     return cutMap
 
 def getChannels(numLeptons,**kwargs):
@@ -525,19 +535,19 @@ def getMergeDict(period):
             'TTJetsSemiLepMGDecays': '1',
         }
         sampleMergeDict['ZJets']     = {
-            #'DYJetsToLL_M-10To50filter_8TeV-madgraph'         : '1',
-            #'Z1jets_M50'                                      : '1',
-            #'Z2jets_M50_S10'                                  : '1',
-            #'Z3jets_M50'                                      : '1',
-            #'Z4jets_M50'                                      : '1',
-            #'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball': 'event.GenNUP==5',
+            'DYJetsToLL_M-10To50filter_8TeV-madgraph'         : '1',
+            'Z1jets_M50'                                      : '1',
+            'Z2jets_M50_S10'                                  : '1',
+            'Z3jets_M50'                                      : '1',
+            'Z4jets_M50'                                      : '1',
+            'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball': 'event.GenNUP==5',
             #'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball': '1',
-            'DYJetsToLL_M-10To50filter_8TeV-madgraph_filtered'         : '1',
-            'Z1jets_M50_filtered'                                      : '1',
-            'Z2jets_M50_S10_filtered'                                  : '1',
-            'Z3jets_M50_filtered'                                      : '1',
-            'Z4jets_M50_filtered'                                      : '1',
-            'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball_filtered': 'event.GenNUP==5',
+            #'DYJetsToLL_M-10To50filter_8TeV-madgraph_filtered'         : '1',
+            #'Z1jets_M50_filtered'                                      : '1',
+            #'Z2jets_M50_S10_filtered'                                  : '1',
+            #'Z3jets_M50_filtered'                                      : '1',
+            #'Z4jets_M50_filtered'                                      : '1',
+            #'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball_filtered': 'event.GenNUP==5',
             #'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball_filtered': '1',
         }
         sampleMergeDict['WJets']     = {

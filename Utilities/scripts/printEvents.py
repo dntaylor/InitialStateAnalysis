@@ -46,7 +46,43 @@ def enumerate_leps(final_state):
     return out
 
 def printISAEvent(row,tree,branches,analysis):
-    print 'TODO'
+    leps = ['l1','l2','l3']
+    bosons = ['z1','w1']
+    
+    event = branches['event']
+    channel = branches['channel']
+    finalstate = branches['finalstate']
+    print '-'*80
+    print '| Event listing ISA {0:58} |'.format('')
+    print '| Run: {0:7} Lumi: {1:5} Event: {2:11} {3:32} |'.format(event.run, event.lumi, event.evt, '')
+    print '|{0}|'.format('-'*78)
+    print '| Channel: {0: <6} Num Vertices: {1:3} {2:45} |'.format(channel.channel, event.nvtx, '')
+    print '| Mass: {0:9.4f} MET: {1:9.4f} MET phi: {2:9.4f} {3:26} |'.format(finalstate.mass, finalstate.met, finalstate.metPhi, '')
+
+    # print lepton info
+    lep_string = '| {0: <2}: pT: {1:11.4f} eta: {2:9.4f} phi: {3:8.4f} iso: {4:7.4f} charge: {5:4} {6:2} |'
+    for lep in leps:
+        l = branches[lep]
+        lf = branches['%sFlv'%lep]
+        print '|{0}|'.format('-'*78)
+        print lep_string.format(lf.Flv, l.Pt, l.Eta, l.Phi, l.Iso, l.Chg, '')
+
+    # print boson info
+    boson_string = '| {0: <3}: Mass: {1:9.4f} Pt: {2:9.4f} {3:40} |'
+    boson_1 = '| Ptl1: {0:9.4f} dRZl1: {1:6.4f} dRZl2: {2:6.4f} {3:32} |'
+    boson_2 = '| Ptl1: {0:9.4f} Ptl2: {1:9.4f} dR: {2:6.4f} {3:33} |'
+    for boson in bosons:
+        b = branches[boson]
+        bf = branches['%sFlv'%boson]
+        print '|{0}|'.format('-'*78)
+        print boson_string.format(bf.Flv, b.mass, b.Pt, '')
+        if boson in ['z1']:
+            print boson_2.format(b.Pt1, b.Pt2, b.dR, '')
+        if boson in ['w1']:
+            print boson_1.format(b.Pt1, b.dR1_z1_1, b.dR1_z1_2, '')
+    print '-'*80
+    print ''
+
 
 def printFSAEvent(row,channel):
     leps = enumerate_leps(channel)
@@ -150,12 +186,13 @@ def main(argv=None):
             alternateIds = []
             doVBF = False
 
+        dummyfile = ROOT.TFile('dummy.root','recreate')
         ntuple, branches = buildNtuple(object_definitions,states,channel,final_states,altIds=alternateIds,doVBF=doVBF)
 
     numPrinted = 0
     for file in files:
-        #if numPrinted >= args.n:
-        #    break
+        if numPrinted >= args.n and args.n != -1:
+            break
         tfile = ROOT.TFile(file)
         if args.mode=='fsa':
             if not args.channel:
@@ -165,10 +202,22 @@ def main(argv=None):
             tree = fulltree.CopyTree(args.cut) if args.cut else fulltree
         elif args.mode=='isa':
             fulltree = tfile.Get(args.analysis)
+            dummyfile.cd()
             tree = fulltree.CopyTree(args.cut) if args.cut else fulltree
             tree.SetBranchAddress("select",ROOT.AddressOf(branches['select'],"passTight"))
             tree.SetBranchAddress("event",ROOT.AddressOf(branches['event'],"evt"))
+            tree.SetBranchAddress("channel",ROOT.AddressOf(branches['channel'],"channel"))
             tree.SetBranchAddress("finalstate",ROOT.AddressOf(branches['finalstate'],"mass"))
+            tree.SetBranchAddress("l1",ROOT.AddressOf(branches['l1'],"Pt"))
+            tree.SetBranchAddress("l1Flv",ROOT.AddressOf(branches['l1Flv'],"Flv"))
+            tree.SetBranchAddress("l2",ROOT.AddressOf(branches['l2'],"Pt"))
+            tree.SetBranchAddress("l2Flv",ROOT.AddressOf(branches['l2Flv'],"Flv"))
+            tree.SetBranchAddress("l3",ROOT.AddressOf(branches['l3'],"Pt"))
+            tree.SetBranchAddress("l3Flv",ROOT.AddressOf(branches['l3Flv'],"Flv"))
+            tree.SetBranchAddress("z1",ROOT.AddressOf(branches['z1'],"mass"))
+            tree.SetBranchAddress("z1Flv",ROOT.AddressOf(branches['z1Flv'],"Flv"))
+            tree.SetBranchAddress("w1",ROOT.AddressOf(branches['w1'],"mass"))
+            tree.SetBranchAddress("w1Flv",ROOT.AddressOf(branches['w1Flv'],"Flv"))
         else:
             print 'Unrecognized ntuple type. Valid values are isa or fsa.'
             return 0
@@ -184,9 +233,11 @@ def main(argv=None):
                     numPrinted += printEvent(row,tree,analysis=args.analysis,eventList=events,branches=branches,isMC=args.mc,mode=args.mode)
                 if args.mode=='fsa':
                     numPrinted += printEvent(row,tree,channel=args.channel,eventList=events,isMC=args.mc,mode=args.mode)
-            #if numPrinted >= args.n:
-            #    break
+            if numPrinted >= args.n and args.n != -1:
+                break
         tfile.Close()
+
+    if args.mode == 'isa': dummyfile.Close()
 
     return 0
 
