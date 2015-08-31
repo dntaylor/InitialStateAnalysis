@@ -154,7 +154,7 @@ def theWrapper(args):
     getIndividualMassCut(args[0],args[1],args[2],args[3],args[4])
 
 def getIndividualMassCut(cut,mass,numTaus,sigSel,bgSel):
-    plotter = initializePlotter('Hpp3l',8,'tempPlots.root',3,True)
+    plotter = initializePlotter('Hpp3l',8,'plots_optimize_temp',3,True)
     optimizationVals = {}
     cutname = cut['name']
     print '%s:%i' % (cutname,mass)

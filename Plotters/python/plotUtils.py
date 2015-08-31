@@ -31,7 +31,7 @@ def getChannelSidebandSignalRegion(region,channel,**kwargs):
     }
     regionMap['Hpp3l'][2] = {
         'sr' : 'hN.mass>0.5*%f && hN.mass<1.1*%f' %(mass,mass),
-        'sb' : '((hN.mass<0.5*%f-20. && hN.mass>12.) ||  (hN.mass>1.1*%f && hN.mass<800.))' %(mass,mass)
+        'sb' : '((hN.mass<0.5*%f && hN.mass>12.) ||  (hN.mass>1.1*%f && hN.mass<800.))' %(mass,mass)
     }
     regionMap['Hpp4l'][0] = {
         'sr' : 'hN.mass>0.9*%f && hN.mass<1.1*%f' %(mass,mass),
@@ -46,7 +46,7 @@ def getChannelSidebandSignalRegion(region,channel,**kwargs):
     regionMap['Hpp3l'][2] = {
         'sr' : 'hN.mass>0.5*%f && hN.mass<1.1*%f' %(mass,mass),
         #'sb' : '((hN.mass<0.5*%f-20. && hN.mass>12.) ||  (hN.mass>1.1*%f && hN.mass<800.))' %(mass,mass)
-        'sb' : '(hN.mass>12. && hN.mass<800. && !(hN.mass>0.5*%f-20. && hN.mass<1.1*%f))' %(mass,mass)
+        'sb' : '(hN.mass>12. && hN.mass<800. && !(hN.mass>0.5*%f && hN.mass<1.1*%f))' %(mass,mass)
     }
     if region == 'Hpp3l':
         numTaus = channel[:2].count('t')
@@ -68,28 +68,35 @@ def getChannelCutFlowMap(region,channel,**kwargs):
     mass = kwargs.pop('mass',500) # for higgs
     regionMap = { 'Hpp3l' : {}, 'Hpp4l' : {}, 'WZ' : {}, 'Z' : {}, 'TT' : {}, }
     regionMap['Hpp3l'][0] = {
-        'st' : 'finalstate.sT>1.1*%f+60.' %mass,
+        #'st' : 'finalstate.sT>1.1*%f+60.' %mass,
+        'st' : 'finalstate.sT>1.07*%f+45.' %mass,
         'zveto' : 'abs(z1.mass-%f)>80.' %ZMASS,
         'met' : None,
         'dphi' : 'abs(hN.dPhi)<%f/600.+1.95' %mass,
-        'dr' : 'hN.dR<%f/1400.+2.43' %mass,
+        #'dr' : 'hN.dR<%f/1400.+2.43' %mass,
+        'dr' : 'hN.dR<%f/380.+2.06'%mass if mass<400 else 'hN.dR<%f/1200.+2.77'%mass,
         'mass' : 'hN.mass>0.9*%f&&hN.mass<1.1*%f' %(mass,mass),
     }
     regionMap['Hpp3l'][1] = {
-        'st' : 'finalstate.sT>0.85*%f+125.' %mass,
+        #'st' : 'finalstate.sT>0.85*%f+125.' %mass,
+        'st' : 'finalstate.sT>0.72*%f+50.' %mass,
         'zveto' : 'abs(z1.mass-%f)>80.' %ZMASS,
         'met' : 'finalstate.met>20.',
         'dphi' : 'abs(hN.dPhi)<%f/200.+1.15' %mass,
-        'dr' : 'hN.dR<%f/1400.+2.43' %mass, # TODO optimize
+        #'dr' : 'hN.dR<%f/1400.+2.43' %mass, # TODO optimize
+        'dr' : 'hN.dR<%f/380.+1.96'%mass if mass<400 else 'hN.dR<%f/1000.+2.6'%mass,
         'mass' : 'hN.mass>0.5*%f&&hN.mass<1.1*%f' %(mass,mass),
     }
     regionMap['Hpp3l'][2] = {
-        'st' : '(finalstate.sT>%f-10||finalstate.sT>200.)' %mass,
+        #'st' : '(finalstate.sT>%f-10||finalstate.sT>200.)' %mass,
+        'st' : 'finalstate.sT>0.44*%f+65' %mass,
         'zveto' : 'abs(z1.mass-%f)>50.' %ZMASS,
         'met' : 'finalstate.met>20.',
         'dphi' : 'abs(hN.dPhi)<2.1',
-        'dr' : 'hN.dR<%f/1400.+2.43' %mass, # TODO optimize
-        'mass' : 'hN.mass>0.5*%f-20.&&hN.mass<1.1*%f' %(mass,mass),
+        #'dr' : 'hN.dR<%f/1400.+2.43' %mass, # TODO optimize
+        'dr' : 'hN.dR<%f/380.+1.86'%mass if mass<400 else 'hN.dR<%f/750.+2.37'%mass,
+        #'mass' : 'hN.mass>0.5*%f-20.&&hN.mass<1.1*%f' %(mass,mass),
+        'mass' : 'hN.mass>0.5*%f&&hN.mass<1.1*%f' %(mass,mass),
     }
     regionMap['Hpp4l'][0] = {
         'st' : 'finalstate.sT>0.6*%f+130.' %mass,
@@ -154,28 +161,35 @@ def defineCutFlowMap(region,channels,mass):
     # define regions (based on number of taus in higgs candidate)
     regionMap = { 'Hpp3l' : {}, 'Hpp4l' : {}, 'WZ' : {}, 'Z' : {}, 'TT' : {}, }
     regionMap['Hpp3l'][0] = {
-        'st' : 'finalstate.sT>1.1*%f+60.' %mass,
+        #'st' : 'finalstate.sT>1.1*%f+60.' %mass,
+        'st' : 'finalstate.sT>1.07*%f+45.' %mass,
         'zveto' : 'fabs(z1.mass-%f)>80.' %ZMASS,
         'met' : None,
         'dphi' : 'fabs(hN.dPhi)<%f/600.+1.95' %mass,
-        'dr' : 'hN.dR<%f/1400.+2.43' %mass,
+        #'dr' : 'hN.dR<%f/1400.+2.43' %mass,
+        'dr' : 'hN.dR<%f/380.+2.06'%mass if mass<400 else 'hN.dR<%f/1200.+2.77'%mass,
         'mass' : 'hN.mass>0.9*%f&&hN.mass<1.1*%f' %(mass,mass)
     }
     regionMap['Hpp3l'][1] = {
-        'st' : 'finalstate.sT>0.85*%f+125.' %mass,
+        #'st' : 'finalstate.sT>0.85*%f+125.' %mass,
+        'st' : 'finalstate.sT>0.72*%f+50.' %mass,
         'zveto' : 'fabs(z1.mass-%f)>80.' %ZMASS,
         'met' : 'finalstate.met>20.',
         'dphi' : 'fabs(hN.dPhi)<%f/200.+1.15' %mass,
-        'dr' : 'hN.dR<%f/1400.+2.43' %mass, # TODO optimize
+        #'dr' : 'hN.dR<%f/1400.+2.43' %mass, # TODO optimize
+        'dr' : 'hN.dR<%f/380.+1.96'%mass if mass<400 else 'hN.dR<%f/1000.+2.6'%mass,
         'mass' : 'hN.mass>0.5*%f&&hN.mass<1.1*%f' %(mass,mass)
     }
     regionMap['Hpp3l'][2] = {
-        'st' : '(finalstate.sT>%f-10||finalstate.sT>200.)' %mass,
+        #'st' : '(finalstate.sT>%f-10||finalstate.sT>200.)' %mass,
+        'st' : 'finalstate.sT>0.44*%f+65' %mass,
         'zveto' : 'fabs(z1.mass-%f)>50.' %ZMASS,
         'met' : 'finalstate.met>20.',
         'dphi' : 'fabs(hN.dPhi)<2.1',
-        'dr' : 'hN.dR<%f/1400.+2.43' %mass, # TODO optimize
-        'mass' : 'hN.mass>0.5*%f-20.&&hN.mass<1.1*%f' %(mass,mass)
+        #'dr' : 'hN.dR<%f/1400.+2.43' %mass, # TODO optimize
+        'dr' : 'hN.dR<%f/380.+1.86'%mass if mass<400 else 'hN.dR<%f/750.+2.37'%mass,
+        #'mass' : 'hN.mass>0.5*%f-20.&&hN.mass<1.1*%f' %(mass,mass)
+        'mass' : 'hN.mass>0.5*%f&&hN.mass<1.1*%f' %(mass,mass)
     }
     regionMap['Hpp4l'][0] = {
         'st' : 'finalstate.sT>0.6*%f+130.' %mass,

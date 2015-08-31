@@ -19,6 +19,7 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
     savedir = kwargs.pop('savedir','')
     analysis = kwargs.pop('analysis','')
     region = kwargs.pop('region','')
+    mass = kwargs.pop('mass',500)
     if savedir: savedir += '/'
     plotMethod('finalstate.sT',[40,0,1000],savedir+'sT',yaxis='Events/25.0 GeV/c^{2}',xaxis='S_{T} (GeV/c^{2})',lumitext=33,logy=1,ymin=0.1,cut=myCut,overflow=True,**kwargs)
     plotMethod('finalstate.sT',[50,0,500],savedir+'sT_zoom',yaxis='Events/10.0 GeV/c^{2}',xaxis='S_{T} (GeV/c^{2})',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
@@ -76,7 +77,7 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
     if analysis in ['Hpp3l','Hpp4l'] or region in ['Hpp2l']:
         plotMethod('h1.mass', [24,0,600],savedir+'hppMass',              yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})',        lumitext=33,logy=1,cut=myCut,overflow=True,**kwargs)
         #plotMethod('h1.mass', [24,0,600],savedir+'hppMass_mod',          yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{+}\\ell^{+}} (GeV/c^{2})',              lumitext=33,legendpos=41,logy=1,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h1.mass', [32,0,800],savedir+'hppMass_alpha',        yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})', lumitext=33,logy=1,cut=myCut,boxes=[[0,150,1],[550,800,1],[450,550,2]],**kwargs)
+        plotMethod('h1.mass', [32,0,800],savedir+'hppMass_alpha',        yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})', lumitext=33,logy=1,cut=myCut,boxes=[[12,0.9*mass,1],[1.1*mass,800,1],[0.9*mass,1.1*mass,2]],**kwargs)
         plotMethod('h1.dPhi', [32,0,3.2],savedir+'hppDphi',              yaxis='Events/0.1 rad',       xaxis='\\Delta\\phi_{\\ell^{\\pm}\\ell^{\\pm}} (rad)',   legendpos=41,lumitext=33,logy=0,cut=myCut,**kwargs)
         plotMethod('h1.Pt',   [40,0,400],savedir+'hppPt',                yaxis='Events/10.0 GeV',      xaxis='p_{T}^{\\Phi^{\\pm\\pm}} (GeV)',                  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('h1.Pt1',  [40,0,200],savedir+'hppLeadingLeptonPt',   yaxis='Events/5.0 GeV',       xaxis='p_{T}^{\\Phi^{\\pm\\pm} Leading Lepton} (GeV)',   legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
@@ -332,19 +333,19 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     plotMode = 'plotMCDataRatio' if dataplot else 'plotMC'
     plotMethod = getattr(plotter,plotMode)
     logger.info("%s:%s:%iTeV: Plotting discriminating variables" % (analysis,channel, runPeriod))
-    plotDistributions(plotMethod,myCut,nl,isControl,analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
+    plotDistributions(plotMethod,myCut,nl,isControl,analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass)
 
     # each channel
     if plotFinalStates:
         logger.info("%s:%s:%iTeV: Plotting individual finalStates" % (analysis, channel, runPeriod))
         for c in fsToPlot:
             logger.info("%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c))
-            plotDistributions(plotMethod,myCut+'&&channel=="%s"'%c,nl,isControl,savedir=c,analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
+            plotDistributions(plotMethod,myCut+'&&channel=="%s"'%c,nl,isControl,savedir=c,analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass)
         if analysis in customFinalStates:
             for c in customFinalStates[analysis]:
                sel = customFinalStates[analysis][c]
                logger.info("%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c))
-               plotDistributions(plotMethod,'%s & %s'%(myCut,sel),nl,isControl,savedir=c,analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
+               plotDistributions(plotMethod,'%s & %s'%(myCut,sel),nl,isControl,savedir=c,analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass)
 
     # some partially blind plots for h++
     if runPeriod==8 and not dataplot and analysis in ['Hpp3l']:
@@ -381,7 +382,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     if plotOverlay and useSignal:
         # plot the signal overlay
         logger.info("%s:%s:%iTeV: Plotting signal overlay discriminating variables" % (analysis, channel, runPeriod))
-        plotDistributions(plotMethod,myCut,nl,isControl,savedir='overlay',signalscale=100,analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
+        plotDistributions(plotMethod,myCut,nl,isControl,savedir='overlay',signalscale=100,analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass)
 
 
     # plot shapes
@@ -412,19 +413,19 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         for i in range(len(cutFlowMap[channel]['cuts'])):
             logger.info('%s:%s:%iTeV: Plotting cut flow selections %s' % (analysis, channel, runPeriod, cutFlowMap[channel]['labels_simple'][i]))
             thisCut = '&&'.join(cutFlowMap[channel]['cuts'][:i+1])
-            plotDistributions(plotMethod,'%s&%s'%(myCut,thisCut),nl,isControl,savedir='cutflow/%s'%cutFlowMap[channel]['labels_simple'][i],analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
+            plotDistributions(plotMethod,'%s&%s'%(myCut,thisCut),nl,isControl,savedir='cutflow/%s'%cutFlowMap[channel]['labels_simple'][i],analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass)
             if plotFinalStates:
                 logger.info("%s:%s:%iTeV: Plotting individual finalStates" % (analysis, channel, runPeriod))
                 for c in fsToPlot:
                     logger.info("%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c))
-                    plotDistributions(plotMethod,'%s&channel=="%s"&%s'%(myCut,c,thisCut),nl,isControl,savedir='cutflow/%s/%s' %(cutFlowMap[channel]['labels_simple'][i],c),analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
+                    plotDistributions(plotMethod,'%s&channel=="%s"&%s'%(myCut,c,thisCut),nl,isControl,savedir='cutflow/%s/%s' %(cutFlowMap[channel]['labels_simple'][i],c),analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass)
             thisCut = cutFlowMap[channel]['cuts'][i]
-            plotDistributions(plotMethod,'%s&%s'%(myCut,thisCut),nl,isControl,savedir='cutflow/%s_only'%cutFlowMap[channel]['labels_simple'][i],analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
+            plotDistributions(plotMethod,'%s&%s'%(myCut,thisCut),nl,isControl,savedir='cutflow/%s_only'%cutFlowMap[channel]['labels_simple'][i],analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass)
             if plotFinalStates:
                 logger.info("%s:%s:%iTeV: Plotting individual finalStates" % (analysis, channel, runPeriod))
                 for c in fsToPlot:
                     logger.info("%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c))
-                    plotDistributions(plotMethod,'%s&channel=="%s"&%s'%(myCut,c,thisCut),nl,isControl,savedir='cutflow/%s_only/%s' %(cutFlowMap[channel]['labels_simple'][i],c),analysis=analysis,region=channel,nostack=nostack,normalize=normalize)
+                    plotDistributions(plotMethod,'%s&channel=="%s"&%s'%(myCut,c,thisCut),nl,isControl,savedir='cutflow/%s_only/%s' %(cutFlowMap[channel]['labels_simple'][i],c),analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass)
 
     # plot cut flows on same plot
     plotter = CutFlowPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_cutflow',mergeDict=mergeDict,scaleFactor=scaleFactor,loglevel=loglevel)

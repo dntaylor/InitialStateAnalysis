@@ -61,7 +61,7 @@ def optimize(analysis, period):
         genSelect = '(' + ' || '.join(['genChannel=="%s"'%x for y in tauFlavor[nTaus] for x in genChannels[y]]) + ')'
         recoSelect = '(' + ' || '.join(['channel=="%s"'%x for y in tauFlavor[nTaus] for x in recoChannels[y]]) + ')'
 
-        optimizer = initializeOptimizer(analysis, period, 'optimize.root', 'select.PassTight & %s' % recoSelect, genSelect, nTaus)
+        optimizer = initializeOptimizer(analysis, period, 'plots_optimize_%iTau' %(nTaus), 'select.PassTight & %s' % recoSelect, genSelect, nTaus)
         
         optimizer.addCut('st',         'finalstate.sT >',            100., 1500., 10.)
         optimizer.addCut('met',        'finalstate.met >',             0.,  500.,  5.)
