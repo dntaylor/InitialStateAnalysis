@@ -56,16 +56,18 @@ def printISAEvent(row,tree,branches,analysis):
     print '| Event listing ISA {0:58} |'.format('')
     print '| Run: {0:7} Lumi: {1:5} Event: {2:11} {3:32} |'.format(event.run, event.lumi, event.evt, '')
     print '|{0}|'.format('-'*78)
-    print '| Channel: {0: <6} Num Vertices: {1:3} {2:45} |'.format(channel.channel, event.nvtx, '')
+    print '| Channel: {0: <6} Num Vertices: {1:3} {2:45} |'.format(str(channel.channel), event.nvtx, '')
     print '| Mass: {0:9.4f} MET: {1:9.4f} MET phi: {2:9.4f} {3:26} |'.format(finalstate.mass, finalstate.met, finalstate.metPhi, '')
 
     # print lepton info
     lep_string = '| {0: <2}: pT: {1:11.4f} eta: {2:9.4f} phi: {3:8.4f} iso: {4:7.4f} charge: {5:4} {6:2} |'
+    lep_string_2 = '| Pass Loose: {0:1} Pass Tight: {1:1} {2:48} |'
     for lep in leps:
         l = branches[lep]
         lf = branches['%sFlv'%lep]
         print '|{0}|'.format('-'*78)
-        print lep_string.format(lf.Flv, l.Pt, l.Eta, l.Phi, l.Iso, l.Chg, '')
+        print lep_string.format(str(lf.Flv), l.Pt, l.Eta, l.Phi, l.Iso, l.Chg, '')
+        print lep_string_2.format(l.PassLoose, l.PassTight, '')
 
     # print boson info
     boson_string = '| {0: <3}: Mass: {1:9.4f} Pt: {2:9.4f} {3:40} |'
@@ -75,7 +77,7 @@ def printISAEvent(row,tree,branches,analysis):
         b = branches[boson]
         bf = branches['%sFlv'%boson]
         print '|{0}|'.format('-'*78)
-        print boson_string.format(bf.Flv, b.mass, b.Pt, '')
+        print boson_string.format(str(bf.Flv), b.mass, b.Pt, '')
         if boson in ['z1']:
             print boson_2.format(b.Pt1, b.Pt2, b.dR, '')
         if boson in ['w1']:
@@ -95,14 +97,14 @@ def printFSAEvent(row,channel):
 
     # print lepton info
     lep_string = '| {0:2}: pT: {1:11.4f} eta: {2:9.4f} phi: {3:8.4f} iso: {4:7.4f} charge: {5:4} {6:1} |'
-    elec_string = '|     MVA: {0:10.4f} d0: {1:10.4f} dz: {2:9.4f} {3:27} |'
+    elec_string = '|     CBID-Med: {0:1f} d0: {1:10.4f} dz: {2:9.4f} {3:22} |'
     muon_string = '|     ID: {0:2} d0: {1:10.4f} dz: {2:9.4f} {3:30} |'
     for lep in leps:
         iso = getattr(row,'%sRelPFIsoDBDefault' %lep) if lep[0]=='m' else getattr(row,'%sRelPFIsoRho' %lep)
         print '|{0}|'.format('-'*78)
         print lep_string.format(lep, getattr(row,'%sPt' %lep), getattr(row,'%sEta' %lep), getattr(row,'%sPhi' %lep), iso, getattr(row,'%sCharge' %lep), '')
         if lep[0]=='e':
-            print elec_string.format(getattr(row,'%sMVATrig'%lep), getattr(row,'%sPVDXY'%lep), getattr(row,'%sPVDZ'%lep),'')
+            print elec_string.format(getattr(row,'%sCBIDMedium'%lep), getattr(row,'%sPVDXY'%lep), getattr(row,'%sPVDZ'%lep),'')
         elif lep[0]=='m':
             print muon_string.format(getattr(row,'%sPFIDTight'%lep), getattr(row,'%sPVDXY'%lep), getattr(row,'%sPVDZ'%lep),'')
     print '-'*80
@@ -191,8 +193,8 @@ def main(argv=None):
 
     numPrinted = 0
     for file in files:
-        if numPrinted >= args.n and args.n != -1:
-            break
+        #if numPrinted >= args.n and args.n != -1:
+        #    break
         tfile = ROOT.TFile(file)
         if args.mode=='fsa':
             if not args.channel:
@@ -233,8 +235,8 @@ def main(argv=None):
                     numPrinted += printEvent(row,tree,analysis=args.analysis,eventList=events,branches=branches,isMC=args.mc,mode=args.mode)
                 if args.mode=='fsa':
                     numPrinted += printEvent(row,tree,channel=args.channel,eventList=events,isMC=args.mc,mode=args.mode)
-            if numPrinted >= args.n and args.n != -1:
-                break
+            #if numPrinted >= args.n and args.n != -1:
+            #    break
         tfile.Close()
 
     if args.mode == 'isa': dummyfile.Close()

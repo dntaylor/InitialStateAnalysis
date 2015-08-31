@@ -63,13 +63,20 @@ class AnalyzerWZ(AnalyzerBase):
             ordList = [l[1], l[0], l[2]] if getattr(rtrow,'%sPt' % l[0]) < getattr(rtrow,'%sPt' % l[1]) else [l[0], l[1], l[2]]
 
             if OS1 and l[0][0]==l[1][0]:
-                cands.append((massdiff, ordList))
+                cands.append((massdiff, mass, ordList))
 
         if not len(cands): return 0
 
         # Sort by mass difference
         cands.sort(key=lambda x: x[0])
-        massdiff, leps = cands[0]
+        massdiff, mass, leps = cands[0]
+        # if mass outside of mass window, switch to one inside the mass window if available
+        if mass < 60. or mass > 120. and len(cands)>1:
+            for c in cands[1:]:
+                if c[1]>=60. and c[1]<=120.: # its a better Z
+                    massdiff = c[0]
+                    leps = c[2]
+                    break
 
         return ([massdiff], leps)
 
@@ -131,9 +138,9 @@ class AnalyzerWZ(AnalyzerBase):
         if self.isData: cuts.add(self.trigger)
         cuts.add(self.fiducial)
         #if self.period=='13': cuts.add(self.passAnyId)
-        #cuts.add(self.ID_tight)
+        cuts.add(self.ID_tight)
         #cuts.add(self.ID_loose)
-        cuts.add(self.ID_veto)
+        #cuts.add(self.ID_veto)
         return cuts
 
     def selection(self,rtrow):

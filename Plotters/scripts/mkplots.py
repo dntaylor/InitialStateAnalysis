@@ -202,6 +202,9 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         'tt': ['tte','ttm','ttt'],
     }
 
+    hppChannels = ['ee','em','et','mm','mt','tt']
+    hpChannels = ['e','m','t']
+
     recoChannels = {
         'ee': ['eee','eem'],
         'em': ['eme','emm','mee','mem'],
@@ -211,12 +214,24 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         'tt': ['eee','eem','eme','emm','mee','mem','mme','mmm'],
     }
 
-    customFinalStates = {'Hpp3l':{}}
+    customFinalStates = {
+        'Hpp3l' : {},
+        'Hpp4l' : {},
+    }
+
+    numTauCuts = {
+        'Hpp3l' : {},
+        'Hpp4l' : {},
+    }
+
+    for nt in range(3):
+        theCut = '(' + ' || '.join(['genChannel=="%s"' %gChan for hChan in genChannels for gChan in genChannels[hChan] if hChan.count('t')==nt]) + ')'
+        numTauCuts['Hpp3l'][nt] = theCut
 
     for c in genChannels:
         genCut = '(' + ' | '.join(['genChannel=="%s"'%x for x in genChannels[c] + ['aaa']]) + ')'
         recoCut = '(' + ' | '.join(['channel=="%s"'%x for x in recoChannels[c]]) + ')'
-        customFinalStates['Hpp3l'][c] = genCut + '& ' + recoCut
+        customFinalStates['Hpp3l'][c] = genCut + ' && ' + recoCut
 
     # plotting correlation
     plotter = CorrelationPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,scaleFactor=scaleFactor,rootName='plots_correlation',loglevel=loglevel)
@@ -245,6 +260,15 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         plotMethod('finalstate.sT', [500,0,2000], 'signal/sT',               yaxis='A.U.',xaxis='S_{T} (GeV/c^{2})',                            lumitext=33,logy=0,cut=myCut,overflow=True,normalize=1)
         plotMethod('z1.mass',       [250,0,1000], 'signal/z1Mass_fullWindow',yaxis='A.U.',xaxis='M_{\\ell^{+}\\ell^{-}} (Z) (GeV)',             legendpos=43,logy=0,cut=myCut,overflow=True,normalize=1)
         plotMethod('finalstate.met',[200,0,1000], 'signal/met',              yaxis='A.U.',xaxis='E_{T}^{miss} (GeV/c^{2})',                     lumitext=33,logy=0,cut=myCut,overflow=True,normalize=1)
+        for nt in range(3):
+            if analysis not in ['Hpp3l']: continue
+            theCut = numTauCuts['Hpp3l'][nt] + ' && ' + myCut
+            plotMethod('h1.mass',       [1000,0,1000],'signal/hppMass_%iTau'%nt,          yaxis='A.U.',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})',     lumitext=33,cut=theCut,logy=0, normalize=1)
+            plotMethod('h1.dPhi',       [100,0,5],    'signal/hppDphi_%iTau'%nt,          yaxis='A.U.',xaxis='\\Delta\\phi_{\\ell^{\\pm}\\ell^{\\pm}} (rad)',lumitext=33,logy=0,cut=theCut,normalize=1)
+            plotMethod('h1.dR',         [100,0,6.28], 'signal/hppDR_%iTau'%nt,            yaxis='A.U.',xaxis='\\Delta R_{\\ell^{\\pm}\\ell^{\\pm}}',         lumitext=33,logy=0,cut=theCut,normalize=1)
+            plotMethod('finalstate.sT', [500,0,2000], 'signal/sT_%iTau'%nt,               yaxis='A.U.',xaxis='S_{T} (GeV/c^{2})',                            lumitext=33,logy=0,cut=theCut,overflow=True,normalize=1)
+            plotMethod('z1.mass',       [250,0,1000], 'signal/z1Mass_fullWindow_%iTau'%nt,yaxis='A.U.',xaxis='M_{\\ell^{+}\\ell^{-}} (Z) (GeV)',             legendpos=43,logy=0,cut=theCut,overflow=True,normalize=1)
+            plotMethod('finalstate.met',[200,0,1000], 'signal/met_%iTau'%nt,              yaxis='A.U.',xaxis='E_{T}^{miss} (GeV/c^{2})',                     lumitext=33,logy=0,cut=theCut,overflow=True,normalize=1)
         #plotter.initializeSignalSamples([allSigMap[runPeriod][mass]])
         #plotter.setIntLumi(intLumiMap[runPeriod])
         #plotMode = 'plotSignal'
@@ -265,6 +289,10 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
             t = tex[l]
             cuts = ['%s & %s' %(myCut,'l%iFlv=="%s"' %((x+1),l)) for x in range(nl)]
             plotMethod(['l%i.Pt'  %(x+1) for x in range(nl)], [100,0,1000], 'signal/%sPt'%name, yaxis='A.U.', xaxis='p_{T}^{%s} (GeV)' %t, legendpos=43, logy=0, cut=cuts, overflow=True, normalize=1)
+            for nt in range(3):
+                if analysis not in ['Hpp3l']: continue
+                theCuts = [numTauCuts['Hpp3l'][nt] + ' && ' + c for c in cuts]
+                plotMethod(['l%i.Pt'  %(x+1) for x in range(nl)], [100,0,1000], 'signal/%sPt_%iTau'%(name,nt), yaxis='A.U.', xaxis='p_{T}^{%s} (GeV)' %t, legendpos=43, logy=0, cut=theCuts, overflow=True, normalize=1)
 
 
 
