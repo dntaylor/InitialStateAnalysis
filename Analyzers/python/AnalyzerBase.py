@@ -469,7 +469,7 @@ class AnalyzerBase(object):
                         if theObjects and period=='8':
                             l = orderedFinalObjects[objCount-1]
                             if l[0]=='e':
-                                ntupleRow["%s.ChargeConsistent%i" % (i,objCount)] = int(getattr(rtrow,'%sChargeIdTight' %l) and getattr(rtrow,'%sChargeIdMed' %l) and getattr(rtrow,'%sChargeIdLoose' %l))
+                                ntupleRow["%s.ChargeConsistent%i" % (i,objCount)] = int(getattr(rtrow,'%sChargeIdTight' %l))
                         # manually add w z deltaRs
                         if i=='w1' and len(theObjects)==3:
                             oZ1 = ordered(theObjects[0],theObjects[2]) if theObjects else []
@@ -548,7 +548,7 @@ class AnalyzerBase(object):
                 ntupleRow["%s%i.MotherGenPdgId" % (charName,objCount)] = float(getattr(rtrow, "%sGenMotherPdgId" % obj))
             ntupleRow["%s%i.ChargeConsistent" % (charName,objCount)] = -1
             if obj[0]=='e' and self.period=='8':
-                ntupleRow["%s%i.ChargeConsistent" % (charName,objCount)] = int(getattr(rtrow,'%sChargeIdTight' %obj) and getattr(rtrow,'%sChargeIdMed' %obj) and getattr(rtrow,'%sChargeIdLoose' %obj))
+                ntupleRow["%s%i.ChargeConsistent" % (charName,objCount)] = int(getattr(rtrow,'%sChargeIdTight' %obj))
 
         return ntupleRow
 

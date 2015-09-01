@@ -52,7 +52,7 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
         plotMethod('%s.Eta' %name,[30,-3.0,3.0],savedir+'%sEta' %name,yaxis='Events',xaxis='\\eta^{\\ell%i}' %(l+1),legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod('%s.Phi' %name,[30,-3.14159,3.14159],savedir+'%sPhi' %name,yaxis='Events',xaxis='\\phi^{\\ell%i}' %(l+1),legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod('%s.Iso' %name,[50,0,.5],savedir+'%sIso' %name,yaxis='Events',xaxis='Relative Isolation (\\ell%i)' %(l+1),legendpos=43,logy=0,cut=myCut,**kwargs)    
-        plotMethod('%s.ChargeConsistent' %name,[3,-1.5,1.5],savedir+'%sChargeId' %name,yaxis='Events',xaxis='Charge ID (\\ell%i)' %(l+1),legendpos=43,logy=0,cut=myCut,**kwargs)    
+        #plotMethod('%s.ChargeConsistent' %name,[3,-1.5,1.5],savedir+'%sChargeId' %name,yaxis='Events',xaxis='Charge ID (\\ell%i)' %(l+1),legendpos=31,logy=0,cut=myCut,**kwargs)    
     names = {
         'e': 'Elec',
         'm': 'Mu',

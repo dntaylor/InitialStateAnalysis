@@ -610,7 +610,7 @@ class PlotterBase(object):
 
     def save(self, savename):
         '''Save the canvas in multiple formats.'''
-        for type in ['png']:
+        for type in ['png','root']:
             name = "%s/%s/%s.%s" % (self.plotDir, type, savename, type)
             python_mkdir(os.path.dirname(name))
             self.canvas.Print(name)

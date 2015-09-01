@@ -80,7 +80,7 @@ def get_sample_names(analysis,period,samples):
             'Hpp2l'      : 'N/A',
             #'WZ'         : '2015-08-03-13TeV-WZ', # last 50ns with old CBIDs
             #'WZ'         : '2015-08-27-13TeV-WZ', # add new egamma CBIDs
-            'WZ'         : '2015-08-31-13TeV-WZ', # remove dr 0.1 from veto definition
+            'WZ'         : '2015-09-01-13TeV-WZ', # move dr 0.1 to 0.01 from veto definition
             'WZ_W'       : '2015-08-03-13TeV-2l',
             'WZ_FakeRate': '2015-08-17-13TeV-1l',
             'Hpp3l'      : '2015-03-30-13TeV-3l',

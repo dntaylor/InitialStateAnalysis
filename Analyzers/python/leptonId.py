@@ -193,7 +193,9 @@ def elec_WZ_tight(rtrow, l, period):
 
     wzloose = elec_WZ_loose(rtrow, l, period)
 
-    return reliso < 0.15 and d0 < 0.02 and dz < 0.1 and wzloose and mva
+    chgId = getattr(rtrow,'%sChargeIdTight' %l)
+
+    return reliso < 0.15 and d0 < 0.02 and dz < 0.1 and wzloose and mva and chgId
 
 def muon_WZ_loose(rtrow, l, period):
     pt = getattr(rtrow, "%sPt" % l)
