@@ -154,8 +154,8 @@ class Limits(object):
         if self.blinded:
             nSRData = 0
             eSRData = 1
-        nBGSR = alpha*(nSBData+1)
-        eBGSR = alpha*((nSBData+1) ** 0.5)
+        nBGSR = alpha*(nSBData)
+        eBGSR = alpha*((nSBData) ** 0.5)
         self.alpha = alpha
         self.nSBData = nSBData
         self.nBGSR = nBGSR
@@ -230,7 +230,7 @@ class Limits(object):
         if self.bgMode=='sideband':
             # add the systematics for the alpha
             alphaSys = {'bg':self.alpha}
-            self.add_systematics("alpha_%s" % file_name.split('.')[0],"gmN %i" %(self.nSBData+1), **alphaSys)
+            self.add_systematics("alpha_%s" % file_name.split('.')[0],"gmN %i" %(self.nSBData), **alphaSys)
             for key in self.sample_groups:
                 is_data = self.sample_groups[key]['isData']
                 if self.sample_groups[key]['isSig']:
