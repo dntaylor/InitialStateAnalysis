@@ -159,27 +159,73 @@ def BP(analysis,region,period,mass,bp,**kwargs):
     recoChannelsMap = channelMap['recomap']
     allRecoChannels = channelMap['allreco']
 
-    for r in allRecoChannels: # one card per reco channel
-        recoCut = 'channel=="%s"' % r
-        cardName = '%s_%s' % (bp, r)
+    baseRecoMap = {
+        'eee': ['eee'],
+        'eem': ['eem'],
+        'eme': ['eme','mee'],
+        'emm': ['emm','mem'],
+        'mme': ['mme'],
+        'mmm': ['mmm'],
+    }
+
+    if analysis in ['Hpp4l']:
+        baseRecoMap = {
+            'eeee': ['eeee'],
+            'eeem': ['eeem','eeme','emee','meee'],
+            'eemm': ['eemm','mmee'],
+            'emem': ['emem','emme','meem','meme'],
+            'emmm': ['emmm','memm','mmem','mmme'],
+            'mmmm': ['mmmm'],
+        }
+
+    for br in baseRecoMap: # one card for base reco channel
+        if not [b for b in baseRecoMap[br] if b in allRecoChannels]: continue
+        cardName = '%s_%s' % (bp, br)
         if do4l: cardName += '_4l'
         genChannels = []
         genCuts = []
         genScales = []
-        logging.debug('Adding reco channel %s' %r)
-        for h in genChannelsMap:
-            if r not in recoChannelsMap[h]: continue
-            for g in genChannelsMap[h]:
-                scale = sf(g[:2],g[2:])
-                if not scale: continue
-                logging.debug('Adding gen channel %s with scale %f' %(g,scale))
-                genChannels += [g]
-                genCuts += ['(%s && genChannel=="%s")' % (recoCut,g)]
-                genScales += [scale]
-        genChannels += ['aaa']
-        genCuts += ['(%s && genChannel=="aaa")' % (recoCut)]
-        genScales += [1.]
-        limit(analysis,region,period,mass,bp=bp,name=cardName,directory=bp,channelCuts=genCuts,channelScales=genScales,genChannels=genChannels,recoChannels=[r],do4l=do4l,**kwargs)
+        recoChannels = []
+        for r in allRecoChannels:
+            if r not in baseRecoMap[br]: continue
+            logging.debug('Adding reco channel %s' %r)
+            recoChannels += [r]
+            recoCut = 'channel=="%s"' % r
+            for h in genChannelsMap:
+                if r not in recoChannelsMap[h]: continue
+                for g in genChannelsMap[h]:
+                    scale = sf(g[:2],g[2:])
+                    if not scale: continue
+                    logging.debug('Adding gen channel %s with scale %f' %(g,scale))
+                    genChannels += [g]
+                    genCuts += ['(%s && genChannel=="%s")' % (recoCut,g)]
+                    genScales += [scale]
+            genChannels += ['aaa']
+            genCuts += ['(%s && genChannel=="aaa")' % (recoCut)]
+            genScales += [1.]
+        limit(analysis,region,period,mass,bp=bp,name=cardName,directory=bp,channelCuts=genCuts,channelScales=genScales,genChannels=genChannels,recoChannels=recoChannels,do4l=do4l,**kwargs)
+
+    #for r in allRecoChannels: # one card per reco channel
+    #    recoCut = 'channel=="%s"' % r
+    #    cardName = '%s_%s' % (bp, r)
+    #    if do4l: cardName += '_4l'
+    #    genChannels = []
+    #    genCuts = []
+    #    genScales = []
+    #    logging.debug('Adding reco channel %s' %r)
+    #    for h in genChannelsMap:
+    #        if r not in recoChannelsMap[h]: continue
+    #        for g in genChannelsMap[h]:
+    #            scale = sf(g[:2],g[2:])
+    #            if not scale: continue
+    #            logging.debug('Adding gen channel %s with scale %f' %(g,scale))
+    #            genChannels += [g]
+    #            genCuts += ['(%s && genChannel=="%s")' % (recoCut,g)]
+    #            genScales += [scale]
+    #    genChannels += ['aaa']
+    #    genCuts += ['(%s && genChannel=="aaa")' % (recoCut)]
+    #    genScales += [1.]
+    #    limit(analysis,region,period,mass,bp=bp,name=cardName,directory=bp,channelCuts=genCuts,channelScales=genScales,genChannels=genChannels,recoChannels=[r],do4l=do4l,**kwargs)
 
 def add_systematics_mc(limits,mass,signal,name,chans,sigscale,period,bp,doAlphaTest,doIndividualChannel,do4l):
     limits.add_group("hpp%i" % mass, signal, scale=sigscale, isSignal=True)
@@ -337,56 +383,71 @@ def calculateLeptonSystematic(mass,chanCuts,chanScales,**kwargs):
     return sigSelSys+1
 
 def calculateChannelLeptonSystematic(mass,chans,**kwargs):
-    do4l = kwargs.pop('do4l',False)
-    analysis = 'Hpp3l'
-    region = 'Hpp3l'
-    runPeriod = 8
-    nl = 3
-    ntuples = 'ntuples/%s_%iTeV_%s' % (analysis,runPeriod,region)
-    saves = '%s_%s_%sTeV' % (analysis,region,runPeriod)
-    sigMap = getSigMap(4,mass) if do4l else getSigMap(nl,mass)
-    intLumiMap = getIntLumiMap()
-    mergeDict = getMergeDict(runPeriod)
-    regionBackground = {
-        'Hpp3l' : ['T','TT', 'TTV','W','Z','VVV','WW','ZZ','WZ'],
-        'Hpp4l' : ['TT','Z','DB']
-    }
-    channels, leptons = getChannels(nl)
+    #do4l = kwargs.pop('do4l',False)
+    #analysis = kwargs.pop('analysis','Hpp3l')
+    #region = analysis
+    #runPeriod = 8
+    #nl = 3
+    #ntuples = 'ntuples/%s_%iTeV_%s' % (analysis,runPeriod,region)
+    #saves = '%s_%s_%sTeV' % (analysis,region,runPeriod)
+    #sigMap = getSigMap(4,mass) if do4l else getSigMap(nl,mass)
+    #intLumiMap = getIntLumiMap()
+    #mergeDict = getMergeDict(runPeriod)
+    #regionBackground = {
+    #    'Hpp3l' : ['T','TT', 'TTV','W','Z','VVV','WW','ZZ','WZ'],
+    #    'Hpp4l' : ['TT','Z','DB']
+    #}
+    #channels, leptons = getChannels(nl)
 
-    plotter = Plotter(analysis,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='systematics',mergeDict=mergeDict)
-    plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in regionBackground[analysis]])
-    plotter.initializeSignalSamples([sigMap[runPeriod]['Sig']])
-    plotter.initializeDataSamples([sigMap[runPeriod]['data']])
-    plotter.setIntLumi(intLumiMap[runPeriod])
+    #plotter = Plotter(analysis,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='systematics',mergeDict=mergeDict)
+    #plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in regionBackground[analysis]])
+    #plotter.initializeSignalSamples([sigMap[runPeriod]['Sig']])
+    #plotter.initializeDataSamples([sigMap[runPeriod]['data']])
+    #plotter.setIntLumi(intLumiMap[runPeriod])
 
-    fullCut = 'finalstate.mass>100 && finalstate.sT>1.1*%f+60. && fabs(z1.mass-%f)>80. && h1.dPhi<%f/600.+1.95' %(mass,ZMASS,mass)
-    finalSRCut = 'h1.mass>0.9*%f && h1.mass<1.1*%f' %(mass,mass)
+    #fullCut = 'finalstate.mass>100 && finalstate.sT>1.1*%f+60. && fabs(z1.mass-%f)>80. && h1.dPhi<%f/600.+1.95' %(mass,ZMASS,mass)
+    #finalSRCut = 'h1.mass>0.9*%f && h1.mass<1.1*%f' %(mass,mass)
 
-    scaleStrings = {
-        0: 'h1.LepScaleTight1',
-        1: 'h1.LepScaleTight2',
-        2: 'h2.LepScaleTight1',
-        3: 'h2.LepScaleTight2',
+    #scaleStrings = {
+    #    0: 'h1.LepScaleTight1',
+    #    1: 'h1.LepScaleTight2',
+    #    2: 'h2.LepScaleTight1',
+    #    3: 'h2.LepScaleTight2',
+    #}
+
+    # WZ electron
+    elecUncertainties = {
+        0: 1.000,
+        1: 1.011,
+        2: 1.022,
+        3: 1.034,
+        4: 1.044, # guess !
     }
 
     scaleMap = {}
     for c in chans:
         scaleMap[c] = {}
         for l in ['e','m']:
-            # get bg
-            scaleFactorBase = "event.trig_scale*event.pu_weight"
-            individualScales = "*".join([scaleStrings[x[0]] for x in enumerate(c)])
-            theScale = "*".join([scaleFactorBase]+[individualScales])
-            plotter.setScaleFactor(theScale)
-            chanBG = plotter.getNumEntries('channel=="%s" && %s && %s' %(c,fullCut,finalSRCut),plotter.signal[0])
-            individualScales = "*".join([scaleStrings[x[0]] for x in enumerate(c) if x[1]!=l])
-            individualScales_up = "*".join([scaleStrings[x[0]]+'_up' for x in enumerate(c) if x[1]==l])
-            theScale = scaleFactorBase
-            if individualScales: theScale += '*'+individualScales
-            if individualScales_up: theScale += '*'+individualScales_up
-            plotter.setScaleFactor(theScale)
-            chanBG_scaled = plotter.getNumEntries('channel=="%s" && %s && %s' %(c,fullCut,finalSRCut),plotter.signal[0])
-            scaleMap[c][l] = (chanBG_scaled-chanBG)/chanBG + 1
+            ## get bg
+            #scaleFactorBase = "event.trig_scale*event.pu_weight"
+            #individualScales = "*".join([scaleStrings[x[0]] for x in enumerate(c)])
+            #theScale = "*".join([scaleFactorBase]+[individualScales])
+            #plotter.setScaleFactor(theScale)
+            #chanBG = plotter.getNumEntries('channel=="%s" && %s && %s' %(c,fullCut,finalSRCut),plotter.signal[0])
+            #individualScales = "*".join([scaleStrings[x[0]] for x in enumerate(c) if x[1]!=l])
+            #individualScales_up = "*".join([scaleStrings[x[0]]+'_up' for x in enumerate(c) if x[1]==l])
+            #theScale = scaleFactorBase
+            #if individualScales: theScale += '*'+individualScales
+            #if individualScales_up: theScale += '*'+individualScales_up
+            #plotter.setScaleFactor(theScale)
+            #chanBG_scaled = plotter.getNumEntries('channel=="%s" && %s && %s' %(c,fullCut,finalSRCut),plotter.signal[0])
+            #scaleMap[c][l] = (chanBG_scaled-chanBG)/chanBG + 1
+
+            if l=='e': # get from WZ analysis note:
+               scaleMap[c][l] = elecUncertainties[c.count('e')]
+            if l=='m': # muon pog, 0.5% id 0.2% iso
+               scaleMap[c][l] = (c.count('m') * (0.005**2 + 0.002**2))**0.5 + 1.
+               
 
     return scaleMap
 

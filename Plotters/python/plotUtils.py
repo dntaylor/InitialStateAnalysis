@@ -43,7 +43,7 @@ def getChannelSidebandSignalRegion(region,channel,**kwargs):
         #'sb' : '((hN.mass<0.5*%f && hN.mass>12.) ||  (hN.mass>1.1*%f && hN.mass<800.))' %(mass,mass)
         'sb' : '(hN.mass>12. && hN.mass<800. && !(hN.mass>0.5*%f && hN.mass<1.1*%f))' %(mass,mass)
     }
-    regionMap['Hpp3l'][2] = {
+    regionMap['Hpp4l'][2] = {
         'sr' : 'hN.mass>0.5*%f && hN.mass<1.1*%f' %(mass,mass),
         #'sb' : '((hN.mass<0.5*%f-20. && hN.mass>12.) ||  (hN.mass>1.1*%f && hN.mass<800.))' %(mass,mass)
         'sb' : '(hN.mass>12. && hN.mass<800. && !(hN.mass>0.5*%f && hN.mass<1.1*%f))' %(mass,mass)

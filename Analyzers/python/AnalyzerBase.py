@@ -70,11 +70,24 @@ def lep_order(a, b):
     '''
     A simple function to guarantee order of leptons in FSA ntuples.
     '''
-    if len(a)==2 and len(b)==2:
+    #if len(a)==2 and len(b)==2:
+    #    a_index = int(a[1])
+    #    b_index = int(b[1])
+    #    return a_index > b_index or a[0] > b[0]
+    #return a[0] > b[0]
+    try:
         a_index = int(a[1])
+    except IndexError:
+        a_index = 1
+    try:
         b_index = int(b[1])
-        return a_index > b_index or a[0] > b[0]
-    return a[0] > b[0]
+    except IndexError:
+        b_index = 1
+    
+    if a[0] == b[0]:
+        return a_index > b_index
+    else:
+        return a[0] > b[0]
 
 def ordered(a,b):
     '''
@@ -261,7 +274,7 @@ class AnalyzerBase(object):
         for i  in ['e', 'm', 't', 'j', 'g']:
             N = final_state.count(i)
             if N==1:
-               out += i
+               out += [i]
             else:
                out += ['%s%i' % (i, n) for n in xrange(1, N+1)]
         return out

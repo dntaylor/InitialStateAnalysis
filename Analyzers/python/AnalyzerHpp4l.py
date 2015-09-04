@@ -56,6 +56,7 @@ class AnalyzerHpp4l(AnalyzerBase):
     def choose_objects(self, rtrow):
         '''
         Select candidate objects
+        return them ++-- with ++ and -- ordered in pt
         '''
         cands = []
         for l in permutations(self.objects):
@@ -66,10 +67,13 @@ class AnalyzerHpp4l(AnalyzerBase):
             mass1 = getattr(rtrow, "%s_%s_Mass" % (l[0], l[1])) # select mass
             SS2 = getattr(rtrow, "%s_%s_SS" % (l[2], l[3])) > 0 # select same sign
             mass2 = getattr(rtrow, "%s_%s_Mass" % (l[2], l[3])) # select mass
-            OS = getattr(rtrow, "%sCharge" % l[0]) != getattr(rtrow, "%sCharge" % l[2]) # select opposite sign
+            #OS = getattr(rtrow, "%sCharge" % l[0]) != getattr(rtrow, "%sCharge" % l[2]) # select opposite sign
+            C1 = getattr(rtrow, "%sCharge" % l[0]) > 0
+            C2 = getattr(rtrow, "%sCharge" % l[2]) < 0
             massdiff = abs(mass1-mass2)
 
-            if SS1 and SS2 and OS:
+            #if SS1 and SS2 and OS:
+            if SS1 and SS2 and C1 and C2:
                 #order by pt
                 l0 = l[0] if getattr(rtrow,'%sPt' % l[0]) > getattr(rtrow,'%sPt' % l[1]) else l[1]
                 l1 = l[1] if getattr(rtrow,'%sPt' % l[0]) > getattr(rtrow,'%sPt' % l[1]) else l[0]

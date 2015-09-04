@@ -104,7 +104,8 @@ class AnalyzerHpp3l(AnalyzerBase):
         '''
         Veto on 4th lepton (considered in 4l analysis)
         '''
-        return (rtrow.elecVeto4l + rtrow.muonVeto4l == 0)
+        #return (rtrow.elecVeto4l + rtrow.muonVeto4l == 0)
+        return (rtrow.elecVetoWZTight + rtrow.muonVetoWZTight == 0)
 
     # override getGenChannel
     def getGenChannel(self, rtrow):

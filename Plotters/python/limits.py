@@ -58,8 +58,10 @@ def plot_limits(analysis, region, period, savename, **kwargs):
     xsecMap = {}
     xsecGraph = ROOT.TGraph(n)
     for i,mass in enumerate(masses):
-        sample = 'HPlusPlusHMinusMinusHTo4L_M-{0}_8TeV-pythia6' if analysis in ['Hpp4l'] or do4l else 'HPlusPlusHMinusHTo3L_M-{0}_8TeV-calchep-pythia6'
+        sample = 'HPlusPlusHMinusMinusHTo4L_M-{0}_8TeV-pythia6' if analysis in ['Hpp4l','HppComb'] or do4l else 'HPlusPlusHMinusHTo3L_M-{0}_8TeV-calchep-pythia6'
         xsecMap[mass] = xsecs[period][sample.format(mass)]
+        if analysis in ['HppComb'] and mass >= 170:
+            xsecMap[mass] += xsecs[period]['HPlusPlusHMinusHTo3L_M-{0}_8TeV-calchep-pythia6'.format(mass)]
         xsecGraph.SetPoint(i,mass,xsecMap[mass])
     xsecGraph.SetMarkerStyle(0)
     xsecGraph.SetFillStyle(0)
@@ -204,6 +206,7 @@ def plot_limits(analysis, region, period, savename, **kwargs):
     legend.AddEntry(xtwoSigma, 'Expected 2#sigma', 'F')
     legend.AddEntry(xoneSigma, 'Expected 1#sigma', 'F')
     name = 'Pair Production Cross Section' if analysis in ['Hpp4l'] or do4l else 'Associated Production Cross Section'
+    if analysis in ['HppComb']: name = 'Cross Section'
     legend.AddEntry(xsecGraph, name, 'l')
 
     legend.Draw('same')

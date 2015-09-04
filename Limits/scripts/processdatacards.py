@@ -27,22 +27,35 @@ def doDatacards(analysis,region,period,bp,bgMode,do4l):
     datacardString = '' if bgMode == "sideband" else "_{0}".format(bgMode)
     if do4l: datacardString += "_4l"
     python_mkdir(combineDatacardDir)
-    # merge Hpp3l
-    for mass in masses:
-        logging.info('%s: Merging %i' % (bp,mass))
-        if not do4l: command = 'pushd {1}/{2}; combineCards.py {0}_[em][em][em].txt > {0}_comb.txt'.format(bp,datacardDir,mass)
-        if do4l: command = 'pushd {1}/{2}; combineCards.py {0}_[em][em][em]_4l.txt > {0}_comb_4l.txt'.format(bp,datacardDir,mass)
-        out = subprocess.Popen(command, shell=True,stdout=pipe,stderr=subprocess.STDOUT).communicate()[0]
     # merge for combine
     if analysis in combos:
         for mass in masses:
+            # merge the inputs
+            logging.info('%s: Merging %i' % (bp,mass))
+            mergeCommands = []
+            mergeCommands += ['pushd datacards/{1}/{0}/{2}; combineCards.py {0}_[em][em][em].txt > {0}_comb.txt'.format(bp,'Hpp3l_8tev_Hpp3l',mass)]
+            mergeCommands += ['pushd datacards/{1}/{0}/{2}; combineCards.py {0}_[em][em][em]_4l.txt > {0}_comb_4l.txt'.format(bp,'Hpp3l_8tev_Hpp3l',mass)]
+            mergeCommands += ['pushd datacards/{1}/{0}/{2}; combineCards.py {0}_[em][em][em][em].txt > {0}_comb.txt'.format(bp,'Hpp4l_8tev_Hpp4l',mass)]
+            for command in mergeCommands:
+                out = subprocess.Popen(command, shell=True,stdout=pipe,stderr=subprocess.STDOUT).communicate()[0]
+            # merge the merged cards
             dirsToCombine = ['datacards/%s_%itev_%s/%s' % (a, period, a, bp) for a in combos[analysis]]
             theCards = ['%s/%i/%s%s.txt' %(x,mass,bp,datacardString) for x in dirsToCombine]
+            # manually add Hpp3l 4l
+            theCards += ['datacards/Hpp3l_%itev_Hpp3l/%s/%i/%s%s_4l.txt' % (period, bp, mass,bp,datacardString)]
             cardsToCombine = [x for x in theCards if os.path.isfile(x)]
             outCard = '%s/%i/%s%s.txt' %(datacardDir,mass,bp,datacardString)
             python_mkdir('%s/%i' %(datacardDir,mass))
-            logging.info('%s: Creating combined card mass %i' % (bp,mass))
-            command = 'combineCards.py %s > %s' % (combineDatacardDir,' '.join(cardsToCombine),outCard)
+            command = 'combineCards.py %s > %s' % (' '.join(cardsToCombine),outCard)
+            out = subprocess.Popen(command, shell=True,stdout=pipe,stderr=subprocess.STDOUT).communicate()[0]
+    else: # merge for individual analyses
+        for mass in masses:
+            logging.info('%s: Merging %i' % (bp,mass))
+            if analysis in ['Hpp3l']:
+                if do4l: command = 'pushd {1}/{2}; combineCards.py {0}_[em][em][em]_4l.txt > {0}_comb_4l.txt'.format(bp,datacardDir,mass)
+                if not do4l: command = 'pushd {1}/{2}; combineCards.py {0}_[em][em][em].txt > {0}_comb.txt'.format(bp,datacardDir,mass)
+            if analysis in ['Hpp4l']:
+                command = 'pushd {1}/{2}; combineCards.py {0}_[em][em][em][em].txt > {0}_comb.txt'.format(bp,datacardDir,mass)
             out = subprocess.Popen(command, shell=True,stdout=pipe,stderr=subprocess.STDOUT).communicate()[0]
             
     command = 'cp -r %s %s' %(datacardDir, combineDatacardDir)
