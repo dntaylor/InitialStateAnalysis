@@ -234,6 +234,36 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         recoCut = '(' + ' | '.join(['channel=="%s"'%x for x in recoChannels[c]]) + ')'
         customFinalStates['Hpp3l'][c] = genCut + ' && ' + recoCut
 
+    # plot efficiencies
+    if analysis in ['Hpp3l','Hpp4l']:
+        logger.info("%s:%s:%iTeV: Plotting efficiency" % (analysis, channel, runPeriod))
+        plotter = EfficiencyPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_efficiency',mergeDict=mergeDict,scaleFactor=scaleFactor,loglevel=loglevel)
+        plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
+        plotter.initializeSignalSamples([sigMap[runPeriod]['Sig']])
+        if dataplot: plotter.initializeDataSamples([sigMap[runPeriod]['data']])
+        plotter.setIntLumi(intLumiMap[runPeriod])
+        plotMode = 'plotCutFlowMCDataSignal' if dataplot else 'plotCutFlowMCSignal'
+        plotMethod = getattr(plotter,plotMode)
+        plotMethod([x+'&&'+myCut for x in cutFlowMap[channel]['cuts']],'efficiency',labels=cutFlowMap[channel]['labels'],lumitext=33)
+        if plotFinalStates:
+            for c in fsToPlot:
+                logger.info("%s:%s:%iTeV: Plotting efficiency  %s" % (analysis, channel, runPeriod, c))
+                plotMethod(['%s&&channel=="%s"&&%s' %(x,c,myCut) for x in cutFlowMap[channel]['cuts']],'%s/efficiency'%c,labels=cutFlowMap[channel]['labels'],lumitext=33,logy=0)
+
+        ## plot cut flows overlays
+        #plotter = CutFlowPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_cutflow_overlay',mergeDict=mergeDict,scaleFactor=scaleFactor,loglevel=loglevel)
+        #plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel] if x not in ['WZ']])
+        #plotter.initializeSignalSamples([sigMap[runPeriod]['WZ']])
+        #if dataplot: plotter.initializeDataSamples([sigMap[runPeriod]['data']])
+        #plotter.setIntLumi(intLumiMap[runPeriod])
+        #plotMode = 'plotCutFlowMCDataSignal' if dataplot else 'plotCutFlowMCSignal'
+        #plotMethod = getattr(plotter,plotMode)
+        #plotMethod([x+'&&'+myCut for x in cutFlowMap[channel]['cuts']],'cutFlow_overlay',labels=cutFlowMap[channel]['labels'],lumitext=33,logy=0)
+        #if plotFinalStates:
+        #    for c in fsToPlot:
+        #        logger.info("%s:%s:%iTeV: Plotting cut flow overlay  %s" % (analysis, channel, runPeriod, c))
+        #        plotMethod(['%s&&channel=="%s"&&%s' %(x,c,myCut) for x in cutFlowMap[channel]['cuts']],'%s/cutFlow_overlay'%c,labels=cutFlowMap[channel]['labels'],lumitext=33,logy=0)
+
     # plotting correlation
     plotter = CorrelationPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,scaleFactor=scaleFactor,rootName='plots_correlation',loglevel=loglevel)
     plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
@@ -480,36 +510,6 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     for i in range(len(cutFlowMap[channel]['cuts'])):
         thisCut = '&&'.join(cutFlowMap[channel]['cuts'][:i+1])
         plotMethod(['%s&&%s'%(myCut,thisCut)]+['%s&&%s&&%s' %(x,myCut,thisCut) for x in plotChannelCuts],'cutflow/%s/individualChannels'%cutFlowMap[channel]['labels_simple'][i],labels=['Total']+plotChannelStrings,nosum=True,lumitext=33,logy=0)
-
-    # plot efficiencies
-    #if analysis in ['WZ']:
-    #    logger.info("%s:%s:%iTeV: Plotting efficiency" % (analysis, channel, runPeriod))
-    #    plotter = EfficiencyPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_efficiency',mergeDict=mergeDict,scaleFactor=scaleFactor,loglevel=loglevel)
-    #    plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel] if x != 'WZ'])
-    #    plotter.initializeSignalSamples([sigMap[runPeriod]['WZ']])
-    #    if dataplot: plotter.initializeDataSamples([sigMap[runPeriod]['data']])
-    #    plotter.setIntLumi(intLumiMap[runPeriod])
-    #    plotMode = 'plotCutFlowMCDataSignal' if dataplot else 'plotCutFlowMCSignal'
-    #    plotMethod = getattr(plotter,plotMode)
-    #    plotMethod([x+'&&'+myCut for x in cutFlowMap[channel]['cuts']],'efficiency',labels=cutFlowMap[channel]['labels'],lumitext=33)
-    #    if plotFinalStates:
-    #        for c in fsToPlot:
-    #            logger.info("%s:%s:%iTeV: Plotting efficiency  %s" % (analysis, channel, runPeriod, c))
-    #            plotMethod(['%s&&channel=="%s"&&%s' %(x,c,myCut) for x in cutFlowMap[channel]['cuts']],'%s/efficiency'%c,labels=cutFlowMap[channel]['labels'],lumitext=33,logy=0)
-
-    #    # plot cut flows overlays
-    #    plotter = CutFlowPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_cutflow_overlay',mergeDict=mergeDict,scaleFactor=scaleFactor,loglevel=loglevel)
-    #    plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel] if x not in ['WZ']])
-    #    plotter.initializeSignalSamples([sigMap[runPeriod]['WZ']])
-    #    if dataplot: plotter.initializeDataSamples([sigMap[runPeriod]['data']])
-    #    plotter.setIntLumi(intLumiMap[runPeriod])
-    #    plotMode = 'plotCutFlowMCDataSignal' if dataplot else 'plotCutFlowMCSignal'
-    #    plotMethod = getattr(plotter,plotMode)
-    #    plotMethod([x+'&&'+myCut for x in cutFlowMap[channel]['cuts']],'cutFlow_overlay',labels=cutFlowMap[channel]['labels'],lumitext=33,logy=0)
-    #    if plotFinalStates:
-    #        for c in fsToPlot:
-    #            logger.info("%s:%s:%iTeV: Plotting cut flow overlay  %s" % (analysis, channel, runPeriod, c))
-    #            plotMethod(['%s&&channel=="%s"&&%s' %(x,c,myCut) for x in cutFlowMap[channel]['cuts']],'%s/cutFlow_overlay'%c,labels=cutFlowMap[channel]['labels'],lumitext=33,logy=0)
 
 
 def plotFakeRate(analysis,channel,runPeriod,**kwargs):

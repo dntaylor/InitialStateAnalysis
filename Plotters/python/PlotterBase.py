@@ -192,7 +192,7 @@ class PlotterBase(object):
              result,err = self.getNumEntries(selection,signal,doError=True,**kwargs)
         else:
             for sig in self.signal:
-                temp = self.getNumEntries(selection,sig,doError=True**kwargs)
+                temp = self.getNumEntries(selection,sig,doError=True,**kwargs)
                 result += temp[0]
                 err2 += temp[1]**2
             err = err2 ** 0.5
@@ -205,6 +205,18 @@ class PlotterBase(object):
         err2 = 0
         for bg in self.backgrounds:
             temp = self.getNumEntries(selection,bg,doError=True,**kwargs)
+            result += temp[0]
+            err2 += temp[1]**2
+        err = err2**0.5
+        if doError: return result, err
+        return result
+
+    def getDataEntries(self,selection,**kwargs):
+        doError = kwargs.pop('doError',False)
+        result = 0
+        err2 = 0
+        for d in self.data:
+            temp = self.getNumEntries(selection,d,doError=True,**kwargs)
             result += temp[0]
             err2 += temp[1]**2
         err = err2**0.5
