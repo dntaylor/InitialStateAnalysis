@@ -269,6 +269,80 @@ class AnalyzerHpp2l_Z(AnalyzerHpp2l):
             if rtrow.pfMetEt > 30.: return False
         return True
 
+class AnalyzerHpp2l_Charge(AnalyzerHpp2l):
+    '''
+    Charge ID test control region for Hpp2l
+    '''
+    def __init__(self, sample_name, file_list, out_file, period, **kwargs):
+        super(AnalyzerHpp2l_Charge, self).__init__(sample_name, file_list, out_file, period, **kwargs)
+        self.channel = 'Charge'
+        self.cutflow_labels = ['Trigger','Fiducial','Trigger Threshold','ID','Mass 3l','Z selection','W selection']
+        self.initial_states = ['z1'] # in order of leptons returned in choose_objects
+        self.other_states = []
+        self.object_definitions = {
+            'z1': ['em','em'],
+        }
+
+    ###############################
+    ### Define Object selection ###
+    ###############################
+    def choose_objects(self, rtrow):
+        '''
+        Select leptons that best fit the Z selection.
+        The first two leptons are the Z.
+        Z are then ordered in pt.
+        We select combinatorics by closest to zmass.
+        '''
+        cands = []
+        for l in permutations(self.objects):
+            if lep_order(l[0], l[1]):
+                continue
+
+            SF1 = l[0][0]==l[1][0] # select same flavor
+            mass = getattr(rtrow, "%s_%s_Mass" % (l[0], l[1]))
+            massdiff = abs(ZMASS-mass)
+
+            ordList = [l[1], l[0]] if getattr(rtrow,'%sPt' % l[0]) < getattr(rtrow,'%sPt' % l[1]) else l
+
+            if SF1:
+                cands.append((massdiff, list(ordList)))
+
+        if not len(cands): return 0
+
+        # Sort by mass difference
+        cands.sort(key=lambda x: x[0])
+        massdiff, leps = cands[0]
+
+        return ([massdiff], leps)
+
+    def preselection(self,rtrow):
+        cuts = CutSequence()
+        if self.isData: cuts.add(self.trigger)
+        cuts.add(self.fiducial)
+        cuts.add(self.overlap)
+        cuts.add(self.trigger_threshold)
+        cuts.add(self.ID_tight)
+        cuts.add(self.zSelection)
+        return cuts
+
+    def selection(self,rtrow):
+        cuts = CutSequence()
+        #if self.isData: cuts.add(self.trigger)
+        cuts.add(self.trigger)
+        cuts.add(self.fiducial)
+        cuts.add(self.overlap)
+        cuts.add(self.trigger_threshold)
+        cuts.add(self.ID_tight)
+        cuts.add(self.zSelection)
+        return cuts
+
+    def zSelection(self,rtrow):
+        leps = self.objCand
+        o = ordered(leps[0], leps[1])
+        m1 = getattr(rtrow,'%s_%s_Mass' % (o[0],o[1]))
+        l0Pt = getattr(rtrow,'%sPt' %leps[0])
+        return m1>60. and m1<120. and l0Pt>20.
+
 
 class AnalyzerHpp2l_TT(AnalyzerHpp2l):
     '''
@@ -378,6 +452,7 @@ def main(argv=None):
 
     if args.analyzer=='Hpp2l': analyzer = AnalyzerHpp2l(args.sample_name,args.file_list,args.out_file,args.period)
     if args.analyzer=='Z': analyzer = AnalyzerHpp2l_Z(args.sample_name,args.file_list,args.out_file,args.period)
+    if args.analyzer=='Charge': analyzer = AnalyzerHpp2l_Charge(args.sample_name,args.file_list,args.out_file,args.period)
     if args.analyzer=='TT': analyzer = AnalyzerHpp2l_TT(args.sample_name,args.file_list,args.out_file,args.period)
     with analyzer as thisAnalyzer:
         thisAnalyzer.analyze()

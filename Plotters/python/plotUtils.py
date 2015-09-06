@@ -502,7 +502,8 @@ def getMergeDict(period):
             'QCD_Pt_3200toInf_TuneCUETP8M1_13TeV_pythia8'  : '1',
         }
         sampleMergeDict['data']      = {
-            'data_Run2015B': '1',
+            #'data_Run2015B': '1', # 50 ns
+            'data_Run2015C': '1', # 25 ns
         }
     # 8 TeV sample aliases
     if period==8:
@@ -658,8 +659,8 @@ def getIntLumiMap():
     intLumiMap = {
         7 : 4900,
         8 : 19700,
-        #13: 1000,
-        13: 40.03,
+        #13: 42, # 50ns
+        13: 20.38, # 25ns
     }
     return intLumiMap
 

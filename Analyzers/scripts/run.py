@@ -22,7 +22,7 @@ from InitialStateAnalysis.Analyzers.AnalyzerZ import AnalyzerZ
 from InitialStateAnalysis.Analyzers.AnalyzerWZ import AnalyzerWZ, AnalyzerWZ_Z
 from InitialStateAnalysis.Analyzers.AnalyzerWZ_W import AnalyzerWZ_W
 from InitialStateAnalysis.Analyzers.AnalyzerWZ_FakeRate import AnalyzerWZ_FakeRate
-from InitialStateAnalysis.Analyzers.AnalyzerHpp2l import AnalyzerHpp2l, AnalyzerHpp2l_Z, AnalyzerHpp2l_TT
+from InitialStateAnalysis.Analyzers.AnalyzerHpp2l import AnalyzerHpp2l, AnalyzerHpp2l_Z, AnalyzerHpp2l_Charge, AnalyzerHpp2l_TT
 from InitialStateAnalysis.Analyzers.AnalyzerHpp3l import AnalyzerHpp3l, AnalyzerHpp3l_WZ, AnalyzerHpp3l_LowMass
 from InitialStateAnalysis.Analyzers.AnalyzerHpp4l import AnalyzerHpp4l
 
@@ -36,6 +36,7 @@ def run_analyzer(args):
         'Hpp2l'   : {
                     'Hpp2l'   : AnalyzerHpp2l,
                     'Z'       : AnalyzerHpp2l_Z,
+                    'Charge'  : AnalyzerHpp2l_Charge,
                     'TT'      : AnalyzerHpp2l_TT,
                     },
         'WZ'      : {
@@ -66,6 +67,7 @@ def get_sample_names(analysis,period,samples):
     ntupleDict = {
         '8': {
             'Z'          : '2015-06-01-8TeV-2l',
+            'Charge'     : '2015-06-01-8TeV-2l',
             'TT'         : '2015-06-01-8TeV-2l',
             'Hpp2l'      : '2015-06-01-8TeV-2l',
             'WZ'         : '2015-06-01-8TeV', 
@@ -182,16 +184,11 @@ def submitFwkliteJob(sampledir,args):
     return
 
 def parse_command_line(argv):
-    parser = argparse.ArgumentParser(description="Run the desired analyzer on "
-                                                 "FSA n-tuples")
+    parser = get_parser("Run the desired analyzer on FSA n-tuples")
 
-    parser.add_argument('analysis', type=str, choices=['Z','WZ','WZ_W','WZ_FakeRate','Hpp2l','Hpp3l','Hpp4l'], help='Analysis to run')
-    parser.add_argument('channel', type=str, choices=['Z','WZ','W','FakeRate','TT','Hpp2l','Hpp3l','Hpp4l','LowMass'], help='Channel to run for given analysis')
-    parser.add_argument('period', type=str, choices=['8','13'], help='Energy (TeV)')
     parser.add_argument('sample_names', nargs='+',help='Sample names w/ UNIX wildcards')
     parser.add_argument('-s','--submit',action='store_true',help='Submit jobs to condor')
     parser.add_argument('-jn','--jobName',nargs='?',type=str,const='',help='Job Name for condor submission')
-    parser.add_argument('-l','--log',nargs='?',type=str,const='INFO',default='INFO',choices=['INFO','DEBUG','WARNING','ERROR','CRITICAL'],help='Log level for logger')
     args = parser.parse_args(argv)
 
     return args

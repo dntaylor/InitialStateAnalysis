@@ -49,7 +49,7 @@ def plot_limits(analysis, region, period, savename, **kwargs):
     if do4l: datacardString += '_4l'
 
     # masses to include
-    masses = _3L_MASSES if analysis == 'Hpp3l' else _4L_MASSES
+    masses = _3L_MASSES if analysis in ['Hpp3l','HppAP'] else _4L_MASSES
     if do4l: masses = _4L_MASSES
     if period==13: masses = [500]
     n = len(masses)
@@ -58,7 +58,7 @@ def plot_limits(analysis, region, period, savename, **kwargs):
     xsecMap = {}
     xsecGraph = ROOT.TGraph(n)
     for i,mass in enumerate(masses):
-        sample = 'HPlusPlusHMinusMinusHTo4L_M-{0}_8TeV-pythia6' if analysis in ['Hpp4l','HppComb'] or do4l else 'HPlusPlusHMinusHTo3L_M-{0}_8TeV-calchep-pythia6'
+        sample = 'HPlusPlusHMinusMinusHTo4L_M-{0}_8TeV-pythia6' if analysis in ['Hpp4l','HppComb','HppPP'] or do4l else 'HPlusPlusHMinusHTo3L_M-{0}_8TeV-calchep-pythia6'
         xsecMap[mass] = xsecs[period][sample.format(mass)]
         if analysis in ['HppComb'] and mass >= 170:
             xsecMap[mass] += xsecs[period]['HPlusPlusHMinusHTo3L_M-{0}_8TeV-calchep-pythia6'.format(mass)]
@@ -205,7 +205,7 @@ def plot_limits(analysis, region, period, savename, **kwargs):
     legend.AddEntry(xexpected, 'Expected', 'l')
     legend.AddEntry(xtwoSigma, 'Expected 2#sigma', 'F')
     legend.AddEntry(xoneSigma, 'Expected 1#sigma', 'F')
-    name = 'Pair Production Cross Section' if analysis in ['Hpp4l'] or do4l else 'Associated Production Cross Section'
+    name = 'Pair Production Cross Section' if analysis in ['Hpp4l','HppPP'] or do4l else 'Associated Production Cross Section'
     if analysis in ['HppComb']: name = 'Cross Section'
     legend.AddEntry(xsecGraph, name, 'l')
 

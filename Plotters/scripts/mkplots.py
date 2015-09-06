@@ -14,6 +14,7 @@ from InitialStateAnalysis.Plotters.FakeRatePlotter import FakeRatePlotter
 from InitialStateAnalysis.Plotters.CorrelationPlotter import CorrelationPlotter
 from InitialStateAnalysis.Plotters.plotUtils import *
 from InitialStateAnalysis.Plotters.plotUtils import ZMASS, _3L_MASSES, _4L_MASSES
+from InitialStateAnalysis.Utilities.utilities import *
 
 def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
     savedir = kwargs.pop('savedir','')
@@ -651,11 +652,8 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
         plotter.plotFakeRate(numer, denom, 'fakeRate/{0}_fakerate'.format(fakeRegion), ptBins=ptBins, etaBins=etaBins[probe], logx=1, ptVar=ptvar, etaVar=etavar)
 
 def parse_command_line(argv):
-    parser = argparse.ArgumentParser(description="Plot a given channel and period")
+    parser = get_parser("Plot a given channel and period")
 
-    parser.add_argument('analysis', type=str, choices=['Z','WZ','WZ_W','WZ_FakeRate','Hpp2l','Hpp3l','Hpp4l'], help='Analysis to plot')
-    parser.add_argument('channel', type=str, choices=['Z','WZ','W','FakeRate','TT','Hpp2l','Hpp3l','Hpp4l','FakeRate','LowMass'], help='Channel in analysis')
-    parser.add_argument('period', type=int, choices=[7,8,13], help='Energy (TeV)')
     parser.add_argument('-pf','--plotFinalStates',action='store_true',help='Plot individual final states')
     parser.add_argument('-pj','--plotJetBins',action='store_true',help='Plot jet bins')
     parser.add_argument('-po','--plotOverlay',action='store_true',help='Plot overlay')
@@ -672,7 +670,6 @@ def parse_command_line(argv):
     parser.add_argument('-fs','--finalStates',type=str,default='all',help='Only run given channels (ie: "eee,emm")')
     parser.add_argument('-c','--cut',type=str,default='1',help='Cut to be applied to plots.')
     parser.add_argument('-sf','--scaleFactor',type=str,default='event.pu_weight*event.lep_scale*event.trig_scale',help='Scale factor for plots.')
-    parser.add_argument('-l','--log',nargs='?',type=str,const='INFO',default='INFO',choices=['INFO','DEBUG','WARNING','ERROR','CRITICAL'],help='Log level for logger')
     args = parser.parse_args(argv)
 
     return args

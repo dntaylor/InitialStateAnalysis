@@ -19,16 +19,12 @@ sys.argv.pop()
 rt.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
 
 from InitialStateAnalysis.Analyzers.ntuples import *
+from InitialStateAnalysis.Utilities.utilities import *
 
 def parse_command_line(argv):
-    parser = argparse.ArgumentParser(description="Run the desired analyzer on "
-                                                 "FSA n-tuples")
+    parser = get_parser("Merge the output ISA ntuples")
 
-    parser.add_argument('analysis', type=str, choices=['Z','WZ','WZ_W','WZ_FakeRate','Hpp2l','Hpp3l','Hpp4l'], help='Analysis to run')
-    parser.add_argument('channel', type=str, choices=['Z','WZ','W','FakeRate','TT','Hpp2l','Hpp3l','LowMass','Hpp4l','FakeRate','DataDriven'], help='Channel to run for given analysis')
-    parser.add_argument('period', type=str, choices=['7','8','13'], help='Energy (TeV)')
     parser.add_argument('jobName',nargs='?',type=str,const='',help='Job Name for condor submission')
-    parser.add_argument('-l','--log',nargs='?',type=str,const='INFO',default='INFO',choices=['INFO','DEBUG','WARNING','ERROR','CRITICAL'],help='Log level for logger')
     args = parser.parse_args(argv)
 
     return args
@@ -46,12 +42,13 @@ def main(argv=None):
     # merge individual samples
     ntupledir = 'ntuples/%s_%sTeV_%s' % (args.analysis, args.period, args.channel)
     os.system('mkdir -p %s' % ntupledir)
-    sampledirs = ['%s/%s' % (args.jobName, name) for name in os.listdir(args.jobName)]
-    for sampledir in sampledirs:
-        sample = os.path.basename(sampledir)
-        ntuplename = '%s/%s.root' % (ntupledir, sample)
-        mergeString = 'hadd -f %s %s/*.root' % (ntuplename, sampledir)
-        os.system(mergeString)
+    if args.jobName:
+        sampledirs = ['%s/%s' % (args.jobName, name) for name in os.listdir(args.jobName)]
+        for sampledir in sampledirs:
+            sample = os.path.basename(sampledir)
+            ntuplename = '%s/%s.root' % (ntupledir, sample)
+            mergeString = 'hadd -f %s %s/*.root' % (ntuplename, sampledir)
+            os.system(mergeString)
 
     # now merge the data samples (checking for duplicate events)
     datasets = {

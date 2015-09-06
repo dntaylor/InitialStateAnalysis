@@ -193,7 +193,8 @@ def elec_WZ_tight(rtrow, l, period):
 
     wzloose = elec_WZ_loose(rtrow, l, period)
 
-    chgId = getattr(rtrow,'%sChargeIdTight' %l)
+    #chgId = getattr(rtrow,'%sChargeIdTight' %l)
+    chgId = 1.
 
     return reliso < 0.15 and d0 < 0.02 and dz < 0.1 and wzloose and mva and chgId
 

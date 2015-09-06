@@ -10,6 +10,7 @@ from InitialStateAnalysis.Plotters.Plotter import Plotter
 from InitialStateAnalysis.Plotters.plotUtils import *
 from InitialStateAnalysis.Limits.Limits import Limits
 from InitialStateAnalysis.Limits.limitUtils import *
+from InitialStateAnalysis.Utilities.utilities import *
 from multiprocessing import Pool
 
 
@@ -492,11 +493,8 @@ def add_systematics_sideband(limits,mass,signal,name,chans,sigscale,period,bp,do
 
 
 def parse_command_line(argv):
-    parser = argparse.ArgumentParser(description="Produce datacards")
+    parser = get_parser("Produce datacards")
 
-    parser.add_argument('analysis', type=str, choices=['Hpp3l','Hpp4l'], help='Analysis to run')
-    parser.add_argument('region', type=str, choices=['Hpp3l','Hpp4l','WZ'], help='Analysis to run')
-    parser.add_argument('period', type=int, choices=[8, 13], help='Energy (TeV)')
     parser.add_argument('-m','--mass',nargs='?',type=int,const=500,default=500,help='Mass for signal')
     parser.add_argument('-am','--allMasses',action='store_true',help='Run over all masses for signal')
     parser.add_argument('-da','--doAlphaTest',action='store_true',help='Run the alpha test')
@@ -506,7 +504,6 @@ def parse_command_line(argv):
     parser.add_argument('-ab','--allBranchingPoints',action='store_true',help='Run over all branching points for H++')
     parser.add_argument('-bg','--bgMode',nargs='?',type=str,const='sideband',default='sideband',choices=['mc','sideband'],help='Choose BG estimation')
     parser.add_argument('-sf','--scaleFactor',type=str,default='event.pu_weight*event.lep_scale*event.trig_scale',help='Scale factor for MC.')
-    parser.add_argument('-l','--log',nargs='?',type=str,const='INFO',default='INFO',choices=['INFO','DEBUG','WARNING','ERROR','CRITICAL'],help='Log level for logger')
 
     args = parser.parse_args(argv)
     return args
