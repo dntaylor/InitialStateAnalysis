@@ -10,6 +10,7 @@ import errno
 import hashlib
 import re
 import logging
+import argparse
 
 logging.basicConfig(format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger(__name__)

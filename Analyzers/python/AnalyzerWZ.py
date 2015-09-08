@@ -37,7 +37,7 @@ class AnalyzerWZ(AnalyzerBase):
         }
         self.lepargs = {'tight':True}
         self.cutflow_labels = ['Trigger','Fiducial','ID','Z Selection','W Selection']
-        #self.alternateIds, self.alternateIdMap = self.defineAlternateIds(period)
+        self.alternateIds, self.alternateIdMap = self.defineAlternateIds(period)
         self.doVBF = (period=='13')
         super(AnalyzerWZ, self).__init__(sample_name, file_list, out_file, period, **kwargs)
 
@@ -158,6 +158,7 @@ class AnalyzerWZ(AnalyzerBase):
         if type=='Tight':
             kwargs['idDef'] = {
                 'e':'Medium',
+                #'e':'Tight',
                 'm':'Tight',
                 't':'Medium'
             }

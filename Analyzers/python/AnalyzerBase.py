@@ -341,7 +341,28 @@ class AnalyzerBase(object):
         ntupleRow["channel.channel"] = channelString
         ntupleRow["genChannel.channel"] = self.getGenChannel(rtrow)
 
+        def getMT(rtrow,period,*objects):
+            masses = {'e':0.511e-3, 'm':0.1056, 't':1.776, 'j':0}
+            metVar = 'pfMet' if period=='13' else 'type1_pfMet'
+            mtVar = 'PFMET' if period=='13' else 'PfMet_Ty1'
+            visP4 = rt.TLorentzVector()
+            for l in objects:
+                p4 = rt.TLorentzVector()
+                pt = getattr(rtrow, "%sPt" % l)
+                eta = getattr(rtrow, "%sEta" % l)
+                phi = getattr(rtrow, "%sPhi" % l)
+                mass = masses[l[0]]
+                p4.SetPtEtaPhiM(pt,eta,phi,mass)
+                visP4 += p4
+            ptMet = getattr(rtrow, "%sEt" % metVar)
+            phiMet = getattr(rtrow, "%sPhi" % metVar)
+            pxMet = ptMet*rt.TMath.Cos(phiMet)
+            pyMet = ptMet*rt.TMath.Sin(phiMet)
+            mt = rt.TMath.Sqrt(visP4.M2() + 2*(ptMet*visP4.Et() - (pxMet*visP4.Px() + pyMet*visP4.Py())))
+            return mt
+
         ntupleRow["finalstate.mass"] = float(rtrow.Mass)
+        ntupleRow["finalstate.mT"] = float(getMT(rtrow,self.period,*objects))
         ntupleRow["finalstate.sT"] = float(sum([getattr(rtrow, "%sPt" % x) for x in objects]))
         metVar = 'pfMet' if self.period=='13' else 'type1_pfMet'
         ntupleRow["finalstate.met"] = float(getattr(rtrow, '%sEt' %metVar))
