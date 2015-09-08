@@ -45,6 +45,25 @@ def enumerate_leps(final_state):
            out += ['%s%i' % (i, n) for n in xrange(1, N+1)]
     return out
 
+def printDetailed(row,tree,branches,analysis):
+    '''Print detailed information in list form'''
+    evt = branches['event']
+    z = branches['z1']
+    w = branches['w1']
+    fs = branches['finalstate']
+    strToPrint = '{run}:{lumi}:{evt}'
+    strToPrint += ':{z1pt:.4f}:{z1eta:.4f}:{z1phi:.4f}:{z1iso:.4f}'
+    strToPrint += ':{z2pt:.4f}:{z2eta:.4f}:{z2phi:.4f}:{z2iso:.4f}'
+    strToPrint += ':{w1pt:.4f}:{w1eta:.4f}:{w1phi:.4f}:{w1iso:.4f}'
+    strToPrint += ':{zdr:.4f}:{z1w1dr:.4f}:{z2w1dr:.4f}'
+    strToPrint += ':{zmass:.4f}:{met:.4f}:{metphi:.4f}:{m3l:.4f}'
+    print strToPrint.format(run=evt.run, lumi=evt.lumi, evt=evt.evt,
+                            z1pt=z.Pt1, z1eta=z.Eta1, z1phi=z.Phi1, z1iso=z.Iso1,
+                            z2pt=z.Pt2, z2eta=z.Eta2, z2phi=z.Phi2, z2iso=z.Iso2,
+                            w1pt=w.Pt1, w1eta=z.Eta1, w1phi=z.Phi1, w1iso=z.Iso1,
+                            zdr=z.dR, z1w1dr=w.dR1_z1_1, z2w1dr=w.dR1_z1_2,
+                            zmass=z.mass, met=fs.met, metphi=fs.metPhi, m3l=fs.mass)
+
 def printISAEvent(row,tree,branches,analysis):
     leps = ['l1','l2','l3']
     bosons = ['z1','w1']
@@ -139,6 +158,7 @@ def parse_command_line(argv):
     parser.add_argument('-m','--mode',nargs='?',type=str,default='isa', help='Ntuple type: isa, fsa')
     parser.add_argument('-n',nargs='?',default=1,help='Number of events to print (default 1, -1 for all)')
     parser.add_argument('-l','--list', action="store_true", help="List events passing selection")
+    parser.add_argument('-d','--detailed', action="store_true", help="List events passing selection with values")
     parser.add_argument('-mc', action="store_true", help="This is MC (not data)")
     args = parser.parse_args(argv)
 
@@ -228,8 +248,11 @@ def main(argv=None):
                 if args.mode=='fsa':
                     print '%i:%i:%i' % (row.run, row.lumi, row.evt)
                 else:
-                    event = branches['event']
-                    print '%i:%i:%i' % (event.run, event.lumi, event.evt)
+                    if args.detailed:
+                        printDetailed(row,tree,branches,args.analysis)
+                    else:
+                        event = branches['event']
+                        print '%i:%i:%i' % (event.run, event.lumi, event.evt)
             else:
                 if args.mode=='isa':
                     numPrinted += printEvent(row,tree,analysis=args.analysis,eventList=events,branches=branches,isMC=args.mc,mode=args.mode)
