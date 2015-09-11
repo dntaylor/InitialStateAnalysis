@@ -8,6 +8,42 @@ sys.argv.append('-b')
 import ROOT as rt
 sys.argv.pop()
 
+class ChargeIdSystematics(object):
+
+    def __int__(self):
+        self.missid = {
+            'EB': {
+                10 : 0.00350,
+                20 : 0.00331,
+                30 : 0.00319,
+                40 : 0.00289,
+                60 : 0.00581,
+                100: 0.00758,
+            },
+            'EE': {
+                10 : 0.02700,
+                20 : 0.02717,
+                30 : 0.01937,
+                40 : 0.01664,
+                60 : 0.04597,
+                100: 0.06232,
+            }
+        }
+
+
+
+    def systematic(self, rtrow, *leps, **kwargs):
+        val = 1.
+        for l in leps:
+            if l[0]=='e':
+                pt = getattr(rtrow,'%sPt' %l)
+                eta = getattr(rtrow,'%sEta' %l)
+                pt_reg = [x for x in [10,20,30,40,60,100,200] if pt>=x][0]
+                eta_reg = 'EB' if abs(eta)<1.479 else 'EE'
+                val *= (1.-self.missid[eta_reg][pt_reg])
+        return 1+(1-val)
+                
+
 class TriggerScaleFactors(object):
 
     def __init__(self):

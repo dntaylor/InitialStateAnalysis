@@ -63,9 +63,10 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
        Float_t trig_scale;\
        Float_t pu_weight;\
        Float_t gen_weight;\
+       Float_t charge_uncertainty;\
     };");
     eventStruct = rt.structEvent_t()
-    structureDict['event'] = [eventStruct, eventStruct,'evt/I:run:lumi:nvtx:GenNUP:lep_scale/F:lep_scale_up:lep_scale_down:trig_scale:pu_weight:gen_weight']
+    structureDict['event'] = [eventStruct, eventStruct,'evt/I:run:lumi:nvtx:GenNUP:lep_scale/F:lep_scale_up:lep_scale_down:trig_scale:pu_weight:gen_weight:charge_uncertainty']
     structOrder += ['event']
 
     rt.gROOT.ProcessLine(

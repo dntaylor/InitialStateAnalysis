@@ -22,7 +22,7 @@ class AnalyzerWZ_FakeRate(AnalyzerBase):
         }
         self.lepargs = {'tight':True}
         self.cutflow_labels = []
-        self.doVBF = (period=='13')
+        self.doVBF = (period==13)
         super(AnalyzerWZ_FakeRate, self).__init__(sample_name, file_list, out_file, period, **kwargs)
 
     ###############################
@@ -108,10 +108,10 @@ class AnalyzerWZ_FakeRate(AnalyzerBase):
                 'e':0.15,
                 'm':0.12
             }
-            if self.period=='8':
+            if self.period==8:
                 kwargs['idDef']['e'] = 'WZTight'
                 kwargs['idDef']['m'] = 'WZTight'
-            if self.period=='13':
+            if self.period==13:
                 kwargs['isoCut']['e'] = 9999.
         if type=='Loose':
             kwargs['idDef'] = {
@@ -123,10 +123,10 @@ class AnalyzerWZ_FakeRate(AnalyzerBase):
                 'e':0.2,
                 'm':0.2
             }
-            if self.period=='8':
+            if self.period==8:
                 kwargs['idDef']['e'] = 'WZLoose'
                 kwargs['idDef']['m'] = 'WZLoose'
-            if self.period=='13':
+            if self.period==13:
                 kwargs['isoCut']['e'] = 9999.
         if type=='Veto':
             kwargs['idDef'] = {
@@ -138,7 +138,7 @@ class AnalyzerWZ_FakeRate(AnalyzerBase):
                 'e':0.4,
                 'm':0.4
             }
-            if self.period=='13':
+            if self.period==13:
                 kwargs['isoCut']['e'] = 9999.
         if hasattr(self,'alternateIds'):
             if type in self.alternateIds:
@@ -190,7 +190,7 @@ class AnalyzerWZ_FakeRate(AnalyzerBase):
 
     def wVeto(self,rtrow):
         leps = self.objCand
-        if self.period=='8':
+        if self.period==8:
             if rtrow.type1_pfMetEt > 20.: return False
             if getattr(rtrow, "%sMtToPfMet_Ty1" % (leps[0])) > 20.: return False
         else:
@@ -217,7 +217,7 @@ def parse_command_line(argv):
     parser.add_argument('sample_name', type=str)
     parser.add_argument('file_list', type=str)
     parser.add_argument('out_file', type=str)
-    parser.add_argument('period', type=str)
+    parser.add_argument('period', type=int)
 
     args = parser.parse_args(argv)
     return args

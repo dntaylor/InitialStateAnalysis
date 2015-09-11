@@ -20,7 +20,7 @@ class AnalyzerZ(AnalyzerBase):
             'z1': ['em','em'],
         }
         self.cutflow_labels = ['Trigger','Fiducial','ID','Z Selection','W Selection']
-        self.doVBF = (period=='13')
+        self.doVBF = (period==13)
         super(AnalyzerZ, self).__init__(sample_name, file_list, out_file, period,**kwargs)
 
     ###############################
@@ -85,7 +85,7 @@ class AnalyzerZ(AnalyzerBase):
                 'e':0.15,
                 'm':0.12
             }
-            if self.period=='8':
+            if self.period==8:
                 kwargs['idDef']['e'] = 'WZTight'
                 kwargs['idDef']['m'] = 'WZTight'
         if type=='Loose':
@@ -98,7 +98,7 @@ class AnalyzerZ(AnalyzerBase):
                 'e':0.2,
                 'm':0.2
             }
-            if self.period=='8':
+            if self.period==8:
                 kwargs['idDef']['e'] = 'WZLoose'
                 kwargs['idDef']['m'] = 'WZLoose'
         if type=='Veto':
@@ -117,11 +117,11 @@ class AnalyzerZ(AnalyzerBase):
         return kwargs
 
     def trigger(self, rtrow):
-        if self.period == '8':
+        if self.period == 8:
             triggers = ["mu17ele8isoPass", "mu8ele17isoPass",
                         "doubleETightPass", "doubleMuPass", "doubleMuTrkPass"]
 
-        if self.period == '13':
+        if self.period == 13:
             triggers = ['muEPass', 'doubleMuPass', 'doubleEPass', 'eMuPass']
 
         for t in triggers:
@@ -162,7 +162,7 @@ def parse_command_line(argv):
     parser.add_argument('sample_name', type=str)
     parser.add_argument('file_list', type=str)
     parser.add_argument('out_file', type=str)
-    parser.add_argument('period', type=str)
+    parser.add_argument('period', type=int)
 
     args = parser.parse_args(argv)
     return args

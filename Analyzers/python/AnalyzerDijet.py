@@ -39,7 +39,7 @@ class AnalyzerDijet(AnalyzerBase):
         }
         self.lepargs = {'tight':True}
         self.cutflow_labels = ['Trigger','Fiducial','ID','Z Selection','W Selection']
-        self.doVBF = (period=='13')
+        self.doVBF = (period==13)
         super(AnalyzerWZ, self).__init__(sample_name, file_list, out_file, period,**kwargs)
 
     ###############################
@@ -81,7 +81,7 @@ class AnalyzerDijet(AnalyzerBase):
         '''
         Veto on 4th lepton
         '''
-        return (rtrow.eVetoTight + rtrow.muVetoTight == 0) if self.period=='13' else\
+        return (rtrow.eVetoTight + rtrow.muVetoTight == 0) if self.period==13 else\
                (rtrow.elecVetoWZTight + rtrow.muonVetoWZTight == 0)
 
     ###########################
@@ -118,10 +118,10 @@ class AnalyzerDijet(AnalyzerBase):
                 'e':0.15,
                 'm':0.12
             }
-            if self.period=='8':
+            if self.period==8:
                 kwargs['idDef']['e'] = 'WZTight'
                 kwargs['idDef']['m'] = 'WZTight'
-            if self.period=='13':
+            if self.period==13:
                 kwargs['isoCut']['e'] = 9999.
         if type=='Loose':
             kwargs['idDef'] = {
@@ -132,10 +132,10 @@ class AnalyzerDijet(AnalyzerBase):
                 'e':0.2,
                 'm':0.2
             }
-            if self.period=='8':
+            if self.period==8:
                 kwargs['idDef']['e'] = 'WZLoose'
                 kwargs['idDef']['m'] = 'WZLoose'
-            if self.period=='13':
+            if self.period==13:
                 kwargs['isoCut']['e'] = 9999.
         if type=='Veto':
             kwargs['idDef'] = {
@@ -183,14 +183,14 @@ class AnalyzerDijet(AnalyzerBase):
         return self.ID(rtrow,*self.objects,**self.getIdArgs('Tight'))
 
     def metveto(self,rtrow):
-        if self.period=='8':
+        if self.period==8:
             if rtrow.type1_pfMetEt > 20.: return False
         else:
             if rtrow.pfMetEt > 20.: return False
         return True
 
     def wveto(self,rtrow):
-        mtVar = 'PFMET' if self.period=='13' else 'PfMet_Ty1'
+        mtVar = 'PFMET' if self.period==13 else 'PfMet_Ty1'
         for obj in self.objects:
             if obj[0] == 'm':
                 if getattr(rtrow, "%sMtTo%s" % (obj, mtVar)) > 20.: return False
@@ -216,7 +216,7 @@ def parse_command_line(argv):
     parser.add_argument('sample_name', type=str)
     parser.add_argument('file_list', type=str)
     parser.add_argument('out_file', type=str)
-    parser.add_argument('period', type=str)
+    parser.add_argument('period', type=int)
 
     args = parser.parse_args(argv)
     return args

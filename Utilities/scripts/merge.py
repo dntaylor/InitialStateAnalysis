@@ -12,9 +12,8 @@ import pwd
 import argparse
 import logging
 
-sys.argv.append('-b')
 import ROOT as rt
-sys.argv.pop()
+rt.PyConfig.IgnoreCommandLineOptions = True
 
 rt.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
 

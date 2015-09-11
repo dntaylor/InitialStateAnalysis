@@ -101,7 +101,7 @@ class AnalyzerHpp2l(AnalyzerBase):
                 'e':0.15,
                 'm':0.12
             }
-            if self.period=='8':
+            if self.period==8:
                 kwargs['idDef']['e'] = 'WZTight'
                 kwargs['idDef']['m'] = 'WZTight'
                 #kwargs['idDef']['e'] = '4l'
@@ -118,7 +118,7 @@ class AnalyzerHpp2l(AnalyzerBase):
                 'e':0.2,
                 'm':0.2
             }
-            if self.period=='8':
+            if self.period==8:
                 #kwargs['idDef']['e'] = 'WZLoose'
                 #kwargs['idDef']['m'] = 'WZLoose'
                 kwargs['idDef']['e'] = '4l'
@@ -131,7 +131,7 @@ class AnalyzerHpp2l(AnalyzerBase):
         triggers = ["mu17ele8isoPass", "mu8ele17isoPass",
                     "doubleETightPass", "doubleMuPass", "doubleMuTrkPass"]
 
-        if self.period == '13':
+        if self.period == 13:
             triggers = ['muEPass', 'eMuPass', 'doubleMuPass',
                         'doubleEPass', 'tripleEPass']
 
@@ -263,7 +263,7 @@ class AnalyzerHpp2l_Z(AnalyzerHpp2l):
         return abs(m1-ZMASS)<20. and l0Pt>20.
 
     def metVeto(self,rtrow):
-        if self.period=='8':
+        if self.period==8:
             if rtrow.type1_pfMetEt > 30.: return False
         else:
             if rtrow.pfMetEt > 30.: return False
@@ -420,7 +420,7 @@ class AnalyzerHpp2l_TT(AnalyzerHpp2l):
 
     def metCut(self,rtrow):
         leps = self.objCand
-        if self.period=='8':
+        if self.period==8:
             if rtrow.type1_pfMetEt < 30.: return False
         else:
             if rtrow.pfMetEt < 30.: return False
@@ -439,7 +439,7 @@ def parse_command_line(argv):
     parser.add_argument('sample_name', type=str)
     parser.add_argument('file_list', type=str)
     parser.add_argument('out_file', type=str)
-    parser.add_argument('period', type=str)
+    parser.add_argument('period', type=int)
     args = parser.parse_args(argv)
     return args
 

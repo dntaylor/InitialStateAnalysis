@@ -91,7 +91,7 @@ def parse_command_line(argv):
     parser = argparse.ArgumentParser()
     parser.add_argument('in_sample', type=str)
     parser.add_argument('out_file', type=str)
-    parser.add_argument('period', type=str)
+    parser.add_argument('period', type=int)
 
     args = parser.parse_args(argv)
     return args

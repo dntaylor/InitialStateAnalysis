@@ -38,7 +38,7 @@ class AnalyzerWZ(AnalyzerBase):
         self.lepargs = {'tight':True}
         self.cutflow_labels = ['Trigger','Fiducial','ID','Z Selection','W Selection']
         self.alternateIds, self.alternateIdMap = self.defineAlternateIds(period)
-        self.doVBF = (period=='13')
+        self.doVBF = (period==13)
         super(AnalyzerWZ, self).__init__(sample_name, file_list, out_file, period, **kwargs)
 
     ###############################
@@ -87,16 +87,20 @@ class AnalyzerWZ(AnalyzerBase):
         '''
         Veto on 4th lepton
         '''
-        return (rtrow.eVetoTight + rtrow.muVetoTight == 0) if self.period=='13' else\
+        return (rtrow.eVetoTight + rtrow.muVetoTight == 0) if self.period==13 else\
                (rtrow.elecVetoWZTight + rtrow.muonVetoWZTight == 0)
 
     def defineAlternateIds(self,period):
-        if period=='8':
+        if period==8:
             return [], {}
-        elecIds = ['Loose', 'Medium', 'Tight']
-        muonIds = ['Loose', 'Tight']
-        elecIsos = [0.5, 0.2, 0.15]
-        muonIsos = [0.4, 0.2, 0.12]
+        #elecIds = ['Loose', 'Medium', 'Tight']
+        elecIds = ['Medium', 'Tight']
+        #muonIds = ['Loose', 'Tight']
+        muonIds = ['Tight']
+        #elecIsos = [0.5, 0.2, 0.15]
+        elecIsos = [9999.]
+        #muonIsos = [0.4, 0.2, 0.12]
+        muonIsos = [0.2, 0.12]
         idList = []
         idMap = {}
         for id in elecIds:
@@ -166,10 +170,10 @@ class AnalyzerWZ(AnalyzerBase):
                 'e':0.15,
                 'm':0.12
             }
-            if self.period=='8':
+            if self.period==8:
                 kwargs['idDef']['e'] = 'WZTight'
                 kwargs['idDef']['m'] = 'WZTight'
-            if self.period=='13':
+            if self.period==13:
                 kwargs['isoCut']['e'] = 9999.
         if type=='Loose':
             kwargs['idDef'] = {
@@ -181,10 +185,10 @@ class AnalyzerWZ(AnalyzerBase):
                 'e':0.2,
                 'm':0.2
             }
-            if self.period=='8':
+            if self.period==8:
                 kwargs['idDef']['e'] = 'WZLoose'
                 kwargs['idDef']['m'] = 'WZLoose'
-            if self.period=='13':
+            if self.period==13:
                 kwargs['isoCut']['e'] = 9999.
         if type=='Veto':
             kwargs['idDef'] = {
@@ -196,7 +200,7 @@ class AnalyzerWZ(AnalyzerBase):
                 'e':0.4,
                 'm':0.4
             }
-            if self.period=='13':
+            if self.period==13:
                 kwargs['isoCut']['e'] = 9999.
         if hasattr(self,'alternateIds'):
             if type in self.alternateIds:
@@ -204,11 +208,11 @@ class AnalyzerWZ(AnalyzerBase):
         return kwargs
 
     def trigger(self, rtrow):
-        if self.period == '8':
+        if self.period == 8:
             triggers = ["mu17ele8isoPass", "mu8ele17isoPass",
                         "doubleETightPass", "doubleMuPass", "doubleMuTrkPass"]
 
-        if self.period == '13':
+        if self.period == 13:
             triggers = ['singleMuSingleEPass', 'doubleMuPass', 'doubleEPass', 'singleESingleMuPass']
 
         for t in triggers:
@@ -264,7 +268,7 @@ class AnalyzerWZ(AnalyzerBase):
     def wSelection(self,rtrow):
         leps = self.objCand
         if getattr(rtrow, '%sPt' %leps[2])<20.: return False
-        if self.period=='8':
+        if self.period==8:
             if rtrow.type1_pfMetEt < 30.: return False
         else:
             if rtrow.pfMetEt < 30.: return False
@@ -314,7 +318,7 @@ class AnalyzerWZ_Z(AnalyzerWZ):
         return self.ID(rtrow,*self.objCand[:2],**self.getIdArgs('Tight'))
 
     def metveto(self,rtrow):
-        if self.period=='8':
+        if self.period==8:
             if rtrow.type1_pfMetEt > 20.: return False
         else:
             if rtrow.pfMetEt > 20.: return False
@@ -344,14 +348,14 @@ class AnalyzerWZ_QCD(AnalyzerWZ):
         return False
 
     def metveto(self,rtrow):
-        if self.period=='8':
+        if self.period==8:
             if rtrow.type1_pfMetEt > 20.: return False
         else:
             if rtrow.pfMetEt > 20.: return False
         return True
 
     def wveto(self,rtrow):
-        mtVar = 'PFMET' if self.period=='13' else 'PfMet_Ty1'
+        mtVar = 'PFMET' if self.period==13 else 'PfMet_Ty1'
         obj = self.objCand[2]
         if obj[0] == 'm':
             return getattr(rtrow, "%sMtTo%s" % (obj, mtVar)) < 20.
@@ -376,7 +380,7 @@ def parse_command_line(argv):
     parser.add_argument('sample_name', type=str)
     parser.add_argument('file_list', type=str)
     parser.add_argument('out_file', type=str)
-    parser.add_argument('period', type=str)
+    parser.add_argument('period', type=int)
 
     args = parser.parse_args(argv)
     return args

@@ -108,7 +108,7 @@ def _elec_zz_tight(rtrow, l, period):
 def _elec_mva_nontriggering_zz(rtrow, l, period):
     pt = getattr(rtrow, "%sPt" % l)
     eta = abs(getattr(rtrow, "%sSCEta" % l))
-    mva = getattr(rtrow, "%sMVANonTrigID" % l) if period == '13' else getattr(rtrow, "%sMVANonTrig" % l)
+    mva = getattr(rtrow, "%sMVANonTrigID" % l) if period == 13 else getattr(rtrow, "%sMVANonTrig" % l)
 
     if 5.0 < pt < 10.0:
         return (eta < 0.8 and mva > -0.202) or (0.8 < eta < 1.479 and mva > -0.444) or (1.479 < eta and mva > 0.264)
@@ -120,7 +120,7 @@ def _elec_mva_nontriggering_zz(rtrow, l, period):
 def _elec_mva_nontriggering(rtrow, l, period):
     pt = getattr(rtrow, "%sPt" % l)
     eta = abs(getattr(rtrow, "%sSCEta" % l))
-    mva = getattr(rtrow, "%sMVANonTrigID" % l) if period == '13' else getattr(rtrow, "%sMVANonTrig" % l)
+    mva = getattr(rtrow, "%sMVANonTrigID" % l) if period == 13 else getattr(rtrow, "%sMVANonTrig" % l)
 
     if 5.0 < pt < 10.0:
         return (eta < 0.8 and mva > 0.47) or (0.8 < eta < 1.479 and mva > 0.004) or (1.479 < eta and mva > 0.295)
@@ -134,7 +134,7 @@ def _elec_mva_nontriggering(rtrow, l, period):
 def _elec_mva_triggering(rtrow, l, period):
     pt = getattr(rtrow, "%sPt" % l)
     eta = abs(getattr(rtrow, "%sSCEta" % l))
-    mva = getattr(rtrow, "%sMVATrigID" % l) if period == '13' else getattr(rtrow, "%sMVATrig" % l)
+    mva = getattr(rtrow, "%sMVATrigID" % l) if period == 13 else getattr(rtrow, "%sMVATrig" % l)
 
     if 10.0 < pt < 20.0:
         return (eta < 0.8 and mva > 0.00) or (0.8 < eta < 1.479 and mva > 0.10) or (1.479 < eta and mva > 0.62)

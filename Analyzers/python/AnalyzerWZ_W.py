@@ -39,7 +39,7 @@ class AnalyzerWZ_W(AnalyzerBase):
         }
         self.lepargs = {'tight':True}
         self.cutflow_labels = []
-        self.doVBF = (period=='13')
+        self.doVBF = (period==13)
         super(AnalyzerWZ_W, self).__init__(sample_name, file_list, out_file, period, **kwargs)
 
     ###############################
@@ -126,10 +126,10 @@ class AnalyzerWZ_W(AnalyzerBase):
                 'e':0.15,
                 'm':0.12
             }
-            if self.period=='8':
+            if self.period==8:
                 kwargs['idDef']['e'] = 'WZTight'
                 kwargs['idDef']['m'] = 'WZTight'
-            if self.period=='13':
+            if self.period==13:
                 kwargs['isoCut']['e'] = 9999.
         if type=='Loose':
             kwargs['idDef'] = {
@@ -141,10 +141,10 @@ class AnalyzerWZ_W(AnalyzerBase):
                 'e':0.2,
                 'm':0.2
             }
-            if self.period=='8':
+            if self.period==8:
                 kwargs['idDef']['e'] = 'WZLoose'
                 kwargs['idDef']['m'] = 'WZLoose'
-            if self.period=='13':
+            if self.period==13:
                 kwargs['isoCut']['e'] = 9999.
         if type=='Veto':
             kwargs['idDef'] = {
@@ -156,7 +156,7 @@ class AnalyzerWZ_W(AnalyzerBase):
                 'e':0.4,
                 'm':0.4
             }
-            if self.period=='13':
+            if self.period==13:
                 kwargs['isoCut']['e'] = 9999.
         if hasattr(self,'alternateIds'):
             if type in self.alternateIds:
@@ -164,11 +164,11 @@ class AnalyzerWZ_W(AnalyzerBase):
         return kwargs
 
     def trigger(self, rtrow):
-        if self.period == '8':
+        if self.period == 8:
             triggers = ["mu17ele8isoPass", "mu8ele17isoPass",
                         "doubleETightPass", "doubleMuPass", "doubleMuTrkPass"]
 
-        if self.period == '13':
+        if self.period == 13:
             triggers = ['muEPass', 'doubleMuPass', 'doubleEPass', 'eMuPass']
 
         for t in triggers:
@@ -219,7 +219,7 @@ class AnalyzerWZ_W(AnalyzerBase):
     def wSelection(self,rtrow):
         leps = self.objCand
         if getattr(rtrow, '%sPt' %leps[0])<20.: return False
-        if self.period=='8':
+        if self.period==8:
             if rtrow.type1_pfMetEt < 45.: return False
         else:
             if rtrow.pfMetEt < 45.: return False
@@ -237,7 +237,7 @@ def parse_command_line(argv):
     parser.add_argument('sample_name', type=str)
     parser.add_argument('file_list', type=str)
     parser.add_argument('out_file', type=str)
-    parser.add_argument('period', type=str)
+    parser.add_argument('period', type=int)
 
     args = parser.parse_args(argv)
     return args

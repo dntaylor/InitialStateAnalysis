@@ -41,6 +41,8 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
     plotMethod('finalstate.met',[40,0,200],savedir+'met',yaxis='Events/5.0 GeV',xaxis='E_{T}^{miss} (GeV)',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
     plotMethod('finalstate.mass',[40,0,400],savedir+'mass',yaxis='Events/10.0 GeV',xaxis='M_{3\\ell} (GeV)',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
     plotMethod('finalstate.mass',[150,0,300],savedir+'mass_zoom',yaxis='Events/2.0 GeV',xaxis='M_{3\\ell} (GeV)',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
+    plotMethod('finalstate.mT',[40,0,400],savedir+'mT',yaxis='Events/10.0 GeV',xaxis='M_T^{3\\ell+MET} (GeV)',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
+    plotMethod('finalstate.mT',[150,0,300],savedir+'mT_zoom',yaxis='Events/2.0 GeV',xaxis='M_T^{3\\ell+MET} (GeV)',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
     plotMethod('event.nvtx',[50,0,50],savedir+'puVertices',yaxis='Events',xaxis='Number PU Vertices',legendpos=43,logy=0,cut=myCut,**kwargs)
     if analysis in ['WZ_FakeRate']:
         plotMethod('finalstate.leadJetPt',[40,0,200],savedir+'JetPt',yaxis='Events/5.0 GeV',xaxis='p_{T}^{jet} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
@@ -90,6 +92,7 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
     if analysis in ['Z', 'Hpp3l', 'Hpp4l', 'WZ', 'WZ_W'] or region in ['Z', 'TT']:
         plotMethod('z1.mass', [42,70,112],   savedir+'z1Mass',               yaxis='Events/1.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (GeV)',     legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod('z1.mass', [60,60,120],   savedir+'z1Mass_newWidth',      yaxis='Events/1.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (GeV)',     legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('z1.mass', [13,58.5,123.5],   savedir+'z1Mass_newWidth_wide', yaxis='Events/5.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (GeV)',     legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod('z1.mass', [7,80.5,101.5],savedir+'z1Mass_wideBin',       yaxis='Events/3.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (GeV)',     legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod('z1.mass', [80,0,240],    savedir+'z1Mass_fullWindow',    yaxis='Events/3.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (GeV)',     legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('z1.mass', [80,0,240],    savedir+'z1Mass_fullWindow_log',yaxis='Events/3.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (GeV)',     legendpos=43,logy=1,cut=myCut,overflow=True,**kwargs)
@@ -196,24 +199,44 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     cutFlowMap[channel] = defineCutFlowMap(channel,finalStates,mass)
 
     genChannels = {
-        'ee': ['eee','eem','eet'],
-        'em': ['eme','emm','emt'],
-        'et': ['ete','etm','ett'],
-        'mm': ['mme','mmm','mmt'],
-        'mt': ['mte','mtm','mtt'],
-        'tt': ['tte','ttm','ttt'],
+        'Hpp3l' : {
+            'ee': ['eee','eem','eet'],
+            'em': ['eme','emm','emt'],
+            'et': ['ete','etm','ett'],
+            'mm': ['mme','mmm','mmt'],
+            'mt': ['mte','mtm','mtt'],
+            'tt': ['tte','ttm','ttt'],
+        },
+        'Hpp4l' : {
+            'ee': ['eeee'],
+            'em': ['emem'],
+            'et': ['etet'],
+            'mm': ['mmmm'],
+            'mt': ['mtmt'],
+            'tt': ['tttt'],
+        },
     }
 
     hppChannels = ['ee','em','et','mm','mt','tt']
     hpChannels = ['e','m','t']
 
     recoChannels = {
-        'ee': ['eee','eem'],
-        'em': ['eme','emm','mee','mem'],
-        'mm': ['mme','mmm'],
-        'et': ['eee','eme','eem','emm','mee','mem'],
-        'mt': ['mee','mem','mme','mmm','eme','emm'],
-        'tt': ['eee','eem','eme','emm','mee','mem','mme','mmm'],
+        'Hpp3l' : {
+            'ee': ['eee','eem'],
+            'em': ['eme','emm','mee','mem'],
+            'mm': ['mme','mmm'],
+            'et': ['eee','eme','eem','emm','mee','mem'],
+            'mt': ['mee','mem','mme','mmm','eme','emm'],
+            'tt': ['eee','eem','eme','emm','mee','mem','mme','mmm'],
+        },
+        'Hpp4l' : {
+            'ee': ['eeee'],
+            'em': ['emem','emme','meem','meme'],
+            'mm': ['mmmm'],
+            'et': ['eeee','eeem','eeme','emee','emem','emme','meee','meem','meme'],
+            'mt': ['emem','emme','emmm','meem','meme','memm','mmem','mmme','mmmm'],
+            'tt': ['eeee','eeem','eeme','eemm','emee','emem','emme','emmm','meee','meem','meme','memm','mmee','mmem','mmme','mmmm'],
+        },
     }
 
     customFinalStates = {
@@ -227,13 +250,17 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     }
 
     for nt in range(3):
-        theCut = '(' + ' || '.join(['genChannel=="%s"' %gChan for hChan in genChannels for gChan in genChannels[hChan] if hChan.count('t')==nt]) + ')'
+        theCut = '(' + ' || '.join(['genChannel=="%s"' %gChan for hChan in hppChannels for gChan in genChannels['Hpp3l'][hChan] if hChan.count('t')==nt]) + ')'
         numTauCuts['Hpp3l'][nt] = theCut
+    numTauCuts['Hpp4l'][0] = '(' + ' || '.join(['genChannel=="%s"' % gChan for gChan in ['eeee','eeem','eemm','emee','emem','emmm','mmee','mmem','mmmm']]) + ')'
+    numTauCuts['Hpp4l'][1] = '(' + ' || '.join(['genChannel=="%s"' % gChan for gChan in ['etet','etmt','mtet','mtmt']]) + ')'
+    numTauCuts['Hpp4l'][2] = '(' + ' || '.join(['genChannel=="%s"' % gChan for gChan in ['tttt']]) + ')'
 
-    for c in genChannels:
-        genCut = '(' + ' | '.join(['genChannel=="%s"'%x for x in genChannels[c] + ['aaa']]) + ')'
-        recoCut = '(' + ' | '.join(['channel=="%s"'%x for x in recoChannels[c]]) + ')'
-        customFinalStates['Hpp3l'][c] = genCut + ' && ' + recoCut
+    for a in ['Hpp3l','Hpp4l']:
+        for c in hppChannels:
+            genCut = '(' + ' || '.join(['genChannel=="%s"'%x for x in genChannels[a][c] + ['aaa']]) + ')'
+            recoCut = '(' + ' || '.join(['channel=="%s"'%x for x in recoChannels[a][c]]) + ')'
+            customFinalStates[a][c] = genCut + ' && ' + recoCut
 
     # plot efficiencies
     if analysis in ['Hpp3l','Hpp4l']:
@@ -266,16 +293,17 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         #        plotMethod(['%s&&channel=="%s"&&%s' %(x,c,myCut) for x in cutFlowMap[channel]['cuts']],'%s/cutFlow_overlay'%c,labels=cutFlowMap[channel]['labels'],lumitext=33,logy=0)
 
     # plotting correlation
-    plotter = CorrelationPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,scaleFactor=scaleFactor,rootName='plots_correlation',loglevel=loglevel)
-    plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
-    if useSignal: plotter.initializeSignalSamples([sigMap[runPeriod]['Sig']])
-    if dataplot: plotter.initializeDataSamples([sigMap[runPeriod]['data']])
-    plotter.setIntLumi(intLumiMap[runPeriod])
+    if analysis in ['Hpp3l', 'Hpp4l']:
+        plotter = CorrelationPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,scaleFactor=scaleFactor,rootName='plots_correlation',loglevel=loglevel)
+        plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
+        if useSignal: plotter.initializeSignalSamples([sigMap[runPeriod]['Sig']])
+        if dataplot: plotter.initializeDataSamples([sigMap[runPeriod]['data']])
+        plotter.setIntLumi(intLumiMap[runPeriod])
 
-    logger.info('%s:%s:%iTeV: Plotting correlation' % (analysis, channel, runPeriod))
-    plotMethod = getattr(plotter,'plotCorrelation')
-    plotMethod(cutFlowMap[channel]['cuts'][1:], 'correlation/mc', cut=myCut, labels=cutFlowMap[channel]['labels'][1:], plottype='mc')
-    if useSignal: plotMethod(cutFlowMap[channel]['cuts'][1:], 'correlation/sig', cut=myCut, labels=cutFlowMap[channel]['labels'][1:], plottype='sig')
+        logger.info('%s:%s:%iTeV: Plotting correlation' % (analysis, channel, runPeriod))
+        plotMethod = getattr(plotter,'plotCorrelation')
+        plotMethod(cutFlowMap[channel]['cuts'][1:], 'correlation/mc', cut=myCut, labels=cutFlowMap[channel]['labels'][1:], plottype='mc')
+        if useSignal: plotMethod(cutFlowMap[channel]['cuts'][1:], 'correlation/sig', cut=myCut, labels=cutFlowMap[channel]['labels'][1:], plottype='sig')
 
     # do variables on same plot
     if useSignal:
@@ -286,21 +314,21 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         plotter.setIntLumi(intLumiMap[runPeriod])
         plotMode = 'plotSignal'
         plotMethod = getattr(plotter,plotMode)
-        plotMethod('h1.mass',       [1000,0,1000],'signal/hppMass',          yaxis='A.U.',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})',     lumitext=33,cut=myCut,logy=0, normalize=1)
+        plotMethod('h1.mass',       [1000,0,1000],'signal/hppMass',          yaxis='A.U.',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})',     legendpos=43,cut=myCut,logy=0, normalize=1)
         plotMethod('h1.dPhi',       [100,0,5],    'signal/hppDphi',          yaxis='A.U.',xaxis='\\Delta\\phi_{\\ell^{\\pm}\\ell^{\\pm}} (rad)',lumitext=33,logy=0,cut=myCut,normalize=1)
         plotMethod('h1.dR',         [100,0,6.28], 'signal/hppDR',            yaxis='A.U.',xaxis='\\Delta R_{\\ell^{\\pm}\\ell^{\\pm}}',         lumitext=33,logy=0,cut=myCut,normalize=1)
-        plotMethod('finalstate.sT', [500,0,2000], 'signal/sT',               yaxis='A.U.',xaxis='S_{T} (GeV/c^{2})',                            lumitext=33,logy=0,cut=myCut,overflow=True,normalize=1)
+        plotMethod('finalstate.sT', [250,0,2000], 'signal/sT',               yaxis='A.U.',xaxis='S_{T} (GeV/c^{2})',                            legendpos=43,logy=0,cut=myCut,overflow=True,normalize=1)
         plotMethod('z1.mass',       [250,0,1000], 'signal/z1Mass_fullWindow',yaxis='A.U.',xaxis='M_{\\ell^{+}\\ell^{-}} (Z) (GeV)',             legendpos=43,logy=0,cut=myCut,overflow=True,normalize=1)
-        plotMethod('finalstate.met',[200,0,1000], 'signal/met',              yaxis='A.U.',xaxis='E_{T}^{miss} (GeV/c^{2})',                     lumitext=33,logy=0,cut=myCut,overflow=True,normalize=1)
+        plotMethod('finalstate.met',[200,0,1000], 'signal/met',              yaxis='A.U.',xaxis='E_{T}^{miss} (GeV/c^{2})',                     legendpos=43,logy=0,cut=myCut,overflow=True,normalize=1)
         for nt in range(3):
-            if analysis not in ['Hpp3l']: continue
-            theCut = numTauCuts['Hpp3l'][nt] + ' && ' + myCut
-            plotMethod('h1.mass',       [1000,0,1000],'signal/hppMass_%iTau'%nt,          yaxis='A.U.',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})',     lumitext=33,cut=theCut,logy=0, normalize=1)
+            if analysis not in ['Hpp3l','Hpp4l']: continue
+            theCut = numTauCuts[analysis][nt] + ' && ' + myCut
+            plotMethod('h1.mass',       [1000,0,1000],'signal/hppMass_%iTau'%nt,          yaxis='A.U.',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})',     legendpos=43,cut=theCut,logy=0, normalize=1)
             plotMethod('h1.dPhi',       [100,0,5],    'signal/hppDphi_%iTau'%nt,          yaxis='A.U.',xaxis='\\Delta\\phi_{\\ell^{\\pm}\\ell^{\\pm}} (rad)',lumitext=33,logy=0,cut=theCut,normalize=1)
             plotMethod('h1.dR',         [100,0,6.28], 'signal/hppDR_%iTau'%nt,            yaxis='A.U.',xaxis='\\Delta R_{\\ell^{\\pm}\\ell^{\\pm}}',         lumitext=33,logy=0,cut=theCut,normalize=1)
-            plotMethod('finalstate.sT', [500,0,2000], 'signal/sT_%iTau'%nt,               yaxis='A.U.',xaxis='S_{T} (GeV/c^{2})',                            lumitext=33,logy=0,cut=theCut,overflow=True,normalize=1)
+            plotMethod('finalstate.sT', [500,0,2000], 'signal/sT_%iTau'%nt,               yaxis='A.U.',xaxis='S_{T} (GeV/c^{2})',                            legendpos=43,logy=0,cut=theCut,overflow=True,normalize=1)
             plotMethod('z1.mass',       [250,0,1000], 'signal/z1Mass_fullWindow_%iTau'%nt,yaxis='A.U.',xaxis='M_{\\ell^{+}\\ell^{-}} (Z) (GeV)',             legendpos=43,logy=0,cut=theCut,overflow=True,normalize=1)
-            plotMethod('finalstate.met',[200,0,1000], 'signal/met_%iTau'%nt,              yaxis='A.U.',xaxis='E_{T}^{miss} (GeV/c^{2})',                     lumitext=33,logy=0,cut=theCut,overflow=True,normalize=1)
+            plotMethod('finalstate.met',[200,0,1000], 'signal/met_%iTau'%nt,              yaxis='A.U.',xaxis='E_{T}^{miss} (GeV/c^{2})',                     legendpos=43,logy=0,cut=theCut,overflow=True,normalize=1)
         #plotter.initializeSignalSamples([allSigMap[runPeriod][mass]])
         #plotter.setIntLumi(intLumiMap[runPeriod])
         #plotMode = 'plotSignal'
@@ -322,8 +350,8 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
             cuts = ['%s & %s' %(myCut,'l%iFlv=="%s"' %((x+1),l)) for x in range(nl)]
             plotMethod(['l%i.Pt'  %(x+1) for x in range(nl)], [100,0,1000], 'signal/%sPt'%name, yaxis='A.U.', xaxis='p_{T}^{%s} (GeV)' %t, legendpos=43, logy=0, cut=cuts, overflow=True, normalize=1)
             for nt in range(3):
-                if analysis not in ['Hpp3l']: continue
-                theCuts = [numTauCuts['Hpp3l'][nt] + ' && ' + c for c in cuts]
+                if analysis not in ['Hpp3l','Hpp4l']: continue
+                theCuts = [numTauCuts[analysis][nt] + ' && ' + c for c in cuts]
                 plotMethod(['l%i.Pt'  %(x+1) for x in range(nl)], [100,0,1000], 'signal/%sPt_%iTau'%(name,nt), yaxis='A.U.', xaxis='p_{T}^{%s} (GeV)' %t, legendpos=43, logy=0, cut=theCuts, overflow=True, normalize=1)
 
 

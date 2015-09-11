@@ -65,7 +65,7 @@ def run_analyzer(args):
 def get_sample_names(analysis,period,samples):
     '''Get unix sample names'''
     ntupleDict = {
-        '8': {
+        8: {
             'Z'          : '2015-06-01-8TeV-2l',
             'Charge'     : '2015-06-01-8TeV-2l',
             'TT'         : '2015-06-01-8TeV-2l',
@@ -76,7 +76,7 @@ def get_sample_names(analysis,period,samples):
             'Hpp3l'      : '2015-06-01-8TeV',
             'Hpp4l'      : '2015-08-26-8TeV-4l', 
         },
-        '13': {
+        13: {
             'Z'          : 'N/A',
             'TT'         : 'N/A',
             'Hpp2l'      : 'N/A',
@@ -100,7 +100,7 @@ def get_sample_names(analysis,period,samples):
 def run_ntuples(analysis, channel, period, samples, loglevel):
     '''Run a given analyzer for the H++ analysis'''
     logger = logging.getLogger(__name__)
-    ntup_dir = './ntuples/%s_%sTeV_%s' % (analysis, period, channel)
+    ntup_dir = './ntuples/%s_%iTeV_%s' % (analysis, period, channel)
     python_mkdir(ntup_dir)
     root_dir, sample_names = get_sample_names(analysis,period,samples)
 
@@ -164,8 +164,8 @@ def submitFwkliteJob(sampledir,args):
             file.write('%s\n' % f.replace('/hdfs','',1))
 
     # create bash script
-    bash_name = '%s/%s_%s_%s_%s.sh' % (dag_dir+'inputs', analysis, channel, period, sample_name)
-    bashScript = '#!/bin/bash\npython $CMSSW_BASE/src/InitialStateAnalysis/Analyzers/python/Analyzer%s.py %s %s $INPUT $OUTPUT %s\n' % (analysis, channel, sample_name, period)
+    bash_name = '%s/%s_%s_%i_%s.sh' % (dag_dir+'inputs', analysis, channel, period, sample_name)
+    bashScript = '#!/bin/bash\npython $CMSSW_BASE/src/InitialStateAnalysis/Analyzers/python/Analyzer%s.py %s %s $INPUT $OUTPUT %i\n' % (analysis, channel, sample_name, period)
     with open(bash_name,'w') as file:
         file.write(bashScript)
     os.system('chmod +x %s' % bash_name)
@@ -173,7 +173,7 @@ def submitFwkliteJob(sampledir,args):
     # create farmout command
     farmoutString = 'farmoutAnalysisJobs --infer-cmssw-path --fwklite --input-file-list=%s' % (input_name)
     farmoutString += ' --submit-dir=%s --output-dag-file=%s --output-dir=%s' % (submit_dir, dag_dir, output_dir)
-    if period == '8':
+    if period == 8:
         farmoutString += ' --input-files-per-job=20 %s %s' % (jobName, bash_name)
     else:
         farmoutString += ' --input-files-per-job=10 %s %s' % (jobName, bash_name)
@@ -203,10 +203,10 @@ def main(argv=None):
     logging.basicConfig(format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', level=loglevel, datefmt='%Y-%m-%d %H:%M:%S')
     logger = logging.getLogger(__name__)
 
-    if args.period == '7':
+    if args.period == 7:
         logger.warning("7 TeV not implemented")
     else:
-        logger.info("Running %s:%s %s TeV analyzer" %(args.analysis, args.channel, args.period))
+        logger.info("Running %s:%s %i TeV analyzer" %(args.analysis, args.channel, args.period))
         if args.submit:
             root_dir, sample_names = get_sample_names(args.analysis, args.period, args.sample_names)
             for sample in sample_names:

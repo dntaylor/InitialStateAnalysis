@@ -32,7 +32,7 @@ import datetime
 import math
 import logging
 
-from scale_factors import LeptonScaleFactors, TriggerScaleFactors
+from scale_factors import LeptonScaleFactors, TriggerScaleFactors, ChargeIdSystematics
 from pu_weights import PileupWeights
 import leptonId as lepId
 from ntuples import *
@@ -127,6 +127,7 @@ class AnalyzerBase(object):
         self.lepscaler = LeptonScaleFactors()
         self.trigscaler = TriggerScaleFactors()
         self.pu_weights = PileupWeights()
+        self.chargeid = ChargeIdSystematics()
 
         self.file = rt.TFile(self.out_file, 'recreate')
         
@@ -166,7 +167,7 @@ class AnalyzerBase(object):
             for fs in self.final_states:
                 if len(self.file_names)<10: logger.info('%s %s %s' % (self.channel, self.sample_name, fs))
                 tree = rtFile.Get("%s/final/Ntuple" % fs)
-                if self.period=='8':
+                if self.period==8:
                     metatree = rtFile.Get("%s/metaInfo" % fs)
                     tempEvts = 0
                     for entry in xrange(metatree.GetEntries()):
@@ -335,6 +336,7 @@ class AnalyzerBase(object):
         ntupleRow["event.trig_scale"] = float(scales['trig'])
         ntupleRow["event.pu_weight"] = float(scales['puweight'])
         ntupleRow["event.gen_weight"] = float(scales['genweight'])
+        ntupleRow["event.charge_uncertainty"] = float(scales['chargeid'])
 
         channelString = ''
         for x in objects: channelString += x[0]
@@ -343,8 +345,8 @@ class AnalyzerBase(object):
 
         def getMT(rtrow,period,*objects):
             masses = {'e':0.511e-3, 'm':0.1056, 't':1.776, 'j':0}
-            metVar = 'pfMet' if period=='13' else 'type1_pfMet'
-            mtVar = 'PFMET' if period=='13' else 'PfMet_Ty1'
+            metVar = 'pfMet' if period==13 else 'type1_pfMet'
+            mtVar = 'PFMET' if period==13 else 'PfMet_Ty1'
             visP4 = rt.TLorentzVector()
             for l in objects:
                 p4 = rt.TLorentzVector()
@@ -364,26 +366,26 @@ class AnalyzerBase(object):
         ntupleRow["finalstate.mass"] = float(rtrow.Mass)
         ntupleRow["finalstate.mT"] = float(getMT(rtrow,self.period,*objects))
         ntupleRow["finalstate.sT"] = float(sum([getattr(rtrow, "%sPt" % x) for x in objects]))
-        metVar = 'pfMet' if self.period=='13' else 'type1_pfMet'
+        metVar = 'pfMet' if self.period==13 else 'type1_pfMet'
         ntupleRow["finalstate.met"] = float(getattr(rtrow, '%sEt' %metVar))
         ntupleRow["finalstate.metPhi"] = float(getattr(rtrow,'%sPhi' %metVar))
-        ntupleRow["finalstate.leadJetPt"] = float(rtrow.jet1Pt) if self.period=='13' else float(-1)
-        ntupleRow["finalstate.leadJetEta"] = float(rtrow.jet1Eta) if self.period=='13' else float(-10)
-        ntupleRow["finalstate.leadJetPhi"] = float(rtrow.jet1Phi) if self.period=='13' else float(-10)
-        ntupleRow["finalstate.leadJetPUMVA"] = float(rtrow.jet1PUMVA) if self.period=='13' else float(-1)
+        ntupleRow["finalstate.leadJetPt"] = float(rtrow.jet1Pt) if self.period==13 else float(-1)
+        ntupleRow["finalstate.leadJetEta"] = float(rtrow.jet1Eta) if self.period==13 else float(-10)
+        ntupleRow["finalstate.leadJetPhi"] = float(rtrow.jet1Phi) if self.period==13 else float(-10)
+        ntupleRow["finalstate.leadJetPUMVA"] = float(rtrow.jet1PUMVA) if self.period==13 else float(-1)
         ntupleRow["finalstate.jetVeto20"] = int(rtrow.jetVeto20)
         ntupleRow["finalstate.jetVeto30"] = int(rtrow.jetVeto30)
         ntupleRow["finalstate.jetVeto40"] = int(rtrow.jetVeto40)
-        ntupleRow["finalstate.bjetVeto20Loose"] = int(rtrow.bjetCISVVeto20Loose) if self.period=='13' else -1
-        ntupleRow["finalstate.bjetVeto30Loose"] = int(rtrow.bjetCISVVeto30Loose) if self.period=='13' else -1
-        ntupleRow["finalstate.bjetVeto20Medium"] = int(rtrow.bjetCISVVeto20Medium) if self.period=='13' else int(rtrow.bjetCSVVeto)
-        ntupleRow["finalstate.bjetVeto30Medium"] = int(rtrow.bjetCISVVeto30Medium) if self.period=='13' else int(rtrow.bjetCSVVeto30)
-        ntupleRow["finalstate.bjetVeto20Tight"] = int(rtrow.bjetCISVVeto20Tight) if self.period=='13' else -1
-        ntupleRow["finalstate.bjetVeto30Tight"] = int(rtrow.bjetCISVVeto30Tight) if self.period=='13' else -1
-        ntupleRow["finalstate.muonVetoTight"] = int(rtrow.muVetoTight) if self.period=='13' else int(rtrow.muonVetoWZTight)
-        ntupleRow["finalstate.elecVetoTight"] = int(rtrow.eVetoTight) if self.period=='13' else int(rtrow.elecVetoWZTight)
-        ntupleRow["finalstate.muonVetoLoose"] = int(rtrow.muVeto) if self.period=='13' else int(rtrow.muVetoPt5IsoIdVtx)
-        ntupleRow["finalstate.elecVetoLoose"] = int(rtrow.eVeto) if self.period=='13' else int(rtrow.eVetoMVAIsoVtx)
+        ntupleRow["finalstate.bjetVeto20Loose"] = int(rtrow.bjetCISVVeto20Loose) if self.period==13 else -1
+        ntupleRow["finalstate.bjetVeto30Loose"] = int(rtrow.bjetCISVVeto30Loose) if self.period==13 else -1
+        ntupleRow["finalstate.bjetVeto20Medium"] = int(rtrow.bjetCISVVeto20Medium) if self.period==13 else int(rtrow.bjetCSVVeto)
+        ntupleRow["finalstate.bjetVeto30Medium"] = int(rtrow.bjetCISVVeto30Medium) if self.period==13 else int(rtrow.bjetCSVVeto30)
+        ntupleRow["finalstate.bjetVeto20Tight"] = int(rtrow.bjetCISVVeto20Tight) if self.period==13 else -1
+        ntupleRow["finalstate.bjetVeto30Tight"] = int(rtrow.bjetCISVVeto30Tight) if self.period==13 else -1
+        ntupleRow["finalstate.muonVetoTight"] = int(rtrow.muVetoTight) if self.period==13 else int(rtrow.muonVetoWZTight)
+        ntupleRow["finalstate.elecVetoTight"] = int(rtrow.eVetoTight) if self.period==13 else int(rtrow.elecVetoWZTight)
+        ntupleRow["finalstate.muonVetoLoose"] = int(rtrow.muVeto) if self.period==13 else int(rtrow.muVetoPt5IsoIdVtx)
+        ntupleRow["finalstate.elecVetoLoose"] = int(rtrow.eVeto) if self.period==13 else int(rtrow.eVetoMVAIsoVtx)
         if self.doVBF:
             ntupleRow["finalstate.vbfMass"] = float(rtrow.vbfMass)
             ntupleRow["finalstate.vbfPt"] = float(rtrow.vbfdijetpt)
@@ -397,8 +399,8 @@ class AnalyzerBase(object):
         def store_state(rtrow,ntupleRow,state,theObjects,period):
             masses = {'e':0.511e-3, 'm':0.1056, 't':1.776, 'j':0}
             objStart = 0
-            metVar = 'pfMet' if period=='13' else 'type1_pfMet'
-            mtVar = 'PFMET' if period=='13' else 'PfMet_Ty1'
+            metVar = 'pfMet' if period==13 else 'type1_pfMet'
+            mtVar = 'PFMET' if period==13 else 'PfMet_Ty1'
             for i in state:
                 numObjects = len([ x for x in self.object_definitions[i] if x != 'n']) if theObjects else 0
                 finalObjects = theObjects[objStart:objStart+numObjects]
@@ -478,10 +480,10 @@ class AnalyzerBase(object):
                         ntupleRow["%s.JetPt%i" % (i,objCount)] = float(getattr(rtrow, "%sJetPt" % orderedFinalObjects[objCount-1])) if (theObjects and orderedFinalObjects[objCount-1][0] in 'emt') else float(-9.)
                         ntupleRow["%s.JetBTag%i" % (i,objCount)] = float(-9.)
                         if theObjects and orderedFinalObjects[objCount-1][0] in 'emt':
-                            ntupleRow["%s.JetBTag%i" % (i,objCount)] = float(getattr(rtrow, "%sJetCSVBtag" % orderedFinalObjects[objCount-1])) if period=='8' else float(getattr(rtrow, "%sJetPFCISVBtag" % orderedFinalObjects[objCount-1]))
+                            ntupleRow["%s.JetBTag%i" % (i,objCount)] = float(getattr(rtrow, "%sJetCSVBtag" % orderedFinalObjects[objCount-1])) if period==8 else float(getattr(rtrow, "%sJetPFCISVBtag" % orderedFinalObjects[objCount-1]))
                         if theObjects:
-                            looseScales = self.lepscaler.scale_factor(rtrow, orderedFinalObjects[objCount-1], loose=True) if self.period=='8' else [1,1,1]
-                            tightScales = self.lepscaler.scale_factor(rtrow, orderedFinalObjects[objCount-1], loose=False) if self.period=='8' else [1,1,1]
+                            looseScales = self.lepscaler.scale_factor(rtrow, orderedFinalObjects[objCount-1], loose=True) if self.period==8 else [1,1,1]
+                            tightScales = self.lepscaler.scale_factor(rtrow, orderedFinalObjects[objCount-1], loose=False) if self.period==8 else [1,1,1]
                         else:
                             looseScales = [-1,-1,-1]
                             tightScales = [-1,-1,-1]
@@ -500,7 +502,7 @@ class AnalyzerBase(object):
                             ntupleRow["%s.GenPdgId%i" % (i,objCount)] = float(getattr(rtrow, "%sGenPdgId" % orderedFinalObjects[objCount-1]))
                             ntupleRow["%s.MotherGenPdgId%i" % (i,objCount)] = float(getattr(rtrow, "%sGenMotherPdgId" % orderedFinalObjects[objCount-1]))
                         ntupleRow["%s.ChargeConsistent%i" % (i,objCount)] = -1
-                        if theObjects and period=='8':
+                        if theObjects and period==8:
                             l = orderedFinalObjects[objCount-1]
                             if l[0]=='e':
                                 ntupleRow["%s.ChargeConsistent%i" % (i,objCount)] = int(getattr(rtrow,'%sChargeIdTight' %l))
@@ -512,7 +514,7 @@ class AnalyzerBase(object):
                             ntupleRow["w1.dR1_z1_2"] = float(getattr(rtrow,"%s_%s_DR" % (oZ2[0],oZ2[1]))) if theObjects else float(-9)
                             ntupleRow["w1.mll_z1_1"] = float(getattr(rtrow,"%s_%s_Mass" % (oZ1[0],oZ1[1]))) if theObjects else float(-9)
                             ntupleRow["w1.mll_z1_2"] = float(getattr(rtrow,"%s_%s_Mass" % (oZ2[0],oZ2[1]))) if theObjects else float(-9)
-                        if i=='w1' and theObjects and self.period=='13':
+                        if i=='w1' and theObjects and self.period==13:
                             lEta = getattr(rtrow,'%sEta' %theObjects[-1])
                             lPhi = getattr(rtrow,'%sPhi' %theObjects[-1])
                             jEta = rtrow.jet1Eta
@@ -560,11 +562,11 @@ class AnalyzerBase(object):
             ntupleRow["%s%i.Iso" % (charName,objCount)] = float(getattr(rtrow, "%s%s" % (obj, isoVar))) if obj[0] in 'em' else float(-1.)
             ntupleRow["%s%i.JetPt" % (charName,objCount)] = float(getattr(rtrow, "%sJetPt" % obj)) if obj[0] in 'emt' else float(-1.)
             if obj[0] in 'emt':
-                ntupleRow["%s%i.JetBTag" % (charName,objCount)] = float(getattr(rtrow, "%sJetCSVBtag" % obj)) if self.period=='8' else float(getattr(rtrow, "%sJetPFCISVBtag" % obj))
+                ntupleRow["%s%i.JetBTag" % (charName,objCount)] = float(getattr(rtrow, "%sJetCSVBtag" % obj)) if self.period==8 else float(getattr(rtrow, "%sJetPFCISVBtag" % obj))
                 ntupleRow["%s%i.Dxy" % (charName,objCount)] = float(getattr(rtrow, "%sPVDXY" % obj))
                 ntupleRow["%s%i.Dz" % (charName,objCount)] = float(getattr(rtrow, "%sPVDZ" % obj))
-            looseScales = self.lepscaler.scale_factor(rtrow, obj, loose=True) if self.period=='8' else [1,1,1]
-            tightScales = self.lepscaler.scale_factor(rtrow, obj, loose=False) if self.period=='8' else [1,1,1]
+            looseScales = self.lepscaler.scale_factor(rtrow, obj, loose=True) if self.period==8 else [1,1,1]
+            tightScales = self.lepscaler.scale_factor(rtrow, obj, loose=False) if self.period==8 else [1,1,1]
             ntupleRow["%s%i.LepScaleLoose" % (charName,objCount)] = float(looseScales[0])
             ntupleRow["%s%i.LepScaleTight" % (charName,objCount)] = float(tightScales[0])
             ntupleRow["%s%i.LepScaleLoose_up" % (charName,objCount)] = float(looseScales[1])
@@ -581,7 +583,7 @@ class AnalyzerBase(object):
                 ntupleRow["%s%i.GenPdgId" % (charName,objCount)] = float(getattr(rtrow, "%sGenPdgId" % obj))
                 ntupleRow["%s%i.MotherGenPdgId" % (charName,objCount)] = float(getattr(rtrow, "%sGenMotherPdgId" % obj))
             ntupleRow["%s%i.ChargeConsistent" % (charName,objCount)] = -1
-            if obj[0]=='e' and self.period=='8':
+            if obj[0]=='e' and self.period==8:
                 ntupleRow["%s%i.ChargeConsistent" % (charName,objCount)] = int(getattr(rtrow,'%sChargeIdTight' %obj))
 
         return ntupleRow
@@ -681,20 +683,23 @@ class AnalyzerBase(object):
             'trig'     : 1,
             'puweight' : 1,
             'genweight': 1,
+            'chargeid' : 1,
         }
-        if self.period=='8':
+        if self.period==8:
             lepscales = self.lepscaler.scale_factor(rtrow, *objects, **lepargs)
             trigscale = self.trigscaler.scale_factor(rtrow, *objects)
             puweight  = self.pu_weights.weight(rtrow)
             genweight = 1
             if hasattr(rtrow,'GenWeight'):
                 genweight = rtrow.GenWeight/abs(rtrow.GenWeight)
+            chargeid  = self.chargeid.systematic(rtrow, *objects)
             scales['lep']      = lepscales[0]
             scales['lepup']    = lepscales[1]
             scales['lepdown']  = lepscales[2]
             scales['trig']     = trigscale
             scales['puweight'] = puweight
             scales['genweight']= genweight
+            scales['chargeid'] = chargeid
         return scales
 
     def getGenChannel(self,rtrow):
