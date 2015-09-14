@@ -10,7 +10,7 @@ sys.argv.pop()
 
 class ChargeIdSystematics(object):
 
-    def __int__(self):
+    def __init__(self):
         self.missid = {
             'EB': {
                 10 : 0.00350,

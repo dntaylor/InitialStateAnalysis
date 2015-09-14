@@ -133,13 +133,13 @@ class AnalyzerHpp3l(AnalyzerBase):
     ###########################
     def preselection(self,rtrow):
         cuts = CutSequence()
-        if self.isData: cuts.add(self.trigger)
-        cuts.add(self.fiducial)
-        cuts.add(self.overlap)
-        cuts.add(self.trigger_threshold)
-        cuts.add(self.ID_tight)
-        cuts.add(self.qcd_rejection)
-        cuts.add(self.mass3l)
+        if self.isData: cuts.add(self.trigger,'Trigger')
+        cuts.add(self.fiducial,'Fiducial')
+        cuts.add(self.overlap,'Overlap')
+        cuts.add(self.trigger_threshold,'Trigger threshold')
+        cuts.add(self.ID_tight,'Tight ID')
+        cuts.add(self.qcd_rejection,'QCD Rejection')
+        cuts.add(self.mass3l,'3l Mass')
         return cuts
 
     def selection(self,rtrow):

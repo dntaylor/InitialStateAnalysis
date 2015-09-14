@@ -40,7 +40,7 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
     #plotMethod('finalstate.elecVeto10',[8,0,8],savedir+'elecVeto10',yaxis='Events',xaxis='Electron Veto (p_{T}>10 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
     plotMethod('finalstate.met',[40,0,200],savedir+'met',yaxis='Events/5.0 GeV',xaxis='E_{T}^{miss} (GeV)',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
     plotMethod('finalstate.mass',[40,0,400],savedir+'mass',yaxis='Events/10.0 GeV',xaxis='M_{3\\ell} (GeV)',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
-    plotMethod('finalstate.mass',[150,0,300],savedir+'mass_zoom',yaxis='Events/2.0 GeV',xaxis='M_{3\\ell} (GeV)',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
+    plotMethod('finalstate.mass',[250,0,500],savedir+'mass_zoom',yaxis='Events/2.0 GeV',xaxis='M_{3\\ell} (GeV)',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
     plotMethod('finalstate.mT',[40,0,400],savedir+'mT',yaxis='Events/10.0 GeV',xaxis='M_T^{3\\ell+MET} (GeV)',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
     plotMethod('finalstate.mT',[150,0,300],savedir+'mT_zoom',yaxis='Events/2.0 GeV',xaxis='M_T^{3\\ell+MET} (GeV)',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
     plotMethod('event.nvtx',[50,0,50],savedir+'puVertices',yaxis='Events',xaxis='Number PU Vertices',legendpos=43,logy=0,cut=myCut,**kwargs)
@@ -188,6 +188,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     channelBackground = getChannelBackgrounds(runPeriod)
 
     finalStates, leptons = getChannels(nl,runTau=runTau)
+    if analysis in ['WZ']: finalStates = ['eee','eem','mme','mmm']
     if finalStatesToPlot=='all':
         fsToPlot = finalStates
     else:

@@ -36,6 +36,7 @@ def sync(analysis,channel,period,**kwargs):
     mergeDict = getMergeDict(period)
     nl = 3 if analysis == 'WZ' or analysis == 'Hpp3l' else 4
     finalStates, leptons = getChannels(nl)
+    if analysis in ['WZ']: finalStates = ['eee','eem','mme','mmm']
     sigMap = getSigMap(nl,mass)
     channelBackground =  getChannelBackgrounds(period)
     plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=period,mergeDict=mergeDict)
@@ -271,6 +272,66 @@ def sync(analysis,channel,period,**kwargs):
             bgEffPost = bgFullCuts[chan]/allBgAllbut if allBgAllbut else -1
             print '%15s | %11.4f | %11.4f | %11.4f | %11.4f' % (chan, sigEffPre, bgEffPre, sigEffPost, bgEffPost)
             print ''
+
+        print 'Cut efficiencies'
+        allPre = {}
+        allFull = {}
+        for chan in finalStates:
+            allPre[chan] = {}
+            allFull[chan] = {}
+            theFullCut = '&'.join([cutflow[x] for x in cutflows])
+            for b in allMC:
+                valPre = plotter.getNumEntries('%s&channel=="%s"' %(cut,chan), sigMap[period][b])
+                valFull = plotter.getNumEntries('%s&channel=="%s"' %(theFullCut,chan), sigMap[period][b])
+                allPre[chan][b] = valPre
+                allFull[chan][b] = valFull
+        allPre['all'] = {}
+        allFull['all'] = {}
+        for b in allMC:
+            allPre['all'][b] = sum([allPre[x][b] for x in finalStates])
+            allFull['all'][b] = sum([allFull[x][b] for x in finalStates])
+
+        for c in cutflows[1:]:
+            pre = ' | '.join(['{0:11}'.format(x+' Pre') for x in allMC])
+            post = ' | '.join(['{0:11}'.format(x+' Post') for x in allMC])
+            print '{0:15} | {1} | {2}'.format(c,pre,post)
+            allBut = {}
+            allOnly = {}
+            allPreEff = {}
+            allPostEff = {}
+            for chan in finalStates:
+                allBut[chan] = {}
+                allOnly[chan] = {}
+                allPreEff[chan] = {}
+                allPostEff[chan] = {}
+                theCut = '&'.join([cutflow[x] for x in cutflows if x != c])
+                theOnlyCut = '%s&%s' % (cut, cutflow[c])
+                for b in allMC:
+                    valAllbut = plotter.getNumEntries('%s&channel=="%s"' %(theCut,chan), sigMap[period][b])
+                    valOnly = plotter.getNumEntries('%s&channel=="%s"' %(theOnlyCut,chan), sigMap[period][b])
+                    allBut[chan][b] = valAllbut
+                    allOnly[chan][b] = valOnly
+                    allPreEff[chan][b] = allOnly[chan][b]/allPre[chan][b] if allPre[chan][b] else -1
+                    allPostEff[chan][b] = allFull[chan][b]/allBut[chan][b] if allBut[chan][b] else -1
+                pre = ' | '.join(['{0:11.4f}'.format(allPreEff[chan][x]) for x in allMC])
+                post = ' | '.join(['{0:11.4f}'.format(allPostEff[chan][x]) for x in allMC])
+                print '{0:15} | {1} | {2}'.format(chan, pre, post)
+            allBut['all'] = {}
+            allOnly['all'] = {}
+            allPreEff['all'] = {}
+            allPostEff['all'] = {}
+            for b in allMC:
+                allBut['all'][b] = sum([allBut[x][b] for x in finalStates])
+                allOnly['all'][b] = sum([allOnly[x][b] for x in finalStates])
+                allPreEff['all'][b] = allOnly['all'][b]/allPre['all'][b] if allPre['all'][b] else -1
+                allPostEff['all'][b] = allFull['all'][b]/allBut['all'][b] if allBut['all'][b] else -1
+            pre = ' | '.join(['{0:11.4f}'.format(allPreEff['all'][x]) for x in allMC])
+            post = ' | '.join(['{0:11.4f}'.format(allPostEff['all'][x]) for x in allMC])
+            print '{0:15} | {1} | {2}'.format('all', pre, post)
+            print ''
+
+
+
 
     if doCorrelation:
         print 'Correlation matrix'

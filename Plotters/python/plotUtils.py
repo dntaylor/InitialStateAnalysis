@@ -213,9 +213,9 @@ def defineCutFlowMap(region,channels,mass):
         'mass' : None
     }
     regionMap['WZ'][0] = {
-        'mass' : 'finalstate.mass>100',
+        'mass' : 'finalstate.mass>105.',
         'zpt' : '(z1.Pt1>20.&z1.Pt2>10.)',
-        'zmass' : 'fabs(z1.mass-%f)<20.' % ZMASS,
+        'zmass' : 'z1.mass>60. && z1.mass<120.',
         'bveto' : 'finalstate.bjetVeto30Medium==0',
         'wdr' : 'w1.dR1_z1_1>0.1 & w1.dR1_z1_2>0.1',
         'wpt' : 'w1.Pt1>20.',
@@ -457,7 +457,19 @@ def getMergeDict(period):
             'ZZTo4Q_13TeV_amcatnloFXFX_madspin_pythia8'   : '1',
             #'ZZ_TuneCUETP8M1_13TeV-pythia8'               : '1',
         }
+        sampleMergeDict['TTZJets'] = {
+            'TTZToLLNuNu_M-10_TuneCUETP8M1_13TeV-amcatnlo-pythia8'         : '1',
+            'TTZToQQ_TuneCUETP8M1_13TeV-amcatnlo-pythia8'                  : '1',
+        }
+        sampleMergeDict['TTWJets'] = {
+            'TTWJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-madspin-pythia8' : '1',
+            'TTWJetsToQQ_TuneCUETP8M1_13TeV-amcatnloFXFX-madspin-pythia8'  : '1',
+        }
         sampleMergeDict['TTVJets'] = {
+            'TTZToLLNuNu_M-10_TuneCUETP8M1_13TeV-amcatnlo-pythia8'         : '1',
+            'TTZToQQ_TuneCUETP8M1_13TeV-amcatnlo-pythia8'                  : '1',
+            'TTWJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-madspin-pythia8' : '1',
+            'TTWJetsToQQ_TuneCUETP8M1_13TeV-amcatnloFXFX-madspin-pythia8'  : '1',
         }
         sampleMergeDict['QCD'] = {
             #'QCD_Pt-15to20_MuEnrichedPt5_TuneCUETP8M1_13TeV_pythia8'    : '1',
@@ -660,7 +672,8 @@ def getIntLumiMap():
         7 : 4900,
         8 : 19700,
         #13: 42, # 50ns
-        13: 20.38, # 25ns
+        #13: 20.38, # 25ns
+        13: 1000, # ideal
     }
     return intLumiMap
 
