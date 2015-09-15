@@ -38,13 +38,15 @@ class FunctionOptimizer( ROOT.TPyMultiGenFunction ):
         bg = self.plotter.getBackgroundEntries(bgSel)
         #result = self.formula.EvalPar(sig,bg) if bg else sig
         result = sig/math.sqrt(bg) if bg else 0.
-        print 'Current args:', [args[x] for x in range(len(self.cuts))], 'result:', result
+        logging.info('Current args:', [args[x] for x in range(len(self.cuts))], 'result:', result)
         return -result if self.maximize else result
 
 class Optimizer(object):
     '''Class to optimize a series of cuts'''
-    def __init__(self,plotter):
+    def __init__(self,plotter,analysis,period):
         self.plotter = plotter
+        self.analysis = analysis
+        self.period = period
         self.cuts = []
         self.formula = ROOT.TFormula('f','[0]/sqrt([1])')
 
@@ -66,7 +68,7 @@ class Optimizer(object):
         formula.replace('SIG','[0]')
         formula.replace('BG','[1]')
         self.formula = ROOT.TFormula('f',formula)
-        if self.formula.Compile()!=0: print 'Formula failed to compile: %s' % formula
+        if self.formula.Compile()!=0: logging.info('Formula failed to compile: %s' % formula)
 
     def optimize(self,**kwargs):
         '''Optimize selections'''
@@ -89,7 +91,6 @@ class Optimizer(object):
         # get efficiencies
         if False:
             for cut in self.cuts:
-                #print cut
                 cutRange = [cut['min']+x*cut['step'] for x in range(int((cut['max']-cut['min'])/cut['step']))]
                 effs = []
                 denom = self.plotter.getSignalEntries(sigSel)
@@ -97,9 +98,7 @@ class Optimizer(object):
                     num = self.plotter.getSignalEntries('%s & %s %f' %(sigSel, cut['func'], cutVal))
                     eff = num/denom
                     effs += [eff]
-                    #print '  %f: %f' %(cutVal, eff)
                 #effs = [self.plotter.getSignalEntries('%s & %s %f' %(sigSel, cut['func'], cutVal))/self.plotter.getSignalEntries(sigSel) for cutVal in cutRange]
-                #print effs
                 effCutoffs = [0.7,0.8,0.9,0.95,0.99,0.999]
                 if effs[0]>effs[-1]: # reversed list
                     for c in effCutoffs:
@@ -108,7 +107,7 @@ class Optimizer(object):
                             val = cutRange[highEffs[0]]
                         else:
                             val = -1
-                        print '%s: Eff=%f: %f' % (cut['name'],c,val)
+                        logging.info('%s: Eff=%f: %f' % (cut['name'],c,val))
                 else:
                     for c in effCutoffs:
                         highEffs = [i for i,e in enumerate(effs) if e>c]
@@ -116,13 +115,13 @@ class Optimizer(object):
                             val = cutRange[highEffs[0]]
                         else:
                             val = -1
-                        print '%s: Eff=%f: %f' % (cut['name'],c,val)
+                        logging.info('%s: Eff=%f: %f' % (cut['name'],c,val))
 
         optimizationVals = {}
         jobs = []
         for cut in self.cuts:
             for mass in masses:
-                jobs += [(cut,mass,self.numTaus,sigSel,bgSel)]
+                jobs += [(cut,mass,self.numTaus,sigSel,bgSel,self.analysis,self.period)]
 
         #theWrapper(jobs[0])
 
@@ -131,7 +130,7 @@ class Optimizer(object):
             p.map_async(theWrapper, jobs).get(999999)
         except KeyboardInterrupt:
             p.terminate()
-            print 'Cancelled'
+            logging.info('Cancelled')
             sys.exit(1)
 
 def initializePlotter(analysis, period, plotName, nl, runTau):
@@ -151,23 +150,26 @@ def initializePlotter(analysis, period, plotName, nl, runTau):
     return plotter
 
 def theWrapper(args):
-    getIndividualMassCut(args[0],args[1],args[2],args[3],args[4])
+    getIndividualMassCut(args[0],args[1],args[2],args[3],args[4],args[5],args[6])
 
-def getIndividualMassCut(cut,mass,numTaus,sigSel,bgSel):
-    plotter = initializePlotter('Hpp3l',8,'plots_optimize_temp',3,True)
+def getIndividualMassCut(cut,mass,numTaus,sigSel,bgSel,analysis,period):
+    nl = 3 if analysis in ['Hpp3l'] else 4
+    plotter = initializePlotter(analysis,period,'plots_optimize_temp',nl,True)
     optimizationVals = {}
     cutname = cut['name']
-    print '%s:%i' % (cutname,mass)
+    logging.info('%s:%i' % (cutname,mass))
     cutRange = [cut['min']+x*cut['step'] for x in range(int((cut['max']-cut['min'])/cut['step']))]
     thisFunc = cut['func'].replace('MASS',str(mass))
     sigSample = 'HPlusPlusHMinusHTo3L_M-%i_8TeV-calchep-pythia6' % mass
-    print '%s:%s Passing signal' % (cutname,mass)
+    if analysis in ['Hpp4l']:
+        sigSample = 'HPlusPlusHMinusMinusHTo4L_M-%i_8TeV-pythia6' % mass
+    logging.info('%s:%s Passing signal' % (cutname,mass))
     sigpass = [plotter.getSignalEntries('%s & %s %f' %(sigSel, thisFunc, cutVal),signal=sigSample,doError=True) for cutVal in cutRange]
-    print '%s:%s All signal' % (cutname,mass)
+    logging.info('%s:%s All signal' % (cutname,mass))
     sigall = plotter.getSignalEntries(sigSel,signal=sigSample,doError=True)
-    print '%s:%s Passing background' % (cutname,mass)
+    logging.info('%s:%s Passing background' % (cutname,mass))
     bgpass = [plotter.getBackgroundEntries('%s & %s %f' %(bgSel, thisFunc, cutVal),doError=True) for cutVal in cutRange]
-    print '%s:%s All background' % (cutname,mass)
+    logging.info('%s:%s All background' % (cutname,mass))
     bgall = plotter.getBackgroundEntries(bgSel,doError=True)
     sigEff = []
     bgEff = []
@@ -201,5 +203,5 @@ def getIndividualMassCut(cut,mass,numTaus,sigSel,bgSel):
     optimizationVals['significance2'] = significance2
     optimizationVals['significance3'] = significance3
     python_mkdir('pickles')
-    with open('pickles/optimize_%iTau_%s_%i.pkl' %(numTaus,cutname,mass),'wb') as file:
+    with open('pickles/%s_%iTeV_%s/optimize_%iTau_%s_%i.pkl' %(analysis,period,analysis,numTaus,cutname,mass),'wb') as file:
         pickle.dump(optimizationVals,file)
