@@ -78,6 +78,7 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
 
     # plot doubly charged higgs stuff
     if analysis in ['Hpp3l','Hpp4l'] or region in ['Hpp2l']:
+        plotMethod('event.charge_uncertainty', [80,0.99,1.15],savedir+'charge_unc',yaxis='Events',      xaxis='Charge Uncertainty',                              lumitext=33,cut=myCut,**kwargs)
         plotMethod('h1.mass', [24,0,600],savedir+'hppMass',              yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})',        lumitext=33,logy=1,cut=myCut,overflow=True,**kwargs)
         #plotMethod('h1.mass', [24,0,600],savedir+'hppMass_mod',          yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{+}\\ell^{+}} (GeV/c^{2})',              lumitext=33,legendpos=41,logy=1,cut=myCut,overflow=True,**kwargs)
         plotMethod('h1.mass', [32,0,800],savedir+'hppMass_alpha',        yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})', lumitext=33,logy=1,cut=myCut,boxes=[[12,0.9*mass,1],[1.1*mass,800,1],[0.9*mass,1.1*mass,2]],**kwargs)
