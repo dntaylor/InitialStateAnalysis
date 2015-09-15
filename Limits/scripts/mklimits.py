@@ -447,7 +447,7 @@ def calculateChannelLeptonSystematic(mass,chans,**kwargs):
             if l=='e': # get from WZ analysis note:
                scaleMap[c][l] = elecUncertainties[c.count('e')]
             if l=='m': # muon pog, 0.5% id 0.2% iso
-               scaleMap[c][l] = (c.count('m') * (0.005**2 + 0.002**2))**0.5 + 1.
+               scaleMap[c][l] = (c.count('m') * (0.005 + 0.002)) + 1.
                
 
     return scaleMap
