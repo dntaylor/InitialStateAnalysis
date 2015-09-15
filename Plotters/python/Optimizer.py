@@ -202,6 +202,6 @@ def getIndividualMassCut(cut,mass,numTaus,sigSel,bgSel,analysis,period):
     optimizationVals['significance1'] = significance1
     optimizationVals['significance2'] = significance2
     optimizationVals['significance3'] = significance3
-    python_mkdir('pickles')
+    python_mkdir('pickles/%s_%iTeV_%s' % (analysis,period,analysis))
     with open('pickles/%s_%iTeV_%s/optimize_%iTau_%s_%i.pkl' %(analysis,period,analysis,numTaus,cutname,mass),'wb') as file:
         pickle.dump(optimizationVals,file)
