@@ -85,7 +85,8 @@ def get_sample_names(analysis,period,samples):
             #'WZ'         : '2015-09-01-13TeV-WZ', # move dr 0.1 to 0.01 from veto definition
             'WZ'         : '2015-09-13-13TeV-WZ', # corrected isolation to new effective areas
             'WZ_W'       : '2015-08-03-13TeV-2l',
-            'WZ_FakeRate': '2015-08-17-13TeV-1l',
+            #'WZ_FakeRate': '2015-08-17-13TeV-1l',
+            'WZ_FakeRate': '2015-09-14-13TeV-1l', # updated with WZ changes
             'Hpp3l'      : '2015-03-30-13TeV-3l',
             'Hpp4l'      : '2015-03-30-13TeV-4l',
         },
