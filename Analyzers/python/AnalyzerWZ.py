@@ -278,28 +278,16 @@ class AnalyzerWZ(AnalyzerBase):
             if dr < 0.1: return False
         return True
 
-class AnalyzerWZ_DataDriven(AnalyzerWZ):
+class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
     def __init__(self, sample_name, file_list, out_file, period, **kwargs):
-        super(AnalyzerWZ_DataDriven, self).__init__(sample_name, file_list, out_file, period, **kwargs)
-        self.channel = 'DataDriven'
+        super(AnalyzerWZ_ZFakeRate, self).__init__(sample_name, file_list, out_file, period, **kwargs)
+        self.channel = 'FakeRate'
 
     def preselection(self,rtrow):
         cuts = CutSequence()
         if self.isData: cuts.add(self.trigger)
         cuts.add(self.fiducial)
-        cuts.add(self.ID_loose)
-        return cuts
-
-class AnalyzerWZ_Z(AnalyzerWZ):
-    def __init__(self, sample_name, file_list, out_file, period, **kwargs):
-        super(AnalyzerWZ_Z, self).__init__(sample_name, file_list, out_file, period, **kwargs)
-        self.channel = 'Z'
-
-    def preselection(self,rtrow):
-        cuts = CutSequence()
-        if self.isData: cuts.add(self.trigger)
-        cuts.add(self.fiducial)
-        cuts.add(self.ID_loose)
+        cuts.add(self.ID_veto)
         cuts.add(self.ID_tight_Z)
         cuts.add(self.zSelection)
         cuts.add(self.metveto)
@@ -324,53 +312,6 @@ class AnalyzerWZ_Z(AnalyzerWZ):
             if rtrow.pfMetEt > 20.: return False
         return True
 
-class AnalyzerWZ_QCD(AnalyzerWZ):
-    def __init__(self, sample_name, file_list, out_file, period, **kwargs):
-        super(AnalyzerWZ_QCD, self).__init__(sample_name, file_list, out_file, period, **kwargs)
-        self.channel = 'QCD'
-
-    def preselection(self,rtrow):
-        cuts = CutSequence()
-        if self.isData: cuts.add(self.trigger)
-        cuts.add(self.fiducial)
-        cuts.add(self.ID_loose)
-        cuts.add(self.metveto)
-        cuts.add(self.wveto)
-        cuts.add(self.zveto)
-        return cuts
-
-    def trigger(self, rtrow):
-        triggers = ["singleEPass", "singleMuPass"]
-
-        for t in triggers:
-            if getattr(rtrow,t)>0:
-                return True
-        return False
-
-    def metveto(self,rtrow):
-        if self.period==8:
-            if rtrow.type1_pfMetEt > 20.: return False
-        else:
-            if rtrow.pfMetEt > 20.: return False
-        return True
-
-    def wveto(self,rtrow):
-        mtVar = 'PFMET' if self.period==13 else 'PfMet_Ty1'
-        obj = self.objCand[2]
-        if obj[0] == 'm':
-            return getattr(rtrow, "%sMtTo%s" % (obj, mtVar)) < 20.
-        return True
-
-    def zveto(self,rtrow):
-        leps = self.objCand
-        o = ordered(leps[0], leps[1])
-        m1 = getattr(rtrow,'%s_%s_Mass' % (o[0],o[1]))
-        if o[0][0] == 'e':
-            return abs(m1-ZMASS)>30. and m1>20.
-        if o[0][0] == 'm':
-            return abs(m1-ZMASS)>15. and m1>20.
-
-
 ##########################
 ###### Command line ######
 ##########################
@@ -393,9 +334,7 @@ def main(argv=None):
     args = parse_command_line(argv)
 
     if args.analyzer == 'WZ': analyzer = AnalyzerWZ(args.sample_name,args.file_list,args.out_file,args.period)
-    if args.analyzer == 'DataDriven': analyzer = AnalyzerWZ_DataDriven(args.sample_name,args.file_list,args.out_file,args.period)
-    if args.analyzer == 'Z': analyzer = AnalyzerWZ_Z(args.sample_name,args.file_list,args.out_file,args.period)
-    if args.analyzer == 'QCD': analyzer = AnalyzerWZ_QCD(args.sample_name,args.file_list,args.out_file,args.period)
+    if args.analyzer == 'FakeRate': analyzer = AnalyzerWZ_ZFakeRate(args.sample_name,args.file_list,args.out_file,args.period)
     with analyzer as thisAnalyzer:
         thisAnalyzer.analyze()
 

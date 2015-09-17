@@ -95,6 +95,17 @@ def ordered(a,b):
     '''
     return [a,b] if lep_order(b,a) else [b,a]
 
+def deltaPhi(phi0,phi1):
+    result = phi0-phi1
+    while result>rt.TMath.Pi(): result -= 2*rt.TMath.Pi()
+    while result<=rt.TMath.Pi(): result += 2*rt.TMath.Pi()
+    return result
+
+def deltaR(eta0,phi0,eta1,phi1):
+    deta = eta0-eta1
+    dphi = deltaPhi(phi0,phi1)
+    return rt.TMath.Sqrt(deta**2+dphi**2)
+
 class AnalyzerBase(object):
     '''
     The basic analyzer class. Inheritor classes must define

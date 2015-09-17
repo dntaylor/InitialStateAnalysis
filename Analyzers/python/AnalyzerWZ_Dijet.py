@@ -7,7 +7,7 @@ Author: Devin N. Taylor, UW-Madison
 
 from AnalyzerBase import *
 
-class AnalyzerWZ_FakeRate(AnalyzerBase):
+class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
     '''
     An implementation of the AnalyzerBase class for use in WZ fake rate analysis.
     '''
@@ -23,7 +23,7 @@ class AnalyzerWZ_FakeRate(AnalyzerBase):
         self.lepargs = {'tight':True}
         self.cutflow_labels = []
         self.doVBF = (period==13)
-        super(AnalyzerWZ_FakeRate, self).__init__(sample_name, file_list, out_file, period, **kwargs)
+        super(AnalyzerWZ_DijetFakeRate, self).__init__(sample_name, file_list, out_file, period, **kwargs)
 
     ###############################
     ### Define Object selection ###
@@ -179,9 +179,6 @@ class AnalyzerWZ_FakeRate(AnalyzerBase):
     def ID_tight(self, rtrow):
         return self.ID(rtrow,*self.objects,**self.getIdArgs('Tight'))
 
-    def mass3l(self,rtrow):
-        return rtrow.Mass > 100.
-
     def zVeto(self,rtrow):
         return getattr(rtrow,'%sNearestZMass' %self.objCand[0]) > 30.
 
@@ -205,7 +202,7 @@ class AnalyzerWZ_FakeRate(AnalyzerBase):
         lPhi = getattr(rtrow,'%sPhi' %leps[0])
         jEta = rtrow.jet1Eta
         jPhi = rtrow.jet1Phi
-        dr = math.sqrt((lEta-jEta)**2 + (lPhi-jPhi)**2)
+        dr = deltaR(lEta,lPhi,jEta,jPhi)
         return dr>1. # jet far from lepton
 
 ##########################
@@ -229,7 +226,7 @@ def main(argv=None):
 
     args = parse_command_line(argv)
 
-    if args.analyzer == 'FakeRate': analyzer = AnalyzerWZ_FakeRate(args.sample_name,args.file_list,args.out_file,args.period)
+    if args.analyzer == 'FakeRate': analyzer = AnalyzerWZ_DijetFakeRate(args.sample_name,args.file_list,args.out_file,args.period)
     with analyzer as thisAnalyzer:
         thisAnalyzer.analyze()
 

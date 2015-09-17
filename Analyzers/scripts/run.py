@@ -19,9 +19,9 @@ from multiprocessing import Pool
 
 from InitialStateAnalysis.Utilities.utilities import *
 from InitialStateAnalysis.Analyzers.AnalyzerZ import AnalyzerZ
-from InitialStateAnalysis.Analyzers.AnalyzerWZ import AnalyzerWZ, AnalyzerWZ_Z
-from InitialStateAnalysis.Analyzers.AnalyzerWZ_W import AnalyzerWZ_W
-from InitialStateAnalysis.Analyzers.AnalyzerWZ_FakeRate import AnalyzerWZ_FakeRate
+from InitialStateAnalysis.Analyzers.AnalyzerWZ import AnalyzerWZ, AnalyzerWZ_ZFakeRate
+from InitialStateAnalysis.Analyzers.AnalyzerWZ_W import AnalyzerWZ_WFakeRate
+from InitialStateAnalysis.Analyzers.AnalyzerWZ_Dijet import AnalyzerWZ_DijetFakeRate
 from InitialStateAnalysis.Analyzers.AnalyzerHpp2l import AnalyzerHpp2l, AnalyzerHpp2l_Z, AnalyzerHpp2l_Charge, AnalyzerHpp2l_TT
 from InitialStateAnalysis.Analyzers.AnalyzerHpp3l import AnalyzerHpp3l, AnalyzerHpp3l_WZ, AnalyzerHpp3l_LowMass
 from InitialStateAnalysis.Analyzers.AnalyzerHpp4l import AnalyzerHpp4l
@@ -41,13 +41,13 @@ def run_analyzer(args):
                     },
         'WZ'      : {
                     'WZ'      : AnalyzerWZ,
-                    'Z'       : AnalyzerWZ_Z,
+                    'FakeRate': AnalyzerWZ_ZFakeRate,
                      },
         'WZ_W'    : {
-                    'W'       : AnalyzerWZ_W,
+                    'FakeRate': AnalyzerWZ_WFakeRate,
                     },
-        'WZ_FakeRate' : {
-                    'FakeRate': AnalyzerWZ_FakeRate,
+        'WZ_Dijet': {
+                    'FakeRate': AnalyzerWZ_DijetFakeRate,
                     },
         'Hpp3l'   : {
                     'Hpp3l'   : AnalyzerHpp3l,
@@ -72,7 +72,7 @@ def get_sample_names(analysis,period,samples):
             'Hpp2l'      : '2015-06-01-8TeV-2l',
             'WZ'         : '2015-06-01-8TeV', 
             'WZ_W'       : 'N/A',
-            'WZ_FakeRate': 'N/A',
+            'WZ_Dijet'   : 'N/A',
             'Hpp3l'      : '2015-06-01-8TeV',
             'Hpp4l'      : '2015-08-26-8TeV-4l', 
         },
@@ -85,8 +85,8 @@ def get_sample_names(analysis,period,samples):
             #'WZ'         : '2015-09-01-13TeV-WZ', # move dr 0.1 to 0.01 from veto definition
             'WZ'         : '2015-09-13-13TeV-WZ', # corrected isolation to new effective areas
             'WZ_W'       : '2015-08-03-13TeV-2l',
-            #'WZ_FakeRate': '2015-08-17-13TeV-1l',
-            'WZ_FakeRate': '2015-09-14-13TeV-1l', # updated with WZ changes
+            #'WZ_Dijet'   : '2015-08-17-13TeV-1l',
+            'WZ_Dijet'   : '2015-09-14-13TeV-1l', # updated with WZ changes
             'Hpp3l'      : '2015-03-30-13TeV-3l',
             'Hpp4l'      : '2015-03-30-13TeV-4l',
         },

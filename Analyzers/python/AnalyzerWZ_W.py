@@ -7,7 +7,7 @@ Author: Devin N. Taylor, UW-Madison
 
 from AnalyzerBase import *
 
-class AnalyzerWZ_W(AnalyzerBase):
+class AnalyzerWZ_WFakeRate(AnalyzerBase):
     '''
     An implementation of the AnalyzerBase class for use in WZ analysis.
 
@@ -27,7 +27,7 @@ class AnalyzerWZ_W(AnalyzerBase):
     '''
 
     def __init__(self, sample_name, file_list, out_file, period, **kwargs):
-        if not hasattr(self,'channel'): self.channel = 'W'
+        if not hasattr(self,'channel'): self.channel = 'FakeRate'
         self.period = period
         self.final_states = ['ee','em','mm']
         self.initial_states = ['w1','w2'] # in order of leptons returned in choose_objects
@@ -40,7 +40,7 @@ class AnalyzerWZ_W(AnalyzerBase):
         self.lepargs = {'tight':True}
         self.cutflow_labels = []
         self.doVBF = (period==13)
-        super(AnalyzerWZ_W, self).__init__(sample_name, file_list, out_file, period, **kwargs)
+        super(AnalyzerWZ_WFakeRate, self).__init__(sample_name, file_list, out_file, period, **kwargs)
 
     ###############################
     ### Define Object selection ###
@@ -98,11 +98,11 @@ class AnalyzerWZ_W(AnalyzerBase):
         cuts = CutSequence()
         if self.isData: cuts.add(self.trigger)
         cuts.add(self.fiducial)
+        cuts.add(self.ID_veto)
         #cuts.add(self.ID_tight)
         #cuts.add(self.ID_loose)
         cuts.add(self.zVeto)
         cuts.add(self.wSelection)
-        cuts.add(self.ID_veto)
         return cuts
 
     def selection(self,rtrow):
@@ -249,7 +249,7 @@ def main(argv=None):
 
     args = parse_command_line(argv)
 
-    if args.analyzer == 'W': analyzer = AnalyzerWZ_W(args.sample_name,args.file_list,args.out_file,args.period)
+    if args.analyzer == 'FakeRate': analyzer = AnalyzerWZ_WFakeRate(args.sample_name,args.file_list,args.out_file,args.period)
     with analyzer as thisAnalyzer:
         thisAnalyzer.analyze()
 
