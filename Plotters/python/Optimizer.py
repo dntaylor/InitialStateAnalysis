@@ -159,16 +159,16 @@ def getIndividualMassCut(cut,mass,numTaus,sigSel,bgSel,analysis,period):
     cutname = cut['name']
     logging.info('%s:%i' % (cutname,mass))
     cutRange = [cut['min']+x*cut['step'] for x in range(int((cut['max']-cut['min'])/cut['step']))]
-    thisFunc = cut['func'].replace('MASS',str(mass))
+    thisFunc = [c.replace('MASS',str(mass)) for c in cut['func']]
     sigSample = 'HPlusPlusHMinusHTo3L_M-%i_8TeV-calchep-pythia6' % mass
     if analysis in ['Hpp4l']:
         sigSample = 'HPlusPlusHMinusMinusHTo4L_M-%i_8TeV-pythia6' % mass
     logging.info('%s:%s Passing signal' % (cutname,mass))
-    sigpass = [plotter.getSignalEntries('%s & %s %f' %(sigSel, thisFunc, cutVal),signal=sigSample,doError=True) for cutVal in cutRange]
+    sigpass = [plotter.getSignalEntries('%s && %s' %(sigSel, " && ".join(["%s %f" %(f,cutVal) for f in thisFunc])),signal=sigSample,doError=True) for cutVal in cutRange]
     logging.info('%s:%s All signal' % (cutname,mass))
     sigall = plotter.getSignalEntries(sigSel,signal=sigSample,doError=True)
     logging.info('%s:%s Passing background' % (cutname,mass))
-    bgpass = [plotter.getBackgroundEntries('%s & %s %f' %(bgSel, thisFunc, cutVal),doError=True) for cutVal in cutRange]
+    bgpass = [plotter.getBackgroundEntries('%s && %s' %(bgSel, " && ".join(["%s %f" %(f,cutVal) for f in thisFunc])),doError=True) for cutVal in cutRange]
     logging.info('%s:%s All background' % (cutname,mass))
     bgall = plotter.getBackgroundEntries(bgSel,doError=True)
     sigEff = []

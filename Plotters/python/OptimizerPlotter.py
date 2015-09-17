@@ -12,22 +12,34 @@ ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
 tdrstyle.setTDRStyle()
 ROOT.gStyle.SetPalette(1)
 
-def plotOptimization(variable,numTaus,nl):
+def plotOptimization(analysis,period,variable,numTaus):
+    nl = 3 if analysis in ['Hpp3l'] else 4
     masses = _3L_MASSES if nl==3 else _4L_MASSES
-    filenames = ['pickles/optimize_%iTau_%s_%i.pkl' %(numTaus,variable,mass) for mass in masses]
+    filenames = ['pickles/%s_%iTeV_%s/optimize_%iTau_%s_%i.pkl' %(analysis,period,analysis,numTaus,variable,mass) for mass in masses]
     optVals = {}
     for mass,filename in zip(masses,filenames):
         with open(filename,'rb') as f:
             optVals[mass] = pickle.load(f)
 
     functions = {
-        'hmassUnder' : [['x-0.9*x'],['x-x/2'],['x-x/2']],
-        'hmassOver'  : [['1.1*x-x'],['1.1*x-x'],['1.1*x-x']],
-        'zmass'      : [['80'],['80'],['50']],
-        'dPhi'       : [['x/600+1.95'],['x/200+1.15'],['2.1']],
-        'dR'         : [['x/380+2.06','x/1200+2.77'],['x/380+1.96','x/1000+2.6'],['x/380+1.86','x/1000+2.37']],
-        'met'        : [['0'],['20'],['40']],
-        'st'         : [['1.07*x+45'],['0.72*x+50'],['0.44*x+65']]
+        'Hpp3l': {
+            'hmassUnder' : [['x-0.9*x'],['x-x/2'],['x-x/2']],
+            'hmassOver'  : [['1.1*x-x'],['1.1*x-x'],['1.1*x-x']],
+            'zmass'      : [['80'],['80'],['50']],
+            'dPhi'       : [['x/600+1.95'],['x/200+1.15'],['2.1']],
+            'dR'         : [['x/380+2.06','x/1200+2.77'],['x/380+1.96','x/1000+2.6'],['x/380+1.86','x/1000+2.37']],
+            'met'        : [['0'],['20'],['40']],
+            'st'         : [['1.07*x+45'],['0.72*x+50'],['0.44*x+65']],
+        },
+        'Hpp4l': {
+            'hmassUnder' : [['x-0.9*x'],['x-x/2'],['x-x/2']],
+            'hmassOver'  : [['1.1*x-x'],['1.1*x-x'],['1.1*x-x']],
+            'zmass'      : [['0'],['0'],['0']],
+            'dPhi'       : [['0'],['0'],['0']],
+            'dR'         : [['0'],['0'],['0']],
+            'met'        : [['0'],['0'],['0']],
+            'st'         : [['0.6*x+130.'],['0'],['0']],
+        }
     }
 
     canvas = ROOT.TCanvas('c','c',50,50,800,600)
@@ -96,16 +108,16 @@ def plotOptimization(variable,numTaus,nl):
             down.Draw('same')
             up.Draw('same')
 
-        if variable in functions:
+        if variable in functions[analysis]:
             funcs = {}
-            for func in functions[variable][numTaus]:
+            for func in functions[analysis][variable][numTaus]:
                 funcs[func] = ROOT.TF1("7TeV_%s"%(plotType),func,extMasses[0],extMasses[-1])
                 funcs[func].SetLineColor(ROOT.kBlack)
                 funcs[func].SetLineWidth(3)
                 funcs[func].Draw("lsame")
 
 
-        savedir = 'plots/Hpp3l_Hpp3l_8TeV/png/optimization'
+        savedir = 'plots/%s_%s_%iTeV/png/optimization' % (analysis,analysis,period)
         python_mkdir(savedir)
         savename = '%s/%s_%iTau_%s.png' % (savedir,variable,numTaus,plotType)
         canvas.Print(savename)

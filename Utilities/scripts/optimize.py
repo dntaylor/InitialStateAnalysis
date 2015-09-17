@@ -90,21 +90,34 @@ def optimize(analysis, period):
 
         optimizer = initializeOptimizer(analysis, period, 'plots_optimize_%iTau' %(nTaus), 'select.PassTight & %s' % recoSelect, genSelect, nTaus)
         
-        optimizer.addCut('st',         'finalstate.sT >',            100., 1500., 10.)
-        optimizer.addCut('met',        'finalstate.met >',             0.,  500.,  5.)
-        optimizer.addCut('dR',         'h1.dR <',                      1.,    5.,  0.05)
-        optimizer.addCut('zmass',      'fabs(z1.mass-%f) >' % ZMASS,   0.,  200.,  5.)
-        optimizer.addCut('zmassUnder', '%f-z1.mass >' % ZMASS,         0.,  200.,  5.)
-        optimizer.addCut('zmassOver',  'z1.mass-%f >' % ZMASS,         0.,  200.,  5.)
-        optimizer.addCut('hmass',      'fabs(h1.mass-MASS) <',         0.,  500.,  5.)
-        optimizer.addCut('hmassUnder', 'MASS-h1.mass >',               0.,  500.,  5.)
-        optimizer.addCut('hmassOver',  'h1.mass-MASS >',               0.,  500.,  5.)
-        #optimizer.addCut('st',         'finalstate.sT >',            100., 1500., 200.)
-        #optimizer.addCut('dR',         'h1.dR <',                      1.,    5.,  1.)
-        #optimizer.addCut('zmass',      'fabs(z1.mass-%f) >' % ZMASS,   0.,  100.,  20.)
-        #optimizer.addCut('hmass',      'fabs(h1.mass-MASS) <',         0.,  400.,  100.)
-        #optimizer.addCut('hmassUnder', 'h1.mass <',                    0., 1000., 200.)
-        #optimizer.addCut('hmassOver',  'h1.mass >',                    0., 1000., 200.)
+        optimizer.addCut('st',         ['finalstate.sT >'],            100., 1500., 10.)
+        optimizer.addCut('met',        ['finalstate.met >'],             0.,  500.,  5.)
+        if analysis in ['Hpp3l']:
+            optimizer.addCut('dR',         ['h1.dR <'],                      1.,    5.,  0.05)
+        else:
+            optimizer.addCut('dR',         ['h1.dR <','h2.dR <'],                                         1.,    5.,  0.05)
+        if analysis in ['Hpp3l']:
+            optimizer.addCut('zmass',      ['fabs(z1.mass-%f) >' % ZMASS],   0.,  200.,  5.)
+            optimizer.addCut('zmassUnder', ['%f-z1.mass >' % ZMASS],         0.,  200.,  5.)
+            optimizer.addCut('zmassOver',  ['z1.mass-%f >' % ZMASS],         0.,  200.,  5.)
+        else:
+            optimizer.addCut('zmass',      ['fabs(z1.mass-%f) >' % ZMASS,'fabs(z2.mass-%f) >' % ZMASS],   0.,  200.,  5.)
+            optimizer.addCut('zmassUnder', ['%f-z1.mass >' % ZMASS,'%f-z2.mass >' % ZMASS],               0.,  200.,  5.)
+            optimizer.addCut('zmassOver',  ['z1.mass-%f >' % ZMASS,'z2.mass-%f >' % ZMASS],               0.,  200.,  5.)
+        if analysis in ['Hpp3l']:
+            optimizer.addCut('hmass',      ['fabs(h1.mass-MASS) <'],         0.,  500.,  5.)
+            optimizer.addCut('hmassUnder', ['MASS-h1.mass >'],               0.,  500.,  5.)
+            optimizer.addCut('hmassOver',  ['h1.mass-MASS >'],               0.,  500.,  5.)
+        else:
+            optimizer.addCut('hmass',      ['fabs(h1.mass-MASS) <','fabs(h2.mass-MASS) <'],               0.,  500.,  5.)
+            optimizer.addCut('hmassUnder', ['MASS-h1.mass >','MASS-h2.mass >'],                           0.,  500.,  5.)
+            optimizer.addCut('hmassOver',  ['h1.mass-MASS >','h2.mass-MASS >'],                           0.,  500.,  5.)
+        #optimizer.addCut('st',         ['finalstate.sT >'],            100., 1500., 200.)
+        #optimizer.addCut('dR',         ['h1.dR <'],                      1.,    5.,  1.)
+        #optimizer.addCut('zmass',      ['fabs(z1.mass-%f) >' % ZMASS],   0.,  100.,  20.)
+        #optimizer.addCut('hmass',      ['fabs(h1.mass-MASS) <'],         0.,  400.,  100.)
+        #optimizer.addCut('hmassUnder', ['h1.mass <'],                    0., 1000., 200.)
+        #optimizer.addCut('hmassOver',  ['h1.mass >'],                    0., 1000., 200.)
 
         print 'Optimizing'
         masses = _3L_MASSES if analysis in ['Hpp3l'] else _4L_MASSES
