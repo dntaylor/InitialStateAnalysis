@@ -377,6 +377,7 @@ class AnalyzerBase(object):
         ntupleRow["finalstate.mass"] = float(rtrow.Mass)
         ntupleRow["finalstate.mT"] = float(getMT(rtrow,self.period,*objects))
         ntupleRow["finalstate.sT"] = float(sum([getattr(rtrow, "%sPt" % x) for x in objects]))
+        ntupleRow["finalstate.hT"] = float(rtrow.Ht) if self.period==13 else float(-1)
         metVar = 'pfMet' if self.period==13 else 'type1_pfMet'
         ntupleRow["finalstate.met"] = float(getattr(rtrow, '%sEt' %metVar))
         ntupleRow["finalstate.metPhi"] = float(getattr(rtrow,'%sPhi' %metVar))

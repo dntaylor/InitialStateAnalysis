@@ -84,13 +84,14 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
        Float_t mass;\
        Float_t mT;\
        Float_t sT;\
+       Float_t hT;\
        Float_t met;\
        Float_t metPhi;\
        Float_t leadJetPt;\
        Float_t leadJetEta;\
        Float_t leadJetPhi;\
        Float_t leadJetPUMVA;"
-    fsStrForBranch = "mass/F:mT:sT:met:metPhi:leadJetPt:leadJetEta:leadJetPhi:leadJetPUMVA:"
+    fsStrForBranch = "mass/F:mT:sT:hT:met:metPhi:leadJetPt:leadJetEta:leadJetPhi:leadJetPUMVA:"
 
     if doVBF:
         fsStrToProcess += "Float_t vbfMass;\
