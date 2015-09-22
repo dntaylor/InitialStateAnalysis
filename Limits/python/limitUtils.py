@@ -31,7 +31,7 @@ def getScales(bp):
     elif bp == 'tt100':
         s = Scales(0., 0., 0., 0., 0., 1.)
     elif bp == 'BP1':
-        s = Scales(0, 0.1, 0.1, 0.3, 0.38, 0.3)
+        s = Scales(0, 0.01, 0.01, 0.3, 0.38, 0.3)
     elif bp == 'BP2':
         s = Scales(1./2., 0, 0, 1./8., 1./4., 1./8.)
     elif bp == 'BP3':
@@ -59,7 +59,7 @@ def getAllowedHiggsChannels(bp,runTau):
     elif bp == 'BP1':
         higgsChannels = ['em','et','mm','mt','tt']
     elif bp == 'BP2':
-        higgsChannels = ['ee','em','mt','tt']
+        higgsChannels = ['ee','mm','mt','tt']
     elif bp == 'BP3':
         higgsChannels = ['ee','mm','tt']
     elif bp == 'BP4':
