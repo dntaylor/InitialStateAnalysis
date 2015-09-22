@@ -43,7 +43,7 @@ def getScales(bp):
         s = Scales(0., 0., 0., 0., 0., 0.)
     return s
 
-def getAllowedHiggsChannels(bp):
+def getAllowedHiggsChannels(bp,runTau):
     if bp == 'ee100':
         higgsChannels = ['ee']
     elif bp == 'em100':
@@ -67,6 +67,7 @@ def getAllowedHiggsChannels(bp):
     else:
         logging.error('Unknown branching point: %s' %bp)
         higgsChannels = []
+    if not runTau: higgsChannels = [x for x in higgsChannels if 't' not in x]
     return higgsChannels
 
 def unorder(chars):
@@ -94,9 +95,10 @@ def recoFromGen(genSet):
         if len(gen)==2: [recoSet.add(x+y) for x in allowedRecoStates[0] for y in allowedRecoStates[1]]
     return recoSet
 
-def getChannelMap(bp,genLeps,recoLeps):
+def getChannelMap(bp,genLeps,recoLeps,**kwargs):
+    runTau = kwargs.pop('runTau',True)
     logging.debug('Getting channel map for %s %i leptons' % (bp,genLeps))
-    higgsChannels = getAllowedHiggsChannels(bp)
+    higgsChannels = getAllowedHiggsChannels(bp,runTau)
     logging.debug('Higgs channels: %s' % str(higgsChannels))
 
     # gets the gen channels allowed for a bp
@@ -111,7 +113,7 @@ def getChannelMap(bp,genLeps,recoLeps):
                 genChannels[thisName] += [hpp+hmm]
     else:
         for hpp in higgsChannels:
-            for hm in ['e','m','t']:
+            for hm in ['e','m','t']: # always okay to have tau here
                 allowedGenChannels.add(hpp+hm)
                 if hpp not in genChannels: genChannels[hpp] = []
                 genChannels[hpp] += [hpp+hm]

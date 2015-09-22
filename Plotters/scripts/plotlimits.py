@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from InitialStateAnalysis.Plotters.limits import *
-from InitialStateAnalyiss.Utilities.utilities import *
+from InitialStateAnalysis.Utilities.utilities import *
 import sys
 import os
 import argparse
@@ -32,10 +32,10 @@ def main(argv=None):
     elif args.allBranchingPoints:
         for bp in branchingPoints:
             print 'Plotting limit for %s' % bp
-            plot_limits(args.analysis,args.region,args.period,'limits_%s_%itev_%s%s'%(args.region,args.period,bp,datacardString),branchingPoint=bp,bgMode=args.bgMode,do4l=args.do4l)
+            plot_limits(args.analysis,args.channel,args.period,'limits_%s_%itev_%s%s'%(args.channel,args.period,bp,datacardString),branchingPoint=bp,bgMode=args.bgMode,do4l=args.do4l)
     else:
         print 'Plotting limit for %s' % args.branchingPoint
-        plot_limits(args.analysis,args.region,args.period,'limits_%s_%itev_%s%s'%(args.region,args.period,args.branchingPoint,datacardString),branchingPoint=args.branchingPoint,bgMode=args.bgMode,do4l=args.do4l)
+        plot_limits(args.analysis,args.channel,args.period,'limits_%s_%itev_%s%s'%(args.channel,args.period,args.branchingPoint,datacardString),branchingPoint=args.branchingPoint,bgMode=args.bgMode,do4l=args.do4l)
 
     return 0
 

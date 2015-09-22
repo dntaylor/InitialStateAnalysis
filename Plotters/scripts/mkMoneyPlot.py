@@ -12,16 +12,60 @@ tdrstyle.setTDRStyle()
 # sub categories
 limitNames = ['ee100','em100','mm100','et100','mt100','BP1','BP2','BP3','BP4']
 
+## without charge id and with tau
+#limits = {
+#    'ee100' : {'name' : '100% H^{#pm#pm}#rightarrow ee',      'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+#    'em100' : {'name' : '100% H^{#pm#pm}#rightarrow e#mu',    'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+#    'mm100' : {'name' : '100% H^{#pm#pm}#rightarrow #mu#mu',  'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+#    'et100' : {'name' : '100% H^{#pm#pm}#rightarrow e#tau',   'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+#    'mt100' : {'name' : '100% H^{#pm#pm}#rightarrow #mu#tau', 'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+#    'tt100' : {'name' : '100% H^{#pm#pm}#rightarrow #tau#tau','PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+#    'BP1'   : {'name' : 'BP1',                                'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+#    'BP2'   : {'name' : 'BP2',                                'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+#    'BP3'   : {'name' : 'BP3',                                'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+#    'BP4'   : {'name' : 'BP4',                                'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+#}
+#
+## with charge id and with tau
+#limits = {
+#    'ee100' : {'name' : '100% H^{#pm#pm}#rightarrow ee',      'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+#    'em100' : {'name' : '100% H^{#pm#pm}#rightarrow e#mu',    'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+#    'mm100' : {'name' : '100% H^{#pm#pm}#rightarrow #mu#mu',  'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+#    'et100' : {'name' : '100% H^{#pm#pm}#rightarrow e#tau',   'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+#    'mt100' : {'name' : '100% H^{#pm#pm}#rightarrow #mu#tau', 'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+#    'tt100' : {'name' : '100% H^{#pm#pm}#rightarrow #tau#tau','PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+#    'BP1'   : {'name' : 'BP1',                                'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+#    'BP2'   : {'name' : 'BP2',                                'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+#    'BP3'   : {'name' : 'BP3',                                'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+#    'BP4'   : {'name' : 'BP4',                                'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+#}
+#
+## without charge id and without tau
+#limits = {
+#    'ee100' : {'name' : '100% H^{#pm#pm}#rightarrow ee',      'PP4l' : 533, 'AP3l' : 509, 'PP3l' : 507, 'AP': 509, 'PP': 592, 'Comb' : 620,},
+#    'em100' : {'name' : '100% H^{#pm#pm}#rightarrow e#mu',    'PP4l' : 545, 'AP3l' : 510, 'PP3l' : 513, 'AP': 510, 'PP': 604, 'Comb' : 624,},
+#    'mm100' : {'name' : '100% H^{#pm#pm}#rightarrow #mu#mu',  'PP4l' : 562, 'AP3l' : 515, 'PP3l' : 517, 'AP': 515, 'PP': 609, 'Comb' : 633,},
+#    'et100' : {'name' : '100% H^{#pm#pm}#rightarrow e#tau',   'PP4l' :   0, 'AP3l' :   0, 'PP3l' :   0, 'AP':   0, 'PP':   0, 'Comb' :   0,},
+#    'mt100' : {'name' : '100% H^{#pm#pm}#rightarrow #mu#tau', 'PP4l' :   0, 'AP3l' :   0, 'PP3l' :   0, 'AP':   0, 'PP':   0, 'Comb' :   0,},
+#    'tt100' : {'name' : '100% H^{#pm#pm}#rightarrow #tau#tau','PP4l' :   0, 'AP3l' :   0, 'PP3l' :   0, 'AP':   0, 'PP':   0, 'Comb' :   0,},
+#    'BP1'   : {'name' : 'BP1',                                'PP4l' : 406, 'AP3l' : 430, 'PP3l' : 351, 'AP': 430, 'PP': 434, 'Comb' : 494,},
+#    'BP2'   : {'name' : 'BP2',                                'PP4l' : 416, 'AP3l' : 456, 'PP3l' : 386, 'AP': 456, 'PP': 462, 'Comb' : 512,},
+#    'BP3'   : {'name' : 'BP3',                                'PP4l' : 482, 'AP3l' : 476, 'PP3l' : 444, 'AP': 476, 'PP': 519, 'Comb' : 557,},
+#    'BP4'   : {'name' : 'BP4',                                'PP4l' : 430, 'AP3l' : 445, 'PP3l' : 384, 'AP': 445, 'PP': 464, 'Comb' : 510,},
+#}
+
+# with charge id and without tau
 limits = {
-    'ee100' : {'name' : '100% H^{#pm#pm}#rightarrow ee',      'PP4l' : 511, 'AP3l' : 498, 'PP3l' : 492, 'Comb' : 603,},
-    'em100' : {'name' : '100% H^{#pm#pm}#rightarrow e#mu',    'PP4l' : 529, 'AP3l' : 504, 'PP3l' : 507, 'Comb' : 615,},
-    'mm100' : {'name' : '100% H^{#pm#pm}#rightarrow #mu#mu',  'PP4l' : 562, 'AP3l' : 513, 'PP3l' : 517, 'Comb' : 632,},
-    'et100' : {'name' : '100% H^{#pm#pm}#rightarrow e#tau',   'PP4l' : 254, 'AP3l' : 308, 'PP3l' : 378, 'Comb' : 405,},
-    'mt100' : {'name' : '100% H^{#pm#pm}#rightarrow #mu#tau', 'PP4l' : 275, 'AP3l' : 322, 'PP3l' : 405, 'Comb' : 427,},
-    'BP1'   : {'name' : 'BP1',                                'PP4l' : 407, 'AP3l' : 428, 'PP3l' : 482, 'Comb' : 530,},
-    'BP2'   : {'name' : 'BP2',                                'PP4l' : 402, 'AP3l' : 443, 'PP3l' : 458, 'Comb' : 519,},
-    'BP3'   : {'name' : 'BP3',                                'PP4l' : 471, 'AP3l' : 468, 'PP3l' : 468, 'Comb' : 557,},
-    'BP4'   : {'name' : 'BP4',                                'PP4l' : 422, 'AP3l' : 438, 'PP3l' : 468, 'Comb' : 529,},
+    'ee100' : {'name' : '100% H^{#pm#pm}#rightarrow ee',      'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+    'em100' : {'name' : '100% H^{#pm#pm}#rightarrow e#mu',    'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+    'mm100' : {'name' : '100% H^{#pm#pm}#rightarrow #mu#mu',  'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+    'et100' : {'name' : '100% H^{#pm#pm}#rightarrow e#tau',   'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+    'mt100' : {'name' : '100% H^{#pm#pm}#rightarrow #mu#tau', 'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+    'tt100' : {'name' : '100% H^{#pm#pm}#rightarrow #tau#tau','PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+    'BP1'   : {'name' : 'BP1',                                'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+    'BP2'   : {'name' : 'BP2',                                'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+    'BP3'   : {'name' : 'BP3',                                'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
+    'BP4'   : {'name' : 'BP4',                                'PP4l' : , 'AP3l' : , 'PP3l' : , 'AP': , 'PP': , 'Comb' : ,},
 }
 
 

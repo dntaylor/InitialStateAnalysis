@@ -28,8 +28,8 @@ def python_mkdir(dir):
 def get_parser(desc):
     parser = argparse.ArgumentParser(description=desc)
 
-    parser.add_argument('analysis', type=str, choices=['Z','WZ','WZ_W','WZ_Dijet','Hpp2l','Hpp3l','Hpp4l'], help='Analysis to run')
-    parser.add_argument('channel', type=str, choices=['Z','WZ','FakeRate','TT','Hpp2l','Hpp3l','Hpp4l','LowMass','Charge'], help='Channel to run for given analysis')
+    parser.add_argument('analysis', type=str, choices=['Z','WZ','WZ_W','WZ_Dijet','Hpp2l','Hpp3l','Hpp4l','HppAP','HppPP','HppComb'], help='Analysis to run')
+    parser.add_argument('channel', type=str, choices=['Z','WZ','FakeRate','TT','Hpp2l','Hpp3l','Hpp4l','HppAP','HppPP','HppComb','LowMass','Charge'], help='Channel to run for given analysis')
     parser.add_argument('period', type=int, choices=[8,13], help='Energy (TeV)')
     parser.add_argument('-l','--log',nargs='?',type=str,const='INFO',default='INFO',choices=['INFO','DEBUG','WARNING','ERROR','CRITICAL'],help='Log level for logger')
 

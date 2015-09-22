@@ -15,6 +15,7 @@ from multiprocessing import Pool
 
 
 def limit(analysis,region,period,mass,**kwargs):
+    cut = kwargs.pop('cut','1')
     doChannels = kwargs.pop('doChannels',False)
     doAlphaTest = kwargs.pop('doAlphaTest',False)
     unblind = kwargs.pop('unblind',False)
@@ -71,7 +72,7 @@ def limit(analysis,region,period,mass,**kwargs):
 
 
     # setup for final selection
-    myCut = '1'
+    myCut = cut
 
     sbcut = '%s && %s && %s' %(myCut,sbCut,chanCuts)
     srcut = '%s && %s && %s && %s' %(myCut,srCut,fullCut, chanCuts)
@@ -144,14 +145,17 @@ def BPWrapper(args):
     doAlphaTest = args[7]
     unblind = args[8]
     do4l = args[9]
-    BP(analysis,region,period,mass,bp,mode=bgMode,scalefactor=scaleFactor,doAlphaTest=doAlphaTest,unblind=unblind,do4l=do4l)
+    cut = args[10]
+    runTau = args[11]
+    BP(analysis,region,period,mass,bp,mode=bgMode,scalefactor=scaleFactor,doAlphaTest=doAlphaTest,unblind=unblind,do4l=do4l,cut=cut,runTau=runTau)
 
 def BP(analysis,region,period,mass,bp,**kwargs):
     do4l = kwargs.pop('do4l',False)
+    runTau = kwargs.pop('runTau',True)
     s = getScales(bp)
     genLeps = 4 if analysis=='Hpp4l' or do4l else 3
     recoLeps = 4 if analysis=='Hpp4l' else 3
-    channelMap = getChannelMap(bp, genLeps, recoLeps)
+    channelMap = getChannelMap(bp, genLeps, recoLeps, runTau=runTau)
     sf = getattr(s,'scale_%s'%analysis)
     if do4l: sf = getattr(s,'scale_Hpp4l')
 
@@ -496,6 +500,8 @@ def parse_command_line(argv):
     parser = get_parser("Produce datacards")
 
     parser.add_argument('-m','--mass',nargs='?',type=int,const=500,default=500,help='Mass for signal')
+    parser.add_argument('-c','--cut',type=str,default='1',help='Cut to be applied to limits.')
+    parser.add_argument('-st','--skipTau',action='store_false',help='Skip Tau finalStates')
     parser.add_argument('-am','--allMasses',action='store_true',help='Run over all masses for signal')
     parser.add_argument('-da','--doAlphaTest',action='store_true',help='Run the alpha test')
     parser.add_argument('-df','--do4l', action='store_true',help='Run the 4l lepton limits')
@@ -516,7 +522,6 @@ def main(argv=None):
 
     loglevel = getattr(logging,args.log)
     logging.basicConfig(format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s', level=loglevel, datefmt='%Y-%m-%d %H:%M:%S')
-    logger = logging.getLogger(__name__)
 
     branchingPoints = ['ee100','em100','mm100','et100','mt100','tt100','BP1','BP2','BP3','BP4']
     masses = _3L_MASSES if args.analysis=='Hpp3l' else _4L_MASSES
@@ -529,21 +534,16 @@ def main(argv=None):
 
     if len(poolArgs)==1:
         job = poolArgs[0]
-        BPWrapper((args.analysis,args.region,args.period,job[0],job[1],args.bgMode,args.scaleFactor,args.doAlphaTest,args.unblind,args.do4l))
+        BPWrapper((args.analysis,args.channel,args.period,job[0],job[1],args.bgMode,args.scaleFactor,args.doAlphaTest,args.unblind,args.do4l,args.cut,args.skipTau))
     else:
         p = Pool(8)
         try:
-            p.map_async(BPWrapper, [(args.analysis,args.region,args.period,job[0],job[1],args.bgMode,args.scaleFactor,args.doAlphaTest,args.unblind,args.do4l) for job in poolArgs]).get(999999)
+            p.map_async(BPWrapper, [(args.analysis,args.channel,args.period,job[0],job[1],args.bgMode,args.scaleFactor,args.doAlphaTest,args.unblind,args.do4l,args.cut,args.skipTau) for job in poolArgs]).get(999999)
         except KeyboardInterrupt:
             p.terminate()
             print 'limits cancelled'
             sys.exit(1)
     
-
-    #for mass in masses:
-    #    for bp in branchingPoints:
-    #        BP(args.analysis,args.region,args.period,mass,bp,mode=args.bgMode,scalefactor=args.scaleFactor,doAlphaTest=args.doAlphaTest,unblind=args.unblind)
-
     return 0
 
 

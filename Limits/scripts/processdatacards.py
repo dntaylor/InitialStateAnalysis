@@ -98,9 +98,9 @@ def main(argv=None):
         print "7 TeV not implemented"
     elif args.allBranchingPoints:
         for bp in branchingPoints:
-            doDatacards(args.analysis,args.region,args.period,bp,args.bgMode,args.do4l)
+            doDatacards(args.analysis,args.channel,args.period,bp,args.bgMode,args.do4l)
     else:
-        doDatacards(args.analysis,args.region,args.period,args.branchingPoint,args.bgMode,args.do4l)
+        doDatacards(args.analysis,args.channel,args.period,args.branchingPoint,args.bgMode,args.do4l)
 
     return 0
 
