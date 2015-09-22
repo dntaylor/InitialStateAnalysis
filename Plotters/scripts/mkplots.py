@@ -90,6 +90,18 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
         plotMethod('h1.Iso1', [50,0,0.5],savedir+'hppLeadingIso',        yaxis='Events',               xaxis='Iso/p_{T} (\\Phi^{\\pm\\pm} Leading Lepton)',     legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('h1.Iso2', [50,0,0.5],savedir+'hppSubleadingIso',     yaxis='Events',               xaxis='Iso/p_{T} (\\Phi^{\\pm\\pm} Subleading Lepton)',  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('h1.dR',   [60,0,6], savedir+'hppdR',                 yaxis='Events',               xaxis='\\Delta R(\\ell^{\\pm}\\ell^{\\pm})',             legendpos=43,logy=0,cut=myCut,**kwargs)
+    if analysis in ['Hpp4l']:
+        plotMethod('abs(h1.mass-h2.mass)', [30,0,300],savedir+'massdiff',yaxis='Events/10.0 GeV/c^{2}',xaxis='|M_{\\ell^{+}\\ell^{+}}-M_{\\ell^{-}\\ell^{-}}| (GeV/c^{2})',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('h2.mass', [24,0,600],savedir+'hmmMass',              yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})',        lumitext=33,logy=1,cut=myCut,overflow=True,**kwargs)
+        #plotMethod('h2.mass', [24,0,600],savedir+'hmmMass_mod',          yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{+}\\ell^{+}} (GeV/c^{2})',              lumitext=33,legendpos=41,logy=1,cut=myCut,overflow=True,**kwargs)
+        plotMethod('h2.mass', [32,0,800],savedir+'hmmMass_alpha',        yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})', lumitext=33,logy=1,cut=myCut,boxes=[[12,0.9*mass,1],[1.1*mass,800,1],[0.9*mass,1.1*mass,2]],**kwargs)
+        plotMethod('h2.dPhi', [32,0,3.2],savedir+'hmmDphi',              yaxis='Events/0.1 rad',       xaxis='\\Delta\\phi_{\\ell^{\\pm}\\ell^{\\pm}} (rad)',   legendpos=41,lumitext=33,logy=0,cut=myCut,**kwargs)
+        plotMethod('h2.Pt',   [40,0,400],savedir+'hmmPt',                yaxis='Events/10.0 GeV',      xaxis='p_{T}^{\\Phi^{\\pm\\pm}} (GeV)',                  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('h2.Pt1',  [40,0,200],savedir+'hmmLeadingLeptonPt',   yaxis='Events/5.0 GeV',       xaxis='p_{T}^{\\Phi^{\\pm\\pm} Leading Lepton} (GeV)',   legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('h2.Pt2',  [40,0,200],savedir+'hmmSubleadingLeptonPt',yaxis='Events/5.0 GeV',       xaxis='p_{T}^{\\Phi^{\\pm\\pm} Subleading Lepton} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('h2.Iso1', [50,0,0.5],savedir+'hmmLeadingIso',        yaxis='Events',               xaxis='Iso/p_{T} (\\Phi^{\\pm\\pm} Leading Lepton)',     legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('h2.Iso2', [50,0,0.5],savedir+'hmmSubleadingIso',     yaxis='Events',               xaxis='Iso/p_{T} (\\Phi^{\\pm\\pm} Subleading Lepton)',  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('h2.dR',   [60,0,6], savedir+'hmmdR',                 yaxis='Events',               xaxis='\\Delta R(\\ell^{\\pm}\\ell^{\\pm})',             legendpos=43,logy=0,cut=myCut,**kwargs)
     # plot Z stuff
     if analysis in ['Z', 'Hpp3l', 'Hpp4l', 'WZ', 'WZ_W'] or region in ['Z', 'TT']:
         plotMethod('z1.mass', [42,70,112],   savedir+'z1Mass',               yaxis='Events/1.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (GeV)',     legendpos=43,logy=0,cut=myCut,**kwargs)
@@ -323,6 +335,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         plotMethod('finalstate.sT', [250,0,2000], 'signal/sT',               yaxis='A.U.',xaxis='S_{T} (GeV/c^{2})',                            legendpos=43,logy=0,cut=myCut,overflow=True,normalize=1)
         plotMethod('z1.mass',       [250,0,1000], 'signal/z1Mass_fullWindow',yaxis='A.U.',xaxis='M_{\\ell^{+}\\ell^{-}} (Z) (GeV)',             legendpos=43,logy=0,cut=myCut,overflow=True,normalize=1)
         plotMethod('finalstate.met',[200,0,1000], 'signal/met',              yaxis='A.U.',xaxis='E_{T}^{miss} (GeV/c^{2})',                     legendpos=43,logy=0,cut=myCut,overflow=True,normalize=1)
+        plotMethod('abs(h1.mass-h2.mass)', [200,0,400],'signal/massdiff',    yaxis='A.U.',xaxis='|M_{\\ell^{+}\\ell^{+}}-M_{\\ell^{-}\\ell^{-}}| (GeV/c^{2})',lumitext=33,logy=0,cut=myCut,overflow=True,normalize=1)
         for nt in range(3):
             if analysis not in ['Hpp3l','Hpp4l']: continue
             theCut = numTauCuts[analysis][nt] + ' && ' + myCut
@@ -332,6 +345,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
             plotMethod('finalstate.sT', [500,0,2000], 'signal/sT_%iTau'%nt,               yaxis='A.U.',xaxis='S_{T} (GeV/c^{2})',                            legendpos=43,logy=0,cut=theCut,overflow=True,normalize=1)
             plotMethod('z1.mass',       [250,0,1000], 'signal/z1Mass_fullWindow_%iTau'%nt,yaxis='A.U.',xaxis='M_{\\ell^{+}\\ell^{-}} (Z) (GeV)',             legendpos=43,logy=0,cut=theCut,overflow=True,normalize=1)
             plotMethod('finalstate.met',[200,0,1000], 'signal/met_%iTau'%nt,              yaxis='A.U.',xaxis='E_{T}^{miss} (GeV/c^{2})',                     legendpos=43,logy=0,cut=theCut,overflow=True,normalize=1)
+            plotMethod('abs(h1.mass-h2.mass)', [200,0,400],'signal/massdiffi_%iTau'%nt,   yaxis='A.U.',xaxis='|M_{\\ell^{+}\\ell^{+}}-M_{\\ell^{-}\\ell^{-}}| (GeV/c^{2})',lumitext=33,logy=0,cut=theCut,overflow=True,normalize=1)
         #plotter.initializeSignalSamples([allSigMap[runPeriod][mass]])
         #plotter.setIntLumi(intLumiMap[runPeriod])
         #plotMode = 'plotSignal'

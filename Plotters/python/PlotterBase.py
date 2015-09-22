@@ -354,21 +354,22 @@ class PlotterBase(object):
         '''Single variable, single sample hist'''
         tree = self.samples[sample]['file'].Get(self.analysis)
         self.j += 1
+        histname = 'h%s%s' % (sample, variable.replace('(','_').replace(')','_'))
         if len(binning) == 3: # standard drawing
-            drawString = "%s>>h%s%s(%s)" % (variable, sample, variable, ", ".join(str(x) for x in binning))
+            drawString = "%s>>%s(%s)" % (variable, histname, ", ".join(str(x) for x in binning))
         else: # we will need to rebin TODO: this might cause issue in root6, double check later
-            drawString = "%s>>h%s%s()" % (variable, sample, variable)
+            drawString = "%s>>%s()" % (variable, histname)
         if not cut: cut = '1'
         if 'data' not in sample:
             tree.Draw(drawString,'%s*(%s)' % (self.scaleFactor,cut),'goff')
         else:
             tree.Draw(drawString,cut,'goff')
-        if not ROOT.gDirectory.Get("h%s%s" %(sample, variable)):
+        if not ROOT.gDirectory.Get(histname):
             return 0
-        hist = ROOT.gDirectory.Get("h%s%s" %(sample, variable)).Clone("hmod%s%s"%(sample,variable))
+        hist = ROOT.gDirectory.Get(histname).Clone(histname+'_mod')
         if len(binning) != 3: # variable binning (list of bin edges
-            hist.Rebin(len(binning)-1,"hnew%s%s" %(sample,variable),array('d',binning))
-            hist = ROOT.gDirectory.Get("hnew%s%s" %(sample,variable)).Clone("hnewmod%s%s"%(sample,variable))
+            hist.Rebin(len(binning)-1,histname+'_new',array('d',binning))
+            hist = ROOT.gDirectory.Get(histname+'_new').Clone(histname+'_newmod')
         hist.Sumw2()
         if 'data' not in sample: # if it is mc, scale to intLumi
             lumi = self.samples[sample]['lumi']
@@ -407,7 +408,8 @@ class PlotterBase(object):
                     hists.Add(hist)
         if hists.IsEmpty():
             return 0
-        hist = hists[0].Clone("hmerged%s%s" % (sample, variables[0]))
+        histname = 'h%s%s_merged' % (sample, variables[0].replace('(','_').replace(')','_'))
+        hist = hists[0].Clone(histname)
         hist.Reset()
         hist.Merge(hists)
         self.logger.debug('The total integral for %s after merging is %f.' % (sample, hist.Integral()))
@@ -443,7 +445,8 @@ class PlotterBase(object):
         for sample in self.data:
             hist = self.getHist(sample, variables, binning, cut, noFormat, **kwargs)
             hists.Add(hist)
-        hist = hists[0].Clone("hdata%s" % variables[0])
+        histname = 'h%s_data' % variables[0].replace('(','_').replace(')','_')
+        hist = hists[0].Clone(histname)
         hist.Reset()
         hist.Merge(hists)
         return hist
