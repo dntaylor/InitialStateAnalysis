@@ -127,6 +127,13 @@ xsecs[13] = {
     'ZZTo4L_13TeV_powheg_pythia8'                 :  1.256 * PB,
     'ZZTo4Q_13TeV_amcatnloFXFX_madspin_pythia8'   :  6.842 * PB,
     'ZZ_TuneCUETP8M1_13TeV-pythia8'               : 10.32  * PB,
+
+    'GluGluToZZTo2e2mu_BackgroundOnly_13TeV_MCFM'   : 0.003194 * PB,
+    'GluGluToZZTo2e2tau_BackgroundOnly_13TeV_MCFM'  : 0.003194 * PB,
+    'GluGluToZZTo2mu2tau_BackgroundOnly_13TeV_MCFM' : 0.003194 * PB,
+    'GluGluToZZTo4e_BackgroundOnly_13TeV_MCFM'      : 0.001586 * PB,
+    'GluGluToZZTo4mu_BackgroundOnly_13TeV_MCFM'     : 0.001586 * PB,
+    'GluGluToZZTo4tau_BackgroundOnly_13TeV_MCFM'    : 0.001586 * PB,
     
     'WZZ_TuneCUETP8M1_13TeV-amcatnlo-pythia8' : 0.05565 * PB,
 
