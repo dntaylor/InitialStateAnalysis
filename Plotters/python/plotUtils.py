@@ -672,8 +672,8 @@ def getIntLumiMap():
         7 : 4900,
         8 : 19700,
         #13: 42, # 50ns
-        #13: 20.38, # 25ns
-        13: 1000, # ideal
+        13: 20.38, # 25ns
+        #13: 1000, # ideal
     }
     return intLumiMap
 

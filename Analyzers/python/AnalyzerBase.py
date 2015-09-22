@@ -341,6 +341,7 @@ class AnalyzerBase(object):
         ntupleRow["event.run"] = int(rtrow.run)
         ntupleRow["event.nvtx"] = int(rtrow.nvtx)
         ntupleRow["event.GenNUP"] = -1 if self.isData else int(rtrow.NUP)
+        ntupleRow["event.trig_prescale"] = int(scales['trigger_prescale'])
         ntupleRow["event.lep_scale"] = float(scales['lep'])
         ntupleRow["event.lep_scale_up"] = float(scales['lepup'])
         ntupleRow["event.lep_scale_down"] = float(scales['lepdown'])
@@ -377,7 +378,7 @@ class AnalyzerBase(object):
         ntupleRow["finalstate.mass"] = float(rtrow.Mass)
         ntupleRow["finalstate.mT"] = float(getMT(rtrow,self.period,*objects))
         ntupleRow["finalstate.sT"] = float(sum([getattr(rtrow, "%sPt" % x) for x in objects]))
-        ntupleRow["finalstate.hT"] = float(rtrow.Ht) if self.period==13 else float(-1)
+        ntupleRow["finalstate.hT"] = float(rtrow.Ht) if hasattr(rtrow,'Ht') else float(-1)
         metVar = 'pfMet' if self.period==13 else 'type1_pfMet'
         ntupleRow["finalstate.met"] = float(getattr(rtrow, '%sEt' %metVar))
         ntupleRow["finalstate.metPhi"] = float(getattr(rtrow,'%sPhi' %metVar))
@@ -696,6 +697,7 @@ class AnalyzerBase(object):
             'puweight' : 1,
             'genweight': 1,
             'chargeid' : 1,
+            'trigger_prescale': 1,
         }
         if self.period==8:
             lepscales = self.lepscaler.scale_factor(rtrow, *objects, **lepargs)
@@ -712,7 +714,12 @@ class AnalyzerBase(object):
             scales['puweight'] = puweight
             scales['genweight']= genweight
             scales['chargeid'] = chargeid
+            scales['trigger_prescale'] = self.getTriggerPrescale(rtrow)
         return scales
+
+    def getTriggerPrescale(self,rtrow):
+        '''Default trigger prescale'''
+        return 1
 
     def getGenChannel(self,rtrow):
         '''Dummy return gen channel string'''

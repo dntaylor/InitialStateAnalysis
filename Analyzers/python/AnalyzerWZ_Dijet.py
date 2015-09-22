@@ -65,9 +65,14 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
         '''
         Select the trigger object
         '''
-        singleTrigMatch_leg1 = getattr(rtrow,'%sMatchesSingleE_leg1' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg1' %self.objCand[0])
+        #singleTrigMatch_leg1 = getattr(rtrow,'%sMatchesSingleE_leg1' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg1' %self.objCand[0])
         singleTrigMatch_leg2 = getattr(rtrow,'%sMatchesSingleE_leg2' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg2' %self.objCand[0])
         return singleTrigMatch_leg2 
+
+    def getTriggerPrescale(self,rtrow):
+        #singleTrigPrescale_leg1 = rtrow.singleE_leg1Prescale if self.objCand[0][0]=='e' else rtrow.singleMu_leg1Prescale
+        singleTrigPrescale_leg2 = rtrow.singleE_leg2Prescale if self.objCand[0][0]=='e' else rtrow.singleMu_leg2Prescale
+        return singleTrigPrescale_leg2
 
     ###########################
     ### Define preselection ###

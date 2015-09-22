@@ -43,6 +43,7 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
     plotMethod('finalstate.mass',[250,0,500],savedir+'mass_zoom',yaxis='Events/2.0 GeV',xaxis='M_{3\\ell} (GeV)',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
     plotMethod('finalstate.mT',[40,0,400],savedir+'mT',yaxis='Events/10.0 GeV',xaxis='M_T^{3\\ell+MET} (GeV)',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
     plotMethod('finalstate.mT',[150,0,300],savedir+'mT_zoom',yaxis='Events/2.0 GeV',xaxis='M_T^{3\\ell+MET} (GeV)',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
+    plotMethod('finalstate.hT',[40,0,800],savedir+'hT',yaxis='Events/20.0 GeV',xaxis='H_{T} (GeV)',lumitext=33,logy=1,cut=myCut,overflow=True,**kwargs)
     plotMethod('event.nvtx',[50,0,50],savedir+'puVertices',yaxis='Events',xaxis='Number PU Vertices',legendpos=43,logy=0,cut=myCut,**kwargs)
     if analysis in ['WZ']:
         plotMethod('finalstate.leadJetPt',[60,0,300],savedir+'JetPt',yaxis='Events/5.0 GeV',xaxis='p_{T}^{jet} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
@@ -545,6 +546,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
 
 def plotFakeRate(analysis,channel,runPeriod,**kwargs):
     '''Plot fake rate for an analysis.'''
+    loglevel = kwargs.pop('loglevel','INFO')
     logger = logging.getLogger(__name__)
     blind = kwargs.pop('blind',True)
     mass = kwargs.pop('mass',500)
@@ -571,7 +573,7 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
         'Z'    : 2,
         'TT'   : 2,
         'WZ_W' : 2,
-        'WZ_FakeRate' : 1,
+        'WZ_Dijet' : 1,
         'WZ'   : 3,
         'Hpp3l': 3,
         'Hpp4l': 4,
@@ -625,7 +627,7 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
                        numer += ' & w2.PassLoose1'
                        fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w2.Pt1', 'etaVar': 'w2.Eta1'}
             # ntuple cuts: zVeto 60-120, met vet 20, w veto 20, jet pt > 20, jet dr > 1.0
-            if analysis in ['WZ_FakeRate']:
+            if analysis in ['WZ_Dijet']:
                fakeRegion = 'FakeRateProbe{0}{1}'.format(lepName[f],p)
                denom = 'l1Flv=="{0}"'.format(f)
                numer = '{0} & w1.Pass{1}1'.format(denom,p)
@@ -639,7 +641,7 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
 
 
     # setup selections
-    ptBins = [10,20,40,100]
+    ptBins = [10,20,40,100,200]
     etaBins = {
         'e': [0,1.479,2.5],
         'm': [0,1.2,2.4],
@@ -652,12 +654,7 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
         ptvar = fakeRegions['WZ'][fakeRegion]['ptVar']
         etavar = fakeRegions['WZ'][fakeRegion]['etaVar']
 
-        if 'Muon' in fakeRegion: # prescale 23 workaround
-            plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,rootName='{0}_fakeplots'.format(fakeRegion),scaleFactor='event.pu_weight*event.lep_scale*event.trig_scale*1./23.')
-        elif 'Elec' in fakeRegion: # prescale 10 workaround
-            plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,rootName='{0}_fakeplots'.format(fakeRegion),scaleFactor='event.pu_weight*event.lep_scale*event.trig_scale*1./23.')
-        else:
-            plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,rootName='{0}_fakeplots'.format(fakeRegion),scaleFactor='event.pu_weight*event.lep_scale*event.trig_scale')
+        plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,rootName='{0}_fakeplots'.format(fakeRegion),scaleFactor='event.pu_weight*event.lep_scale*event.trig_scale*event.trig_prescale')
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
         plotter.initializeDataSamples([sigMap[runPeriod]['data']])
         plotter.setIntLumi(intLumiMap[runPeriod])
@@ -672,10 +669,7 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
 
         # now plot the fake rates
         logger.info("%s:%s:%iTeV: Computing fake rates" % (analysis,channel, runPeriod))
-        plotter = FakeRatePlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='{0}_fakerates'.format(fakeRegion),mergeDict=mergeDict,scaleFactor='event.pu_weight*event.lep_scale*event.trig_scale*1./23.')
-        # this should be done in data... using mc until we get some!
-        # subtract WZ, ZZ, ttbar contributions from data
-        # only initialize Z... in MC?
+        plotter = FakeRatePlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='{0}_fakerates'.format(fakeRegion),mergeDict=mergeDict,scaleFactor='event.pu_weight*event.lep_scale*event.trig_scale*event.trig_prescale')
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
         plotter.initializeDataSamples([sigMap[runPeriod]['data']])
         plotter.setIntLumi(intLumiMap[runPeriod])

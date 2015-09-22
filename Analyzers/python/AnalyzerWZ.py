@@ -70,13 +70,14 @@ class AnalyzerWZ(AnalyzerBase):
         # Sort by mass difference
         cands.sort(key=lambda x: x[0])
         massdiff, mass, leps = cands[0]
+        # this is dumb
         # if mass outside of mass window, switch to one inside the mass window if available
-        if mass < 60. or mass > 120. and len(cands)>1:
-            for c in cands[1:]:
-                if c[1]>=60. and c[1]<=120.: # its a better Z
-                    massdiff = c[0]
-                    leps = c[2]
-                    break
+        #if mass < 60. or mass > 120. and len(cands)>1:
+        #    for c in cands[1:]:
+        #        if c[1]>=60. and c[1]<=120.: # its a better Z
+        #            massdiff = c[0]
+        #            leps = c[2]
+        #            break
 
         return ([massdiff], leps)
 
@@ -152,7 +153,7 @@ class AnalyzerWZ(AnalyzerBase):
         if self.isData: cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.ID_tight)
-        #cuts.add(self.mass3l)
+        cuts.add(self.mass3l)
         cuts.add(self.zSelection)
         cuts.add(self.wSelection)
         return cuts

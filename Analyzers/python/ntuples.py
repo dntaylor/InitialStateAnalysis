@@ -57,6 +57,7 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
        Int_t   lumi;\
        Int_t   nvtx;\
        Int_t   GenNUP;\
+       Int_t   trig_prescale;\
        Float_t lep_scale;\
        Float_t lep_scale_up;\
        Float_t lep_scale_down;\
@@ -66,7 +67,7 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
        Float_t charge_uncertainty;\
     };");
     eventStruct = rt.structEvent_t()
-    structureDict['event'] = [eventStruct, eventStruct,'evt/I:run:lumi:nvtx:GenNUP:lep_scale/F:lep_scale_up:lep_scale_down:trig_scale:pu_weight:gen_weight:charge_uncertainty']
+    structureDict['event'] = [eventStruct, eventStruct,'evt/I:run:lumi:nvtx:GenNUP:trig_prescale:lep_scale/F:lep_scale_up:lep_scale_down:trig_scale:pu_weight:gen_weight:charge_uncertainty']
     structOrder += ['event']
 
     rt.gROOT.ProcessLine(
