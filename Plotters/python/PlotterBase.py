@@ -249,12 +249,14 @@ class PlotterBase(object):
         scaleup = kwargs.pop('scaleup',False)
         unweighted = kwargs.pop('doUnweighted',False)
         doDataDriven = kwargs.pop('doDataDriven',False) # a custom weight (for datadriven background)
+        customScale = kwargs.pop('customScale','')
         totalVal = 0
         totalErr2 = 0
         scalefactor = "event.lep_scale_up*event.trig_scale*event.pu_weight" if scaleup else self.scaleFactor
         if 'data' in sample:
             scalefactor = '1'
             if doDataDriven: scalefactor = 'event.datadriven_weight'
+        if customScale: scalefactor = customScale
         self.j += 1
         self.logger.debug('Cut: %s'%selection)
         if sample in self.sampleMergeDict:

@@ -237,4 +237,5 @@ def plot_limits(analysis, region, period, savename, **kwargs):
         if y > 1: break
 
     print "Expected Limit: %i GeV (+%i, -%i)" % (x, h-x, x-l)
+    return [x,h-x,x-l]
 

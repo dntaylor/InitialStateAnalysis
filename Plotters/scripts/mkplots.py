@@ -90,6 +90,7 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
         plotMethod('h1.Iso1', [50,0,0.5],savedir+'hppLeadingIso',        yaxis='Events',               xaxis='Iso/p_{T} (\\Phi^{\\pm\\pm} Leading Lepton)',     legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('h1.Iso2', [50,0,0.5],savedir+'hppSubleadingIso',     yaxis='Events',               xaxis='Iso/p_{T} (\\Phi^{\\pm\\pm} Subleading Lepton)',  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('h1.dR',   [60,0,6], savedir+'hppdR',                 yaxis='Events',               xaxis='\\Delta R(\\ell^{\\pm}\\ell^{\\pm})',             legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('abs(h1.mass-h2.mass)', [30,0,300],savedir+'massdiff',yaxis='Events/10.0 GeV/c^{2}',xaxis='|M_{\\ell^{\\pm}\\ell^{\\pm}}-M_{\\ell^{\\mp}}| (GeV/c^{2})',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
     if analysis in ['Hpp4l']:
         plotMethod('abs(h1.mass-h2.mass)', [30,0,300],savedir+'massdiff',yaxis='Events/10.0 GeV/c^{2}',xaxis='|M_{\\ell^{+}\\ell^{+}}-M_{\\ell^{-}\\ell^{-}}| (GeV/c^{2})',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('h2.mass', [24,0,600],savedir+'hmmMass',              yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})',        lumitext=33,logy=1,cut=myCut,overflow=True,**kwargs)
@@ -191,6 +192,8 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         'Z'    : 2,
         'TT'   : 2,
         'WZ'   : 3,
+        'WZ_W' : 1,
+        'WZ_Dijet': 1,
         'Hpp3l': 3,
         'Hpp4l': 4,
     }
