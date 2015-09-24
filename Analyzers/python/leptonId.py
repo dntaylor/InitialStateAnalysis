@@ -77,8 +77,6 @@ def tau_id(rtrow, l, period, idType):
         if not getattr(rtrow, "%sByTightCombinedIsolationDeltaBetaCorr3Hits" %l):return False
     return True
 
-
-
 def _muon_zz_loose(rtrow, l, period):
     if getattr(rtrow, "%sPt" % l) < 5: return False
     if abs(getattr(rtrow, "%sEta" % l)) > 2.4: return False
@@ -111,9 +109,9 @@ def _elec_mva_nontriggering_zz(rtrow, l, period):
     mva = getattr(rtrow, "%sMVANonTrigID" % l) if period == 13 else getattr(rtrow, "%sMVANonTrig" % l)
 
     if 5.0 < pt < 10.0:
-        return (eta < 0.8 and mva > -0.202) or (0.8 < eta < 1.479 and mva > -0.444) or (1.479 < eta and mva > 0.264)
+        return (eta < 0.8 and mva > -0.586) or (0.8 < eta < 1.479 and mva > -0.712) or (1.479 < eta and mva > -0.662)
     elif 10.0 < pt:
-        return (eta < 0.8 and mva > -0.110) or (0.8 < eta < 1.479 and mva > -0.284) or (1.479 < eta and mva > -0.212)
+        return (eta < 0.8 and mva > -0.652) or (0.8 < eta < 1.479 and mva > -0.701) or (1.479 < eta and mva > -0.350)
     else:
         return False
 

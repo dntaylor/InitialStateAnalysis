@@ -313,6 +313,74 @@ class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
             if rtrow.pfMetEt > 20.: return False
         return True
 
+class AnalyzerWZ_HZZFakeRate(AnalyzerWZ):
+    def __init__(self, sample_name, file_list, out_file, period, **kwargs):
+        super(AnalyzerWZ_HZZFakeRate, self).__init__(sample_name, file_list, out_file, period, **kwargs)
+        self.channel = 'HZZFakeRate'
+
+    def preselection(self,rtrow):
+        cuts = CutSequence()
+        if self.isData: cuts.add(self.trigger)
+        cuts.add(self.fiducial)
+        cuts.add(self.ID_loose)
+        cuts.add(self.ID_tight_Z)
+        cuts.add(self.zSelection)
+        cuts.add(self.metveto)
+        return cuts
+
+    def selection(self,rtrow):
+        cuts = CutSequence()
+        if self.isData: cuts.add(self.trigger)
+        cuts.add(self.fiducial)
+        cuts.add(self.ID_tight)
+        cuts.add(self.zSelection)
+        cuts.add(self.metveto)
+        return cuts
+
+    def ID_tight_Z(self, rtrow):
+        return self.ID(rtrow,*self.objCand[:2],**self.getIdArgs('Tight'))
+
+    def metveto(self,rtrow):
+        if self.period==8:
+            if rtrow.type1_pfMetEt > 20.: return False
+        else:
+            if rtrow.pfMetEt > 20.: return False
+        return True
+
+    def getIdArgs(self,type):
+        kwargs = {}
+        if type=='Tight':
+            kwargs['idDef'] = {
+                'e':'ZZTight',
+                'm':'ZZTight',
+            }
+            kwargs['isoCut'] = {
+                'e':0.5,
+                'm':0.4
+            }
+        if type=='Loose':
+            kwargs['idDef'] = {
+                'e':'ZZLoose',
+                'm':'ZZLoose',
+            }
+            kwargs['isoCut'] = {
+                'e':0.5,
+                'm':0.4
+            }
+        if hasattr(self,'alternateIds'):
+            if type in self.alternateIds:
+                kwargs = self.alternateIdMap[type]
+        return kwargs
+
+    # fudged for now... maybe fix in next iteration
+    def good_to_store(self,rtrow, cand1, cand2):
+        '''
+        Veto on 4th lepton
+        '''
+        return (rtrow.eVetoMVAIsoVtx + rtrow.muGlbIsoVetoPt10 == 0)
+
+
+
 ##########################
 ###### Command line ######
 ##########################
@@ -336,6 +404,7 @@ def main(argv=None):
 
     if args.analyzer == 'WZ': analyzer = AnalyzerWZ(args.sample_name,args.file_list,args.out_file,args.period)
     if args.analyzer == 'FakeRate': analyzer = AnalyzerWZ_ZFakeRate(args.sample_name,args.file_list,args.out_file,args.period)
+    if args.analyzer == 'HZZFakeRate': analyzer = AnalyzerWZ_HZZFakeRate(args.sample_name,args.file_list,args.out_file,args.period)
     with analyzer as thisAnalyzer:
         thisAnalyzer.analyze()
 

@@ -210,6 +210,59 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
         dr = deltaR(lEta,lPhi,jEta,jPhi)
         return dr>1. # jet far from lepton
 
+class AnalyzerWZ_HZZDijetFakeRate(AnalyzerWZ_DijetFakeRate):
+    def __init__(self, sample_name, file_list, out_file, period, **kwargs):
+        super(AnalyzerWZ_HZZDijetFakeRate, self).__init__(sample_name, file_list, out_file, period, **kwargs)
+        self.channel = 'HZZFakeRate'
+
+    def preselection(self,rtrow):
+        cuts = CutSequence()
+        cuts.add(self.trigger)
+        cuts.add(self.fiducial)
+        cuts.add(self.ID_loose)
+        cuts.add(self.zVeto)
+        cuts.add(self.jPsiVeto)
+        cuts.add(self.wVeto)
+        cuts.add(self.jetSelection)
+        return cuts
+
+    def selection(self,rtrow):
+        cuts = CutSequence()
+        cuts.add(self.trigger)
+        cuts.add(self.fiducial)
+        cuts.add(self.ID_tight)
+        cuts.add(self.zVeto)
+        cuts.add(self.jPsiVeto)
+        cuts.add(self.wVeto)
+        cuts.add(self.jetSelection)
+        return cuts
+
+    def getIdArgs(self,type):
+        kwargs = {}
+        if type=='Tight':
+            kwargs['idDef'] = {
+                'e':'ZZTight',
+                'm':'ZZTight',
+            }
+            kwargs['isoCut'] = {
+                'e':0.5,
+                'm':0.4
+            }
+        if type=='Loose':
+            kwargs['idDef'] = {
+                'e':'ZZLoose',
+                'm':'ZZLoose',
+            }
+            kwargs['isoCut'] = {
+                'e':0.5,
+                'm':0.4
+            }
+        if hasattr(self,'alternateIds'):
+            if type in self.alternateIds:
+                kwargs = self.alternateIdMap[type]
+        return kwargs
+
+
 ##########################
 ###### Command line ######
 ##########################
@@ -232,6 +285,7 @@ def main(argv=None):
     args = parse_command_line(argv)
 
     if args.analyzer == 'FakeRate': analyzer = AnalyzerWZ_DijetFakeRate(args.sample_name,args.file_list,args.out_file,args.period)
+    if args.analyzer == 'HZZFakeRate': analyzer = AnalyzerWZ_HZZDijetFakeRate(args.sample_name,args.file_list,args.out_file,args.period)
     with analyzer as thisAnalyzer:
         thisAnalyzer.analyze()
 

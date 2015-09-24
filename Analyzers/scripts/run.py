@@ -19,9 +19,9 @@ from multiprocessing import Pool
 
 from InitialStateAnalysis.Utilities.utilities import *
 from InitialStateAnalysis.Analyzers.AnalyzerZ import AnalyzerZ
-from InitialStateAnalysis.Analyzers.AnalyzerWZ import AnalyzerWZ, AnalyzerWZ_ZFakeRate
+from InitialStateAnalysis.Analyzers.AnalyzerWZ import AnalyzerWZ, AnalyzerWZ_ZFakeRate, AnalyzerWZ_HZZFakeRate
 from InitialStateAnalysis.Analyzers.AnalyzerWZ_W import AnalyzerWZ_WFakeRate
-from InitialStateAnalysis.Analyzers.AnalyzerWZ_Dijet import AnalyzerWZ_DijetFakeRate
+from InitialStateAnalysis.Analyzers.AnalyzerWZ_Dijet import AnalyzerWZ_DijetFakeRate, AnalyzerWZ_HZZDijetFakeRate
 from InitialStateAnalysis.Analyzers.AnalyzerHpp2l import AnalyzerHpp2l, AnalyzerHpp2l_Z, AnalyzerHpp2l_Charge, AnalyzerHpp2l_TT
 from InitialStateAnalysis.Analyzers.AnalyzerHpp3l import AnalyzerHpp3l, AnalyzerHpp3l_WZ, AnalyzerHpp3l_LowMass
 from InitialStateAnalysis.Analyzers.AnalyzerHpp4l import AnalyzerHpp4l
@@ -42,12 +42,14 @@ def run_analyzer(args):
         'WZ'      : {
                     'WZ'      : AnalyzerWZ,
                     'FakeRate': AnalyzerWZ_ZFakeRate,
+                    'HZZFakeRate': AnalyzerWZ_HZZFakeRate,
                      },
         'WZ_W'    : {
                     'FakeRate': AnalyzerWZ_WFakeRate,
                     },
         'WZ_Dijet': {
                     'FakeRate': AnalyzerWZ_DijetFakeRate,
+                    'HZZFakeRate': AnalyzerWZ_HZZDijetFakeRate,
                     },
         'Hpp3l'   : {
                     'Hpp3l'   : AnalyzerHpp3l,
