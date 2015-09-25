@@ -89,7 +89,8 @@ def get_sample_names(analysis,period,samples):
             'WZ'         : '2015-09-18-13TeV-WZ', # add ht variable
             'WZ_W'       : '2015-08-03-13TeV-2l',
             #'WZ_Dijet'   : '2015-08-17-13TeV-1l',
-            'WZ_Dijet'   : '2015-09-14-13TeV-1l', # updated with WZ changes
+            #'WZ_Dijet'   : '2015-09-14-13TeV-1l', # updated with WZ changes
+            'WZ_Dijet'   : '2015-09-24-13TeV-1l', # add ht
             'Hpp3l'      : '2015-03-30-13TeV-3l',
             'Hpp4l'      : '2015-03-30-13TeV-4l',
         },

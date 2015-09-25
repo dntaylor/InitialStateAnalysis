@@ -45,7 +45,7 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
     plotMethod('finalstate.mT',[150,0,300],savedir+'mT_zoom',yaxis='Events/2.0 GeV',xaxis='M_T^{3\\ell+MET} (GeV)',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
     plotMethod('finalstate.hT',[40,0,800],savedir+'hT',yaxis='Events/20.0 GeV',xaxis='H_{T} (GeV)',lumitext=33,logy=1,cut=myCut,overflow=True,**kwargs)
     plotMethod('event.nvtx',[50,0,50],savedir+'puVertices',yaxis='Events',xaxis='Number PU Vertices',legendpos=43,logy=0,cut=myCut,**kwargs)
-    if analysis in ['WZ']:
+    if analysis in ['WZ','WZ_Dijet']:
         plotMethod('finalstate.leadJetPt',[60,0,300],savedir+'JetPt',yaxis='Events/5.0 GeV',xaxis='p_{T}^{jet} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('finalstate.leadJetEta',[50,-5.0,5.0],savedir+'JetEta',yaxis='Events',xaxis='\\eta^{jet}',legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod('finalstate.leadJetPhi',[30,-3.14159,3.14159],savedir+'JetPhi',yaxis='Events',xaxis='\\phi^{jet}',legendpos=43,logy=0,cut=myCut,**kwargs)
@@ -617,15 +617,17 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
     fakeRegions = {}
     fakeRegions['WZ'] = {}
     for f in ['e', 'm']:
-        for p in ['Loose', 'Tight']:
+        #for p in ['Loose', 'Tight']:
+        for p in ['Tight']:
             # select leading Z pt, Z window [60,120], tight (or loose) Z, low met, m3l>100, w1 mass < 30
             if analysis in ['WZ']:
-                for z in ['Loose', 'Tight']:
+                #for z in ['Loose', 'Tight']:
+                for z in ['Tight']:
                     fakeRegion = 'Z{0}Probe{1}{2}'.format(z,lepName[f],p)
                     denom = 'z1.Pt1>20. & z1.mass>60. & z1.mass<120. & z1.Pass{0}1 & z1.Pass{0}2 & finalstate.met<20. & finalstate.mass>100. & w1.mass<20. & w1.dR1_z1_1>0.1 & w1.dR1_z1_2>0.1 & w1Flv=="{1}"'.format(z,f)
                     numer = '{0} & w1.Pass{1}1'.format(denom,p)
                     fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
-                    if p=='Tight':
+                    if p=='Tight' and channel not in ['HZZFakeRate']:
                        fakeRegion += '_LooseProbe'
                        denom += ' & w1.PassLoose1'
                        numer += ' & w1.PassLoose1'
@@ -633,12 +635,13 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
             # select w lepton pt, z veto, met
             #'W' : 'w1.Pt1>20. & (z1.mass<60. | z1.mass>120.) & finalstate.met>30. & w1.mass>30.',
             if analysis in ['WZ_W']:
-                for w in ['Loose','Tight']:
+                #for w in ['Loose','Tight']:
+                for w in ['Tight']:
                     fakeRegion = 'W{0}Probe{1}{2}'.format(w,lepName[f],p)
                     denom = 'w1.Pt1>20. & w1.mass>30. & finalstate.met>30. & (z1.mass<60. | z1.mass>120.) & l1.Chg==l2.Chg & z1.dR>0.1 & w1.Pass{0}1 & w2Flv=="{1}"'.format(w,f)
                     numer = '{0} & w2.Pass{1}1'.format(denom,p)
                     fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w2.Pt1', 'etaVar': 'w2.Eta1'}
-                    if p=='Tight':
+                    if p=='Tight' and channel not in ['HZZFakeRate']:
                        fakeRegion += '_LooseProbe'
                        denom += ' & w2.PassLoose1'
                        numer += ' & w2.PassLoose1'
@@ -649,7 +652,7 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
                denom = 'l1Flv=="{0}"'.format(f)
                numer = '{0} & w1.Pass{1}1'.format(denom,p)
                fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
-               if p=='Tight':
+               if p=='Tight' and channel not in ['HZZFakeRate']:
                   fakeRegion += '_LooseProbe'
                   denom += ' & w1.PassLoose1'
                   numer += ' & w1.PassLoose1'

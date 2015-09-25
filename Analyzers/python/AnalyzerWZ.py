@@ -59,17 +59,18 @@ class AnalyzerWZ(AnalyzerBase):
             OS1 = getattr(rtrow, "%s_%s_SS" % (l[0], l[1])) < 0.5 # select opposite sign
             mass = getattr(rtrow, "%s_%s_Mass" % (l[0], l[1]))
             massdiff = abs(ZMASS-mass)
+            pt2 = getattr(rtrow,'%sPt' % l[2])
 
             ordList = [l[1], l[0], l[2]] if getattr(rtrow,'%sPt' % l[0]) < getattr(rtrow,'%sPt' % l[1]) else [l[0], l[1], l[2]]
 
             if OS1 and l[0][0]==l[1][0]:
-                cands.append((massdiff, mass, ordList))
+                cands.append((massdiff, -pt2, mass, ordList))
 
         if not len(cands): return 0
 
         # Sort by mass difference
         cands.sort(key=lambda x: x[0])
-        massdiff, mass, leps = cands[0]
+        massdiff, negpt2, mass, leps = cands[0]
         # this is dumb
         # if mass outside of mass window, switch to one inside the mass window if available
         #if mass < 60. or mass > 120. and len(cands)>1:
@@ -79,7 +80,7 @@ class AnalyzerWZ(AnalyzerBase):
         #            leps = c[2]
         #            break
 
-        return ([massdiff], leps)
+        return ([massdiff,negpt2], leps)
 
     # overide good_to_store
     # will store via veto
@@ -286,7 +287,7 @@ class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
 
     def preselection(self,rtrow):
         cuts = CutSequence()
-        if self.isData: cuts.add(self.trigger)
+        cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.ID_veto)
         cuts.add(self.ID_tight_Z)
@@ -296,7 +297,7 @@ class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
 
     def selection(self,rtrow):
         cuts = CutSequence()
-        if self.isData: cuts.add(self.trigger)
+        cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.ID_tight)
         cuts.add(self.zSelection)
@@ -313,6 +314,37 @@ class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
             if rtrow.pfMetEt > 20.: return False
         return True
 
+    def trigger(self, rtrow):
+        if self.period == 8:
+            triggers = ["doubleETightPass", "doubleMuPass", "doubleMuTrkPass"]
+
+        if self.period == 13:
+            triggers = ['doubleMuPass', 'doubleEPass']
+
+        for t in triggers:
+            if getattr(rtrow,t)>0:
+                return True
+        return False
+
+    def good_to_store(self, rtrow, cand1, cand2):
+        '''
+        Iterate through minimizing variables.
+        '''
+        good = False
+        for min1, min2 in zip(cand1, cand2):
+            if min1 < min2:
+                good = True
+                break
+            if min1 > min2:
+                good = False
+                break
+        match_0 = getattr(rtrow,'%sMatchesDoubleE' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesDoubleMu' %self.objCand[0])
+        match_1 = getattr(rtrow,'%sMatchesDoubleE' %self.objCand[1]) if self.objCand[1][0]=='e' else getattr(rtrow,'%sMatchesDoubleMu' %self.objCand[1])
+        passTrig = match_0 > 0.5 and match_1 > 0.5
+
+        return good and passTrig
+
+
 class AnalyzerWZ_HZZFakeRate(AnalyzerWZ):
     def __init__(self, sample_name, file_list, out_file, period, **kwargs):
         super(AnalyzerWZ_HZZFakeRate, self).__init__(sample_name, file_list, out_file, period, **kwargs)
@@ -320,7 +352,7 @@ class AnalyzerWZ_HZZFakeRate(AnalyzerWZ):
 
     def preselection(self,rtrow):
         cuts = CutSequence()
-        if self.isData: cuts.add(self.trigger)
+        cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.ID_loose)
         cuts.add(self.ID_tight_Z)
@@ -330,7 +362,7 @@ class AnalyzerWZ_HZZFakeRate(AnalyzerWZ):
 
     def selection(self,rtrow):
         cuts = CutSequence()
-        if self.isData: cuts.add(self.trigger)
+        cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.ID_tight)
         cuts.add(self.zSelection)
@@ -372,13 +404,35 @@ class AnalyzerWZ_HZZFakeRate(AnalyzerWZ):
                 kwargs = self.alternateIdMap[type]
         return kwargs
 
-    # fudged for now... maybe fix in next iteration
-    def good_to_store(self,rtrow, cand1, cand2):
-        '''
-        Veto on 4th lepton
-        '''
-        return (rtrow.eVetoMVAIsoVtx + rtrow.muGlbIsoVetoPt10 == 0)
+    def trigger(self, rtrow):
+        if self.period == 8:
+            triggers = ["doubleETightPass", "doubleMuPass", "doubleMuTrkPass"]
 
+        if self.period == 13:
+            triggers = ['doubleMuPass', 'doubleEPass']
+
+        for t in triggers:
+            if getattr(rtrow,t)>0:
+                return True
+        return False
+
+    def good_to_store(self, rtrow, cand1, cand2):
+        '''
+        Iterate through minimizing variables.
+        '''
+        good = False
+        for min1, min2 in zip(cand1, cand2):
+            if min1 < min2:
+                good = True
+                break
+            if min1 > min2:
+                good = False
+                break
+        match_0 = getattr(rtrow,'%sMatchesDoubleE' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesDoubleMu' %self.objCand[0])
+        match_1 = getattr(rtrow,'%sMatchesDoubleE' %self.objCand[1]) if self.objCand[1][0]=='e' else getattr(rtrow,'%sMatchesDoubleMu' %self.objCand[1])
+        passTrig = match_0 > 0.5 and match_1 > 0.5
+
+        return good and passTrig
 
 
 ##########################
