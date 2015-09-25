@@ -15,9 +15,9 @@ class FakeRatePlotter(PlotterBase):
     def __init__(self,analysis,**kwargs):
         PlotterBase.__init__(self,analysis,**kwargs)
 
-    def getFakeRate(self,passSelection, failSelection, ptBins, etaBins, ptVar, etaVar, savename):
+    def getFakeRate(self,passSelection, failSelection, ptBins, etaBins, ptVar, etaVar, savename, **kwargs):
         '''Get 2d histogram of fakerates'''
-        dataDriven = True # until we get data
+        dataDriven = kwargs.pop('dataDriven',True)
         fakeHist = ROOT.TH2F(savename,'',len(ptBins)-1,array('d',ptBins),len(etaBins)-1,array('d',etaBins))
         for p in range(len(ptBins)-1):
             for e in range(len(etaBins)-1):
@@ -70,6 +70,7 @@ class FakeRatePlotter(PlotterBase):
         etaVar = kwargs.pop('etaVar','w1.Eta1')
         xaxis = kwargs.pop('xaxis','p_{T} (GeV)')
         yaxis = kwargs.pop('yaxis','#eta')
+        dataDriven = kwargs.pop('dataDriven',True)
         for key, value in kwargs.iteritems():
             self.logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
 
@@ -80,7 +81,7 @@ class FakeRatePlotter(PlotterBase):
         self.canvas.SetRightMargin(0.14)
 
         # calculate fake rate
-        fakeRateHist = self.getFakeRate(passSelection,failSelection,ptBins,etaBins,ptVar,etaVar,savename)
+        fakeRateHist = self.getFakeRate(passSelection,failSelection,ptBins,etaBins,ptVar,etaVar,savename,dataDriven=dataDriven)
         fakeRateHist.GetXaxis().SetTitle(xaxis)
         fakeRateHist.GetYaxis().SetTitle(yaxis)
         fakeRateHist.GetYaxis().SetTitleOffset(1.)

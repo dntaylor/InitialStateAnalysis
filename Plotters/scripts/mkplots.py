@@ -583,6 +583,7 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
         logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
         return 0
 
+    dataDriven = not blind
     if useSignal: logger.info("%s:%s:%iTeV: Mass: %i" % (analysis,channel,runPeriod,mass))
     isControl = analysis != channel
     numleps = {
@@ -693,7 +694,7 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
         plotter.initializeDataSamples([sigMap[runPeriod]['data']])
         plotter.setIntLumi(intLumiMap[runPeriod])
-        plotter.plotFakeRate(numer, denom, 'fakeRate/{0}_fakerate'.format(fakeRegion), ptBins=ptBins, etaBins=etaBins[probe], logx=1, ptVar=ptvar, etaVar=etavar)
+        plotter.plotFakeRate(numer, denom, 'fakeRate/{0}_fakerate'.format(fakeRegion), ptBins=ptBins, etaBins=etaBins[probe], logx=1, ptVar=ptvar, etaVar=etavar, dataDriven=dataDriven)
 
 def parse_command_line(argv):
     parser = get_parser("Plot a given channel and period")
@@ -748,7 +749,7 @@ def main(argv=None):
     if args.period == 7:
         logger.warning("7 TeV not implemented")
     elif args.doFakeRate:
-        plotFakeRate(args.analysis,args.channel,args.period,mass=args.mass,loglevel=args.log)
+        plotFakeRate(args.analysis,args.channel,args.period,mass=args.mass,loglevel=args.log,blind=args.unblind)
     else:
         plotRegion(args.analysis,args.channel,args.period,plotFinalStates=args.plotFinalStates,runTau=args.runTau,blind=args.unblind,mass=args.mass,plotJetBins=args.plotJetBins,plotOverlay=args.plotOverlay,plotShapes=args.plotShapes,plotCutFlow=args.plotCutFlow,myCut=args.cut,finalStates=args.finalStates,nostack=args.nostack,normalize=args.normalize,scaleFactor=args.scaleFactor,loglevel=args.log)
 

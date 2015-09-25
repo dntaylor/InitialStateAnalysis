@@ -456,12 +456,12 @@ def getMergeDict(period):
             'ZZTo4L_13TeV_powheg_pythia8'                   : '1',
             'ZZTo4Q_13TeV_amcatnloFXFX_madspin_pythia8'     : '1',
             #'ZZ_TuneCUETP8M1_13TeV-pythia8'                 : '1',
-            #'GluGluToZZTo2e2mu_BackgroundOnly_13TeV_MCFM'   : '1',
-            #'GluGluToZZTo2e2tau_BackgroundOnly_13TeV_MCFM'  : '1',
-            #'GluGluToZZTo2mu2tau_BackgroundOnly_13TeV_MCFM' : '1',
-            #'GluGluToZZTo4e_BackgroundOnly_13TeV_MCFM'      : '1',
-            #'GluGluToZZTo4mu_BackgroundOnly_13TeV_MCFM'     : '1',
-            #'GluGluToZZTo4tau_BackgroundOnly_13TeV_MCFM'    : '1',
+            'GluGluToZZTo2e2mu_BackgroundOnly_13TeV_MCFM'   : '1',
+            'GluGluToZZTo2e2tau_BackgroundOnly_13TeV_MCFM'  : '1',
+            'GluGluToZZTo2mu2tau_BackgroundOnly_13TeV_MCFM' : '1',
+            'GluGluToZZTo4e_BackgroundOnly_13TeV_MCFM'      : '1',
+            'GluGluToZZTo4mu_BackgroundOnly_13TeV_MCFM'     : '1',
+            'GluGluToZZTo4tau_BackgroundOnly_13TeV_MCFM'    : '1',
         }
         sampleMergeDict['TTZJets'] = {
             'TTZToLLNuNu_M-10_TuneCUETP8M1_13TeV-amcatnlo-pythia8'         : '1',
