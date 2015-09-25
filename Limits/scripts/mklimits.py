@@ -30,6 +30,7 @@ def limit(analysis,region,period,mass,**kwargs):
     scalefactor = kwargs.pop('scalefactor','event.pu_weight*event.lep_scale*event.trig_scale')
     datacardDir = kwargs.pop('datacardDir','./datacards')
     do4l = kwargs.pop('do4l',False)
+    doBoth = kwargs.pop('doBoth',False)
     logging.info("Processing BP %s; mass-point %i; card name %s" % (bp,mass,name))
 
     # get the cut maps for each gen channel
@@ -97,27 +98,36 @@ def limit(analysis,region,period,mass,**kwargs):
                     blinded=not unblind, bgMode=mode, scalefactor=scalefactor,
                     sbcut=sbcut, srcut=srcut)
 
-    signal =  sigMap[period]['Sig']
+    signal =  sigMap[period]['SigPP'] if do4l or analysis in ['Hpp4l'] else sigMap[period]['SigAP']
     if mode=='sideband':
         # add groups, signal scales must be list of floats with same length as cuts list in gen card
-        limits.add_group("hpp%i" % mass, signal, scale=channelScales, isSignal=True)
+        signame = "hpp%i_PP" % mass if do4l or analysis in ['Hpp4l'] else "hpp%i_AP" % mass
+        limits.add_group(signame, signal, scale=channelScales, isSignal=True)
+        if doBoth:
+            signame_PP = "hpp%i_PP" % mass
+            signal_PP =  sigMap[period]['SigPP']
+            limits.add_group(signame_PP, signal_PP, scale=channelScales, isSignal=True)
         limits.add_group("bg", "bg")
         limits.add_group("data", "data_R*", isData=True)
 
         # luminosity systematics, 2.6 % for mc
-        lumi = {'hpp%i' % mass: 1.026}
+        lumi = {signame: 1.026}
+        if doBoth: lumi = {signame: 1.026, signame_PP: 1.026}
         limits.add_systematics("lumi", "lnN", **lumi)
     
         # lepton systematics, electron and muon separately for mc
         chanNames = recoChannels # only one supported for now
-        scaleMap = calculateChannelLeptonSystematic(mass,chanNames,do4l=do4l)
-        eid = {'hpp%i' % mass: "%0.3f" %scaleMap[chanNames[0]]['e']}
-        mid = {'hpp%i' % mass: "%0.3f" %scaleMap[chanNames[0]]['m']}
+        scaleMap = calculateChannelLeptonSystematic(mass,chanNames,do4l=do4l,doBoth=doBoth)
+        eid = {signame: "%0.3f" %scaleMap[chanNames[0]]['e']}
+        if doBoth: eid = {signame: "%0.3f" %scaleMap[chanNames[0]]['e'], signame_PP: "%0.3f" %scaleMap[chanNames[0]]['e']}
+        mid = {signame: "%0.3f" %scaleMap[chanNames[0]]['m']}
+        if doBoth: mid = {signame: "%0.3f" %scaleMap[chanNames[0]]['m'], signame_PP: "%0.3f" %scaleMap[chanNames[0]]['m']}
         limits.add_systematics('eid', 'lnN', **eid)
         limits.add_systematics('mid', 'lnN', **mid)
     
         # signal mc uncertainty
-        sigmc = {'hpp%i' % mass: 1.15}
+        sigmc = {signame: 1.15}
+        if doBoth: sigmc = {signame: 1.15, signame_PP: 1.15}
         limits.add_systematics("sig_mc_err", "lnN", **sigmc)
     
         # uncertainty on bg estimation
@@ -145,23 +155,29 @@ def BPWrapper(args):
     doAlphaTest = args[7]
     unblind = args[8]
     do4l = args[9]
-    cut = args[10]
-    runTau = args[11]
-    BP(analysis,region,period,mass,bp,mode=bgMode,scalefactor=scaleFactor,doAlphaTest=doAlphaTest,unblind=unblind,do4l=do4l,cut=cut,runTau=runTau)
+    doBoth = args[10]
+    cut = args[11]
+    runTau = args[12]
+    BP(analysis,region,period,mass,bp,mode=bgMode,scalefactor=scaleFactor,doAlphaTest=doAlphaTest,unblind=unblind,do4l=do4l,doBoth=doBoth,cut=cut,runTau=runTau)
 
 def BP(analysis,region,period,mass,bp,**kwargs):
     do4l = kwargs.pop('do4l',False)
+    doBoth = kwargs.pop('doBoth',False)
     runTau = kwargs.pop('runTau',True)
     s = getScales(bp)
     genLeps = 4 if analysis=='Hpp4l' or do4l else 3
     recoLeps = 4 if analysis=='Hpp4l' else 3
     channelMap = getChannelMap(bp, genLeps, recoLeps, runTau=runTau)
+    if doBoth: channelMap_PP = getChannelMap(bp, 4, recoLeps, runTau=runTau)
     sf = getattr(s,'scale_%s'%analysis)
     if do4l: sf = getattr(s,'scale_Hpp4l')
+    if doBoth: sf_PP = getattr(s,'scale_Hpp4l')
 
     higgsChannels = channelMap['names']
     genChannelsMap = channelMap['genmap']
+    if doBoth: genChannelsMap_PP = channelMap_PP['genmap']
     recoChannelsMap = channelMap['recomap']
+    if doBoth: recoChannelsMap_PP = channelMap_PP['recomap']
     allRecoChannels = channelMap['allreco']
 
     baseRecoMap = {
@@ -187,6 +203,7 @@ def BP(analysis,region,period,mass,bp,**kwargs):
         if not [b for b in baseRecoMap[br] if b in allRecoChannels]: continue
         cardName = '%s_%s' % (bp, br)
         if do4l: cardName += '_4l'
+        if doBoth: cardName += '_APandPP'
         genChannels = []
         genCuts = []
         genScales = []
@@ -205,10 +222,20 @@ def BP(analysis,region,period,mass,bp,**kwargs):
                     genChannels += [g]
                     genCuts += ['(%s && genChannel=="%s")' % (recoCut,g)]
                     genScales += [scale]
+            if doBoth:
+                for h in genChannelsMap_PP:
+                    if r not in recoChannelsMap_PP[h]: continue
+                    for g in genChannelsMap_PP[h]:
+                        scale = sf_PP(g[:2],g[2:])
+                        if not scale: continue
+                        logging.debug('Adding gen channel %s with scale %f' %(g,scale))
+                        genChannels += [g]
+                        genCuts += ['(%s && genChannel=="%s")' % (recoCut,g)]
+                        genScales += [scale]
             genChannels += ['aaa']
             genCuts += ['(%s && genChannel=="aaa")' % (recoCut)]
             genScales += [1.]
-        limit(analysis,region,period,mass,bp=bp,name=cardName,directory=bp,channelCuts=genCuts,channelScales=genScales,genChannels=genChannels,recoChannels=recoChannels,do4l=do4l,**kwargs)
+        limit(analysis,region,period,mass,bp=bp,name=cardName,directory=bp,channelCuts=genCuts,channelScales=genScales,genChannels=genChannels,recoChannels=recoChannels,do4l=do4l,doBoth=doBoth,**kwargs)
 
     #for r in allRecoChannels: # one card per reco channel
     #    recoCut = 'channel=="%s"' % r
@@ -504,7 +531,8 @@ def parse_command_line(argv):
     parser.add_argument('-st','--skipTau',action='store_false',help='Skip Tau finalStates')
     parser.add_argument('-am','--allMasses',action='store_true',help='Run over all masses for signal')
     parser.add_argument('-da','--doAlphaTest',action='store_true',help='Run the alpha test')
-    parser.add_argument('-df','--do4l', action='store_true',help='Run the 4l lepton limits')
+    parser.add_argument('-df','--do4l', action='store_true',help='Run the PP lepton limits')
+    parser.add_argument('-db','--doBoth', action='store_true',help='Run the AP+PP lepton limits')
     parser.add_argument('-ub','--unblind',action='store_true',help='unblind')
     parser.add_argument('-bp','--branchingPoint',nargs='?',type=str,const='BP4',default='BP4',choices=['ee100','em100','mm100','et100','mt100','tt100','BP1','BP2','BP3','BP4'],help='Choose branching point for H++')
     parser.add_argument('-ab','--allBranchingPoints',action='store_true',help='Run over all branching points for H++')
@@ -526,6 +554,7 @@ def main(argv=None):
     branchingPoints = ['ee100','em100','mm100','et100','mt100','tt100','BP1','BP2','BP3','BP4']
     masses = _3L_MASSES if args.analysis=='Hpp3l' else _4L_MASSES
     if args.do4l: masses = _4L_MASSES
+    if args.doBoth: masses = _4L_MASSES
 
     if not args.allMasses: masses = [args.mass]
     if not args.allBranchingPoints: branchingPoints = [args.branchingPoint]
@@ -534,11 +563,11 @@ def main(argv=None):
 
     if len(poolArgs)==1:
         job = poolArgs[0]
-        BPWrapper((args.analysis,args.channel,args.period,job[0],job[1],args.bgMode,args.scaleFactor,args.doAlphaTest,args.unblind,args.do4l,args.cut,args.skipTau))
+        BPWrapper((args.analysis,args.channel,args.period,job[0],job[1],args.bgMode,args.scaleFactor,args.doAlphaTest,args.unblind,args.do4l,args.doBoth,args.cut,args.skipTau))
     else:
         p = Pool(8)
         try:
-            p.map_async(BPWrapper, [(args.analysis,args.channel,args.period,job[0],job[1],args.bgMode,args.scaleFactor,args.doAlphaTest,args.unblind,args.do4l,args.cut,args.skipTau) for job in poolArgs]).get(999999)
+            p.map_async(BPWrapper, [(args.analysis,args.channel,args.period,job[0],job[1],args.bgMode,args.scaleFactor,args.doAlphaTest,args.unblind,args.do4l,args.doBoth,args.cut,args.skipTau) for job in poolArgs]).get(999999)
         except KeyboardInterrupt:
             p.terminate()
             print 'limits cancelled'

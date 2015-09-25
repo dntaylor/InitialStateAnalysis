@@ -613,7 +613,7 @@ class PlotterBase(object):
         # create and draw legend
         leg = ROOT.TLegend(xstart,ystart,xend,yend,'','NDC')
         leg.SetTextFont(42)
-        leg.SetTextSize(0.25/numEntries)
+        #leg.SetTextSize(0.25/numEntries)
         leg.SetBorderSize(0)
         leg.SetFillColor(0)
         if plotdata: leg.AddEntry(datahist,'Data','ep')

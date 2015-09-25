@@ -456,12 +456,12 @@ def getMergeDict(period):
             'ZZTo4L_13TeV_powheg_pythia8'                   : '1',
             'ZZTo4Q_13TeV_amcatnloFXFX_madspin_pythia8'     : '1',
             #'ZZ_TuneCUETP8M1_13TeV-pythia8'                 : '1',
-            'GluGluToZZTo2e2mu_BackgroundOnly_13TeV_MCFM'   : '1',
-            'GluGluToZZTo2e2tau_BackgroundOnly_13TeV_MCFM'  : '1',
-            'GluGluToZZTo2mu2tau_BackgroundOnly_13TeV_MCFM' : '1',
-            'GluGluToZZTo4e_BackgroundOnly_13TeV_MCFM'      : '1',
-            'GluGluToZZTo4mu_BackgroundOnly_13TeV_MCFM'     : '1',
-            'GluGluToZZTo4tau_BackgroundOnly_13TeV_MCFM'    : '1',
+            #'GluGluToZZTo2e2mu_BackgroundOnly_13TeV_MCFM'   : '1',
+            #'GluGluToZZTo2e2tau_BackgroundOnly_13TeV_MCFM'  : '1',
+            #'GluGluToZZTo2mu2tau_BackgroundOnly_13TeV_MCFM' : '1',
+            #'GluGluToZZTo4e_BackgroundOnly_13TeV_MCFM'      : '1',
+            #'GluGluToZZTo4mu_BackgroundOnly_13TeV_MCFM'     : '1',
+            #'GluGluToZZTo4tau_BackgroundOnly_13TeV_MCFM'    : '1',
         }
         sampleMergeDict['TTZJets'] = {
             'TTZToLLNuNu_M-10_TuneCUETP8M1_13TeV-amcatnlo-pythia8'         : '1',
@@ -648,6 +648,8 @@ def getSigMap(numLeptons,mass):
              'WWW' : 'WWWJets',
              'Sig' : 'HPlusPlusHMinusHTo3L_M-%i_8TeV-calchep-pythia6' % mass\
                       if numLeptons==3 else 'HPlusPlusHMinusMinusHTo4L_M-%i_8TeV-pythia6' % mass,
+             'SigAP' : 'HPlusPlusHMinusHTo3L_M-%i_8TeV-calchep-pythia6' % mass,
+             'SigPP' : 'HPlusPlusHMinusMinusHTo4L_M-%i_8TeV-pythia6' % mass,
              'data': 'data'
         },
         13 : {
@@ -730,6 +732,7 @@ def getChannelBackgrounds(runPeriod):
         'Charge'  : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
         'W'       : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
         'FakeRate': ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'HZZFakeRate': ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
         'Hpp3l'   : ['TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WZ'],
         'WZ'      : ['TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WZ'],
         'LowMass' : ['TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WZ'],
@@ -740,6 +743,7 @@ def getChannelBackgrounds(runPeriod):
             'WZ'      : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
             'W'       : ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'ZZ', 'WZ'],
             'FakeRate': ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'ZZ', 'WZ'],
+            'HZZFakeRate': ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'ZZ', 'WZ'],
             'Z'       : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
             'Charge'  : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
             'TT'      : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],

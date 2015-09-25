@@ -6,10 +6,11 @@ class Datacard(object):
         self.card_name = name
         self.bkg = []
         self.syst = []
+        self.signal = []
         self.observed = 0
 
     def add_sig(self, name, rate):
-        self.signal = (name, rate)
+        self.signal.append((name, rate))
 
     def set_observed(self, obs):
         self.observed = obs
@@ -23,14 +24,16 @@ class Datacard(object):
         self.syst.append((name, syst_type, chans))
 
     def dump(self):
+        smax = len(self.signal)
+        bmax = len(self.bkg)
         imax = 1
-        jmax = len(self.bkg)
+        jmax = smax
         kmax = len(self.syst)
 
         out = ""
         out += "#%s\n" % self.card_name
         out += "imax %2i number of channels\n" % imax
-        out += "jmax %2i number of backgrounds\n" % jmax
+        out += "jmax %2i number of processes minus 1\n" % jmax
         out += "kmax %2i number of nuisance parameters\n" % kmax
 
         out += "-" * 30 + "\n"
@@ -40,28 +43,32 @@ class Datacard(object):
 
         out += "-" * 30 + "\n"
 
-        fmt = "{:<35}" + "{:^11}" * (1 + jmax) + "\n"
-        fmt_f = "{:<35}" + "{:^11.3e}" * (1 + jmax) + "\n"
+        fmt = "{:<40}" + "{:^11}" * (smax + bmax) + "\n"
+        fmt_f = "{:<40}" + "{:^11.3e}" * (smax + bmax) + "\n"
 
-        row = ["1" for i in xrange(1+jmax)]
+        row = ["1" for i in xrange(smax+bmax)]
         out += fmt.format("bin", *row)
 
-        row = [self.signal[0]] + [x[0] for x in self.bkg]
+        row = [x[0] for x in self.signal + self.bkg]
         out += fmt.format("process", *row)
 
-        row = [i for i in xrange(1+jmax)]
+        row = [i-(smax-1) for i in xrange(smax+bmax)]
         out += fmt.format("process", *row)
 
-        row = [self.signal[1]] + [x[1] for x in self.bkg]
+        row = [x[1] for x in self.signal + self.bkg]
         out += fmt_f.format("rate", *row)
 
         out += "-" * 30 + "\n"
 
-        fmt = "{:<30}" + "{:<5}" + "{:^11}" * (1 + jmax) + "\n"
+        fmt = "{:<30}" + "{:<10}" + "{:^11}" * (smax + bmax) + "\n"
+        fmt_f = "{:<30}" + "{:<10}" + "{:^11.8e}" * (smax + bmax) + "\n"
 
         for syst in self.syst:
-            names = [self.signal[0]] + [x[0] for x in self.bkg]
+            names = [x[0] for x in self.signal + self.bkg]
             row = [syst[2][name] if name in syst[2] else '-' for name in names]
+            #if 'gmN' in syst[1]:
+            #    out += fmt_f.format(syst[0], syst[1], *row)
+            #else:
             out += fmt.format(syst[0], syst[1], *row)
 
         return out

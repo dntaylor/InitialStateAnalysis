@@ -15,15 +15,15 @@ limitNames = ['ee100','em100','mm100','et100','mt100','BP1','BP2','BP3','BP4']
 # without charge id and with tau
 limits = {
     'ee100' : {'name' : '100% H^{#pm#pm}#rightarrow ee',      'PP4l' : 533, 'AP3l' : 509, 'PP3l' : 507, 'AP': 509, 'PP': 592, 'Comb' : 620,},
-    'em100' : {'name' : '100% H^{#pm#pm}#rightarrow e#mu',    'PP4l' : 545, 'AP3l' : 510, 'PP3l' : 513, 'AP': 510, 'PP': 604, 'Comb' : 624,},
-    'mm100' : {'name' : '100% H^{#pm#pm}#rightarrow #mu#mu',  'PP4l' : 562, 'AP3l' : 515, 'PP3l' : 517, 'AP': 515, 'PP': 609, 'Comb' : 633,},
-    'et100' : {'name' : '100% H^{#pm#pm}#rightarrow e#tau',   'PP4l' : 261, 'AP3l' : 313, 'PP3l' : 383, 'AP': 313, 'PP': 394, 'Comb' : 410,},
-    'mt100' : {'name' : '100% H^{#pm#pm}#rightarrow #mu#tau', 'PP4l' : 280, 'AP3l' : 326, 'PP3l' : 406, 'AP': 326, 'PP': 417, 'Comb' : 431,},
-    'tt100' : {'name' : '100% H^{#pm#pm}#rightarrow #tau#tau','PP4l' :   1, 'AP3l' : 141, 'PP3l' :  54, 'AP': 141, 'PP':   1, 'Comb' : 164,},
-    'BP1'   : {'name' : 'BP1',                                'PP4l' : 373, 'AP3l' : 417, 'PP3l' : 449, 'AP': 417, 'PP': 478, 'Comb' : 509,},
-    'BP2'   : {'name' : 'BP2',                                'PP4l' : 462, 'AP3l' : 469, 'PP3l' : 498, 'AP': 469, 'PP': 535, 'Comb' : 571,},
-    'BP3'   : {'name' : 'BP3',                                'PP4l' : 482, 'AP3l' : 476, 'PP3l' : 477, 'AP': 476, 'PP': 533, 'Comb' : 571,},
-    'BP4'   : {'name' : 'BP4',                                'PP4l' : 432, 'AP3l' : 447, 'PP3l' : 477, 'AP': 447, 'PP': 513, 'Comb' : 539,},
+    'em100' : {'name' : '100% H^{#pm#pm}#rightarrow e#mu',    'PP4l' : 545, 'AP3l' : 510, 'PP3l' : 513, 'AP': 510, 'PP': 604, 'Comb' : 626,},
+    'mm100' : {'name' : '100% H^{#pm#pm}#rightarrow #mu#mu',  'PP4l' : 562, 'AP3l' : 515, 'PP3l' : 517, 'AP': 515, 'PP': 609, 'Comb' : 635,},
+    'et100' : {'name' : '100% H^{#pm#pm}#rightarrow e#tau',   'PP4l' : 261, 'AP3l' : 313, 'PP3l' : 383, 'AP': 313, 'PP': 394, 'Comb' : 422,},
+    'mt100' : {'name' : '100% H^{#pm#pm}#rightarrow #mu#tau', 'PP4l' : 280, 'AP3l' : 326, 'PP3l' : 406, 'AP': 326, 'PP': 417, 'Comb' : 444,},
+    'tt100' : {'name' : '100% H^{#pm#pm}#rightarrow #tau#tau','PP4l' :   1, 'AP3l' : 141, 'PP3l' :  54, 'AP': 141, 'PP':   1, 'Comb' :   1,},
+    'BP1'   : {'name' : 'BP1',                                'PP4l' : 373, 'AP3l' : 417, 'PP3l' : 449, 'AP': 417, 'PP': 478, 'Comb' : 511,},
+    'BP2'   : {'name' : 'BP2',                                'PP4l' : 462, 'AP3l' : 469, 'PP3l' : 498, 'AP': 469, 'PP': 535, 'Comb' : 574,},
+    'BP3'   : {'name' : 'BP3',                                'PP4l' : 482, 'AP3l' : 476, 'PP3l' : 477, 'AP': 476, 'PP': 533, 'Comb' : 575,},
+    'BP4'   : {'name' : 'BP4',                                'PP4l' : 432, 'AP3l' : 447, 'PP3l' : 477, 'AP': 447, 'PP': 513, 'Comb' : 544,},
 }
 
 ## with charge id and with tau
