@@ -120,13 +120,17 @@ xsecs[13] = {
     'WW_TuneCUETP8M1_13TeV-pythia8' : 63.21 * PB,
 
     'WZTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8' : 10.96    * PB,
+    'WZTo1L3Nu_13TeV_amcatnloFXFX_madspin_pythia8'   :  3.05    * PB,
+    'WZTo2L2Q_13TeV_amcatnloFXFX_madspin_pythia8'    :  5.52    * PB,
     'WZTo3LNu_TuneCUETP8M1_13TeV-powheg-pythia8'     :  4.42965 * PB,
     'WZ_TuneCUETP8M1_13TeV-pythia8'                  : 22.82    * PB,
 
-    'ZZTo2L2Q_13TeV_amcatnloFXFX_madspin_pythia8' :  4.07  * PB,
-    'ZZTo4L_13TeV_powheg_pythia8'                 :  1.256 * PB,
-    'ZZTo4Q_13TeV_amcatnloFXFX_madspin_pythia8'   :  6.842 * PB,
-    'ZZ_TuneCUETP8M1_13TeV-pythia8'               : 10.32  * PB,
+    'ZZTo4Q_13TeV_amcatnloFXFX_madspin_pythia8'   :  6.842  * PB,
+    'ZZTo2Q2Nu_13TeV_amcatnloFXFX_madspin_pythia8':  4.072  * PB,
+    'ZZTo2L2Q_13TeV_amcatnloFXFX_madspin_pythia8' :  4.07   * PB,
+    'ZZTo2L2Nu_13TeV_powheg_pythia8'              :  0.5644 * PB,
+    'ZZTo4L_13TeV_powheg_pythia8'                 :  1.256  * PB,
+    'ZZ_TuneCUETP8M1_13TeV-pythia8'               : 10.32   * PB,
 
     'GluGluToZZTo2e2mu_BackgroundOnly_13TeV_MCFM'   : 0.003194 * PB,
     'GluGluToZZTo2e2tau_BackgroundOnly_13TeV_MCFM'  : 0.003194 * PB,
@@ -135,7 +139,10 @@ xsecs[13] = {
     'GluGluToZZTo4mu_BackgroundOnly_13TeV_MCFM'     : 0.001586 * PB,
     'GluGluToZZTo4tau_BackgroundOnly_13TeV_MCFM'    : 0.001586 * PB,
     
+    'WWW_TuneCUETP8M1_13TeV-amcatnlo-pythia8' : 0.1651  * PB,
+    'WWZ_TuneCUETP8M1_13TeV-amcatnlo-pythia8' : 0.1651  * PB,
     'WZZ_TuneCUETP8M1_13TeV-amcatnlo-pythia8' : 0.05565 * PB,
+    'ZZZ_TuneCUETP8M1_13TeV-amcatnlo-pythia8' : 0.01398 * PB,
 
 }
 

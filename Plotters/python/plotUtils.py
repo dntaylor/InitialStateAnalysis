@@ -477,6 +477,12 @@ def getMergeDict(period):
             'TTWJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-madspin-pythia8' : '1',
             'TTWJetsToQQ_TuneCUETP8M1_13TeV-amcatnloFXFX-madspin-pythia8'  : '1',
         }
+        sampleMergeDict['VVVJets']   = {
+            'ZZZ': '1',
+            'WZZ': '1',
+            'WWZ': '1',
+            #'WWW': '1',
+        }
         sampleMergeDict['QCD'] = {
             #'QCD_Pt-15to20_MuEnrichedPt5_TuneCUETP8M1_13TeV_pythia8'    : '1',
             #'QCD_Pt-20to30_MuEnrichedPt5_TuneCUETP8M1_13TeV_pythia8'    : '1',
@@ -521,7 +527,8 @@ def getMergeDict(period):
         }
         sampleMergeDict['data']      = {
             #'data_Run2015B': '1', # 50 ns
-            'data_Run2015C': '1', # 25 ns
+            'data_Run2015C': '1', # 25 ns and 50 ns
+            'data_Run2015D': '1', # 25 ns
         }
     # 8 TeV sample aliases
     if period==8:
