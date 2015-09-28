@@ -44,36 +44,38 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
         strForBranch += "pass_%s:" % altId
     strToProcess += "};"
     strForBranch = strForBranch[:-1] # remove trailing :
-    rt.gROOT.ProcessLine(strToProcess)
+    if not hasattr(rt.gROOT,'structSelect_t'): rt.gROOT.ProcessLine(strToProcess)
     selectStruct = rt.structSelect_t()
     structureDict['select'] = [selectStruct, selectStruct, strForBranch]
     structOrder += ['select']    
 
     # define common root classes
-    rt.gROOT.ProcessLine(
-    "struct structEvent_t {\
-       Int_t   evt;\
-       Int_t   run;\
-       Int_t   lumi;\
-       Int_t   nvtx;\
-       Int_t   GenNUP;\
-       Int_t   trig_prescale;\
-       Float_t lep_scale;\
-       Float_t lep_scale_up;\
-       Float_t lep_scale_down;\
-       Float_t trig_scale;\
-       Float_t pu_weight;\
-       Float_t gen_weight;\
-       Float_t charge_uncertainty;\
-    };");
+    if not hasattr(rt.gROOT,'structEvent_t'):
+        rt.gROOT.ProcessLine(
+        "struct structEvent_t {\
+           Int_t   evt;\
+           Int_t   run;\
+           Int_t   lumi;\
+           Int_t   nvtx;\
+           Int_t   GenNUP;\
+           Int_t   trig_prescale;\
+           Float_t lep_scale;\
+           Float_t lep_scale_up;\
+           Float_t lep_scale_down;\
+           Float_t trig_scale;\
+           Float_t pu_weight;\
+           Float_t gen_weight;\
+           Float_t charge_uncertainty;\
+        };");
     eventStruct = rt.structEvent_t()
     structureDict['event'] = [eventStruct, eventStruct,'evt/I:run:lumi:nvtx:GenNUP:trig_prescale:lep_scale/F:lep_scale_up:lep_scale_down:trig_scale:pu_weight:gen_weight:charge_uncertainty']
     structOrder += ['event']
 
-    rt.gROOT.ProcessLine(
-    "struct structChannel_t {\
-       Char_t  channel[9];\
-    };");
+    if not hasattr(rt.gROOT,'structChannel_t'):
+        rt.gROOT.ProcessLine(
+        "struct structChannel_t {\
+           Char_t  channel[9];\
+        };");
     channelStruct = rt.structChannel_t()
     structureDict['channel'] = [channelStruct, rt.AddressOf(channelStruct,'channel'),'channel/C']
     structOrder += ['channel']
@@ -125,40 +127,60 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
 
     fsStrToProcess += "};"
     fsStrForBranch = fsStrForBranch[:-1]
-    rt.gROOT.ProcessLine(fsStrToProcess);
+    if not hasattr(rt.gROOT,'structFinalState_t'):
+        rt.gROOT.ProcessLine(fsStrToProcess);
     finalStateStruct = rt.structFinalState_t()
     structureDict['finalstate'] = [finalStateStruct, finalStateStruct, fsStrForBranch]
     structOrder += ['finalstate']
 
-    rt.gROOT.ProcessLine(
-    "struct structObject_t {\
-       Float_t Pt;\
-       Float_t Eta;\
-       Float_t Phi;\
-       Float_t Iso;\
-       Float_t Dxy;\
-       Float_t Dz;\
-       Float_t JetPt;\
-       Float_t JetBTag;\
-       Float_t LepScaleLoose;\
-       Float_t LepScaleTight;\
-       Float_t LepScaleLoose_up;\
-       Float_t LepScaleTight_up;\
-       Float_t LepScaleLoose_down;\
-       Float_t LepScaleTight_down;\
-       Float_t LepFakeLoose;\
-       Float_t LepFakeTight;\
-       Int_t   Chg;\
-       Int_t   PassLoose;\
-       Int_t   PassTight;\
-       Int_t   GenPdgId;\
-       Int_t   MotherGenPdgId;\
-       Int_t   ChargeConsistent;\
-    };");
-    rt.gROOT.ProcessLine(
-    "struct structObjChar_t {\
-       Char_t  Flv[2];\
-    };");
+    if not hasattr(rt.gROOT,'structObject_t'):
+        rt.gROOT.ProcessLine(
+        "struct structObject_t {\
+           Float_t Pt;\
+           Float_t Eta;\
+           Float_t Phi;\
+           Float_t Iso;\
+           Float_t Dxy;\
+           Float_t Dz;\
+           Float_t SigmaIEtaIEta;\
+           Float_t DEtaIn;\
+           Float_t DPhiIn;\
+           Float_t HOverE;\
+           Float_t OoEmOoP;\
+           Float_t TriggeringMVA;\
+           Float_t NonTriggeringMVA;\
+           Float_t NormalizedChi2;\
+           Float_t JetPt;\
+           Float_t JetBTag;\
+           Float_t LepScaleLoose;\
+           Float_t LepScaleTight;\
+           Float_t LepScaleLoose_up;\
+           Float_t LepScaleTight_up;\
+           Float_t LepScaleLoose_down;\
+           Float_t LepScaleTight_down;\
+           Float_t LepFakeLoose;\
+           Float_t LepFakeTight;\
+           Int_t   Chg;\
+           Int_t   PassLoose;\
+           Int_t   PassTight;\
+           Int_t   GenPdgId;\
+           Int_t   MotherGenPdgId;\
+           Int_t   ChargeConsistent;\
+           Int_t   ExpectedMissingInnerHits;\
+           Int_t   PassConversionVeto;\
+           Int_t   IsGlobalMuon;\
+           Int_t   IsPFMuon;\
+           Int_t   IsTrackerMuon;\
+           Int_t   ValidMuonHits;\
+           Int_t   MatchedStations;\
+           Int_t   ValidPixelHits;\
+           Int_t   TrackerLayers;\
+        };");
+    if not hasattr(rt.gROOT,'structObjChar_t'):
+        rt.gROOT.ProcessLine(
+        "struct structObjChar_t {\
+           Char_t  Flv[2];\
+        };");
     lepCount = 0
     jetCount = 0
     phoCount = 0
@@ -181,7 +203,7 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
                     charName = 'g'
                     phoCount += 1
                     objCount = phoCount
-                structureDict['%s%i' % (charName, objCount)] = [objStruct, objStruct, 'Pt/F:Eta:Phi:Iso:Dxy:Dz:JetPt:JetBTag:LepScaleLoose:LepScaleTight:LepScaleLoose_up:LepScaleTight_up:LepScaleLoose_down:LepScaleTight_down:LepFakeLoose:LepFakeTight:Chg/I:PassLoose:PassTight:GenPdgId:MotherGenPdgId:ChargeConsistent']
+                structureDict['%s%i' % (charName, objCount)] = [objStruct, objStruct, 'Pt/F:Eta:Phi:Iso:Dxy:Dz:SigmaIEtaIEta:DEtaIn:DPhiIn:HOverE:OoEmOoP:TriggeringMVA:NonTriggeringMVA:NormalizedChi2:JetPt:JetBTag:LepScaleLoose:LepScaleTight:LepScaleLoose_up:LepScaleTight_up:LepScaleLoose_down:LepScaleTight_down:LepFakeLoose:LepFakeTight:Chg/I:PassLoose:PassTight:GenPdgId:MotherGenPdgId:ChargeConsistent:ExpectedMissingInnerHits:PassConversionVeto:IsGlobalMuon:IsPFMuon:IsTrackerMuon:ValidMuonHits:MatchedStations:ValidPixelHits:TrackerLayers']
                 structureDict['%s%iFlv' % (charName, objCount)] = [flvStruct, rt.AddressOf(flvStruct,'Flv'),'Flv/C']
                 structOrder += ['%s%i' % (charName, objCount)]
                 structOrder += ['%s%iFlv' % (charName, objCount)]
@@ -210,7 +232,7 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
                         Float_t metPhi;"
                 else:
                     objCount += 1
-                    strForBranch += "Pt{0}:Eta{0}:Phi{0}:Iso{0}:Dxy{0}:Dz{0}:JetPt{0}:JetBTag{0}:LepScaleLoose{0}:LepScaleTight{0}:LepScaleLoose{0}_up:LepScaleTight{0}_up:LepScaleLoose{0}_down:LepScaleTight{0}_down:LepFakeLoose{0}:LepFakeTight{0}:".format(objCount)
+                    strForBranch += "Pt{0}:Eta{0}:Phi{0}:Iso{0}:Dxy{0}:Dz{0}:SigmaIEtaIEta{0}:DEtaIn{0}:DPhiIn{0}:HOverE{0}:OoEmOoP{0}:TriggeringMVA{0}:NonTriggeringMVA{0}:NormalizedChi2{0}:JetPt{0}:JetBTag{0}:LepScaleLoose{0}:LepScaleTight{0}:LepScaleLoose{0}_up:LepScaleTight{0}_up:LepScaleLoose{0}_down:LepScaleTight{0}_down:LepFakeLoose{0}:LepFakeTight{0}:".format(objCount)
                     strToProcess += "\
                         Float_t Pt{0};\
                         Float_t Eta{0};\
@@ -218,6 +240,14 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
                         Float_t Iso{0};\
                         Float_t Dxy{0};\
                         Float_t Dz{0};\
+                        Float_t SigmaIEtaIEta{0};\
+                        Float_t DEtaIn{0};\
+                        Float_t DPhiIn{0};\
+                        Float_t HOverE{0};\
+                        Float_t OoEmOoP{0};\
+                        Float_t TriggeringMVA{0};\
+                        Float_t NonTriggeringMVA{0};\
+                        Float_t NormalizedChi2{0};\
                         Float_t JetPt{0};\
                         Float_t JetBTag{0};\
                         Float_t LepScaleLoose{0};\
@@ -250,29 +280,40 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
                 if obj == 'n': continue
                 else:
                     objCount += 1
-                    strForBranch += "Chg{0}/I:PassLoose{0}:PassTight{0}:GenPdgId{0}:MotherGenPdgId{0}:ChargeConsistent{0}:".format(objCount)
+                    strForBranch += "Chg{0}/I:PassLoose{0}:PassTight{0}:GenPdgId{0}:MotherGenPdgId{0}:ChargeConsistent{0}:ExpectedMissingInnerHits{0}:PassConversionVeto{0}:IsGlobalMuon{0}:IsPFMuon{0}:IsTrackerMuon{0}:ValidMuonHits{0}:MatchedStations{0}:ValidPixelHits{0}:TrackerLayers{0}:".format(objCount)
                     strToProcess += "\
                         Int_t   Chg{0};\
                         Int_t   PassLoose{0};\
                         Int_t   PassTight{0};\
                         Int_t   GenPdgId{0};\
                         Int_t   MotherGenPdgId{0};\
-                        Int_t   ChargeConsistent{0};".format(objCount)
+                        Int_t   ChargeConsistent{0};\
+                        Int_t   ExpectedMissingInnerHits{0};\
+                        Int_t   PassConversionVeto{0};\
+                        Int_t   IsGlobalMuon{0};\
+                        Int_t   IsPFMuon{0};\
+                        Int_t   IsTrackerMuon{0};\
+                        Int_t   ValidMuonHits{0};\
+                        Int_t   MatchedStations{0};\
+                        Int_t   ValidPixelHits{0};\
+                        Int_t   TrackerLayers{0};".format(objCount)
                     for altId in alternateIds:
                         strToProcess += "Int_t pass_{0}_{1};".format(altId, objCount)
                         strForBranch += "pass_{0}_{1}:".format(altId, objCount)
             strForBranch = strForBranch[:-1] # remove trailing :
             strToProcess += "\
                 };"
-            rt.gROOT.ProcessLine(strToProcess)
+            if not hasattr(rt.gROOT,'struct%s_t' % (key.upper())):
+                rt.gROOT.ProcessLine(strToProcess)
             initialStruct = getattr(rt,"struct{0}_t".format(key.upper()))()
             structureDict[key] = [initialStruct, initialStruct, strForBranch]
             structOrder += [key]
 
-    rt.gROOT.ProcessLine(
-    "struct structInitialChar_t {\
-       Char_t  Flv[3];\
-    };");
+    if not hasattr(rt.gROOT,'structInitialChar_t'):
+        rt.gROOT.ProcessLine(
+        "struct structInitialChar_t {\
+           Char_t  Flv[3];\
+        };");
     for key in object_definitions:
         initialFlvStruct = rt.structInitialChar_t()
         structureDict['%sFlv' % key] = [initialFlvStruct,rt.AddressOf(initialFlvStruct,'Flv'),'Flv/C']

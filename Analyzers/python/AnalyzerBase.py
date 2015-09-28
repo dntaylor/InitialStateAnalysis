@@ -478,25 +478,34 @@ class AnalyzerBase(object):
                         ntupleRow["%s.metPhi" %i] = float(getattr(rtrow, '%sPhi' %metVar)) if theObjects else float(-9)
                     else:
                         objCount += 1
-                        ntupleRow["%s.Pt%i" % (i,objCount)] = float(getattr(rtrow, "%sPt" % orderedFinalObjects[objCount-1])) if theObjects else float(-9)
-                        ntupleRow["%s.Eta%i" % (i,objCount)] = float(getattr(rtrow, "%sEta" % orderedFinalObjects[objCount-1])) if theObjects else float(-9)
-                        ntupleRow["%s.Phi%i" % (i,objCount)] = float(getattr(rtrow, "%sPhi" % orderedFinalObjects[objCount-1])) if theObjects else float(-9)
+                        l = orderedFinalObjects[objCount-1] if theObjects else 'a'
+                        ntupleRow["%s.Pt%i" % (i,objCount)] = float(getattr(rtrow, "%sPt" % l)) if theObjects else float(-9)
+                        ntupleRow["%s.Eta%i" % (i,objCount)] = float(getattr(rtrow, "%sEta" % l)) if theObjects else float(-9)
+                        ntupleRow["%s.Phi%i" % (i,objCount)] = float(getattr(rtrow, "%sPhi" % l)) if theObjects else float(-9)
                         if theObjects:
-                            if orderedFinalObjects[objCount-1][0]=='e': isoVar = 'RelPFIsoRho'
-                            if orderedFinalObjects[objCount-1][0]=='m': isoVar = 'RelPFIsoDBDefault'
-                            isoVal = float(getattr(rtrow, "%s%s" % (orderedFinalObjects[objCount-1], isoVar))) if orderedFinalObjects[objCount-1][0] in 'em' and theObjects else float(-9.)
+                            if l[0]=='e': isoVar = 'RelPFIsoRho'
+                            if l[0]=='m': isoVar = 'RelPFIsoDBDefault'
+                            isoVal = float(getattr(rtrow, "%s%s" % (l, isoVar))) if l[0] in 'em' and theObjects else float(-9.)
                         else:
                             isoVal = float(-9)
                         ntupleRow["%s.Iso%i" % (i,objCount)] = isoVal
-                        ntupleRow["%s.Dxy%i" % (i,objCount)] = float(getattr(rtrow, "%sPVDXY" % orderedFinalObjects[objCount-1])) if theObjects else float(-9)
-                        ntupleRow["%s.Dz%i" % (i,objCount)] = float(getattr(rtrow, "%sPVDZ" % orderedFinalObjects[objCount-1])) if theObjects else float(-9)
-                        ntupleRow["%s.JetPt%i" % (i,objCount)] = float(getattr(rtrow, "%sJetPt" % orderedFinalObjects[objCount-1])) if (theObjects and orderedFinalObjects[objCount-1][0] in 'emt') else float(-9.)
+                        ntupleRow["%s.Dxy%i" % (i,objCount)] = float(getattr(rtrow, "%sPVDXY" % l)) if theObjects else float(-9)
+                        ntupleRow["%s.Dz%i" % (i,objCount)] = float(getattr(rtrow, "%sPVDZ" % l)) if theObjects else float(-9)
+                        ntupleRow["%s.SigmaIEtaIEta%i" % (i,objCount)] = float(getattr(rtrow, "%sSigmaIEtaIEta" % (l))) if l[0] in 'e' else float(-1.)
+                        ntupleRow["%s.DEtaIn%i" % (i,objCount)] = float(getattr(rtrow, "%sdeltaEtaSuperClusterTrackAtVtx" % (l))) if l[0] in 'e' else float(-9.)
+                        ntupleRow["%s.DPhiIn%i" % (i,objCount)] = float(getattr(rtrow, "%sdeltaPhiSuperClusterTrackAtVtx" % (l))) if l[0] in 'e' else float(-9.)
+                        ntupleRow["%s.HOverE%i" % (i,objCount)] = float(getattr(rtrow, "%sHadronicOverEM" % (l))) if l[0] in 'e' else float(-1.)
+                        ntupleRow["%s.OoEmOoP%i" % (i,objCount)] = float(abs((1.-getattr(rtrow, "%seSuperClusterOverP" % (l)))*1./getattr(rtrow, "%secalEnergy" % (l)))) if l[0] in 'e' else float(-1.)
+                        ntupleRow["%s.TriggeringMVA%i" % (i,objCount)] = float(-9.)
+                        ntupleRow["%s.NonTriggeringMVA%i" % (i,objCount)] = float(getattr(rtrow, "%sMVANonTrigID" % (l))) if l[0] in 'e' else float(-9.)
+                        ntupleRow["%s.NormalizedChi2%i" % (i,objCount)] = float(getattr(rtrow, "%sNormTrkChi2" % (l))) if l[0] in 'm' else float(-1.)
+                        ntupleRow["%s.JetPt%i" % (i,objCount)] = float(getattr(rtrow, "%sJetPt" % l)) if (theObjects and l[0] in 'emt') else float(-9.)
                         ntupleRow["%s.JetBTag%i" % (i,objCount)] = float(-9.)
-                        if theObjects and orderedFinalObjects[objCount-1][0] in 'emt':
-                            ntupleRow["%s.JetBTag%i" % (i,objCount)] = float(getattr(rtrow, "%sJetCSVBtag" % orderedFinalObjects[objCount-1])) if period==8 else float(getattr(rtrow, "%sJetPFCISVBtag" % orderedFinalObjects[objCount-1]))
+                        if theObjects and l[0] in 'emt':
+                            ntupleRow["%s.JetBTag%i" % (i,objCount)] = float(getattr(rtrow, "%sJetCSVBtag" % l)) if period==8 else float(getattr(rtrow, "%sJetPFCISVBtag" % l))
                         if theObjects:
-                            looseScales = self.lepscaler.scale_factor(rtrow, orderedFinalObjects[objCount-1], loose=True) if self.period==8 else [1,1,1]
-                            tightScales = self.lepscaler.scale_factor(rtrow, orderedFinalObjects[objCount-1], loose=False) if self.period==8 else [1,1,1]
+                            looseScales = self.lepscaler.scale_factor(rtrow, l, loose=True) if self.period==8 else [1,1,1]
+                            tightScales = self.lepscaler.scale_factor(rtrow, l, loose=False) if self.period==8 else [1,1,1]
                         else:
                             looseScales = [-1,-1,-1]
                             tightScales = [-1,-1,-1]
@@ -506,19 +515,27 @@ class AnalyzerBase(object):
                         ntupleRow["%s.LepScaleTight%i_up" % (i,objCount)] = float(tightScales[1])
                         ntupleRow["%s.LepScaleLoose%i_down" % (i,objCount)] = float(looseScales[2])
                         ntupleRow["%s.LepScaleTight%i_down" % (i,objCount)] = float(tightScales[2])
-                        ntupleRow["%s.Chg%i" % (i,objCount)] = float(getattr(rtrow, "%sCharge" % orderedFinalObjects[objCount-1])) if theObjects else float(-9)
-                        ntupleRow["%s.PassLoose%i" % (i,objCount)] = float(self.ID(rtrow,orderedFinalObjects[objCount-1],**self.getIdArgs('Loose'))) if theObjects else float(-9)
-                        ntupleRow["%s.PassTight%i" % (i,objCount)] = float(self.ID(rtrow,orderedFinalObjects[objCount-1],**self.getIdArgs('Tight'))) if theObjects else float(-9)
+                        ntupleRow["%s.Chg%i" % (i,objCount)] = float(getattr(rtrow, "%sCharge" % l)) if theObjects else float(-9)
+                        ntupleRow["%s.PassLoose%i" % (i,objCount)] = float(self.ID(rtrow,l,**self.getIdArgs('Loose'))) if theObjects else float(-9)
+                        ntupleRow["%s.PassTight%i" % (i,objCount)] = float(self.ID(rtrow,l,**self.getIdArgs('Tight'))) if theObjects else float(-9)
                         ntupleRow["%s.GenPdgId%i" % (i,objCount)] = -2000
                         ntupleRow["%s.MotherGenPdgId%i" % (i,objCount)] = -2000
                         if not self.isData and theObjects:
-                            ntupleRow["%s.GenPdgId%i" % (i,objCount)] = float(getattr(rtrow, "%sGenPdgId" % orderedFinalObjects[objCount-1]))
-                            ntupleRow["%s.MotherGenPdgId%i" % (i,objCount)] = float(getattr(rtrow, "%sGenMotherPdgId" % orderedFinalObjects[objCount-1]))
+                            ntupleRow["%s.GenPdgId%i" % (i,objCount)] = float(getattr(rtrow, "%sGenPdgId" % l))
+                            ntupleRow["%s.MotherGenPdgId%i" % (i,objCount)] = float(getattr(rtrow, "%sGenMotherPdgId" % l))
                         ntupleRow["%s.ChargeConsistent%i" % (i,objCount)] = -1
                         if theObjects and period==8:
-                            l = orderedFinalObjects[objCount-1]
                             if l[0]=='e':
                                 ntupleRow["%s.ChargeConsistent%i" % (i,objCount)] = int(getattr(rtrow,'%sChargeIdTight' %l))
+                        ntupleRow["%s.ExpectedMissingInnerHits%i" % (i,objCount)] = int(getattr(rtrow,'%sMissingHits' %l)) if l[0]=='e' else int(-1)
+                        ntupleRow["%s.PassConversionVeto%i" % (i,objCount)] = int(getattr(rtrow,'%sPassesConversionVeto' %l)) if l[0]=='e' else int(-1)
+                        ntupleRow["%s.IsGlobalMuon%i" % (i,objCount)] = int(getattr(rtrow,'%sIsGlobal' %l)) if l[0]=='m' else int(-1)
+                        ntupleRow["%s.IsPFMuon%i" % (i,objCount)] = int(getattr(rtrow,'%sIsPFMuon' %l)) if l[0]=='m' else int(-1)
+                        ntupleRow["%s.IsTrackerMuon%i" % (i,objCount)] = int(getattr(rtrow,'%sIsTracker' %l)) if l[0]=='m' else int(-1)
+                        ntupleRow["%s.ValidMuonHits%i" % (i,objCount)] = int(getattr(rtrow,'%sMuonHits' %l)) if l[0]=='m' else int(-1)
+                        ntupleRow["%s.MatchedStations%i" % (i,objCount)] = int(getattr(rtrow,'%sMatchedStations' %l)) if l[0]=='m' else int(-1)
+                        ntupleRow["%s.ValidPixelHits%i" % (i,objCount)] = int(getattr(rtrow,'%sPixHits' %l)) if l[0]=='m' else int(-1)
+                        ntupleRow["%s.TrackerLayers%i" % (i,objCount)] = int(getattr(rtrow,'%sTkLayersWithMeasurement' %l)) if l[0]=='m' else int(-1)
                         # manually add w z deltaRs
                         if i=='w1' and len(theObjects)==3:
                             oZ1 = ordered(theObjects[0],theObjects[2]) if theObjects else []
@@ -536,7 +553,7 @@ class AnalyzerBase(object):
                             ntupleRow["w1.dR1_leadJet"] = float(dr)
                         # do alternate IDs
                         for altId in self.alternateIds:
-                            ntupleRow["%s.pass_%s_%i"%(i,altId,objCount)] = int(self.ID(rtrow,orderedFinalObjects[objCount-1],**self.alternateIdMap[altId]) if theObjects else float(-9))
+                            ntupleRow["%s.pass_%s_%i"%(i,altId,objCount)] = int(self.ID(rtrow,l,**self.alternateIdMap[altId]) if theObjects else float(-9))
                 objStart += numObjects
 
 
@@ -573,6 +590,14 @@ class AnalyzerBase(object):
             if obj[0]=='e': isoVar = 'RelPFIsoRho'
             if obj[0]=='m': isoVar = 'RelPFIsoDBDefault'
             ntupleRow["%s%i.Iso" % (charName,objCount)] = float(getattr(rtrow, "%s%s" % (obj, isoVar))) if obj[0] in 'em' else float(-1.)
+            ntupleRow["%s%i.SigmaIEtaIEta" % (charName,objCount)] = float(getattr(rtrow, "%sSigmaIEtaIEta" % (obj))) if obj[0] in 'e' else float(-1.)
+            ntupleRow["%s%i.DEtaIn" % (charName,objCount)] = float(getattr(rtrow, "%sdeltaEtaSuperClusterTrackAtVtx" % (obj))) if obj[0] in 'e' else float(-9.)
+            ntupleRow["%s%i.DPhiIn" % (charName,objCount)] = float(getattr(rtrow, "%sdeltaPhiSuperClusterTrackAtVtx" % (obj))) if obj[0] in 'e' else float(-9.)
+            ntupleRow["%s%i.HOverE" % (charName,objCount)] = float(getattr(rtrow, "%sHadronicOverEM" % (obj))) if obj[0] in 'e' else float(-1.)
+            ntupleRow["%s%i.OoEmOoP" % (charName,objCount)] = float(abs((1.-getattr(rtrow, "%seSuperClusterOverP" % (obj)))*1./getattr(rtrow, "%secalEnergy" % (obj)))) if obj[0] in 'e' else float(-1.)
+            ntupleRow["%s%i.TriggeringMVA" % (charName,objCount)] = float(-9.)
+            ntupleRow["%s%i.NonTriggeringMVA" % (charName,objCount)] = float(getattr(rtrow, "%sMVANonTrigID" % (obj))) if obj[0] in 'e' else float(-9.)
+            ntupleRow["%s%i.NormalizedChi2" % (charName,objCount)] = float(getattr(rtrow, "%sNormTrkChi2" % (obj))) if obj[0] in 'm' else float(-1.)
             ntupleRow["%s%i.JetPt" % (charName,objCount)] = float(getattr(rtrow, "%sJetPt" % obj)) if obj[0] in 'emt' else float(-1.)
             if obj[0] in 'emt':
                 ntupleRow["%s%i.JetBTag" % (charName,objCount)] = float(getattr(rtrow, "%sJetCSVBtag" % obj)) if self.period==8 else float(getattr(rtrow, "%sJetPFCISVBtag" % obj))
@@ -595,9 +620,16 @@ class AnalyzerBase(object):
             if not self.isData and obj[0] in 'emt':
                 ntupleRow["%s%i.GenPdgId" % (charName,objCount)] = float(getattr(rtrow, "%sGenPdgId" % obj))
                 ntupleRow["%s%i.MotherGenPdgId" % (charName,objCount)] = float(getattr(rtrow, "%sGenMotherPdgId" % obj))
-            ntupleRow["%s%i.ChargeConsistent" % (charName,objCount)] = -1
-            if obj[0]=='e' and self.period==8:
-                ntupleRow["%s%i.ChargeConsistent" % (charName,objCount)] = int(getattr(rtrow,'%sChargeIdTight' %obj))
+            ntupleRow["%s%i.ChargeConsistent" % (charName,objCount)] = int(getattr(rtrow,'%sChargeIdTight' %obj)) if obj[0]=='e' and self.period==8 else int(-1)
+            ntupleRow["%s%i.ExpectedMissingInnerHits" % (charName,objCount)] = int(getattr(rtrow,'%sMissingHits' %obj)) if obj[0]=='e' else int(-1)
+            ntupleRow["%s%i.PassConversionVeto" % (charName,objCount)] = int(getattr(rtrow,'%sPassesConversionVeto' %obj)) if obj[0]=='e' else int(-1)
+            ntupleRow["%s%i.IsGlobalMuon" % (charName,objCount)] = int(getattr(rtrow,'%sIsGlobal' %obj)) if obj[0]=='m' else int(-1)
+            ntupleRow["%s%i.IsPFMuon" % (charName,objCount)] = int(getattr(rtrow,'%sIsPFMuon' %obj)) if obj[0]=='m' else int(-1)
+            ntupleRow["%s%i.IsTrackerMuon" % (charName,objCount)] = int(getattr(rtrow,'%sIsTracker' %obj)) if obj[0]=='m' else int(-1)
+            ntupleRow["%s%i.ValidMuonHits" % (charName,objCount)] = int(getattr(rtrow,'%sMuonHits' %obj)) if obj[0]=='m' else int(-1)
+            ntupleRow["%s%i.MatchedStations" % (charName,objCount)] = int(getattr(rtrow,'%sMatchedStations' %obj)) if obj[0]=='m' else int(-1)
+            ntupleRow["%s%i.ValidPixelHits" % (charName,objCount)] = int(getattr(rtrow,'%sPixHits' %obj)) if obj[0]=='m' else int(-1)
+            ntupleRow["%s%i.TrackerLayers" % (charName,objCount)] = int(getattr(rtrow,'%sTkLayersWithMeasurement' %obj)) if obj[0]=='m' else int(-1)
 
         return ntupleRow
 

@@ -326,6 +326,14 @@ class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
                 return True
         return False
 
+    def zSelection(self,rtrow):
+        leps = self.objCand
+        o = ordered(leps[0], leps[1])
+        m1 = getattr(rtrow,'%s_%s_Mass' % (o[0],o[1]))
+        l0Pt = getattr(rtrow,'%sPt' %leps[0])
+        return abs(m1-ZMASS)<10. and l0Pt>20.
+
+
     def good_to_store(self, rtrow, cand1, cand2):
         '''
         Iterate through minimizing variables.
@@ -415,6 +423,13 @@ class AnalyzerWZ_HZZFakeRate(AnalyzerWZ):
             if getattr(rtrow,t)>0:
                 return True
         return False
+
+    def zSelection(self,rtrow):
+        leps = self.objCand
+        o = ordered(leps[0], leps[1])
+        m1 = getattr(rtrow,'%s_%s_Mass' % (o[0],o[1]))
+        l0Pt = getattr(rtrow,'%sPt' %leps[0])
+        return abs(m1-ZMASS)<10. and l0Pt>20.
 
     def good_to_store(self, rtrow, cand1, cand2):
         '''
