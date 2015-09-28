@@ -44,13 +44,13 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
         strForBranch += "pass_%s:" % altId
     strToProcess += "};"
     strForBranch = strForBranch[:-1] # remove trailing :
-    if not hasattr(rt.gROOT,'structSelect_t'): rt.gROOT.ProcessLine(strToProcess)
+    if not hasattr(rt,'structSelect_t'): rt.gROOT.ProcessLine(strToProcess)
     selectStruct = rt.structSelect_t()
     structureDict['select'] = [selectStruct, selectStruct, strForBranch]
     structOrder += ['select']    
 
     # define common root classes
-    if not hasattr(rt.gROOT,'structEvent_t'):
+    if not hasattr(rt,'structEvent_t'):
         rt.gROOT.ProcessLine(
         "struct structEvent_t {\
            Int_t   evt;\
@@ -71,7 +71,7 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
     structureDict['event'] = [eventStruct, eventStruct,'evt/I:run:lumi:nvtx:GenNUP:trig_prescale:lep_scale/F:lep_scale_up:lep_scale_down:trig_scale:pu_weight:gen_weight:charge_uncertainty']
     structOrder += ['event']
 
-    if not hasattr(rt.gROOT,'structChannel_t'):
+    if not hasattr(rt,'structChannel_t'):
         rt.gROOT.ProcessLine(
         "struct structChannel_t {\
            Char_t  channel[9];\
@@ -127,13 +127,13 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
 
     fsStrToProcess += "};"
     fsStrForBranch = fsStrForBranch[:-1]
-    if not hasattr(rt.gROOT,'structFinalState_t'):
+    if not hasattr(rt,'structFinalState_t'):
         rt.gROOT.ProcessLine(fsStrToProcess);
     finalStateStruct = rt.structFinalState_t()
     structureDict['finalstate'] = [finalStateStruct, finalStateStruct, fsStrForBranch]
     structOrder += ['finalstate']
 
-    if not hasattr(rt.gROOT,'structObject_t'):
+    if not hasattr(rt,'structObject_t'):
         rt.gROOT.ProcessLine(
         "struct structObject_t {\
            Float_t Pt;\
@@ -176,7 +176,7 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
            Int_t   ValidPixelHits;\
            Int_t   TrackerLayers;\
         };");
-    if not hasattr(rt.gROOT,'structObjChar_t'):
+    if not hasattr(rt,'structObjChar_t'):
         rt.gROOT.ProcessLine(
         "struct structObjChar_t {\
            Char_t  Flv[2];\
@@ -303,13 +303,13 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
             strForBranch = strForBranch[:-1] # remove trailing :
             strToProcess += "\
                 };"
-            if not hasattr(rt.gROOT,'struct%s_t' % (key.upper())):
+            if not hasattr(rt,'struct%s_t' % (key.upper())):
                 rt.gROOT.ProcessLine(strToProcess)
             initialStruct = getattr(rt,"struct{0}_t".format(key.upper()))()
             structureDict[key] = [initialStruct, initialStruct, strForBranch]
             structOrder += [key]
 
-    if not hasattr(rt.gROOT,'structInitialChar_t'):
+    if not hasattr(rt,'structInitialChar_t'):
         rt.gROOT.ProcessLine(
         "struct structInitialChar_t {\
            Char_t  Flv[3];\
