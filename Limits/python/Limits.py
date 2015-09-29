@@ -15,7 +15,7 @@ ROOT.gROOT.SetBatch(ROOT.kTRUE)
 class Limits(object):
 
     def __init__(self, analysis, region, period, base_selections, ntuple_dir, out_dir,
-                 channels=[], lumi=25.0, blinded=True, bgMode='mc', scalefactor='event.pu_weight*event.lep_scale*event.trig_scale',
+                 channels=[], lumi=25.0, blinded=True, bgMode='mc', scalefactor='event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale',
                  sbcut='1', srcut='1'):
         self.base_selections = base_selections
         self.analysis = analysis

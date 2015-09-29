@@ -33,7 +33,7 @@ def generate(analysis, channel, period, **kwargs):
     '''
     logger = logging.getLogger(__name__)
     cut = kwargs.pop('cut','1')
-    scaleFactor = kwargs.pop('scaleFactor','event.pu_weight*event.lep_scale*event.trig_scale')
+    scaleFactor = kwargs.pop('scaleFactor','event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale')
     force = kwargs.pop('force','False')
 
     if force: logger.info('%s:%s:%iTeV: Forcing reprocessing' % (analysis, channel, period))

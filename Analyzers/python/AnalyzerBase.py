@@ -178,15 +178,15 @@ class AnalyzerBase(object):
             for fs in self.final_states:
                 if len(self.file_names)<10: logger.info('%s %s %s' % (self.channel, self.sample_name, fs))
                 tree = rtFile.Get("%s/final/Ntuple" % fs)
-                if self.period==8:
-                    metatree = rtFile.Get("%s/metaInfo" % fs)
-                    tempEvts = 0
-                    for entry in xrange(metatree.GetEntries()):
-                        metatree.GetEntry(entry)
-                        tempEvts += metatree.nevents
-                else: # THIS WAS MY PROBLEM AT 8 TEV: TODO: Check 13TeV in FSA with miniAOD
-                    metatree = rtFile.Get("%s/eventCount" % fs)
-                    tempEvts = metatree.GetEntries()
+                #if self.period==8:
+                metatree = rtFile.Get("%s/metaInfo" % fs)
+                tempEvts = 0
+                for entry in xrange(metatree.GetEntries()):
+                    metatree.GetEntry(entry)
+                    tempEvts += metatree.nevents if self.isData else metatree.summedWeights # gen level processed
+                #else: # THIS WAS MY PROBLEM AT 8 TEV: TODO: Check 13TeV in FSA with miniAOD
+                #    metatree = rtFile.Get("%s/eventCount" % fs)
+                #    tempEvts = metatree.GetEntries()
 
                 self.objects = self.enumerate_objects(fs)
 
@@ -731,22 +731,20 @@ class AnalyzerBase(object):
             'chargeid' : 1,
             'trigger_prescale': 1,
         }
-        if self.period==8:
+        if self.period==8: # TODO: move when we have numbers for 13 tev
             lepscales = self.lepscaler.scale_factor(rtrow, *objects, **lepargs)
             trigscale = self.trigscaler.scale_factor(rtrow, *objects)
             puweight  = self.pu_weights.weight(rtrow)
-            genweight = 1
-            if hasattr(rtrow,'GenWeight'):
-                genweight = rtrow.GenWeight/abs(rtrow.GenWeight)
             chargeid  = self.chargeid.systematic(rtrow, *objects)
             scales['lep']      = lepscales[0]
             scales['lepup']    = lepscales[1]
             scales['lepdown']  = lepscales[2]
             scales['trig']     = trigscale
             scales['puweight'] = puweight
-            scales['genweight']= genweight
             scales['chargeid'] = chargeid
             scales['trigger_prescale'] = self.getTriggerPrescale(rtrow)
+        genweight = rtrow.GenWeight if hasattr(rtrow,'GenWeight') else 1.
+        scales['genweight']= genweight
         return scales
 
     def getTriggerPrescale(self,rtrow):

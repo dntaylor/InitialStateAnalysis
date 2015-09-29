@@ -40,7 +40,7 @@ class PlotterBase(object):
         blind = kwargs.pop('blind',False)
         rootName = kwargs.pop('rootName','plots')
         mergeDict = kwargs.pop('mergeDict',{})
-        scaleFactor = kwargs.pop('scaleFactor','event.pu_weight*event.lep_scale*event.trig_scale')
+        scaleFactor = kwargs.pop('scaleFactor','event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale')
         for key, value in kwargs.iteritems():
             self.logger.warning("Unrecognized parameter '%s' = %s" %(key,str(value)))
 
@@ -252,7 +252,7 @@ class PlotterBase(object):
         customScale = kwargs.pop('customScale','')
         totalVal = 0
         totalErr2 = 0
-        scalefactor = "event.lep_scale_up*event.trig_scale*event.pu_weight" if scaleup else self.scaleFactor
+        scalefactor = "event.gen_weight*event.lep_scale_up*event.trig_scale*event.pu_weight" if scaleup else self.scaleFactor
         if 'data' in sample:
             scalefactor = '1'
             if doDataDriven: scalefactor = 'event.datadriven_weight'

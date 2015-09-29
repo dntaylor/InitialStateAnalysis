@@ -335,7 +335,7 @@ def parse_command_line(argv):
     parser.add_argument('-ab','--allBranchingPoints',action='store_true',help='Run over all branching points for H++')
     parser.add_argument('-av','--allOptimizationVariables',action='store_true',help='Run over all optimization variables')
     parser.add_argument('-bg','--bgMode',nargs='?',type=str,const='sideband',default='sideband',choices=['mc','sideband'],help='Choose BG estimation')
-    parser.add_argument('-sf','--scaleFactor',type=str,default='event.pu_weight*event.lep_scale*event.trig_scale',help='Scale factor for MC.')
+    parser.add_argument('-sf','--scaleFactor',type=str,default='event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale',help='Scale factor for MC.')
     parser.add_argument('-dm','--doMultidimensional',action='store_true',help='Run the multidimensional fit')
 
     args = parser.parse_args(argv)

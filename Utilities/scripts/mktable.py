@@ -19,7 +19,7 @@ import sys
 def table(analysis,channel,period,**kwargs):
     myCut = kwargs.pop('myCut','1')
     mass = kwargs.pop('mass',500)
-    scaleFactor = kwargs.pop('scaleFactor','event.pu_weight*event.lep_scale*event.trig_scale')
+    scaleFactor = kwargs.pop('scaleFactor','event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale')
 
     numleps = {
         'Hpp2l': 2,

@@ -27,7 +27,7 @@ def limit(analysis,region,period,mass,**kwargs):
     recoChannels = kwargs.pop('recoChannels',['1'])
     genChannels = kwargs.pop('genChannels',['1'])
     mode = kwargs.pop('mode','sideband')
-    scalefactor = kwargs.pop('scalefactor','event.pu_weight*event.lep_scale*event.trig_scale')
+    scalefactor = kwargs.pop('scalefactor','event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale')
     datacardDir = kwargs.pop('datacardDir','./datacards')
     do4l = kwargs.pop('do4l',False)
     doBoth = kwargs.pop('doBoth',False)
@@ -537,7 +537,7 @@ def parse_command_line(argv):
     parser.add_argument('-bp','--branchingPoint',nargs='?',type=str,const='BP4',default='BP4',choices=['ee100','em100','mm100','et100','mt100','tt100','BP1','BP2','BP3','BP4'],help='Choose branching point for H++')
     parser.add_argument('-ab','--allBranchingPoints',action='store_true',help='Run over all branching points for H++')
     parser.add_argument('-bg','--bgMode',nargs='?',type=str,const='sideband',default='sideband',choices=['mc','sideband'],help='Choose BG estimation')
-    parser.add_argument('-sf','--scaleFactor',type=str,default='event.pu_weight*event.lep_scale*event.trig_scale',help='Scale factor for MC.')
+    parser.add_argument('-sf','--scaleFactor',type=str,default='event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale',help='Scale factor for MC.')
 
     args = parser.parse_args(argv)
     return args

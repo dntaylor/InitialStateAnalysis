@@ -259,7 +259,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     finalStatesToPlot = kwargs.pop('finalStates','all')
     nostack = kwargs.pop('nostack',False)
     normalize = kwargs.pop('normalize',False)
-    scaleFactor = kwargs.pop('scaleFactor','event.pu_weight*event.lep_scale*event.trig_scale')
+    scaleFactor = kwargs.pop('scaleFactor','event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale')
     useSignal = analysis in ['Hpp3l','Hpp4l']
     loglevel = kwargs.pop('loglevel','INFO')
     for key, value in kwargs.iteritems():
@@ -658,7 +658,7 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
     finalStatesToPlot = kwargs.pop('finalStates','all')
     nostack = kwargs.pop('nostack',False)
     normalize = kwargs.pop('normalize',False)
-    scaleFactor = kwargs.pop('scaleFactor','event.pu_weight*event.lep_scale*event.trig_scale')
+    scaleFactor = kwargs.pop('scaleFactor','event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale')
     useSignal = analysis in ['Hpp3l','Hpp4l']
     for key, value in kwargs.iteritems():
         logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
@@ -756,7 +756,7 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
         ptvar = fakeRegions['WZ'][fakeRegion]['ptVar']
         etavar = fakeRegions['WZ'][fakeRegion]['etaVar']
 
-        plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,rootName='{0}_fakeplots'.format(fakeRegion),scaleFactor='event.pu_weight*event.lep_scale*event.trig_scale*event.trig_prescale')
+        plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,rootName='{0}_fakeplots'.format(fakeRegion),scaleFactor='event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale*event.trig_prescale')
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
         plotter.initializeDataSamples([sigMap[runPeriod]['data']])
         plotter.setIntLumi(intLumiMap[runPeriod])
@@ -771,7 +771,7 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
 
         # now plot the fake rates
         logger.info("%s:%s:%iTeV: Computing fake rates" % (analysis,channel, runPeriod))
-        plotter = FakeRatePlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='{0}_fakerates'.format(fakeRegion),mergeDict=mergeDict,scaleFactor='event.pu_weight*event.lep_scale*event.trig_scale*event.trig_prescale')
+        plotter = FakeRatePlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='{0}_fakerates'.format(fakeRegion),mergeDict=mergeDict,scaleFactor='event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale*event.trig_prescale')
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
         plotter.initializeDataSamples([sigMap[runPeriod]['data']])
         plotter.setIntLumi(intLumiMap[runPeriod])
@@ -795,7 +795,7 @@ def parse_command_line(argv):
     parser.add_argument('-fr','--doFakeRate',action='store_true',help='Make fake rate plots and output fake rate histograms')
     parser.add_argument('-fs','--finalStates',type=str,default='all',help='Only run given channels (ie: "eee,emm")')
     parser.add_argument('-c','--cut',type=str,default='1',help='Cut to be applied to plots.')
-    parser.add_argument('-sf','--scaleFactor',type=str,default='event.pu_weight*event.lep_scale*event.trig_scale',help='Scale factor for plots.')
+    parser.add_argument('-sf','--scaleFactor',type=str,default='event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale',help='Scale factor for plots.')
     args = parser.parse_args(argv)
 
     return args

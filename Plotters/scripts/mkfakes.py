@@ -16,7 +16,7 @@ import json
 def makeFakes(analysis,channel,runPeriod,**kwargs):
     '''Plot fake rate for an analysis.'''
     myCut = kwargs.pop('myCut','1')
-    scaleFactor = kwargs.pop('scaleFactor','event.pu_weight*event.lep_scale*event.trig_scale')
+    scaleFactor = kwargs.pop('scaleFactor','event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale')
     mass = kwargs.pop('mass',500)
     runTau = kwargs.pop('runTau',0)
     for key, value in kwargs.iteritems():
@@ -140,7 +140,7 @@ def parse_command_line(argv):
     parser.add_argument('channel', type=str, choices=['Z','WZ','W','FakeRate','TT','Hpp2l','Hpp3l','Hpp4l','FakeRate'], help='Channel in analysis')
     parser.add_argument('period', type=int, choices=[7,8,13], help='Energy (TeV)')
     parser.add_argument('-c','--cut',type=str,default='1',help='Cut to be applied to plots.')
-    parser.add_argument('-sf','--scaleFactor',type=str,default='event.pu_weight*event.lep_scale*event.trig_scale',help='Scale factor for plots.')
+    parser.add_argument('-sf','--scaleFactor',type=str,default='event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale',help='Scale factor for plots.')
     args = parser.parse_args(argv)
 
     return args

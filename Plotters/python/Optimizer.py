@@ -141,7 +141,7 @@ def initializePlotter(analysis, period, plotName, nl, runTau):
     regionBackground = getChannelBackgrounds(period)
     channels, leptons = getChannels(nl,runTau=runTau)
     mergeDict = getMergeDict(period)
-    scaleFactor = 'event.pu_weight*event.lep_scale*event.trig_scale'
+    scaleFactor = 'event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale'
     masses = _3L_MASSES if nl==3 else _4L_MASSES
     plotter = Plotter(analysis,ntupleDir=ntuples,saveDir=saves,period=period,mergeDict=mergeDict,scaleFactor=scaleFactor,rootName=plotName)
     plotter.initializeBackgroundSamples([sigMap[period][x] for x in regionBackground[analysis]])
