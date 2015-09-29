@@ -478,10 +478,10 @@ def getMergeDict(period):
             'TTWJetsToQQ_TuneCUETP8M1_13TeV-amcatnloFXFX-madspin-pythia8'  : '1',
         }
         sampleMergeDict['VVVJets']   = {
-            'ZZZ': '1',
-            'WZZ': '1',
-            'WWZ': '1',
-            #'WWW': '1',
+            'ZZZ_TuneCUETP8M1_13TeV-amcatnlo-pythia8': '1',
+            'WZZ_TuneCUETP8M1_13TeV-amcatnlo-pythia8': '1',
+            'WWZ_TuneCUETP8M1_13TeV-amcatnlo-pythia8': '1',
+            #'WWW_TuneCUETP8M1_13TeV-amcatnlo-pythia8': '1',
         }
         sampleMergeDict['QCD'] = {
             #'QCD_Pt-15to20_MuEnrichedPt5_TuneCUETP8M1_13TeV_pythia8'    : '1',
@@ -668,6 +668,7 @@ def getSigMap(numLeptons,mass):
              'TT'  : 'TTJets',
              'T'   : 'SingleTop',
              'TTV' : 'TTVJets',
+             'VVV' : 'VVVJets',
              'QCD' : 'QCD',
              'Sig' : 'DBLH_m500',
              'data': 'data'
@@ -747,7 +748,7 @@ def getChannelBackgrounds(runPeriod):
     }   
     if runPeriod==13:
         channelBackground = {
-            'WZ'      : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
+            'WZ'      : ['T', 'TT', 'TTV', 'Z', 'VVV', 'WW', 'ZZ', 'WZ'],
             'W'       : ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'ZZ', 'WZ'],
             'FakeRate': ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'ZZ', 'WZ'],
             'HZZFakeRate': ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'ZZ', 'WZ'],
