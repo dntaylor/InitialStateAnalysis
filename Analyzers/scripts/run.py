@@ -14,6 +14,7 @@ import errno
 import socket
 import signal
 import logging
+import math
 
 from multiprocessing import Pool
 
@@ -166,6 +167,10 @@ def submitFwkliteJob(sampledir,args):
 
     # create file list
     filelist = ['%s/%s' % (sampledir, x) for x in os.listdir(sampledir)]
+    numfiles = len(filelist)
+    totalsize = sum([os.path.getsize(f) for f in filelist])
+    averagesize = totalsize/numfiles
+    filesperjob = int(math.ceil(100000000./averagesize)) # average them to 100MB per job
     input_name = '%s/%s.txt' % (dag_dir+'inputs', sample_name)
     with open(input_name,'w') as file:
         for f in filelist:
@@ -181,10 +186,11 @@ def submitFwkliteJob(sampledir,args):
     # create farmout command
     farmoutString = 'farmoutAnalysisJobs --infer-cmssw-path --fwklite --input-file-list=%s' % (input_name)
     farmoutString += ' --submit-dir=%s --output-dag-file=%s --output-dir=%s' % (submit_dir, dag_dir, output_dir)
-    if period == 8:
-        farmoutString += ' --input-files-per-job=20 %s %s' % (jobName, bash_name)
-    else:
-        farmoutString += ' --input-files-per-job=10 %s %s' % (jobName, bash_name)
+    #if period == 8:
+    #    farmoutString += ' --input-files-per-job=20 %s %s' % (jobName, bash_name)
+    #else:
+    #    farmoutString += ' --input-files-per-job=10 %s %s' % (jobName, bash_name)
+    farmoutString += ' --input-files-per-job=%i %s %s' % (filesperjob, jobName, bash_name)
 
     logger.info('Submitting %s' % sample_name)
     os.system(farmoutString)
