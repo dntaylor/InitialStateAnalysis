@@ -86,6 +86,11 @@ h =  ROOT.TH2F("h", "h; Excluded Masses (GeV/c^{2}); ", 1,0,1000,nl+2,0.5,nl+2.5
 h.GetYaxis().SetRangeUser(2,nl+1)
 h.Draw()
 
+pp4l = ROOT.TColor.GetColor('#FFAE03')
+pp3l = ROOT.TColor.GetColor('#E67F0D')
+ap3l = ROOT.TColor.GetColor('#FE4E00')
+comb = ROOT.TColor.GetColor('#E9190F')
+
 binPos = nl+2
 limitBars = {}
 for l,lim in enumerate(limitNames):
@@ -98,8 +103,8 @@ for l,lim in enumerate(limitNames):
     bar.SetPoint(1,limits[lim]['Comb'],binPos-.45)
     bar.SetPoint(2,limits[lim]['Comb'],binPos+.45)
     bar.SetPoint(3,0,binPos+.45)
-    bar.SetFillColor(ROOT.kOrange+8)
-    bar.SetLineColor(ROOT.kOrange+8)
+    bar.SetFillColor(comb)
+    bar.SetLineColor(comb)
     bar.Draw('f')
     # draw pair
     limitBars['pair%s' %(lim)] = ROOT.TGraph(4)
@@ -108,8 +113,8 @@ for l,lim in enumerate(limitNames):
     bar.SetPoint(1,limits[lim]['PP4l'],binPos+.15)
     bar.SetPoint(2,limits[lim]['PP4l'],binPos+.45)
     bar.SetPoint(3,0,binPos+.45)
-    bar.SetFillColor(ROOT.kOrange-1)
-    bar.SetLineColor(ROOT.kOrange-1)
+    bar.SetFillColor(pp4l)
+    bar.SetLineColor(pp4l)
     bar.Draw('f')
     # draw pair 3l
     limitBars['pair3l%s' %(lim)] = ROOT.TGraph(4)
@@ -118,8 +123,8 @@ for l,lim in enumerate(limitNames):
     bar.SetPoint(1,limits[lim]['PP3l'],binPos-.15)
     bar.SetPoint(2,limits[lim]['PP3l'],binPos+.15)
     bar.SetPoint(3,0,binPos+.15)
-    bar.SetFillColor(ROOT.kOrange+2)
-    bar.SetLineColor(ROOT.kOrange+2)
+    bar.SetFillColor(pp3l)
+    bar.SetLineColor(pp3l)
     bar.Draw('f')
     # draw associated
     limitBars['associated%s' %(lim)] = ROOT.TGraph(4)
@@ -128,8 +133,8 @@ for l,lim in enumerate(limitNames):
     bar.SetPoint(1,limits[lim]['AP3l'],binPos-.45)
     bar.SetPoint(2,limits[lim]['AP3l'],binPos-.15)
     bar.SetPoint(3,0,binPos-.15)
-    bar.SetFillColor(ROOT.kOrange)
-    bar.SetLineColor(ROOT.kOrange)
+    bar.SetFillColor(ap3l)
+    bar.SetLineColor(ap3l)
     bar.Draw('f')
 
 #set the colors and size for the legend
@@ -180,10 +185,10 @@ xx_ = x_l[0]
 yy_ = y_l[0]
 
 dataStyles = {
-    'Comb': {'name': 'Combined',                   'color' : ROOT.kOrange+8,},
-    'PP4l': {'name': 'Pair Production (4l)',       'color' : ROOT.kOrange-1,},
-    'PP3l': {'name': 'Pair Production (3l)',       'color' : ROOT.kOrange+2,},
-    'AP3l': {'name': 'Associated Production (3l)', 'color' : ROOT.kOrange,},
+    'Comb': {'name': 'Combined',                   'color' : comb},
+    'PP4l': {'name': 'Pair Production (4l)',       'color' : pp4l},
+    'PP3l': {'name': 'Pair Production (3l)',       'color' : pp3l},
+    'AP3l': {'name': 'Associated Production (3l)', 'color' : ap3l},
 }
 
 for n in ['Comb','PP4l','PP3l','AP3l']:

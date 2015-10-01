@@ -117,7 +117,8 @@ def getChannelCutFlowMap(region,channel,**kwargs):
         'zveto' : 'abs(z1.mass-%f)>50.&&abs(z2.mass-%f)>50.' %(ZMASS,ZMASS),
         'dphi' : 'abs(hN.dPhi)<2.5',
         'dr' : 'hN.dR<%f/1400.+2.43' %mass, # TODO optimize
-        'mass' : 'hN.mass>0.5*%f-20.&&hN.mass<1.1*%f' %(mass,mass),
+        #'mass' : 'hN.mass>0.5*%f-20.&&hN.mass<1.1*%f' %(mass,mass),
+        'mass' : 'hN.mass>0.5*%f&&hN.mass<1.1*%f' %(mass,mass),
     }
 
     cutMap = {}

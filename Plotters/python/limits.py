@@ -239,3 +239,200 @@ def plot_limits(analysis, region, period, savename, **kwargs):
     print "Expected Limit: %i GeV (+%i, -%i)" % (x, h-x, x-l)
     return [x,h-x,x-l]
 
+def plot_combined_limits(period, savename, **kwargs):
+    '''Plot limits and get exclusion limits'''
+    datacardBaseDir = kwargs.pop('datacardBaseDir','datacards')
+    limitDataBaseDir = kwargs.pop('limitDataBaseDir','limitData')
+    saveDir = kwargs.pop('saveDir','plots/limits')
+    blind = kwargs.pop('blind',True)
+    bp = kwargs.pop('branchingPoint','')
+    bgMode = kwargs.pop('bgMode','sideband')
+
+    # directories
+    datacardDir = {}
+    limitDataDir = {}
+    for analysis in ['AP','PP','Comb']:
+        datacardDir[analysis] = '%s/Hpp%s_%itev_Hpp%s/%s' % (datacardBaseDir, analysis, period, analysis, bp)
+        limitDataDir[analysis] = '%s/Hpp%s_%itev_Hpp%s/%s' % (limitDataBaseDir, analysis, period, analysis, bp)
+
+    datacardString = '' if bgMode == "sideband" else "_{0}".format(bgMode)
+
+    # masses to include
+    masses = _4L_MASSES
+    n = len(masses)
+
+    # get cross sections
+    xsecMap = {'AP':{},'PP':{}}
+    xsecGraph = {'AP':ROOT.TGraph(n),'PP':ROOT.TGraph(n)}
+    for i,mass in enumerate(masses):
+        sample_4l = 'HPlusPlusHMinusMinusHTo4L_M-{0}_8TeV-pythia6'
+        sample_3l = 'HPlusPlusHMinusHTo3L_M-{0}_8TeV-calchep-pythia6'
+        xsecMap['PP'][mass] = xsecs[period][sample_4l.format(mass)]
+        xsecMap['AP'][mass] = xsecs[period][sample_3l.format(mass)] if mass in _3L_MASSES else 0.
+        xsecGraph['AP'].SetPoint(i,mass,xsecMap['AP'][mass])
+        xsecGraph['PP'].SetPoint(i,mass,xsecMap['PP'][mass])
+    for analysis in ['AP','PP']:
+        xsecGraph[analysis].SetMarkerStyle(0)
+        xsecGraph[analysis].SetFillStyle(0)
+        xsecGraph[analysis].SetLineColor(ROOT.kBlue)
+
+    # get limit values
+    quartiles = {}
+    for analysis in ['AP','PP','Comb']:
+        quartiles[analysis] = np.empty((6, len(masses)), dtype=float)
+        for j, mass in enumerate(masses):
+            if mass not in _3L_MASSES and analysis == 'AP': continue
+            fname = os.path.join(limitDataDir[analysis], "higgsCombineTest.Asymptotic.mH%i%s.root" % (mass,datacardString))
+            file = ROOT.TFile(fname,"READ")
+            tree = file.Get("limit")
+            if not tree: continue
+            for i, row in enumerate(tree):
+                quartiles[analysis][i,j] = row.limit
+
+    twoSigma = {}
+    oneSigma = {}
+    expected = {}
+    oneSigma_low = {}
+    oneSigma_high = {}
+    observed = {}
+    xtwoSigma = {}
+    xoneSigma = {}
+    xexpected = {}
+    xoneSigma_low = {}
+    xoneSigma_high = {}
+    xobserved = {}
+    for analysis in ['AP','PP','Comb']:
+        twoSigma[analysis] = ROOT.TGraph(2*n)
+        oneSigma[analysis] = ROOT.TGraph(2*n)
+        expected[analysis]  = ROOT.TGraph(n)
+        oneSigma_low[analysis] = ROOT.TGraph(n)
+        oneSigma_high[analysis] = ROOT.TGraph(n)
+        if not blind: observed[analysis]  = ROOT.TGraph(n)
+        if analysis in ['AP','PP']:
+            xtwoSigma[analysis] = ROOT.TGraph(2*n)
+            xoneSigma[analysis] = ROOT.TGraph(2*n)
+            xexpected[analysis]  = ROOT.TGraph(n)
+            xoneSigma_low[analysis] = ROOT.TGraph(n)
+            xoneSigma_high[analysis] = ROOT.TGraph(n)
+            if not blind: xobserved[analysis]  = ROOT.TGraph(n)
+        for i, mass in enumerate(masses):
+            twoSigma[analysis].SetPoint(i,masses[i],quartiles[analysis][4][i])
+            twoSigma[analysis].SetPoint(n+i,masses[n-i-1],quartiles[analysis][0][n-i-1])
+            oneSigma[analysis].SetPoint(i,masses[i],quartiles[analysis][3][i])
+            oneSigma[analysis].SetPoint(n+i,masses[n-i-1],quartiles[analysis][1][n-i-1])
+            oneSigma_low[analysis].SetPoint(i,masses[i],quartiles[analysis][3][i])
+            oneSigma_high[analysis].SetPoint(i,masses[i],quartiles[analysis][1][i])
+            expected[analysis].SetPoint(i,masses[i],quartiles[analysis][2][i])
+            if not blind: observed[analysis].SetPoint(i,masses[i],quartiles[analysis][5][i])
+            if analysis in ['AP','PP']:
+                xtwoSigma[analysis].SetPoint(i,masses[i],quartiles[analysis][4][i]*xsecMap[analysis][masses[i]])
+                xtwoSigma[analysis].SetPoint(n+i,masses[n-i-1],quartiles[analysis][0][n-i-1]*xsecMap[analysis][masses[n-i-1]])
+                xoneSigma[analysis].SetPoint(i,masses[i],quartiles[analysis][3][i]*xsecMap[analysis][masses[i]])
+                xoneSigma[analysis].SetPoint(n+i,masses[n-i-1],quartiles[analysis][1][n-i-1]*xsecMap[analysis][masses[n-i-1]])
+                xoneSigma_low[analysis].SetPoint(i,masses[i],quartiles[analysis][3][i]*xsecMap[analysis][masses[i]])
+                xoneSigma_high[analysis].SetPoint(i,masses[i],quartiles[analysis][1][i]*xsecMap[analysis][masses[i]])
+                xexpected[analysis].SetPoint(i,masses[i],quartiles[analysis][2][i]*xsecMap[analysis][masses[i]])
+                if not blind: xobserved[analysis].SetPoint(i,masses[i],quartiles[analysis][5][i]*xsecMap[analysis][masses[i]])
+        twoSigma[analysis].SetFillColor(ROOT.kYellow)
+        twoSigma[analysis].SetLineColor(ROOT.kYellow)
+        twoSigma[analysis].SetMarkerStyle(0)
+        oneSigma[analysis].SetFillColor(ROOT.kSpring)
+        oneSigma[analysis].SetLineColor(ROOT.kSpring)
+        oneSigma[analysis].SetMarkerStyle(0)
+        expected[analysis].SetLineStyle(7)
+        expected[analysis].SetMarkerStyle(0)
+        expected[analysis].SetFillStyle(0)
+        if not blind:
+            observed[analysis].SetMarkerStyle(0)
+            observed[analysis].SetFillStyle(0)
+        if analysis in ['AP','PP']:
+            xtwoSigma[analysis].SetFillColor(ROOT.kYellow)
+            xtwoSigma[analysis].SetLineColor(ROOT.kYellow)
+            xtwoSigma[analysis].SetMarkerStyle(0)
+            xoneSigma[analysis].SetFillColor(ROOT.kSpring)
+            xoneSigma[analysis].SetLineColor(ROOT.kSpring)
+            xoneSigma[analysis].SetMarkerStyle(0)
+            xexpected[analysis].SetLineStyle(7)
+            xexpected[analysis].SetMarkerStyle(0)
+            xexpected[analysis].SetFillStyle(0)
+            if not blind:
+                xobserved[analysis].SetMarkerStyle(0)
+                xobserved[analysis].SetFillStyle(0)
+
+    # create canvas
+    canvas = ROOT.TCanvas('cxs%s'%bp,'cxs%s'%bp,50,50,800,600)
+    canvas.SetFillColor(0)
+    canvas.SetBorderMode(0)
+    canvas.SetFrameFillStyle(0)
+    canvas.SetFrameBorderMode(0)
+    canvas.SetLeftMargin(0.12)
+    canvas.SetRightMargin(0.04)
+    canvas.SetTopMargin(0.08)
+    canvas.SetBottomMargin(0.12)
+    canvas.SetLogy(1)
+
+    appad = ROOT.TPad("appad", "top pad", 0.0, 0.5, 1.0, 1.0)
+    appad.SetLeftMargin(0.12)
+    appad.SetRightMargin(0.04)
+    appad.SetTopMargin(0.08)
+    appad.SetBottomMargin(0.12)
+    appad.SetTickx(0)
+    appad.SetTicky(0)
+    appad.SetLogy(1)
+    appad.Draw()
+    pppad = ROOT.TPad("pppad", "bottom pad", 0.0, 0.0, 1.0, 0.5)
+    pppad.SetLeftMargin(0.12)
+    pppad.SetRightMargin(0.04)
+    pppad.SetTopMargin(0.08)
+    pppad.SetBottomMargin(0.12)
+    pppad.SetFillColor(0)
+    pppad.SetTickx(0)
+    pppad.SetTicky(0)
+    pppad.SetLogy(1)
+    pppad.Draw()
+
+    # create the limit on cross section plot
+    legend = {}
+    for analysis in ['AP','PP']:
+        if analysis in ['AP']: appad.cd()
+        if analysis in ['PP']: pppad.cd()
+        xsecGraph[analysis].GetXaxis().SetLimits(_3L_MASSES[0],_3L_MASSES[-1])
+        xsecGraph[analysis].GetXaxis().SetTitle('#Phi^{++} Mass (GeV)')
+        if analysis in ['AP']: xsecGraph[analysis].GetYaxis().SetTitle('#sigma*BR (pb)')
+        if analysis in ['PP']: xsecGraph[analysis].GetYaxis().SetTitle('#sigma*BR^{2} (pb)')
+        xsecGraph[analysis].GetYaxis().SetTitleOffset(1.)
+        xsecGraph[analysis].GetYaxis().SetTitleSize(0.05)
+
+        xsecGraph[analysis].Draw('')
+        xsecGraph[analysis].SetMaximum(1)
+        xtwoSigma[analysis].Draw('f')
+        xoneSigma[analysis].Draw('f')
+        xexpected[analysis].Draw('same')
+        xsecGraph[analysis].Draw('same')
+        ROOT.gPad.RedrawAxis()
+        if not blind: xobserved[analysis].Draw()
+
+        legend[analysis] = ROOT.TLegend(0.5,0.6,0.90,0.85)
+        legend[analysis].SetFillColor(0)
+        if not blind: legend[analysis].AddEntry(xobserved[analysis], 'Observed', 'l')
+        legend[analysis].AddEntry(xexpected[analysis], 'Expected', 'l')
+        legend[analysis].AddEntry(xtwoSigma[analysis], 'Expected 2#sigma', 'F')
+        legend[analysis].AddEntry(xoneSigma[analysis], 'Expected 1#sigma', 'F')
+        name = 'Pair Production Cross Section' if analysis in ['PP'] else 'Associated Production Cross Section'
+        legend[analysis].AddEntry(xsecGraph[analysis], name, 'l')
+
+        legend[analysis].Draw('same')
+
+        lumiperiod = 2 if period == 8 else 4
+        CMS_lumi.wrtieExtraText = True
+        CMS_lumi.extraText = "Preliminary" if not blind else "Simulation Preliminary"
+        CMS_lumi.lumi_7TeV = "%0.1f fb^{-1}" % (4.9)
+        CMS_lumi.lumi_8TeV = "%0.1f fb^{-1}" % (19.7)
+        CMS_lumi.lumi_13TeV = "%0.1f fb^{-1}" % (25.0)
+        if analysis in ['AP']: CMS_lumi.CMS_lumi(appad,lumiperiod,11)
+        if analysis in ['PP']: CMS_lumi.CMS_lumi(pppad,lumiperiod,11)
+
+    canvas.cd()
+
+    save(savename,saveDir,canvas)
+

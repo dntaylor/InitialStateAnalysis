@@ -108,6 +108,7 @@ class Plotter(PlotterBase):
         plotratio = kwargs.pop('plotratio', 1)
         lumitext = kwargs.pop('lumitext', 11)
         legendpos = kwargs.pop('legendpos', 33)
+        numcol = kwargs.pop('numcol',1)
         signalscale = kwargs.pop('signalscale',1)
         isprelim = kwargs.pop('isprelim', 1)
         if not xmin and len(xrange)==2: xmin = xrange[0]
@@ -321,7 +322,7 @@ class Plotter(PlotterBase):
         if not plotdata: data = 0
         if not plotsig: sighists = 0
         if nobg: stack = 0
-        leg = self.getLegend(plotdata,plotsig,plotratio,legendpos,stack,data,sighists)
+        leg = self.getLegend(stack,data,sighists,plotdata=plotdata,plotsig=plotsig,plotratio=plotratio,legendpos=legendpos,numcol=numcol)
         leg.Draw()
 
         # draw cms lumi

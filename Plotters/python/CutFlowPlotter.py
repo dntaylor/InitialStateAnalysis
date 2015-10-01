@@ -200,6 +200,7 @@ class CutFlowPlotter(PlotterBase):
         plotratio = kwargs.pop('plotratio', 1)
         lumitext = kwargs.pop('lumitext', 11)
         legendpos = kwargs.pop('legendpos', 33)
+        numcol = kwargs.pop('numcol',1)
         signalscale = kwargs.pop('signalscale',1)
         nosum = kwargs.pop('nosum',False)
         isprecf = kwargs.pop('isprecf',False)
@@ -274,7 +275,7 @@ class CutFlowPlotter(PlotterBase):
         # legend
         if not plotdata: dataHist = 0
         if not plotsig: sigHists = 0
-        leg = self.getLegend(plotdata,plotsig,plotratio,legendpos,mc,dataHist,sigHists)
+        leg = self.getLegend(mc,dataHist,sigHists,plotdata=plotdata,plotsig=plotsig,plotratio=plotratio,legendpos=legendpos,numcol=numcol)
         leg.Draw()
 
         # save everything

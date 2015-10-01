@@ -742,7 +742,7 @@ class AnalyzerBase(object):
             scales['trig']     = trigscale
             scales['puweight'] = puweight
             scales['chargeid'] = chargeid
-            scales['trigger_prescale'] = self.getTriggerPrescale(rtrow)
+        scales['trigger_prescale'] = self.getTriggerPrescale(rtrow)
         genweight = rtrow.GenWeight if hasattr(rtrow,'GenWeight') else 1.
         scales['genweight']= genweight
         return scales

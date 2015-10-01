@@ -18,36 +18,42 @@ from InitialStateAnalysis.Utilities.utilities import *
 
 def plotLepton(plotMethod,myCut,obj,**kwargs):
     savedir = kwargs.pop('savedir','')
-    doDetailed = kwargs.pop('doDetailed',True)
+    doDetailed = kwargs.pop('doDetailed',False)
     pre = kwargs.pop('pre','')
     post = kwargs.pop('post','')
     name = kwargs.pop('name','')
     pretty = kwargs.pop('pretty','')
-    plotMethod('%s.%sPt%s' %(obj,pre,post), [40,0,200],           savedir+'%sPt' %name, yaxis='Events/5.0 GeV',xaxis='p_{T}^{%s} (GeV)' %pretty,       legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-    plotMethod('%s.%sEta%s' %(obj,pre,post),[30,-3.0,3.0],        savedir+'%sEta' %name,yaxis='Events',        xaxis='\\eta^{%s}' %pretty,             legendpos=43,logy=0,cut=myCut,**kwargs)
-    plotMethod('%s.%sPhi%s' %(obj,pre,post),[30,-3.14159,3.14159],savedir+'%sPhi' %name,yaxis='Events',        xaxis='\\phi^{%s}' %pretty,             legendpos=43,logy=0,cut=myCut,**kwargs)
-    plotMethod('%s.%sIso%s' %(obj,pre,post),[50,0,.5],            savedir+'%sIso' %name,yaxis='Events',        xaxis='Relative Isolation (%s)' %pretty,legendpos=43,logy=0,cut=myCut,**kwargs)
+    plotMethod('%s.%sPt%s' %(obj,pre,post), [40,0,200],           savedir+'%s/Pt' %name, yaxis='Events/5.0 GeV',xaxis='p_{T}^{%s} (GeV)' %pretty,       legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+    plotMethod('%s.%sEta%s' %(obj,pre,post),[30,-3.0,3.0],        savedir+'%s/Eta' %name,yaxis='Events',        xaxis='\\eta^{%s}' %pretty,             legendpos=43,logy=0,cut=myCut,**kwargs)
+    plotMethod('%s.%sPhi%s' %(obj,pre,post),[30,-3.14159,3.14159],savedir+'%s/Phi' %name,yaxis='Events',        xaxis='\\phi^{%s}' %pretty,             legendpos=43,logy=0,cut=myCut,**kwargs)
+    plotMethod('%s.%sIso%s' %(obj,pre,post),[50,0,.5],            savedir+'%s/Iso' %name,yaxis='Events',        xaxis='Relative Isolation (%s)' %pretty,legendpos=43,logy=0,cut=myCut,**kwargs)
     #plotMethod('%s.ChargeConsistent' %name,[3,-1.5,1.5],savedir+'%sChargeId' %name,yaxis='Events',xaxis='Charge ID (\\ell%i)' %(l+1),legendpos=31,logy=0,cut=myCut,**kwargs)    
     if doDetailed:
-        plotMethod('%s.%sDxy%s' %(obj,pre,post),                     [50,-0.1,0.1],savedir+'%sDxy' %name,             yaxis='Events',xaxis='d_{0}^{%s}' %pretty,                      legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('%s.%sDz%s' %(obj,pre,post),                      [50,-0.1,0.1],savedir+'%sDz' %name,              yaxis='Events',xaxis='d_{Z}^{%s}' %pretty,                      legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('%s.%sSigmaIEtaIEta%s' %(obj,pre,post),           [40,0.,0.08], savedir+'%sSigmaIEtaIEta' %name,   yaxis='Events',xaxis='\\sigma_{i\\eta i\\eta}^{%s}' %pretty,    legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('%s.%sDEtaIn%s' %(obj,pre,post),                  [50,-0.1,0.1],savedir+'%sDEtaIn' %name,          yaxis='Events',xaxis='\\Delta\\eta_{In}^{%s}' %pretty,          legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('%s.%sDPhiIn%s' %(obj,pre,post),                  [50,-0.1,0.1],savedir+'%sDPhiIn' %name,          yaxis='Events',xaxis='\\Delta\\phi_{In}^{%s}' %pretty,          legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('%s.%sHOverE%s' %(obj,pre,post),                  [50,0.,0.1],  savedir+'%sHOverE' %name,          yaxis='Events',xaxis='\\frac{H}{E}^{%s}' %pretty,               legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('%s.%sOoEmOoP%s' %(obj,pre,post),                 [50,0.,0.1],  savedir+'%sOoEmOoP' %name,         yaxis='Events',xaxis='|\\frac{1}{E}-\\frac{1}{P}|^{%s}' %pretty,legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('%s.%sTriggeringMVA%s' %(obj,pre,post),           [50,-1.,1.],  savedir+'%sTriggeringMVA' %name,   yaxis='Events',xaxis='MVA_{Triggering} (%s)' %pretty,           legendpos=42,logy=0,cut=myCut,**kwargs)
-        plotMethod('%s.%sNonTriggeringMVA%s' %(obj,pre,post),        [50,-1.,1.],  savedir+'%sNonTriggeringMVA' %name,yaxis='Events',xaxis='MVA_{NonTriggering} (%s)' %pretty,        legendpos=42,logy=0,cut=myCut,**kwargs)
-        plotMethod('%s.%sExpectedMissingInnerHits%s' %(obj,pre,post),[6,0,6],      savedir+'%sMissingHits' %name,     yaxis='Events',xaxis='Missing Hits (%s)' %pretty,               legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('%s.%sPassConversionVeto%s' %(obj,pre,post),      [2,0,2],      savedir+'%sPassConversion' %name,  yaxis='Events',xaxis='Pass Conversion Veto (%s)' %pretty,       legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('%s.%sNormalizedChi2%s' %(obj,pre,post),          [60,0.,15.],  savedir+'%sNormalizedChi2' %name,  yaxis='Events',xaxis='\\chi_{Norm}^{2} (%s)' %pretty,           legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('%s.%sIsGlobalMuon%s' %(obj,pre,post),            [2,0,2],      savedir+'%sIsGlobalMuon' %name,    yaxis='Events',xaxis='Gloabl Muon (%s)' %pretty,                legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('%s.%sIsPFMuon%s' %(obj,pre,post),                [2,0,2],      savedir+'%sIsPFMuon' %name,        yaxis='Events',xaxis='PFMuon (%s)' %pretty,                     legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('%s.%sIsTrackerMuon%s' %(obj,pre,post),           [2,0,2],      savedir+'%sIsTrackerMuon' %name,   yaxis='Events',xaxis='Tracker Muon (%s)' %pretty,               legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('%s.%sValidMuonHits%s' %(obj,pre,post),           [80,0,80],    savedir+'%sValidMuonHits' %name,   yaxis='Events',xaxis='Muon Hits (%s)' %pretty,                  legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('%s.%sMatchedStations%s' %(obj,pre,post),         [6,0,6],      savedir+'%sMatchedStations' %name, yaxis='Events',xaxis='Matched Stations (%s)' %pretty,           legendpos=31,logy=0,cut=myCut,**kwargs)
-        plotMethod('%s.%sValidPixelHits%s' %(obj,pre,post),          [8,0,8],      savedir+'%sValidPixelHits' %name,  yaxis='Events',xaxis='Valid Pixel Hits (%s)' %pretty,           legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('%s.%sTrackerLayers%s' %(obj,pre,post),           [20,0,20],    savedir+'%sTrackerLayers' %name,   yaxis='Events',xaxis='Tracker Layers (%s)' %pretty,             legendpos=31,logy=0,cut=myCut,**kwargs)
+        plotMethod('%s.%sDxy%s' %(obj,pre,post),                     [50,-0.1,0.1],savedir+'%s/Dxy' %name,             yaxis='Events',xaxis='d_{0}^{%s}' %pretty,                      legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('%s.%sDz%s' %(obj,pre,post),                      [50,-0.1,0.1],savedir+'%s/Dz' %name,              yaxis='Events',xaxis='d_{Z}^{%s}' %pretty,                      legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('%s.%sSigmaIEtaIEta%s' %(obj,pre,post),           [40,0.,0.08], savedir+'%s/SigmaIEtaIEta' %name,   yaxis='Events',xaxis='\\sigma_{i\\eta i\\eta}^{%s}' %pretty,    legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('%s.%sDEtaIn%s' %(obj,pre,post),                  [50,-0.1,0.1],savedir+'%s/DEtaIn' %name,          yaxis='Events',xaxis='\\Delta\\eta_{In}^{%s}' %pretty,          legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('%s.%sDPhiIn%s' %(obj,pre,post),                  [50,-0.1,0.1],savedir+'%s/DPhiIn' %name,          yaxis='Events',xaxis='\\Delta\\phi_{In}^{%s}' %pretty,          legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('%s.%sHOverE%s' %(obj,pre,post),                  [50,0.,0.1],  savedir+'%s/HOverE' %name,          yaxis='Events',xaxis='\\frac{H}{E}^{%s}' %pretty,               legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('%s.%sOoEmOoP%s' %(obj,pre,post),                 [50,0.,0.1],  savedir+'%s/OoEmOoP' %name,         yaxis='Events',xaxis='|\\frac{1}{E}-\\frac{1}{P}|^{%s}' %pretty,legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('%s.%sTriggeringMVA%s' %(obj,pre,post),           [50,-1.,1.],  savedir+'%s/TriggeringMVA' %name,   yaxis='Events',xaxis='MVA_{Triggering} (%s)' %pretty,           legendpos=42,logy=0,cut=myCut,**kwargs)
+        plotMethod('%s.%sNonTriggeringMVA%s' %(obj,pre,post),        [50,-1.,1.],  savedir+'%s/NonTriggeringMVA' %name,yaxis='Events',xaxis='MVA_{NonTriggering} (%s)' %pretty,        legendpos=42,logy=0,cut=myCut,**kwargs)
+        plotMethod('%s.%sExpectedMissingInnerHits%s' %(obj,pre,post),[6,0,6],      savedir+'%s/MissingHits' %name,     yaxis='Events',xaxis='Missing Hits (%s)' %pretty,               legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('%s.%sPassConversionVeto%s' %(obj,pre,post),      [2,0,2],      savedir+'%s/PassConversion' %name,  yaxis='Events',xaxis='Pass Conversion Veto (%s)' %pretty,       legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('%s.%sNormalizedChi2%s' %(obj,pre,post),          [60,0.,15.],  savedir+'%s/NormalizedChi2' %name,  yaxis='Events',xaxis='\\chi_{Norm}^{2} (%s)' %pretty,           legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('%s.%sIsGlobalMuon%s' %(obj,pre,post),            [2,0,2],      savedir+'%s/IsGlobalMuon' %name,    yaxis='Events',xaxis='Gloabl Muon (%s)' %pretty,                legendpos=43,logy=0,cut=myCut,numcol=3,**kwargs)
+        plotMethod('%s.%sIsPFMuon%s' %(obj,pre,post),                [2,0,2],      savedir+'%s/IsPFMuon' %name,        yaxis='Events',xaxis='PFMuon (%s)' %pretty,                     legendpos=43,logy=0,cut=myCut,numcol=3,**kwargs)
+        plotMethod('%s.%sIsTrackerMuon%s' %(obj,pre,post),           [2,0,2],      savedir+'%s/IsTrackerMuon' %name,   yaxis='Events',xaxis='Tracker Muon (%s)' %pretty,               legendpos=43,logy=0,cut=myCut,numcol=3,**kwargs)
+        plotMethod('%s.%sValidMuonHits%s' %(obj,pre,post),           [80,0,80],    savedir+'%s/ValidMuonHits' %name,   yaxis='Events',xaxis='Muon Hits (%s)' %pretty,                  legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('%s.%sMatchedStations%s' %(obj,pre,post),         [6,0,6],      savedir+'%s/MatchedStations' %name, yaxis='Events',xaxis='Matched Stations (%s)' %pretty,           legendpos=31,logy=0,cut=myCut,**kwargs)
+        plotMethod('%s.%sValidPixelHits%s' %(obj,pre,post),          [8,0,8],      savedir+'%s/ValidPixelHits' %name,  yaxis='Events',xaxis='Valid Pixel Hits (%s)' %pretty,           legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('%s.%sTrackerLayers%s' %(obj,pre,post),           [20,0,20],    savedir+'%s/TrackerLayers' %name,   yaxis='Events',xaxis='Tracker Layers (%s)' %pretty,             legendpos=31,logy=0,cut=myCut,**kwargs)
+        plotMethod('%s.%sGenPdgId%s' %(obj,pre,post),                [61,-30,31],  savedir+'%s/GenPdgId' %name,        yaxis='Events',xaxis='Gen PDG ID (%s)' %pretty,                 legendpos=31,logy=0,cut=myCut,**kwargs)
+        plotMethod('%s.%sMotherGenPdgId%s' %(obj,pre,post),          [61,-30,31],  savedir+'%s/MotherGenPdgId' %name,  yaxis='Events',xaxis='Mother Gen PDG ID (%s)' %pretty,          legendpos=31,logy=0,cut=myCut,**kwargs)
+        plotMethod('%s.%sPassLoose%s' %(obj,pre,post),               [2,0,2],      savedir+'%s/PassLoose' %name,       yaxis='Events',xaxis='Pass Loose (%s)' %pretty,                 legendpos=43,logy=0,cut=myCut,numcol=3,**kwargs)
+        plotMethod('%s.%sPassTight%s' %(obj,pre,post),               [2,0,2],      savedir+'%s/PassTight' %name,       yaxis='Events',xaxis='Pass Tight (%s)' %pretty,                 legendpos=43,logy=0,cut=myCut,numcol=3,**kwargs)
+        plotMethod('%s.%sJetPt%s' %(obj,pre,post),                   [40,0,200],   savedir+'%s/JetPt' %name,           yaxis='Events/5.0 GeV',xaxis='p_{T}^{%s jet} (GeV)' %pretty,    legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('%s.%sJetBTag%s' %(obj,pre,post),                 [50,0.,1.],   savedir+'%s/JetBtag' %name,         yaxis='Events',xaxis='Jet b Tag (%s)' %pretty,                  legendpos=42,logy=0,cut=myCut,**kwargs)
 
 
 def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
@@ -55,7 +61,7 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
     analysis = kwargs.pop('analysis','')
     region = kwargs.pop('region','')
     mass = kwargs.pop('mass',500)
-    doDetailed = kwargs.pop('doDetailed',True)
+    doDetailed = kwargs.pop('doDetailed',False)
     if savedir: savedir += '/'
     plotMethod('finalstate.sT',[40,0,1000],savedir+'sT',yaxis='Events/25.0 GeV/c^{2}',xaxis='S_{T} (GeV/c^{2})',lumitext=33,logy=1,ymin=0.1,cut=myCut,overflow=True,**kwargs)
     plotMethod('finalstate.sT',[50,0,500],savedir+'sT_zoom',yaxis='Events/10.0 GeV/c^{2}',xaxis='S_{T} (GeV/c^{2})',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
@@ -103,75 +109,76 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
         name = names[l]
         t = tex[l]
         cuts = ['%s & %s' %(myCut,'l%iFlv=="%s"' %((x+1),l)) for x in range(nl)]
-        plotMethod(['l%i.Pt'  %(x+1) for x in range(nl)], [40,0,200],            savedir+'%sPt'  %name, yaxis='Events/5.0 GeV', xaxis='p_{T}^{%s} (GeV)' %t,        legendpos=43, logy=0, cut=cuts, overflow=True, **kwargs)
-        plotMethod(['l%i.Eta' %(x+1) for x in range(nl)], [30,-3.0,3.0],         savedir+'%sEta' %name, yaxis='Events',         xaxis='\\eta^{%s}' %t,              legendpos=43, logy=0, cut=cuts, **kwargs)
-        plotMethod(['l%i.Phi' %(x+1) for x in range(nl)], [30,-3.14159,3.14159], savedir+'%sPhi' %name, yaxis='Events',         xaxis='\\phi^{%s}' %t,              legendpos=43, logy=0, cut=cuts, **kwargs)
-        plotMethod(['l%i.Iso' %(x+1) for x in range(nl)], [50,0,.5],             savedir+'%sIso' %name, yaxis='Events',         xaxis='Relative Isolation (%s)' %t, legendpos=43, logy=0, cut=cuts, **kwargs)    
-        plotMethod(['l%i.ChargeConsistent' %(x+1) for x in range(nl)], [3,-1.5,1.5], savedir+'%sChargeId' %name, yaxis='Events', xaxis='Charge ID (%s)' %t,         legendpos=43, logy=0, cut=cuts, **kwargs)    
+        plotMethod(['l%i.Pt'  %(x+1) for x in range(nl)], [40,0,200],            savedir+'%s/Pt'  %name, yaxis='Events/5.0 GeV', xaxis='p_{T}^{%s} (GeV)' %t,        legendpos=43, logy=0, cut=cuts, overflow=True, **kwargs)
+        plotMethod(['l%i.Eta' %(x+1) for x in range(nl)], [30,-3.0,3.0],         savedir+'%s/Eta' %name, yaxis='Events',         xaxis='\\eta^{%s}' %t,              legendpos=43, logy=0, cut=cuts, **kwargs)
+        plotMethod(['l%i.Phi' %(x+1) for x in range(nl)], [30,-3.14159,3.14159], savedir+'%s/Phi' %name, yaxis='Events',         xaxis='\\phi^{%s}' %t,              legendpos=43, logy=0, cut=cuts, **kwargs)
+        plotMethod(['l%i.Iso' %(x+1) for x in range(nl)], [50,0,.5],             savedir+'%s/Iso' %name, yaxis='Events',         xaxis='Relative Isolation (%s)' %t, legendpos=43, logy=0, cut=cuts, **kwargs)    
+        plotMethod(['l%i.ChargeConsistent' %(x+1) for x in range(nl)], [3,-1.5,1.5], savedir+'%s/ChargeId' %name, yaxis='Events', xaxis='Charge ID (%s)' %t,         legendpos=43, logy=0, cut=cuts, **kwargs)    
 
     # plot doubly charged higgs stuff
     if analysis in ['Hpp3l','Hpp4l'] or region in ['Hpp2l']:
         plotMethod('event.charge_uncertainty', [80,0.99,1.15],savedir+'charge_unc',yaxis='Events',      xaxis='Charge Uncertainty',                              lumitext=33,cut=myCut,**kwargs)
-        plotMethod('h1.mass', [24,0,600],savedir+'hppMass',              yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})',        lumitext=33,logy=1,cut=myCut,overflow=True,**kwargs)
-        #plotMethod('h1.mass', [24,0,600],savedir+'hppMass_mod',          yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{+}\\ell^{+}} (GeV/c^{2})',              lumitext=33,legendpos=41,logy=1,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h1.mass', [32,0,800],savedir+'hppMass_alpha',        yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})', lumitext=33,logy=1,cut=myCut,boxes=[[12,0.9*mass,1],[1.1*mass,800,1],[0.9*mass,1.1*mass,2]],**kwargs)
-        plotMethod('h1.dPhi', [32,0,3.2],savedir+'hppDphi',              yaxis='Events/0.1 rad',       xaxis='\\Delta\\phi_{\\ell^{\\pm}\\ell^{\\pm}} (rad)',   legendpos=41,lumitext=33,logy=0,cut=myCut,**kwargs)
-        plotMethod('h1.Pt',   [40,0,400],savedir+'hppPt',                yaxis='Events/10.0 GeV',      xaxis='p_{T}^{\\Phi^{\\pm\\pm}} (GeV)',                  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h1.Pt1',  [40,0,200],savedir+'hppLeadingLeptonPt',   yaxis='Events/5.0 GeV',       xaxis='p_{T}^{\\Phi^{\\pm\\pm} Leading Lepton} (GeV)',   legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h1.Pt2',  [40,0,200],savedir+'hppSubleadingLeptonPt',yaxis='Events/5.0 GeV',       xaxis='p_{T}^{\\Phi^{\\pm\\pm} Subleading Lepton} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h1.Iso1', [50,0,0.5],savedir+'hppLeadingIso',        yaxis='Events',               xaxis='Iso/p_{T} (\\Phi^{\\pm\\pm} Leading Lepton)',     legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h1.Iso2', [50,0,0.5],savedir+'hppSubleadingIso',     yaxis='Events',               xaxis='Iso/p_{T} (\\Phi^{\\pm\\pm} Subleading Lepton)',  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h1.dR',   [60,0,6], savedir+'hppdR',                 yaxis='Events',               xaxis='\\Delta R(\\ell^{\\pm}\\ell^{\\pm})',             legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('h1.mass', [24,0,600],savedir+'hpp/Mass',              yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})',        lumitext=33,logy=1,cut=myCut,overflow=True,**kwargs)
+        #plotMethod('h1.mass', [24,0,600],savedir+'hpp/Mass_mod',          yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{+}\\ell^{+}} (GeV/c^{2})',              lumitext=33,legendpos=41,logy=1,cut=myCut,overflow=True,**kwargs)
+        plotMethod('h1.mass', [32,0,800],savedir+'hpp/Mass_alpha',        yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})', lumitext=33,logy=1,cut=myCut,boxes=[[12,0.9*mass,1],[1.1*mass,800,1],[0.9*mass,1.1*mass,2]],**kwargs)
+        plotMethod('h1.dPhi', [32,0,3.2],savedir+'hpp/Dphi',              yaxis='Events/0.1 rad',       xaxis='\\Delta\\phi_{\\ell^{\\pm}\\ell^{\\pm}} (rad)',   legendpos=41,lumitext=33,logy=0,cut=myCut,**kwargs)
+        plotMethod('h1.Pt',   [40,0,400],savedir+'hpp/Pt',                yaxis='Events/10.0 GeV',      xaxis='p_{T}^{\\Phi^{\\pm\\pm}} (GeV)',                  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('h1.Pt1',  [40,0,200],savedir+'hpp/LeadingLeptonPt',   yaxis='Events/5.0 GeV',       xaxis='p_{T}^{\\Phi^{\\pm\\pm} Leading Lepton} (GeV)',   legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('h1.Pt2',  [40,0,200],savedir+'hpp/SubleadingLeptonPt',yaxis='Events/5.0 GeV',       xaxis='p_{T}^{\\Phi^{\\pm\\pm} Subleading Lepton} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('h1.Iso1', [50,0,0.5],savedir+'hpp/LeadingIso',        yaxis='Events',               xaxis='Iso/p_{T} (\\Phi^{\\pm\\pm} Leading Lepton)',     legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('h1.Iso2', [50,0,0.5],savedir+'hpp/SubleadingIso',     yaxis='Events',               xaxis='Iso/p_{T} (\\Phi^{\\pm\\pm} Subleading Lepton)',  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('h1.dR',   [60,0,6], savedir+'hpp/dR',                 yaxis='Events',               xaxis='\\Delta R(\\ell^{\\pm}\\ell^{\\pm})',             legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod('abs(h1.mass-h2.mass)', [30,0,300],savedir+'massdiff',yaxis='Events/10.0 GeV/c^{2}',xaxis='|M_{\\ell^{\\pm}\\ell^{\\pm}}-M_{\\ell^{\\mp}}| (GeV/c^{2})',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
     if analysis in ['Hpp4l']:
         plotMethod('abs(h1.mass-h2.mass)', [30,0,300],savedir+'massdiff',yaxis='Events/10.0 GeV/c^{2}',xaxis='|M_{\\ell^{+}\\ell^{+}}-M_{\\ell^{-}\\ell^{-}}| (GeV/c^{2})',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h2.mass', [24,0,600],savedir+'hmmMass',              yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})',        lumitext=33,logy=1,cut=myCut,overflow=True,**kwargs)
-        #plotMethod('h2.mass', [24,0,600],savedir+'hmmMass_mod',          yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{+}\\ell^{+}} (GeV/c^{2})',              lumitext=33,legendpos=41,logy=1,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h2.mass', [32,0,800],savedir+'hmmMass_alpha',        yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})', lumitext=33,logy=1,cut=myCut,boxes=[[12,0.9*mass,1],[1.1*mass,800,1],[0.9*mass,1.1*mass,2]],**kwargs)
-        plotMethod('h2.dPhi', [32,0,3.2],savedir+'hmmDphi',              yaxis='Events/0.1 rad',       xaxis='\\Delta\\phi_{\\ell^{\\pm}\\ell^{\\pm}} (rad)',   legendpos=41,lumitext=33,logy=0,cut=myCut,**kwargs)
-        plotMethod('h2.Pt',   [40,0,400],savedir+'hmmPt',                yaxis='Events/10.0 GeV',      xaxis='p_{T}^{\\Phi^{\\pm\\pm}} (GeV)',                  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h2.Pt1',  [40,0,200],savedir+'hmmLeadingLeptonPt',   yaxis='Events/5.0 GeV',       xaxis='p_{T}^{\\Phi^{\\pm\\pm} Leading Lepton} (GeV)',   legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h2.Pt2',  [40,0,200],savedir+'hmmSubleadingLeptonPt',yaxis='Events/5.0 GeV',       xaxis='p_{T}^{\\Phi^{\\pm\\pm} Subleading Lepton} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h2.Iso1', [50,0,0.5],savedir+'hmmLeadingIso',        yaxis='Events',               xaxis='Iso/p_{T} (\\Phi^{\\pm\\pm} Leading Lepton)',     legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h2.Iso2', [50,0,0.5],savedir+'hmmSubleadingIso',     yaxis='Events',               xaxis='Iso/p_{T} (\\Phi^{\\pm\\pm} Subleading Lepton)',  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h2.dR',   [60,0,6], savedir+'hmmdR',                 yaxis='Events',               xaxis='\\Delta R(\\ell^{\\pm}\\ell^{\\pm})',             legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('h2.mass', [24,0,600],savedir+'hmm/Mass',              yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})',        lumitext=33,logy=1,cut=myCut,overflow=True,**kwargs)
+        #plotMethod('h2.mass', [24,0,600],savedir+'hmm/Mass_mod',          yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{+}\\ell^{+}} (GeV/c^{2})',              lumitext=33,legendpos=41,logy=1,cut=myCut,overflow=True,**kwargs)
+        plotMethod('h2.mass', [32,0,800],savedir+'hmm/Mass_alpha',        yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})', lumitext=33,logy=1,cut=myCut,boxes=[[12,0.9*mass,1],[1.1*mass,800,1],[0.9*mass,1.1*mass,2]],**kwargs)
+        plotMethod('h2.dPhi', [32,0,3.2],savedir+'hmm/Dphi',              yaxis='Events/0.1 rad',       xaxis='\\Delta\\phi_{\\ell^{\\pm}\\ell^{\\pm}} (rad)',   legendpos=41,lumitext=33,logy=0,cut=myCut,**kwargs)
+        plotMethod('h2.Pt',   [40,0,400],savedir+'hmm/Pt',                yaxis='Events/10.0 GeV',      xaxis='p_{T}^{\\Phi^{\\pm\\pm}} (GeV)',                  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('h2.Pt1',  [40,0,200],savedir+'hmm/LeadingLeptonPt',   yaxis='Events/5.0 GeV',       xaxis='p_{T}^{\\Phi^{\\pm\\pm} Leading Lepton} (GeV)',   legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('h2.Pt2',  [40,0,200],savedir+'hmm/SubleadingLeptonPt',yaxis='Events/5.0 GeV',       xaxis='p_{T}^{\\Phi^{\\pm\\pm} Subleading Lepton} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('h2.Iso1', [50,0,0.5],savedir+'hmm/LeadingIso',        yaxis='Events',               xaxis='Iso/p_{T} (\\Phi^{\\pm\\pm} Leading Lepton)',     legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('h2.Iso2', [50,0,0.5],savedir+'hmm/SubleadingIso',     yaxis='Events',               xaxis='Iso/p_{T} (\\Phi^{\\pm\\pm} Subleading Lepton)',  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('h2.dR',   [60,0,6], savedir+'hmm/dR',                 yaxis='Events',               xaxis='\\Delta R(\\ell^{\\pm}\\ell^{\\pm})',             legendpos=43,logy=0,cut=myCut,**kwargs)
     # plot Z stuff
     if analysis in ['Z', 'Hpp3l', 'Hpp4l', 'WZ', 'WZ_W'] or region in ['Z', 'TT']:
-        plotMethod('z1.mass', [42,70,112],   savedir+'z1Mass',               yaxis='Events/1.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (GeV)',     legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('z1.mass', [60,60,120],   savedir+'z1Mass_newWidth',      yaxis='Events/1.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (GeV)',     legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('z1.mass', [13,58.5,123.5],   savedir+'z1Mass_newWidth_wide', yaxis='Events/5.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (GeV)',     legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('z1.mass', [7,80.5,101.5],savedir+'z1Mass_wideBin',       yaxis='Events/3.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (GeV)',     legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('z1.mass', [80,0,240],    savedir+'z1Mass_fullWindow',    yaxis='Events/3.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (GeV)',     legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('z1.mass', [80,0,240],    savedir+'z1Mass_fullWindow_log',yaxis='Events/3.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (GeV)',     legendpos=43,logy=1,cut=myCut,overflow=True,**kwargs)
-        plotMethod('z1.Pt',   [40,0,400],    savedir+'z1Pt',                 yaxis='Events/10.0 GeV',xaxis='p_{T}^{Z} (GeV)',                  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('z1.dR',   [60,0,6],      savedir+'z1dR',                 yaxis='Events',         xaxis='\\Delta R(\\ell^{+}\\ell^{-})',    legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotLepton(plotMethod,myCut,'z1',post='1',name='z1Leading',pretty='Z Leading Lepton',savedir=savedir,doDetailed=doDetailed,**kwargs)
-        plotLepton(plotMethod,myCut,'z1',post='2',name='z1SubLeading',pretty='Z SubLeading Lepton',savedir=savedir,doDetailed=doDetailed,**kwargs)
+        plotMethod('z1.mass', [42,70,112],   savedir+'z1/Mass',               yaxis='Events/1.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (GeV)',     legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('z1.mass', [60,60,120],   savedir+'z1/Mass_newWidth',      yaxis='Events/1.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (GeV)',     legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('z1.mass', [13,58.5,123.5],   savedir+'z1/Mass_newWidth_wide', yaxis='Events/5.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (GeV)',     legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('z1.mass', [7,80.5,101.5],savedir+'z1/Mass_wideBin',       yaxis='Events/3.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (GeV)',     legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('z1.mass', [80,0,240],    savedir+'z1/Mass_fullWindow',    yaxis='Events/3.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (GeV)',     legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('z1.mass', [80,0,240],    savedir+'z1/Mass_fullWindow_log',yaxis='Events/3.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (GeV)',     legendpos=43,logy=1,cut=myCut,overflow=True,**kwargs)
+        plotMethod('z1.Pt',   [40,0,400],    savedir+'z1/Pt',                 yaxis='Events/10.0 GeV',xaxis='p_{T}^{Z} (GeV)',                  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('z1.dR',   [60,0,6],      savedir+'z1/dR',                 yaxis='Events',         xaxis='\\Delta R(\\ell^{+}\\ell^{-})',    legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotLepton(plotMethod,myCut,'z1',post='1',name='z1/Leading',pretty='Z Leading Lepton',savedir=savedir,doDetailed=doDetailed,**kwargs)
+        plotLepton(plotMethod,myCut,'z1',post='2',name='z1/SubLeading',pretty='Z SubLeading Lepton',savedir=savedir,doDetailed=doDetailed,**kwargs)
     # plot second z stuff
     if analysis in ['Hpp4l']:
-        plotMethod('z2.mass',[42,70,112],   savedir+'z2Mass',               yaxis='Events/1.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (Z2) (GeV)', legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('z2.mass',[7,80.5,101.5],savedir+'z2Mass_wideBin',       yaxis='Events/3.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (Z2) (GeV)', legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('z2.mass',[80,0,240],    savedir+'z2Mass_fullWindow',    yaxis='Events/3.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (Z2) (GeV)', legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('z2.mass',[80,0,240],    savedir+'z2Mass_fullWindow_log',yaxis='Events/3.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (Z2) (GeV)', legendpos=43,logy=1,cut=myCut,**kwargs)
-        plotMethod('z2.Pt',  [40,0,400],    savedir+'z2Pt',                 yaxis='Events/10.0 GeV',xaxis='p_{T}^{Z2} (GeV)',                  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('z2.Pt1', [40,0,200],    savedir+'z2LeadingLeptonPt',    yaxis='Events/5.0 GeV', xaxis='p_{T}^{Z2 Leading Lepton} (GeV)',   legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('z2.Pt2', [40,0,200],    savedir+'z2SubleadingLeptonPt', yaxis='Events/5.0 GeV', xaxis='p_{T}^{Z2 Subleading Lepton} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('z2.Iso1',[50,0,0.5],    savedir+'z2LeadingIso',         yaxis='Events',         xaxis='Iso/p_{T} (Z2 Leading Lepton)',     legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('z2.Iso2',[50,0,0.5],    savedir+'z2SubleadingIso',      yaxis='Events',         xaxis='Iso/p_{T} (Z2 Subleading Lepton)',  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('z2.mass',[42,70,112],   savedir+'z2/Mass',               yaxis='Events/1.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (Z2) (GeV)', legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('z2.mass',[7,80.5,101.5],savedir+'z2/Mass_wideBin',       yaxis='Events/3.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (Z2) (GeV)', legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('z2.mass',[80,0,240],    savedir+'z2/Mass_fullWindow',    yaxis='Events/3.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (Z2) (GeV)', legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('z2.mass',[80,0,240],    savedir+'z2/Mass_fullWindow_log',yaxis='Events/3.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (Z2) (GeV)', legendpos=43,logy=1,cut=myCut,**kwargs)
+        plotMethod('z2.Pt',  [40,0,400],    savedir+'z2/Pt',                 yaxis='Events/10.0 GeV',xaxis='p_{T}^{Z2} (GeV)',                  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotLepton(plotMethod,myCut,'z2',post='1',name='z2/Leading',pretty='Z2 Leading Lepton',savedir=savedir,doDetailed=doDetailed,**kwargs)
+        plotLepton(plotMethod,myCut,'z2',post='2',name='z2/SubLeading',pretty='Z2 SubLeading Lepton',savedir=savedir,doDetailed=doDetailed,**kwargs)
     # plot W stuff
     if analysis in ['Hpp3l', 'WZ', 'WZ_W', 'WZ_FakeRate']:
-        plotMethod('w1.Pt',  [40,0,400],savedir+'w1Pt',      yaxis='Events/10.0 GeV',xaxis='p_{T}^{W} (GeV)',                           legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('w1.mass',[40,0,200],savedir+'w1Mass',    yaxis='Events/5.0 GeV', xaxis='M_{T}^{W} (GeV)',                           legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('w1.dPhi',[32,0,3.2],savedir+'w1dPhi',    yaxis='Events/0.1 rad', xaxis='\\Delta\\phi(W lepton, E_{T}^{miss}) (rad)',legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotLepton(plotMethod,myCut,'w1',post='1',name='w1',pretty='W Lepton',savedir=savedir,doDetailed=doDetailed,**kwargs)
-        #plotMethod('w1.mll_z1_1',[80,0,240],savedir+'dilepton_mass_1_ss',yaxis='Events/3.0 GeV',xaxis='M(l^{#pm}l^{#pm}) (Z_{l1},W_{l}) (GeV)',legendpos=43,logy=0,cut='w1.Chg1==z1.Chg1 & %s' %myCut,overflow=True,**kwargs)
-        #plotMethod('w1.mll_z1_2',[80,0,240],savedir+'dilepton_mass_2_ss',yaxis='Events/3.0 GeV',xaxis='M(l^{#pm}l^{#pm}) (Z_{l2},W_{l}) (GeV)',legendpos=43,logy=0,cut='w1.Chg1==z1.Chg2 & %s' %myCut,overflow=True,**kwargs)
-        #plotMethod('w1.mll_z1_1',[80,0,240],savedir+'dilepton_mass_1_os',yaxis='Events/3.0 GeV',xaxis='M(l^{#pm}l^{#mp}) (Z_{l1},W_{l}) (GeV)',legendpos=43,logy=0,cut='w1.Chg1!=z1.Chg1 & %s' %myCut,overflow=True,**kwargs)
-        #plotMethod('w1.mll_z1_2',[80,0,240],savedir+'dilepton_mass_2_os',yaxis='Events/3.0 GeV',xaxis='M(l^{#pm}l^{#mp}) (Z_{l2},W_{l}) (GeV)',legendpos=43,logy=0,cut='w1.Chg1!=z1.Chg2 & %s' %myCut,overflow=True,**kwargs)
-        #plotMethod(['w1.mll_z1_1','w1.mll_z1_2'],[80,0,240],savedir+'dilepton_mass',yaxis='Events/3.0 GeV',xaxis='M(ll) (Z_{l},W_{l}) (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-    #if analysis in ['Hpp3l', 'WZ']:
-    #    plotMethod('w1.dR1_z1_1',[60,0,6],savedir+'w1dR1_1',yaxis='Events',xaxis='#DeltaR(W^{lepton},Z^{leading lepton})',legendpos=43,logy=0,cut=myCut,**kwargs)
-    #    plotMethod('w1.dR1_z1_2',[60,0,6],savedir+'w1dR1_2',yaxis='Events',xaxis='#DeltaR(W^{lepton},Z^{subleading lepton})',legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('w1.Pt',  [40,0,400],savedir+'w1/Pt',      yaxis='Events/10.0 GeV',xaxis='p_{T}^{W} (GeV)',                           legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('w1.mass',[40,0,200],savedir+'w1/Mass',    yaxis='Events/5.0 GeV', xaxis='M_{T}^{W} (GeV)',                           legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('w1.dPhi',[32,0,3.2],savedir+'w1/dPhi',    yaxis='Events/0.1 rad', xaxis='\\Delta\\phi(W lepton, E_{T}^{miss}) (rad)',legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotLepton(plotMethod,myCut,'w1',post='1',name='w1/Lepton',pretty='W Lepton',savedir=savedir,doDetailed=doDetailed,**kwargs)
+        plotMethod('w1.mll_z1_1',[80,0,240],savedir+'w1/dilepton_mass_1_ss',yaxis='Events/3.0 GeV',xaxis='M(l^{#pm}l^{#pm}) (Z_{l1},W_{l}) (GeV)',legendpos=43,logy=0,cut='w1.Chg1==z1.Chg1 & %s' %myCut,overflow=True,**kwargs)
+        plotMethod('w1.mll_z1_2',[80,0,240],savedir+'w1/dilepton_mass_2_ss',yaxis='Events/3.0 GeV',xaxis='M(l^{#pm}l^{#pm}) (Z_{l2},W_{l}) (GeV)',legendpos=43,logy=0,cut='w1.Chg1==z1.Chg2 & %s' %myCut,overflow=True,**kwargs)
+        plotMethod('w1.mll_z1_1',[80,0,240],savedir+'w1/dilepton_mass_1_os',yaxis='Events/3.0 GeV',xaxis='M(l^{#pm}l^{#mp}) (Z_{l1},W_{l}) (GeV)',legendpos=43,logy=0,cut='w1.Chg1!=z1.Chg1 & %s' %myCut,overflow=True,**kwargs)
+        plotMethod('w1.mll_z1_2',[80,0,240],savedir+'w1/dilepton_mass_2_os',yaxis='Events/3.0 GeV',xaxis='M(l^{#pm}l^{#mp}) (Z_{l2},W_{l}) (GeV)',legendpos=43,logy=0,cut='w1.Chg1!=z1.Chg2 & %s' %myCut,overflow=True,**kwargs)
+        plotMethod(['w1.mll_z1_1','w1.mll_z1_2'],[80,0,240],savedir+'w1/dilepton_mass',yaxis='Events/3.0 GeV',xaxis='M(ll) (Z_{l},W_{l}) (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod(['w1.mll_z1_1','w1.mll_z1_2'],[80,0,240],savedir+'w1/dilepton_mass_ss',yaxis='Events/3.0 GeV',xaxis='M(ll) (Z_{l},W_{l}) (GeV)',legendpos=43,logy=0,cut=['w1.Chg1==z1.Chg1 & %s' %myCut,'w1.Chg1==z1.Chg2 & %s' %myCut],overflow=True,**kwargs)
+        plotMethod(['w1.mll_z1_1','w1.mll_z1_2'],[80,0,240],savedir+'w1/dilepton_mass_os',yaxis='Events/3.0 GeV',xaxis='M(ll) (Z_{l},W_{l}) (GeV)',legendpos=43,logy=0,cut=['w1.Chg1!=z1.Chg1 & %s' %myCut,'w1.Chg1!=z1.Chg2 & %s' %myCut],overflow=True,**kwargs)
+    if analysis in ['Hpp3l', 'WZ']:
+        plotMethod('w1.dR1_z1_1',[60,0,6],savedir+'w1/dR_z1_1',yaxis='Events',xaxis='#DeltaR(W^{lepton},Z^{leading lepton})',legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('w1.dR1_z1_2',[60,0,6],savedir+'w1/dR_z1_2',yaxis='Events',xaxis='#DeltaR(W^{lepton},Z^{subleading lepton})',legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod(['w1.dR1_z1_1','w1.dR1_z1_2'],[60,0,6],savedir+'w1/dR_z1_l',yaxis='Events',xaxis='#DeltaR(W^{lepton},Z^{lepton})',legendpos=43,logy=0,cut=myCut,**kwargs)
 
 
 def plotRegion(analysis,channel,runPeriod,**kwargs):
@@ -189,6 +196,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     finalStatesToPlot = kwargs.pop('finalStates','all')
     nostack = kwargs.pop('nostack',False)
     normalize = kwargs.pop('normalize',False)
+    doDetailed = kwargs.pop('doDetailed',False)
     scaleFactor = kwargs.pop('scaleFactor','event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale')
     useSignal = analysis in ['Hpp3l','Hpp4l']
     loglevel = kwargs.pop('loglevel','INFO')
@@ -423,19 +431,19 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     plotMode = 'plotMCDataRatio' if dataplot else 'plotMC'
     plotMethod = getattr(plotter,plotMode)
     logger.info("%s:%s:%iTeV: Plotting discriminating variables" % (analysis,channel, runPeriod))
-    plotDistributions(plotMethod,myCut,nl,isControl,analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass)
+    plotDistributions(plotMethod,myCut,nl,isControl,analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass,doDetailed=doDetailed)
 
     # each channel
     if plotFinalStates:
         logger.info("%s:%s:%iTeV: Plotting individual finalStates" % (analysis, channel, runPeriod))
         for c in fsToPlot:
             logger.info("%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c))
-            plotDistributions(plotMethod,myCut+'&&channel=="%s"'%c,nl,isControl,savedir=c,analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass)
+            plotDistributions(plotMethod,myCut+'&&channel=="%s"'%c,nl,isControl,savedir=c,analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass,doDetailed=doDetailed)
         if analysis in customFinalStates:
             for c in customFinalStates[analysis]:
                sel = customFinalStates[analysis][c]
                logger.info("%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c))
-               plotDistributions(plotMethod,'%s & %s'%(myCut,sel),nl,isControl,savedir=c,analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass)
+               plotDistributions(plotMethod,'%s & %s'%(myCut,sel),nl,isControl,savedir=c,analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass,doDetailed=doDetailed)
 
     # some partially blind plots for h++
     if runPeriod==8 and not dataplot and analysis in ['Hpp3l']:
@@ -472,7 +480,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     if plotOverlay and useSignal:
         # plot the signal overlay
         logger.info("%s:%s:%iTeV: Plotting signal overlay discriminating variables" % (analysis, channel, runPeriod))
-        plotDistributions(plotMethod,myCut,nl,isControl,savedir='overlay',signalscale=100,analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass)
+        plotDistributions(plotMethod,myCut,nl,isControl,savedir='overlay',signalscale=100,analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass,doDetailed=doDetailed)
 
 
     # plot shapes
@@ -503,19 +511,19 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         for i in range(len(cutFlowMap[channel]['cuts'])):
             logger.info('%s:%s:%iTeV: Plotting cut flow selections %s' % (analysis, channel, runPeriod, cutFlowMap[channel]['labels_simple'][i]))
             thisCut = '&&'.join(cutFlowMap[channel]['cuts'][:i+1])
-            plotDistributions(plotMethod,'%s&%s'%(myCut,thisCut),nl,isControl,savedir='cutflow/%s'%cutFlowMap[channel]['labels_simple'][i],analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass)
+            plotDistributions(plotMethod,'%s&%s'%(myCut,thisCut),nl,isControl,savedir='cutflow/%s'%cutFlowMap[channel]['labels_simple'][i],analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass,doDetailed=doDetailed)
             if plotFinalStates:
                 logger.info("%s:%s:%iTeV: Plotting individual finalStates" % (analysis, channel, runPeriod))
                 for c in fsToPlot:
                     logger.info("%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c))
-                    plotDistributions(plotMethod,'%s&channel=="%s"&%s'%(myCut,c,thisCut),nl,isControl,savedir='cutflow/%s/%s' %(cutFlowMap[channel]['labels_simple'][i],c),analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass)
+                    plotDistributions(plotMethod,'%s&channel=="%s"&%s'%(myCut,c,thisCut),nl,isControl,savedir='cutflow/%s/%s' %(cutFlowMap[channel]['labels_simple'][i],c),analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass,doDetailed=doDetailed)
             thisCut = cutFlowMap[channel]['cuts'][i]
-            plotDistributions(plotMethod,'%s&%s'%(myCut,thisCut),nl,isControl,savedir='cutflow/%s_only'%cutFlowMap[channel]['labels_simple'][i],analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass)
+            plotDistributions(plotMethod,'%s&%s'%(myCut,thisCut),nl,isControl,savedir='cutflow/%s_only'%cutFlowMap[channel]['labels_simple'][i],analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass,doDetailed=doDetailed)
             if plotFinalStates:
                 logger.info("%s:%s:%iTeV: Plotting individual finalStates" % (analysis, channel, runPeriod))
                 for c in fsToPlot:
                     logger.info("%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c))
-                    plotDistributions(plotMethod,'%s&channel=="%s"&%s'%(myCut,c,thisCut),nl,isControl,savedir='cutflow/%s_only/%s' %(cutFlowMap[channel]['labels_simple'][i],c),analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass)
+                    plotDistributions(plotMethod,'%s&channel=="%s"&%s'%(myCut,c,thisCut),nl,isControl,savedir='cutflow/%s_only/%s' %(cutFlowMap[channel]['labels_simple'][i],c),analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass,doDetailed=doDetailed)
 
     # plot cut flows on same plot
     plotter = CutFlowPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_cutflow',mergeDict=mergeDict,scaleFactor=scaleFactor,loglevel=loglevel)
@@ -590,6 +598,7 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
     normalize = kwargs.pop('normalize',False)
     scaleFactor = kwargs.pop('scaleFactor','event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale')
     useSignal = analysis in ['Hpp3l','Hpp4l']
+    doDetailed = kwargs.pop('doDetailed',False)
     for key, value in kwargs.iteritems():
         logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
         return 0
@@ -636,13 +645,15 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
                 #for z in ['Loose', 'Tight']:
                 for z in ['Tight']:
                     fakeRegion = 'Z{0}Probe{1}{2}'.format(z,lepName[f],p)
-                    denom = 'z1.Pt1>20. & z1.mass>60. & z1.mass<120. & z1.Pass{0}1 & z1.Pass{0}2 & finalstate.met<20. & finalstate.mass>100. & w1.mass<20. & w1.dR1_z1_1>0.1 & w1.dR1_z1_2>0.1 & w1Flv=="{1}"'.format(z,f)
+                    #denom = 'z1.Pass{0}1 && z1.Pass{0}2 && finalstate.mass>100. && w1.mass<20. && w1.dR1_z1_1>0.1 && w1.dR1_z1_2>0.1 && w1Flv=="{1}"'.format(z,f)
+                    denom = 'z1.Pass{0}1 && z1.Pass{0}2 && w1.dR1_z1_1>0.02 && w1.dR1_z1_2>0.02 && w1Flv=="{1}"'.format(z,f)
+                    #denom = 'z1.Pass{0}1 && z1.Pass{0}2 && w1Flv=="{1}"'.format(z,f)
                     numer = '{0} & w1.Pass{1}1'.format(denom,p)
                     fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
                     if p=='Tight' and channel not in ['HZZFakeRate']:
                        fakeRegion += '_LooseProbe'
-                       denom += ' & w1.PassLoose1'
-                       numer += ' & w1.PassLoose1'
+                       denom += ' && w1.PassLoose1'
+                       numer += ' && w1.PassLoose1'
                        fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
             # select w lepton pt, z veto, met
             #'W' : 'w1.Pt1>20. & (z1.mass<60. | z1.mass>120.) & finalstate.met>30. & w1.mass>30.',
@@ -650,24 +661,24 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
                 #for w in ['Loose','Tight']:
                 for w in ['Tight']:
                     fakeRegion = 'W{0}Probe{1}{2}'.format(w,lepName[f],p)
-                    denom = 'w1.Pt1>20. & w1.mass>30. & finalstate.met>30. & (z1.mass<60. | z1.mass>120.) & l1.Chg==l2.Chg & z1.dR>0.1 & w1.Pass{0}1 & w2Flv=="{1}"'.format(w,f)
-                    numer = '{0} & w2.Pass{1}1'.format(denom,p)
+                    denom = 'w1.Pt1>20. && w1.mass>30. && finalstate.met>30. && (z1.mass<60. || z1.mass>120.) && l1.Chg==l2.Chg && z1.dR>0.1 && w1.Pass{0}1 && w2Flv=="{1}"'.format(w,f)
+                    numer = '{0} && w2.Pass{1}1'.format(denom,p)
                     fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w2.Pt1', 'etaVar': 'w2.Eta1'}
                     if p=='Tight' and channel not in ['HZZFakeRate']:
                        fakeRegion += '_LooseProbe'
-                       denom += ' & w2.PassLoose1'
-                       numer += ' & w2.PassLoose1'
+                       denom += ' && w2.PassLoose1'
+                       numer += ' && w2.PassLoose1'
                        fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w2.Pt1', 'etaVar': 'w2.Eta1'}
             # ntuple cuts: zVeto 60-120, met vet 20, w veto 20, jet pt > 20, jet dr > 1.0
             if analysis in ['WZ_Dijet']:
                fakeRegion = 'FakeRateProbe{0}{1}'.format(lepName[f],p)
                denom = 'l1Flv=="{0}"'.format(f)
-               numer = '{0} & w1.Pass{1}1'.format(denom,p)
+               numer = '{0} && w1.Pass{1}1'.format(denom,p)
                fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
                if p=='Tight' and channel not in ['HZZFakeRate']:
                   fakeRegion += '_LooseProbe'
-                  denom += ' & w1.PassLoose1'
-                  numer += ' & w1.PassLoose1'
+                  denom += ' && w1.PassLoose1'
+                  numer += ' && w1.PassLoose1'
                   fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
 
 
@@ -693,11 +704,11 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
         plotMode = 'plotMCData'
         plotMethod = getattr(plotter,plotMode)
         logger.info("%s:%s:%iTeV: Plotting discriminating variables: All Probes" % (analysis,channel, runPeriod))
-        plotDistributions(plotMethod,denom,nl,isControl,analysis=analysis,savedir='fakeRate/{0}_all'.format(fakeRegion))
+        plotDistributions(plotMethod,denom,nl,isControl,analysis=analysis,savedir='fakeRate/{0}_all'.format(fakeRegion),doDetailed=doDetailed)
         logger.info("%s:%s:%iTeV: Plotting discriminating variables: Passing" % (analysis,channel, runPeriod))
-        plotDistributions(plotMethod,numer,nl,isControl,analysis=analysis,savedir='fakeRate/{0}_prompts'.format(fakeRegion))
+        plotDistributions(plotMethod,numer,nl,isControl,analysis=analysis,savedir='fakeRate/{0}_prompts'.format(fakeRegion),doDetailed=doDetailed)
         logger.info("%s:%s:%iTeV: Plotting discriminating variables: Failing" % (analysis,channel, runPeriod))
-        plotDistributions(plotMethod,'{0} & !({1})'.format(denom,numer),nl,isControl,analysis=analysis,savedir='fakeRate/{0}_fakes'.format(fakeRegion))
+        plotDistributions(plotMethod,'{0} & !({1})'.format(denom,numer),nl,isControl,analysis=analysis,savedir='fakeRate/{0}_fakes'.format(fakeRegion),doDetailed=doDetailed)
 
         # now plot the fake rates
         logger.info("%s:%s:%iTeV: Computing fake rates" % (analysis,channel, runPeriod))
@@ -723,6 +734,7 @@ def parse_command_line(argv):
     parser.add_argument('-am','--allMasses',action='store_true',help='Run over all masses')
     parser.add_argument('-ac','--allControls',action='store_true',help='Run over all controls for a given analysis (3l, 4l)')
     parser.add_argument('-fr','--doFakeRate',action='store_true',help='Make fake rate plots and output fake rate histograms')
+    parser.add_argument('-dd','--doDetailed',action='store_true',help='Do detailed lepton plots')
     parser.add_argument('-fs','--finalStates',type=str,default='all',help='Only run given channels (ie: "eee,emm")')
     parser.add_argument('-c','--cut',type=str,default='1',help='Cut to be applied to plots.')
     parser.add_argument('-sf','--scaleFactor',type=str,default='event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale',help='Scale factor for plots.')
@@ -760,9 +772,9 @@ def main(argv=None):
     if args.period == 7:
         logger.warning("7 TeV not implemented")
     elif args.doFakeRate:
-        plotFakeRate(args.analysis,args.channel,args.period,mass=args.mass,loglevel=args.log,blind=args.unblind)
+        plotFakeRate(args.analysis,args.channel,args.period,mass=args.mass,loglevel=args.log,blind=args.unblind,doDetailed=args.doDetailed)
     else:
-        plotRegion(args.analysis,args.channel,args.period,plotFinalStates=args.plotFinalStates,runTau=args.runTau,blind=args.unblind,mass=args.mass,plotJetBins=args.plotJetBins,plotOverlay=args.plotOverlay,plotShapes=args.plotShapes,plotCutFlow=args.plotCutFlow,myCut=args.cut,finalStates=args.finalStates,nostack=args.nostack,normalize=args.normalize,scaleFactor=args.scaleFactor,loglevel=args.log)
+        plotRegion(args.analysis,args.channel,args.period,plotFinalStates=args.plotFinalStates,runTau=args.runTau,blind=args.unblind,mass=args.mass,plotJetBins=args.plotJetBins,plotOverlay=args.plotOverlay,plotShapes=args.plotShapes,plotCutFlow=args.plotCutFlow,myCut=args.cut,finalStates=args.finalStates,nostack=args.nostack,normalize=args.normalize,scaleFactor=args.scaleFactor,loglevel=args.log,doDetailed=args.doDetailed)
 
     return 0
 

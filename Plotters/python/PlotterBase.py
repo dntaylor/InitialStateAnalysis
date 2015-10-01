@@ -234,7 +234,7 @@ class PlotterBase(object):
             hist.Sumw2()
             val = hist.Integral()
             self.logger.debug('%s: Entries: %f'%(sample,val))
-        err = val ** 0.5
+        err = abs(val) ** 0.5
         if 'data' in sample: return val, err
         lumi = self.samples[sample]['lumi']
         val = val * self.intLumi/lumi
@@ -586,7 +586,13 @@ class PlotterBase(object):
             CMS_lumi.lumi_13TeV = "%0.1f pb^{-1}" % (float(self.intLumi))
         CMS_lumi.CMS_lumi(self.plotpad if plotratio else self.canvas,self.period,position)
 
-    def getLegend(self,plotdata,plotsig,plotratio,legendpos,mchist,datahist,sighists):
+    def getLegend(self,mchist,datahist,sighists,**kwargs):
+        legendpos = kwargs.pop('legendpos',33)
+        plotdata = kwargs.pop('plotdata',True)
+        plotsig = kwargs.pop('plotsig',True)
+        plotmc = kwargs.pop('plotmc',True)
+        plotratio = kwargs.pop('plotratio',True)
+        numcol = kwargs.pop('numcol',1)
 
         numEntries = 0
         if mchist: numEntries += len(self.backgrounds)
@@ -607,11 +613,12 @@ class PlotterBase(object):
             yend = 0.91
         else:                     # default, top, just below CMS label
             yend = 0.77
-        xstart = xend-0.3
-        ystart = yend-numEntries*0.045
+        xstart = xend-0.2*numcol-0.1
+        ystart = yend-ceil(float(numEntries)/numcol)*0.045
         if plotratio: yend *= 0.95
         # create and draw legend
         leg = ROOT.TLegend(xstart,ystart,xend,yend,'','NDC')
+        if numcol>1: leg.SetNColumns(int(numcol))
         leg.SetTextFont(42)
         #leg.SetTextSize(0.25/numEntries)
         leg.SetBorderSize(0)

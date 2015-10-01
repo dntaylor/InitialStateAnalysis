@@ -36,10 +36,12 @@ def main(argv=None):
             print 'Plotting limit for %s' % bp
             limvals = plot_limits(args.analysis,args.channel,args.period,'limits_%s_%itev_%s%s'%(args.channel,args.period,bp,datacardString),branchingPoint=bp,bgMode=args.bgMode,do4l=args.do4l)
             outstring += '{3}: {0} [+{1},-{2}]\n'.format(limvals[0],limvals[1],limvals[2],bp)
+            if args.analysis in ['HppComb']: plot_combined_limits(args.period,'limits_combinedCrossSection_%itev_%s%s'%(args.period,bp,datacardString),branchingPoint=bp,bgMode=args.bgMode)
     else:
         print 'Plotting limit for %s' % args.branchingPoint
         limvals = plot_limits(args.analysis,args.channel,args.period,'limits_%s_%itev_%s%s'%(args.channel,args.period,args.branchingPoint,datacardString),branchingPoint=args.branchingPoint,bgMode=args.bgMode,do4l=args.do4l)
         outstring += '{3}: {0} [+{1},-{2}]\n'.format(limvals[0],limvals[1],limvals[2],args.branchingPoint)
+        if args.analysis in ['HppComb']: plot_combined_limits(args.period,'limits_combinedCrossSection_%itev_%s%s'%(args.period,args.branchingPoint,datacardString),branchingPoint=args.branchingPoint,bgMode=args.bgMode)
 
     savename = 'plots/limits/limits_%s_%itev'%(args.channel,args.period)
     if args.do4l: savename += '_4l'
