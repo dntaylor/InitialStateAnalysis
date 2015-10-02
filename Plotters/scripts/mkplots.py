@@ -24,8 +24,8 @@ def plotLepton(plotMethod,myCut,obj,**kwargs):
     name = kwargs.pop('name','')
     pretty = kwargs.pop('pretty','')
     plotMethod('%s.%sPt%s' %(obj,pre,post), [40,0,200],           savedir+'%s/Pt' %name, yaxis='Events/5.0 GeV',xaxis='p_{T}^{%s} (GeV)' %pretty,       legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-    plotMethod('%s.%sEta%s' %(obj,pre,post),[30,-3.0,3.0],        savedir+'%s/Eta' %name,yaxis='Events',        xaxis='\\eta^{%s}' %pretty,             legendpos=43,logy=0,cut=myCut,**kwargs)
-    plotMethod('%s.%sPhi%s' %(obj,pre,post),[30,-3.14159,3.14159],savedir+'%s/Phi' %name,yaxis='Events',        xaxis='\\phi^{%s}' %pretty,             legendpos=43,logy=0,cut=myCut,**kwargs)
+    plotMethod('%s.%sEta%s' %(obj,pre,post),[30,-3.0,3.0],        savedir+'%s/Eta' %name,yaxis='Events',        xaxis='\\eta^{%s}' %pretty,             legendpos=43,logy=0,cut=myCut,numcol=3,**kwargs)
+    plotMethod('%s.%sPhi%s' %(obj,pre,post),[30,-3.14159,3.14159],savedir+'%s/Phi' %name,yaxis='Events',        xaxis='\\phi^{%s}' %pretty,             legendpos=43,logy=0,cut=myCut,numcol=3,**kwargs)
     plotMethod('%s.%sIso%s' %(obj,pre,post),[50,0,.5],            savedir+'%s/Iso' %name,yaxis='Events',        xaxis='Relative Isolation (%s)' %pretty,legendpos=43,logy=0,cut=myCut,**kwargs)
     #plotMethod('%s.ChargeConsistent' %name,[3,-1.5,1.5],savedir+'%sChargeId' %name,yaxis='Events',xaxis='Charge ID (\\ell%i)' %(l+1),legendpos=31,logy=0,cut=myCut,**kwargs)    
     if doDetailed:
@@ -39,7 +39,7 @@ def plotLepton(plotMethod,myCut,obj,**kwargs):
         plotMethod('%s.%sTriggeringMVA%s' %(obj,pre,post),           [50,-1.,1.],  savedir+'%s/TriggeringMVA' %name,   yaxis='Events',xaxis='MVA_{Triggering} (%s)' %pretty,           legendpos=42,logy=0,cut=myCut,**kwargs)
         plotMethod('%s.%sNonTriggeringMVA%s' %(obj,pre,post),        [50,-1.,1.],  savedir+'%s/NonTriggeringMVA' %name,yaxis='Events',xaxis='MVA_{NonTriggering} (%s)' %pretty,        legendpos=42,logy=0,cut=myCut,**kwargs)
         plotMethod('%s.%sExpectedMissingInnerHits%s' %(obj,pre,post),[6,0,6],      savedir+'%s/MissingHits' %name,     yaxis='Events',xaxis='Missing Hits (%s)' %pretty,               legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('%s.%sPassConversionVeto%s' %(obj,pre,post),      [2,0,2],      savedir+'%s/PassConversion' %name,  yaxis='Events',xaxis='Pass Conversion Veto (%s)' %pretty,       legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('%s.%sPassConversionVeto%s' %(obj,pre,post),      [2,0,2],      savedir+'%s/PassConversion' %name,  yaxis='Events',xaxis='Pass Conversion Veto (%s)' %pretty,       legendpos=43,logy=0,cut=myCut,numcol=3,**kwargs)
         plotMethod('%s.%sNormalizedChi2%s' %(obj,pre,post),          [60,0.,15.],  savedir+'%s/NormalizedChi2' %name,  yaxis='Events',xaxis='\\chi_{Norm}^{2} (%s)' %pretty,           legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod('%s.%sIsGlobalMuon%s' %(obj,pre,post),            [2,0,2],      savedir+'%s/IsGlobalMuon' %name,    yaxis='Events',xaxis='Gloabl Muon (%s)' %pretty,                legendpos=43,logy=0,cut=myCut,numcol=3,**kwargs)
         plotMethod('%s.%sIsPFMuon%s' %(obj,pre,post),                [2,0,2],      savedir+'%s/IsPFMuon' %name,        yaxis='Events',xaxis='PFMuon (%s)' %pretty,                     legendpos=43,logy=0,cut=myCut,numcol=3,**kwargs)
@@ -110,10 +110,10 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
         t = tex[l]
         cuts = ['%s & %s' %(myCut,'l%iFlv=="%s"' %((x+1),l)) for x in range(nl)]
         plotMethod(['l%i.Pt'  %(x+1) for x in range(nl)], [40,0,200],            savedir+'%s/Pt'  %name, yaxis='Events/5.0 GeV', xaxis='p_{T}^{%s} (GeV)' %t,        legendpos=43, logy=0, cut=cuts, overflow=True, **kwargs)
-        plotMethod(['l%i.Eta' %(x+1) for x in range(nl)], [30,-3.0,3.0],         savedir+'%s/Eta' %name, yaxis='Events',         xaxis='\\eta^{%s}' %t,              legendpos=43, logy=0, cut=cuts, **kwargs)
-        plotMethod(['l%i.Phi' %(x+1) for x in range(nl)], [30,-3.14159,3.14159], savedir+'%s/Phi' %name, yaxis='Events',         xaxis='\\phi^{%s}' %t,              legendpos=43, logy=0, cut=cuts, **kwargs)
+        plotMethod(['l%i.Eta' %(x+1) for x in range(nl)], [30,-3.0,3.0],         savedir+'%s/Eta' %name, yaxis='Events',         xaxis='\\eta^{%s}' %t,              legendpos=43, logy=0, cut=cuts, numcol=3, **kwargs)
+        plotMethod(['l%i.Phi' %(x+1) for x in range(nl)], [30,-3.14159,3.14159], savedir+'%s/Phi' %name, yaxis='Events',         xaxis='\\phi^{%s}' %t,              legendpos=43, logy=0, cut=cuts, numcol=3, **kwargs)
         plotMethod(['l%i.Iso' %(x+1) for x in range(nl)], [50,0,.5],             savedir+'%s/Iso' %name, yaxis='Events',         xaxis='Relative Isolation (%s)' %t, legendpos=43, logy=0, cut=cuts, **kwargs)    
-        plotMethod(['l%i.ChargeConsistent' %(x+1) for x in range(nl)], [3,-1.5,1.5], savedir+'%s/ChargeId' %name, yaxis='Events', xaxis='Charge ID (%s)' %t,         legendpos=43, logy=0, cut=cuts, **kwargs)    
+        plotMethod(['l%i.ChargeConsistent' %(x+1) for x in range(nl)], [3,-1.5,1.5], savedir+'%s/ChargeId' %name, yaxis='Events', xaxis='Charge ID (%s)' %t,         legendpos=43, logy=0, cut=cuts, numcol=3, **kwargs)    
 
     # plot doubly charged higgs stuff
     if analysis in ['Hpp3l','Hpp4l'] or region in ['Hpp2l']:
@@ -696,23 +696,46 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
         probe = fakeRegions['WZ'][fakeRegion]['probe']
         ptvar = fakeRegions['WZ'][fakeRegion]['ptVar']
         etavar = fakeRegions['WZ'][fakeRegion]['etaVar']
+        ptcut = '{0} >= {1} && {0} < {2}'
+        etacut = 'abs({0}) >= {1} && abs({0}) < {2}'
 
-        plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,rootName='{0}_fakeplots'.format(fakeRegion),scaleFactor='event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale*event.trig_prescale')
+        plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,rootName='{0}_fakeplots'.format(fakeRegion),scaleFactor='event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale*event.trig_prescale',dataScaleFactor='event.trig_prescale')
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
         plotter.initializeDataSamples([sigMap[runPeriod]['data']])
         plotter.setIntLumi(intLumiMap[runPeriod])
         plotMode = 'plotMCData'
         plotMethod = getattr(plotter,plotMode)
+
         logger.info("%s:%s:%iTeV: Plotting discriminating variables: All Probes" % (analysis,channel, runPeriod))
         plotDistributions(plotMethod,denom,nl,isControl,analysis=analysis,savedir='fakeRate/{0}_all'.format(fakeRegion),doDetailed=doDetailed)
+        logger.info("%s:%s:%iTeV: Plotting discriminating variables: All Probes - barrel" % (analysis,channel, runPeriod))
+        thiscut = '{0} && {1}'.format(denom,etacut.format(etavar,etaBins[probe][0],etaBins[probe][1]))
+        plotDistributions(plotMethod,thiscut,nl,isControl,analysis=analysis,savedir='fakeRate/{0}_all/barrel'.format(fakeRegion),doDetailed=doDetailed)
+        logger.info("%s:%s:%iTeV: Plotting discriminating variables: All Probes - endcap" % (analysis,channel, runPeriod))
+        thiscut = '{0} && {1}'.format(denom,etacut.format(etavar,etaBins[probe][1],etaBins[probe][2]))
+        plotDistributions(plotMethod,thiscut,nl,isControl,analysis=analysis,savedir='fakeRate/{0}_all/endcap'.format(fakeRegion),doDetailed=doDetailed)
+
         logger.info("%s:%s:%iTeV: Plotting discriminating variables: Passing" % (analysis,channel, runPeriod))
         plotDistributions(plotMethod,numer,nl,isControl,analysis=analysis,savedir='fakeRate/{0}_prompts'.format(fakeRegion),doDetailed=doDetailed)
+        logger.info("%s:%s:%iTeV: Plotting discriminating variables: Passing - barrel" % (analysis,channel, runPeriod))
+        thiscut = '{0} && {1}'.format(numer,etacut.format(etavar,etaBins[probe][0],etaBins[probe][1]))
+        plotDistributions(plotMethod,thiscut,nl,isControl,analysis=analysis,savedir='fakeRate/{0}_prompts/barrel'.format(fakeRegion),doDetailed=doDetailed)
+        logger.info("%s:%s:%iTeV: Plotting discriminating variables: Passing - endcap" % (analysis,channel, runPeriod))
+        thiscut = '{0} && {1}'.format(numer,etacut.format(etavar,etaBins[probe][1],etaBins[probe][2]))
+        plotDistributions(plotMethod,thiscut,nl,isControl,analysis=analysis,savedir='fakeRate/{0}_prompts/endcap'.format(fakeRegion),doDetailed=doDetailed)
+
         logger.info("%s:%s:%iTeV: Plotting discriminating variables: Failing" % (analysis,channel, runPeriod))
         plotDistributions(plotMethod,'{0} & !({1})'.format(denom,numer),nl,isControl,analysis=analysis,savedir='fakeRate/{0}_fakes'.format(fakeRegion),doDetailed=doDetailed)
+        logger.info("%s:%s:%iTeV: Plotting discriminating variables: Failing - barrel" % (analysis,channel, runPeriod))
+        thiscut = '{0} && {1}'.format('{0} & !({1})'.format(denom,numer),etacut.format(etavar,etaBins[probe][0],etaBins[probe][1]))
+        plotDistributions(plotMethod,thiscut,nl,isControl,analysis=analysis,savedir='fakeRate/{0}_fakes/barrel'.format(fakeRegion),doDetailed=doDetailed)
+        logger.info("%s:%s:%iTeV: Plotting discriminating variables: Failing - endcap" % (analysis,channel, runPeriod))
+        thiscut = '{0} && {1}'.format('{0} & !({1})'.format(denom,numer),etacut.format(etavar,etaBins[probe][1],etaBins[probe][2]))
+        plotDistributions(plotMethod,thiscut,nl,isControl,analysis=analysis,savedir='fakeRate/{0}_fakes/endcap'.format(fakeRegion),doDetailed=doDetailed)
 
         # now plot the fake rates
         logger.info("%s:%s:%iTeV: Computing fake rates" % (analysis,channel, runPeriod))
-        plotter = FakeRatePlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='{0}_fakerates'.format(fakeRegion),mergeDict=mergeDict,scaleFactor='event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale*event.trig_prescale')
+        plotter = FakeRatePlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='{0}_fakerates'.format(fakeRegion),mergeDict=mergeDict,scaleFactor='event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale*event.trig_prescale',dataScaleFactor='event.trig_prescale')
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
         plotter.initializeDataSamples([sigMap[runPeriod]['data']])
         plotter.setIntLumi(intLumiMap[runPeriod])

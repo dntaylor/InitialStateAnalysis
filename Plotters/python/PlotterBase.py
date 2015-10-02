@@ -41,6 +41,7 @@ class PlotterBase(object):
         rootName = kwargs.pop('rootName','plots')
         mergeDict = kwargs.pop('mergeDict',{})
         scaleFactor = kwargs.pop('scaleFactor','event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale')
+        dataScaleFactor = kwargs.pop('dataScaleFactor','1')
         for key, value in kwargs.iteritems():
             self.logger.warning("Unrecognized parameter '%s' = %s" %(key,str(value)))
 
@@ -92,6 +93,7 @@ class PlotterBase(object):
         self.intLumi = 25000. # just a default 25 fb-1 for plotting without data
         self.sampleMergeDict = mergeDict
         self.scaleFactor = scaleFactor
+        self.dataScaleFactor = dataScaleFactor
 
     def reset(self):
         '''Reset the plotter class'''
@@ -254,7 +256,7 @@ class PlotterBase(object):
         totalErr2 = 0
         scalefactor = "event.gen_weight*event.lep_scale_up*event.trig_scale*event.pu_weight" if scaleup else self.scaleFactor
         if 'data' in sample:
-            scalefactor = '1'
+            scalefactor = self.dataScaleFactor
             if doDataDriven: scalefactor = 'event.datadriven_weight'
         if customScale: scalefactor = customScale
         self.j += 1
@@ -306,7 +308,7 @@ class PlotterBase(object):
         if 'data' not in sample:
             tree.Draw(drawString,'%s*(%s)' % (self.scaleFactor,cut),'goff')
         else:
-            tree.Draw(drawString,cut,'goff')
+            tree.Draw(drawString,'%s*(%s)' % (self.dataScaleFactor,cut),'goff')
         if not ROOT.gDirectory.Get("h%s%s%s" %(sample, var1,var2)):
             return 0
         hist = ROOT.gDirectory.Get("h%s%s%s" %(sample, var1,var2)).Clone("hmod%s%s%s"%(sample,var1,var2))
@@ -365,7 +367,7 @@ class PlotterBase(object):
         if 'data' not in sample:
             tree.Draw(drawString,'%s*(%s)' % (self.scaleFactor,cut),'goff')
         else:
-            tree.Draw(drawString,cut,'goff')
+            tree.Draw(drawString,'%s*(%s)' % (self.dataScaleFactor,cut),'goff')
         if not ROOT.gDirectory.Get(histname):
             return 0
         hist = ROOT.gDirectory.Get(histname).Clone(histname+'_mod')
@@ -613,8 +615,8 @@ class PlotterBase(object):
             yend = 0.91
         else:                     # default, top, just below CMS label
             yend = 0.77
-        xstart = xend-0.2*numcol-0.1
-        ystart = yend-ceil(float(numEntries)/numcol)*0.045
+        xstart = xend-0.15*numcol-0.15
+        ystart = yend-math.ceil(float(numEntries)/numcol)*0.045
         if plotratio: yend *= 0.95
         # create and draw legend
         leg = ROOT.TLegend(xstart,ystart,xend,yend,'','NDC')

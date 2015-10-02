@@ -221,6 +221,21 @@ def main(argv=None):
             }
             alternateIds = []
             doVBF = False
+        if args.analysis == 'Hpp4l':
+            channel = 'Hpp4l'
+            final_states = ['eeee','eeem','eemm','emmm','mmmm'] # no tau
+            initial_states = ['h1','h2']
+            other_states = [['z1', 'z2']]
+            states = other_states + [initial_states]
+            object_definitions = {
+                'h1': ['em','em'],
+                'h2': ['em','em'],
+                'z1': ['em','em'],
+                'z2': ['em','em'],
+            }
+            alternateIds = []
+            doVBF = False
+
 
         logging.debug('Loading dummy file.')
         dummyfile = ROOT.TFile('dummy.root','recreate')
@@ -257,10 +272,18 @@ def main(argv=None):
             tree.SetBranchAddress("l2Flv",ROOT.AddressOf(branches['l2Flv'],"Flv"))
             tree.SetBranchAddress("l3",ROOT.AddressOf(branches['l3'],"Pt"))
             tree.SetBranchAddress("l3Flv",ROOT.AddressOf(branches['l3Flv'],"Flv"))
-            tree.SetBranchAddress("z1",ROOT.AddressOf(branches['z1'],"mass"))
-            tree.SetBranchAddress("z1Flv",ROOT.AddressOf(branches['z1Flv'],"Flv"))
-            tree.SetBranchAddress("w1",ROOT.AddressOf(branches['w1'],"mass"))
-            tree.SetBranchAddress("w1Flv",ROOT.AddressOf(branches['w1Flv'],"Flv"))
+            if args.analysis in ['Hpp4l']:
+                tree.SetBranchAddress("l4",ROOT.AddressOf(branches['l4'],"Pt"))
+                tree.SetBranchAddress("l4Flv",ROOT.AddressOf(branches['l4Flv'],"Flv"))
+            if args.analysis in ['Hpp3l','Hpp4l','WZ']:
+                tree.SetBranchAddress("z1",ROOT.AddressOf(branches['z1'],"mass"))
+                tree.SetBranchAddress("z1Flv",ROOT.AddressOf(branches['z1Flv'],"Flv"))
+            if args.analysis in ['Hpp4l']:
+                tree.SetBranchAddress("z2",ROOT.AddressOf(branches['z2'],"mass"))
+                tree.SetBranchAddress("z2Flv",ROOT.AddressOf(branches['z2Flv'],"Flv"))
+            if args.analysis in ['Hpp3l','WZ']:
+                tree.SetBranchAddress("w1",ROOT.AddressOf(branches['w1'],"mass"))
+                tree.SetBranchAddress("w1Flv",ROOT.AddressOf(branches['w1Flv'],"Flv"))
         else:
             logging.error('Unrecognized ntuple type. Valid values are isa or fsa.')
             return 0
