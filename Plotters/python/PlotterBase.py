@@ -21,6 +21,7 @@ from xsec import xsecs
 from dataStyles import dataStyles
 import CMS_lumi, tdrstyle
 from plotUtils import *
+from InitialStateAnalysis.Limits.limitUtils import *
 
 ROOT.gROOT.SetBatch(ROOT.kTRUE)
 ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 2001;")
@@ -226,6 +227,51 @@ class PlotterBase(object):
         return result
 
     def getIndividualSampleEntries(self,sample,selection,scalefactor,**kwargs):
+        bp = kwargs.pop('bp','')
+        if bp and 'HPlusPlus' in sample: # need to get scaled entries
+            do4l = kwargs.pop('do4l',False)
+            runTau = kwargs.pop('runTau',False)
+            s = getScales(bp)
+            genLeps = 4 if self.analysis=='Hpp4l' or do4l else 3
+            recoLeps = 4 if self.analysis=='Hpp4l' else 3
+            channelMap = getChannelMap(bp, genLeps, recoLeps, runTau=runTau)
+            higgsChannels = channelMap['names']
+            genChannelsMap = channelMap['genmap']
+            recoChannelsMap = channelMap['recomap']
+            allRecoChannels = channelMap['allreco']
+            sf = getattr(s,'scale_%s'%self.analysis)
+            if do4l: sf = getattr(s,'scale_Hpp4l')
+            # setup the scaling
+            genChannels = []
+            genCuts = []
+            genScales = []
+            recoChannels = []
+            for r in allRecoChannels:
+                logging.debug('Adding reco channel %s' %r)
+                recoChannels += [r]
+                recoCut = 'channel=="%s"' % r
+                for h in genChannelsMap:
+                    if r not in recoChannelsMap[h]: continue
+                    for g in genChannelsMap[h]:
+                        scale = sf(g[:2],g[2:])
+                        if not scale: continue
+                        logging.debug('Adding gen channel %s with scale %f' %(g,scale))
+                        genChannels += [g]
+                        genCuts += ['(%s && genChannel=="%s")' % (recoCut,g)]
+                        genScales += [scale]
+            # now get the summed scaled entries
+            totVal = 0.
+            totErr2 = 0.
+            for gencut, scale in zip(genCuts, genScales):
+                thisCut = '{0} && {1}'.format(selection,gencut)
+                val, err = self.getScaledIndividualSampleEntries(sample,thisCut,scalefactor,**kwargs)
+                totVal += val*scale
+                totErr2 += err*err*scale*scale
+            return totVal, abs(totErr2)**0.5
+        else:
+            return self.getScaledIndividualSampleEntries(sample,selection,scalefactor,**kwargs)
+
+    def getScaledIndividualSampleEntries(self,sample,selection,scalefactor,**kwargs):
         tree = self.samples[sample]['file'].Get(self.analysis)
         tree.Draw('1>>h%s%i(1,0,2)'%(sample,self.j),'%s*(%s)' %(scalefactor,selection),'goff')
         if not ROOT.gDirectory.Get("h%s%i" %(sample,self.j)):
@@ -243,7 +289,6 @@ class PlotterBase(object):
         err = err * self.intLumi/lumi
         self.logger.debug('%s: Lumi scaled: %f'%(sample,val))
         return val, err
-
 
     def getNumEntries(self,selection,sample,**kwargs):
         '''Return the lumi scaled number of entries passing a given cut.'''
@@ -264,11 +309,11 @@ class PlotterBase(object):
         if sample in self.sampleMergeDict:
             for s in self.sampleMergeDict[sample]:
                 thisCut = selection + ' & ' + self.sampleMergeDict[sample][s] if 'data' not in s else selection
-                val, err = self.getIndividualSampleEntries(s,thisCut,scalefactor)
+                val, err = self.getIndividualSampleEntries(s,thisCut,scalefactor,**kwargs)
                 totalVal += val
                 totalErr2 += err*err
         else:
-            val, err = self.getIndividualSampleEntries(sample,selection,scalefactor)
+            val, err = self.getIndividualSampleEntries(sample,selection,scalefactor,**kwargs)
             totalVal += val
             totalErr2 += err*err
         totalErr = totalErr2 ** 0.5

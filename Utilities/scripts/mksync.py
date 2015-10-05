@@ -18,7 +18,10 @@ def sync(analysis,channel,period,**kwargs):
     doCounts = kwargs.pop('doCounts',False)
     doCorrelation = kwargs.pop('doCorrelation',False)
     doChargeId = kwargs.pop('doChargeId',False)
+    do4l = kwargs.pop('do4l',False)
+    doFinalStates = kwargs.pop('doFinalStates',False)
     cut = kwargs.pop('cut','1')
+    bp = kwargs.pop('bp','')
     mass = kwargs.pop('mass',500)
 
     print ''
@@ -37,11 +40,14 @@ def sync(analysis,channel,period,**kwargs):
     nl = 3 if analysis == 'WZ' or analysis == 'Hpp3l' else 4
     finalStates, leptons = getChannels(nl)
     if analysis in ['WZ']: finalStates = ['eee','eem','mme','mmm']
+    s = 'Sig'
+    if analysis in ['WZ']: s = 'WZ'
+    if do4l: s = 'SigPP'
     sigMap = getSigMap(nl,mass)
     channelBackground =  getChannelBackgrounds(period)
     plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=period,mergeDict=mergeDict)
     plotter.initializeBackgroundSamples([sigMap[period][x] for x in channelBackground[channel]])
-    if analysis in ['Hpp3l', 'Hpp4l']: plotter.initializeSignalSamples([sigMap[period]['Sig']])
+    if analysis in ['Hpp3l', 'Hpp4l']: plotter.initializeSignalSamples([sigMap[period][s]])
     plotter.initializeDataSamples([sigMap[period]['data']])
     intLumi = getIntLumiMap()[period]
     plotter.setIntLumi(intLumi)
@@ -51,14 +57,13 @@ def sync(analysis,channel,period,**kwargs):
         cutflow[l] = c
     cutflows = cutflowMap['labels_simple']
     allMC = channelBackground[channel]
-    s = 'Sig' if analysis in ['Hpp3l', 'Hpp4l'] else 'WZ'
-    if analysis in ['Hpp3l', 'Hpp4l']: allMC += ['Sig']
+    if analysis in ['Hpp3l', 'Hpp4l']: allMC += [s]
 
     if doCounts:
         print '{0} event counts'.format(analysis)
         tempCut = cut
         for chan in finalStates:
-            num = plotter.getNumEntries('%s&channel=="%s"' %(tempCut,chan), sigMap[period][s], doUnweighted=True)
+            num = plotter.getNumEntries('%s&channel=="%s"' %(tempCut,chan), sigMap[period][s], doUnweighted=True, do4l=do4l, bp=bp)
             print '%s: %i' % (chan, num)
         print ''
 
@@ -70,7 +75,7 @@ def sync(analysis,channel,period,**kwargs):
         for chan in finalStates:
             print '%8s |    Channel |      Yield' % chan
             for b in allMC:
-                val = plotter.getNumEntries('%s&channel=="%s"' %(cut,chan), sigMap[period][b])
+                val = plotter.getNumEntries('%s&channel=="%s"' %(cut,chan), sigMap[period][b], do4l=do4l, bp=bp)
                 print '         | %10s | %10.2f' %(b,val)
             print ''
 
@@ -84,7 +89,7 @@ def sync(analysis,channel,period,**kwargs):
                 bg = 0
                 theCut = '&'.join([cutflow[x] for x in cutflows[0:c+1]])
                 for b in allMC:
-                    val = plotter.getNumEntries('%s&channel=="%s"' %(theCut,chan), sigMap[period][b])
+                    val = plotter.getNumEntries('%s&channel=="%s"' %(theCut,chan), sigMap[period][b], do4l=do4l, bp=bp)
                     if b==s: sig += val
                     elif 'data' in b: pass
                     else: bg += val
@@ -107,12 +112,12 @@ def sync(analysis,channel,period,**kwargs):
         dataDenom = 0.
         dataDenom_err_2 = 0.
         for b in allMC + ['data']:
-            val01, err01 = plotter.getNumEntries('%s & l1Flv=="e" & l1.ChargeConsistent==0' %cut, sigMap[period][b], doError=True)
-            val02, err02 = plotter.getNumEntries('%s & l2Flv=="e" & l2.ChargeConsistent==0' %cut, sigMap[period][b], doError=True)
-            val03, err03 = plotter.getNumEntries('%s & l3Flv=="e" & l3.ChargeConsistent==0' %cut, sigMap[period][b], doError=True)
-            val11, err11 = plotter.getNumEntries('%s & l1Flv=="e" & l1.ChargeConsistent==1' %cut, sigMap[period][b], doError=True)
-            val12, err12 = plotter.getNumEntries('%s & l2Flv=="e" & l2.ChargeConsistent==1' %cut, sigMap[period][b], doError=True)
-            val13, err13 = plotter.getNumEntries('%s & l3Flv=="e" & l3.ChargeConsistent==1' %cut, sigMap[period][b], doError=True)
+            val01, err01 = plotter.getNumEntries('%s & l1Flv=="e" & l1.ChargeConsistent==0' %cut, sigMap[period][b], doError=True, do4l=do4l, bp=bp)
+            val02, err02 = plotter.getNumEntries('%s & l2Flv=="e" & l2.ChargeConsistent==0' %cut, sigMap[period][b], doError=True, do4l=do4l, bp=bp)
+            val03, err03 = plotter.getNumEntries('%s & l3Flv=="e" & l3.ChargeConsistent==0' %cut, sigMap[period][b], doError=True, do4l=do4l, bp=bp)
+            val11, err11 = plotter.getNumEntries('%s & l1Flv=="e" & l1.ChargeConsistent==1' %cut, sigMap[period][b], doError=True, do4l=do4l, bp=bp)
+            val12, err12 = plotter.getNumEntries('%s & l2Flv=="e" & l2.ChargeConsistent==1' %cut, sigMap[period][b], doError=True, do4l=do4l, bp=bp)
+            val13, err13 = plotter.getNumEntries('%s & l3Flv=="e" & l3.ChargeConsistent==1' %cut, sigMap[period][b], doError=True, do4l=do4l, bp=bp)
             val0 = val01+val02+val03
             val1 = val11+val12+val13
             err0_2 = err01**2 + err02**2 + err03**2
@@ -156,12 +161,12 @@ def sync(analysis,channel,period,**kwargs):
             ptlow = ptBins[p]
             pthigh = ptBins[p+1]
             for b in allMC + ['data']:
-                val01, err01 = plotter.getNumEntries('%s && l1Flv=="e" && l1.ChargeConsistent==0 && l1.Pt > %f && l1.Pt < %f' %(cut,ptlow,pthigh), sigMap[period][b], doError=True)
-                val02, err02 = plotter.getNumEntries('%s && l2Flv=="e" && l2.ChargeConsistent==0 && l2.Pt > %f && l2.Pt < %f' %(cut,ptlow,pthigh), sigMap[period][b], doError=True)
-                val03, err03 = plotter.getNumEntries('%s && l3Flv=="e" && l3.ChargeConsistent==0 && l3.Pt > %f && l3.Pt < %f' %(cut,ptlow,pthigh), sigMap[period][b], doError=True)
-                val11, err11 = plotter.getNumEntries('%s && l1Flv=="e" && l1.ChargeConsistent==1 && l1.Pt > %f && l1.Pt < %f' %(cut,ptlow,pthigh), sigMap[period][b], doError=True)
-                val12, err12 = plotter.getNumEntries('%s && l2Flv=="e" && l2.ChargeConsistent==1 && l2.Pt > %f && l2.Pt < %f' %(cut,ptlow,pthigh), sigMap[period][b], doError=True)
-                val13, err13 = plotter.getNumEntries('%s && l3Flv=="e" && l3.ChargeConsistent==1 && l3.Pt > %f && l3.Pt < %f' %(cut,ptlow,pthigh), sigMap[period][b], doError=True)
+                val01, err01 = plotter.getNumEntries('%s && l1Flv=="e" && l1.ChargeConsistent==0 && l1.Pt > %f && l1.Pt < %f' %(cut,ptlow,pthigh), sigMap[period][b], doError=True, do4l=do4l, bp=bp)
+                val02, err02 = plotter.getNumEntries('%s && l2Flv=="e" && l2.ChargeConsistent==0 && l2.Pt > %f && l2.Pt < %f' %(cut,ptlow,pthigh), sigMap[period][b], doError=True, do4l=do4l, bp=bp)
+                val03, err03 = plotter.getNumEntries('%s && l3Flv=="e" && l3.ChargeConsistent==0 && l3.Pt > %f && l3.Pt < %f' %(cut,ptlow,pthigh), sigMap[period][b], doError=True, do4l=do4l, bp=bp)
+                val11, err11 = plotter.getNumEntries('%s && l1Flv=="e" && l1.ChargeConsistent==1 && l1.Pt > %f && l1.Pt < %f' %(cut,ptlow,pthigh), sigMap[period][b], doError=True, do4l=do4l, bp=bp)
+                val12, err12 = plotter.getNumEntries('%s && l2Flv=="e" && l2.ChargeConsistent==1 && l2.Pt > %f && l2.Pt < %f' %(cut,ptlow,pthigh), sigMap[period][b], doError=True, do4l=do4l, bp=bp)
+                val13, err13 = plotter.getNumEntries('%s && l3Flv=="e" && l3.ChargeConsistent==1 && l3.Pt > %f && l3.Pt < %f' %(cut,ptlow,pthigh), sigMap[period][b], doError=True, do4l=do4l, bp=bp)
                 val0 = val01+val02+val03
                 val1 = val11+val12+val13
                 err0_2 = err01**2 + err02**2 + err03**2
@@ -210,8 +215,8 @@ def sync(analysis,channel,period,**kwargs):
             bgFull = 0
             theFullCut = '&'.join([cutflow[x] for x in cutflows])
             for b in allMC:
-                valPre = plotter.getNumEntries('%s&channel=="%s"' %(cut,chan), sigMap[period][b])
-                valFull = plotter.getNumEntries('%s&channel=="%s"' %(theFullCut,chan), sigMap[period][b])
+                valPre = plotter.getNumEntries('%s&channel=="%s"' %(cut,chan), sigMap[period][b], do4l=do4l, bp=bp)
+                valFull = plotter.getNumEntries('%s&channel=="%s"' %(theFullCut,chan), sigMap[period][b], do4l=do4l, bp=bp)
                 if b==s:
                     sigPre += valPre
                     sigFull += valFull
@@ -247,8 +252,8 @@ def sync(analysis,channel,period,**kwargs):
                 theCut = '&'.join([cutflow[x] for x in cutflows if x != c])
                 theOnlyCut = '%s&%s' % (cut, cutflow[c])
                 for b in allMC:
-                    valAllbut = plotter.getNumEntries('%s&channel=="%s"' %(theCut,chan), sigMap[period][b])
-                    valOnly = plotter.getNumEntries('%s&channel=="%s"' %(theOnlyCut,chan), sigMap[period][b])
+                    valAllbut = plotter.getNumEntries('%s&channel=="%s"' %(theCut,chan), sigMap[period][b], do4l=do4l, bp=bp)
+                    valOnly = plotter.getNumEntries('%s&channel=="%s"' %(theOnlyCut,chan), sigMap[period][b], do4l=do4l, bp=bp)
                     if b==s:
                         sigAllbut += valAllbut
                         sigOnly += valOnly
@@ -281,8 +286,8 @@ def sync(analysis,channel,period,**kwargs):
             allFull[chan] = {}
             theFullCut = '&'.join([cutflow[x] for x in cutflows])
             for b in allMC:
-                valPre = plotter.getNumEntries('%s&channel=="%s"' %(cut,chan), sigMap[period][b])
-                valFull = plotter.getNumEntries('%s&channel=="%s"' %(theFullCut,chan), sigMap[period][b])
+                valPre = plotter.getNumEntries('%s&channel=="%s"' %(cut,chan), sigMap[period][b], do4l=do4l, bp=bp)
+                valFull = plotter.getNumEntries('%s&channel=="%s"' %(theFullCut,chan), sigMap[period][b], do4l=do4l, bp=bp)
                 allPre[chan][b] = valPre
                 allFull[chan][b] = valFull
         allPre['all'] = {}
@@ -307,8 +312,8 @@ def sync(analysis,channel,period,**kwargs):
                 theCut = '&'.join([cutflow[x] for x in cutflows if x != c])
                 theOnlyCut = '%s&%s' % (cut, cutflow[c])
                 for b in allMC:
-                    valAllbut = plotter.getNumEntries('%s&channel=="%s"' %(theCut,chan), sigMap[period][b])
-                    valOnly = plotter.getNumEntries('%s&channel=="%s"' %(theOnlyCut,chan), sigMap[period][b])
+                    valAllbut = plotter.getNumEntries('%s&channel=="%s"' %(theCut,chan), sigMap[period][b], do4l=do4l, bp=bp)
+                    valOnly = plotter.getNumEntries('%s&channel=="%s"' %(theOnlyCut,chan), sigMap[period][b], do4l=do4l, bp=bp)
                     allBut[chan][b] = valAllbut
                     allOnly[chan][b] = valOnly
                     allPreEff[chan][b] = allOnly[chan][b]/allPre[chan][b] if allPre[chan][b] else -1
@@ -342,8 +347,8 @@ def sync(analysis,channel,period,**kwargs):
                 for nc in cutflows[1:]:
                     numCut = '%s & %s & %s' % (cut, cutflow[dc], cutflow[nc])
                     denomCut = '%s & %s' % (cut, cutflow[dc])
-                    numSig = plotter.getNumEntries('%s&channel=="%s"' %(numCut,chan), sigMap[period][s])
-                    denomSig = plotter.getNumEntries('%s&channel=="%s"' %(denomCut,chan), sigMap[period][s])
+                    numSig = plotter.getNumEntries('%s&channel=="%s"' %(numCut,chan), sigMap[period][s], do4l=do4l, bp=bp)
+                    denomSig = plotter.getNumEntries('%s&channel=="%s"' %(denomCut,chan), sigMap[period][s], do4l=do4l, bp=bp)
                     eff = numSig/denomSig if denomSig else -1
                     row += [eff]
                 print ' | '.join(['%15s'%dc] + ['%15.4f' % x for x in row])
@@ -364,6 +369,9 @@ def parse_command_line(argv):
     parser.add_argument('-de','--doEfficiency',action='store_true',help='run efficiencies')
     parser.add_argument('-dy','--doYields',action='store_true',help='run yields')
     parser.add_argument('-dco','--doCorrelation',action='store_true',help='run correlation')
+    parser.add_argument('-df','--do4l',action='store_true',help='do PP part of Hpp3l')
+    parser.add_argument('-dfs','--doFinalStates',action='store_true',help='do individual channels')
+    parser.add_argument('-bp','--branchingPoint',nargs='?',type=str,const='',default='',choices=['ee100','em100','mm100','et100','mt100','tt100','BP1','BP2','BP3','BP4',''],help='Choose branching point for H++')
     parser.add_argument('-c','--cut',type=str,default='select.passTight',help='Cut to be applied to plots (default = "select.passTight").')
     args = parser.parse_args(argv)
 
@@ -400,7 +408,10 @@ def main(argv=None):
          doCutflow=args.doCutflow,
          doYields=args.doYields,
          doCounts=args.doCounts,
-         doCorrelation=args.doCorrelation
+         doCorrelation=args.doCorrelation,
+         do4l=args.do4l,
+         bp=args.branchingPoint,
+         doFinalStates=args.doFinalStates
     )
 
     return 0
