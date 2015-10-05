@@ -67,7 +67,8 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
         '''
         #singleTrigMatch_leg1 = getattr(rtrow,'%sMatchesSingleE_leg1' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg1' %self.objCand[0])
         singleTrigMatch_leg2 = getattr(rtrow,'%sMatchesSingleE_leg2' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg2' %self.objCand[0])
-        return singleTrigMatch_leg2 
+        veto = (rtrow.eVeto + rtrow.muVeto == 0)
+        return singleTrigMatch_leg2 and veto
 
     def getTriggerPrescale(self,rtrow):
         #singleTrigPrescale_leg1 = rtrow.singleE_leg1Prescale if self.objCand[0][0]=='e' else rtrow.singleMu_leg1Prescale
@@ -261,6 +262,15 @@ class AnalyzerWZ_HZZDijetFakeRate(AnalyzerWZ_DijetFakeRate):
             if type in self.alternateIds:
                 kwargs = self.alternateIdMap[type]
         return kwargs
+
+    def good_to_store(self,rtrow, cand1, cand2):
+        '''
+        Select the trigger object
+        '''
+        #singleTrigMatch_leg1 = getattr(rtrow,'%sMatchesSingleE_leg1' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg1' %self.objCand[0])
+        singleTrigMatch_leg2 = getattr(rtrow,'%sMatchesSingleE_leg2' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg2' %self.objCand[0])
+        veto = (rtrow.eVetoMVAIsoVtx + rtrow.muVetoPt5 == 0)
+        return singleTrigMatch_leg2 and veto
 
 
 ##########################

@@ -183,7 +183,7 @@ class AnalyzerBase(object):
                 tempEvts = 0
                 for entry in xrange(metatree.GetEntries()):
                     metatree.GetEntry(entry)
-                    tempEvts += metatree.nevents if self.isData else metatree.summedWeights # gen level processed
+                    tempEvts += metatree.nevents if self.isData or self.period==8 else metatree.summedWeights # gen level processed
                 #else: # THIS WAS MY PROBLEM AT 8 TEV: TODO: Check 13TeV in FSA with miniAOD
                 #    metatree = rtFile.Get("%s/eventCount" % fs)
                 #    tempEvts = metatree.GetEntries()
@@ -496,8 +496,8 @@ class AnalyzerBase(object):
                         ntupleRow["%s.DPhiIn%i" % (i,objCount)] = float(getattr(rtrow, "%sdeltaPhiSuperClusterTrackAtVtx" % (l))) if l[0] in 'e' else float(-9.)
                         ntupleRow["%s.HOverE%i" % (i,objCount)] = float(getattr(rtrow, "%sHadronicOverEM" % (l))) if l[0] in 'e' else float(-1.)
                         ntupleRow["%s.OoEmOoP%i" % (i,objCount)] = float(abs((1.-getattr(rtrow, "%seSuperClusterOverP" % (l)))*1./getattr(rtrow, "%secalEnergy" % (l)))) if l[0] in 'e' else float(-1.)
-                        ntupleRow["%s.TriggeringMVA%i" % (i,objCount)] = float(-9.)
-                        ntupleRow["%s.NonTriggeringMVA%i" % (i,objCount)] = float(getattr(rtrow, "%sMVANonTrigID" % (l))) if l[0] in 'e' else float(-9.)
+                        ntupleRow["%s.TriggeringMVA%i" % (i,objCount)] = float(-9. if self.period==13 else getattr(rtrow, "%sMVATrig" % (l))) if l[0] in 'e' else float(-9.)
+                        ntupleRow["%s.NonTriggeringMVA%i" % (i,objCount)] = float(getattr(rtrow, "%sMVANonTrigID" % (l)) if period==13 else getattr(rtrow, "%sMVANonTrig" % (l))) if l[0] in 'e' else float(-9.)
                         ntupleRow["%s.NormalizedChi2%i" % (i,objCount)] = float(getattr(rtrow, "%sNormTrkChi2" % (l))) if l[0] in 'm' else float(-1.)
                         ntupleRow["%s.JetPt%i" % (i,objCount)] = float(getattr(rtrow, "%sJetPt" % l)) if (theObjects and l[0] in 'emt') else float(-9.)
                         ntupleRow["%s.JetBTag%i" % (i,objCount)] = float(-9.)
@@ -528,7 +528,7 @@ class AnalyzerBase(object):
                             if l[0]=='e':
                                 ntupleRow["%s.ChargeConsistent%i" % (i,objCount)] = int(getattr(rtrow,'%sChargeIdTight' %l))
                         ntupleRow["%s.ExpectedMissingInnerHits%i" % (i,objCount)] = int(getattr(rtrow,'%sMissingHits' %l)) if l[0]=='e' else int(-1)
-                        ntupleRow["%s.PassConversionVeto%i" % (i,objCount)] = int(getattr(rtrow,'%sPassesConversionVeto' %l)) if l[0]=='e' else int(-1)
+                        ntupleRow["%s.PassConversionVeto%i" % (i,objCount)] = int(getattr(rtrow,'%sPassesConversionVeto' %l) if period==13 else not getattr(rtrow, "%sHasConversion" %l)) if l[0]=='e' else int(-1)
                         ntupleRow["%s.IsGlobalMuon%i" % (i,objCount)] = int(getattr(rtrow,'%sIsGlobal' %l)) if l[0]=='m' else int(-1)
                         ntupleRow["%s.IsPFMuon%i" % (i,objCount)] = int(getattr(rtrow,'%sIsPFMuon' %l)) if l[0]=='m' else int(-1)
                         ntupleRow["%s.IsTrackerMuon%i" % (i,objCount)] = int(getattr(rtrow,'%sIsTracker' %l)) if l[0]=='m' else int(-1)
@@ -595,8 +595,8 @@ class AnalyzerBase(object):
             ntupleRow["%s%i.DPhiIn" % (charName,objCount)] = float(getattr(rtrow, "%sdeltaPhiSuperClusterTrackAtVtx" % (obj))) if obj[0] in 'e' else float(-9.)
             ntupleRow["%s%i.HOverE" % (charName,objCount)] = float(getattr(rtrow, "%sHadronicOverEM" % (obj))) if obj[0] in 'e' else float(-1.)
             ntupleRow["%s%i.OoEmOoP" % (charName,objCount)] = float(abs((1.-getattr(rtrow, "%seSuperClusterOverP" % (obj)))*1./getattr(rtrow, "%secalEnergy" % (obj)))) if obj[0] in 'e' else float(-1.)
-            ntupleRow["%s%i.TriggeringMVA" % (charName,objCount)] = float(-9.)
-            ntupleRow["%s%i.NonTriggeringMVA" % (charName,objCount)] = float(getattr(rtrow, "%sMVANonTrigID" % (obj))) if obj[0] in 'e' else float(-9.)
+            ntupleRow["%s%i.TriggeringMVA" % (charName,objCount)] = float(-9. if self.period==13 else getattr(rtrow, "%sMVATrig" % (obj))) if obj[0] in 'e' else float(-9.)
+            ntupleRow["%s%i.NonTriggeringMVA" % (charName,objCount)] = float(getattr(rtrow, "%sMVANonTrigID" % (obj)) if self.period==13 else getattr(rtrow, "%sMVANonTrig" % (obj))) if obj[0] in 'e' else float(-9.)
             ntupleRow["%s%i.NormalizedChi2" % (charName,objCount)] = float(getattr(rtrow, "%sNormTrkChi2" % (obj))) if obj[0] in 'm' else float(-1.)
             ntupleRow["%s%i.JetPt" % (charName,objCount)] = float(getattr(rtrow, "%sJetPt" % obj)) if obj[0] in 'emt' else float(-1.)
             if obj[0] in 'emt':
@@ -622,7 +622,7 @@ class AnalyzerBase(object):
                 ntupleRow["%s%i.MotherGenPdgId" % (charName,objCount)] = float(getattr(rtrow, "%sGenMotherPdgId" % obj))
             ntupleRow["%s%i.ChargeConsistent" % (charName,objCount)] = int(getattr(rtrow,'%sChargeIdTight' %obj)) if obj[0]=='e' and self.period==8 else int(-1)
             ntupleRow["%s%i.ExpectedMissingInnerHits" % (charName,objCount)] = int(getattr(rtrow,'%sMissingHits' %obj)) if obj[0]=='e' else int(-1)
-            ntupleRow["%s%i.PassConversionVeto" % (charName,objCount)] = int(getattr(rtrow,'%sPassesConversionVeto' %obj)) if obj[0]=='e' else int(-1)
+            ntupleRow["%s%i.PassConversionVeto" % (charName,objCount)] = int(getattr(rtrow,'%sPassesConversionVeto' %obj) if self.period==13 else not getattr(rtrow,'%sHasConversion' %obj)) if obj[0]=='e' else int(-1)
             ntupleRow["%s%i.IsGlobalMuon" % (charName,objCount)] = int(getattr(rtrow,'%sIsGlobal' %obj)) if obj[0]=='m' else int(-1)
             ntupleRow["%s%i.IsPFMuon" % (charName,objCount)] = int(getattr(rtrow,'%sIsPFMuon' %obj)) if obj[0]=='m' else int(-1)
             ntupleRow["%s%i.IsTrackerMuon" % (charName,objCount)] = int(getattr(rtrow,'%sIsTracker' %obj)) if obj[0]=='m' else int(-1)

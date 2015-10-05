@@ -148,8 +148,8 @@ class AnalyzerHpp4l(AnalyzerBase):
         cuts = CutSequence()
         if self.isData: cuts.add(self.trigger)
         cuts.add(self.fiducial)
-        cuts.add(self.overlap)
-        cuts.add(self.trigger_threshold)
+        #cuts.add(self.overlap)
+        #cuts.add(self.trigger_threshold)
         #cuts.add(self.ID_loose)
         cuts.add(self.ID_tight) # put it to WZ for now... 
         cuts.add(self.qcd_rejection)
@@ -159,8 +159,8 @@ class AnalyzerHpp4l(AnalyzerBase):
         cuts = CutSequence()
         if self.isData: cuts.add(self.trigger)
         cuts.add(self.fiducial)
-        cuts.add(self.overlap)
-        cuts.add(self.trigger_threshold)
+        #cuts.add(self.overlap)
+        #cuts.add(self.trigger_threshold)
         cuts.add(self.ID_tight)
         cuts.add(self.qcd_rejection)
         return cuts
@@ -219,10 +219,10 @@ class AnalyzerHpp4l(AnalyzerBase):
     def fiducial(self, rtrow):
         for l in self.objects:
             if l[0]=='e':
-                ptcut = 10.0
+                ptcut = 20.0
                 etacut = 2.5
             if l[0]=='m':
-                ptcut = 10.0
+                ptcut = 20.0
                 etacut = 2.4
             if l[0]=='t':
                 ptcut = 20.0

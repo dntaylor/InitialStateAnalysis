@@ -339,7 +339,7 @@ class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
         Iterate through minimizing variables.
         '''
         good = False
-        for min1, min2 in zip(cand1, cand2):
+        for min1, min2 in zip([cand1[0]], [cand2[0]]):
             if min1 < min2:
                 good = True
                 break
@@ -350,7 +350,10 @@ class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
         match_1 = getattr(rtrow,'%sMatchesDoubleE' %self.objCand[1]) if self.objCand[1][0]=='e' else getattr(rtrow,'%sMatchesDoubleMu' %self.objCand[1])
         passTrig = match_0 > 0.5 and match_1 > 0.5
 
-        return good and passTrig
+        veto = (rtrow.eVeto + rtrow.muVeto == 0)
+
+        return good and passTrig and veto
+
 
 
 class AnalyzerWZ_HZZFakeRate(AnalyzerWZ):
@@ -436,7 +439,7 @@ class AnalyzerWZ_HZZFakeRate(AnalyzerWZ):
         Iterate through minimizing variables.
         '''
         good = False
-        for min1, min2 in zip(cand1, cand2):
+        for min1, min2 in zip([cand1[0]], [cand2[0]]):
             if min1 < min2:
                 good = True
                 break
@@ -447,7 +450,9 @@ class AnalyzerWZ_HZZFakeRate(AnalyzerWZ):
         match_1 = getattr(rtrow,'%sMatchesDoubleE' %self.objCand[1]) if self.objCand[1][0]=='e' else getattr(rtrow,'%sMatchesDoubleMu' %self.objCand[1])
         passTrig = match_0 > 0.5 and match_1 > 0.5
 
-        return good and passTrig
+        veto = (rtrow.eVetoMVAIsoVtx + rtrow.muVetoPt5 == 0)
+
+        return good and passTrig and veto
 
 
 ##########################
