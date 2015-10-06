@@ -309,9 +309,9 @@ class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
 
     def metveto(self,rtrow):
         if self.period==8:
-            if rtrow.type1_pfMetEt > 20.: return False
+            if rtrow.type1_pfMetEt > 25.: return False
         else:
-            if rtrow.pfMetEt > 20.: return False
+            if rtrow.pfMetEt > 25.: return False
         return True
 
     def trigger(self, rtrow):
@@ -385,9 +385,9 @@ class AnalyzerWZ_HZZFakeRate(AnalyzerWZ):
 
     def metveto(self,rtrow):
         if self.period==8:
-            if rtrow.type1_pfMetEt > 20.: return False
+            if rtrow.type1_pfMetEt > 25.: return False
         else:
-            if rtrow.pfMetEt > 20.: return False
+            if rtrow.pfMetEt > 25.: return False
         return True
 
     def getIdArgs(self,type):
@@ -450,7 +450,7 @@ class AnalyzerWZ_HZZFakeRate(AnalyzerWZ):
         match_1 = getattr(rtrow,'%sMatchesDoubleE' %self.objCand[1]) if self.objCand[1][0]=='e' else getattr(rtrow,'%sMatchesDoubleMu' %self.objCand[1])
         passTrig = match_0 > 0.5 and match_1 > 0.5
 
-        veto = (rtrow.eVetoMVAIsoVtx + rtrow.muVetoPt5 == 0)
+        veto = (rtrow.eVetoHZZIso + rtrow.muVetoHZZIso == 0)
 
         return good and passTrig and veto
 

@@ -99,7 +99,7 @@ class Limits(object):
         hist.Sumw2()
         val = hist.Integral()
         err = 0
-        for i in range(hist.GetNbinsX()):
+        for i in range(hist.GetNbinsX()+1):
             err += hist.GetBinError(i)
         val = val * scale * lumiscale
         err = err * scale * lumiscale
@@ -188,7 +188,7 @@ class Limits(object):
         #if not self.blinded: print "nSRDa: %0.4f" % nSRData
         strToSave = ":".join(["%0.10f" % x for x in [nSB,eSB,nSR,eSR,alpha,nSBData,eSBData,nBGSR,eBGSR,nSRData,eSRData]])
 
-        with open(self.out_dir+'/alphavalues.txt', 'w') as file:
+        with open('%s/alphavalues_%s' % (self.out_dir, file_name), 'w') as file:
             file.write(strToSave)
 
         # calculate values
@@ -215,16 +215,17 @@ class Limits(object):
                        wgts.append(thisWeight)
                bgMap[key] = [sum([x[0] for x in wgts]), sum([x[1]**2 for x in wgts])**0.5]
 
-        mcVal = 0.
-        mcStatErr2 = 0.
-        for key, val in bgMap.iteritems():
-            if not self.sample_groups[key]['isData'] and not self.sample_groups[key]['isSig'] and key!='bg':
-                mcVal += val[0]
-                mcStatErr2 += val[1] ** 2
+        for key in self.sample_groups:
             if self.sample_groups[key]['isSig']:
-                assocVal = val[0]
-                assocStatErr = val[1]
-        mcStatErr = mcStatErr2 ** 0.5
+                val = bgMap[key]
+                if 'AP' == key[-2:]:
+                    assocVal = val[0]
+                    assocStatErr = val[1]
+                if 'PP' in key[-2:]:
+                    pairVal = val[0]
+                    pairStatErr = val[1]
+
+        mcVal, mcStatErr = plotter.getBackgroundEntries(cutMC_data,doError=True)
 
         # here we decide what datacard format we want to output
         if self.bgMode=='sideband':
@@ -260,7 +261,7 @@ class Limits(object):
         # output this to text file to be read later
         # format mcVal:mcStatErr:mcSystErr:sbVal:sbStatErr:sbSystErr:dataVal:dataStatErr:dataSystErr:\
         #        pairVal:pairStatErr:pairSystErr:assocVal:assocStatErr:assocSystErr
-        with open(self.out_dir+'/values.txt', 'w') as file:
+        with open('%s/values_%s' % (self.out_dir, file_name), 'w') as file:
             outString = '%f:%f' % (mcVal, mcStatErr)
             outString += ':%f:%f' % (sbVal, sbStatErr)
             if not self.blinded:

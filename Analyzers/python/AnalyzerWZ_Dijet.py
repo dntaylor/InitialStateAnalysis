@@ -195,10 +195,10 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
         leps = self.objCand
         if self.period==8:
             if rtrow.type1_pfMetEt > 20.: return False
-            if getattr(rtrow, "%sMtToPfMet_Ty1" % (leps[0])) > 20.: return False
+            if getattr(rtrow, "%sMtToPfMet_Ty1" % (leps[0])) > 25.: return False
         else:
             if rtrow.pfMetEt > 20.: return False
-            if getattr(rtrow, "%sMtToPFMET" % (leps[0])) > 20.: return False
+            if getattr(rtrow, "%sMtToPFMET" % (leps[0])) > 25.: return False
         return True
 
     def jetSelection(self,rtrow):
@@ -269,7 +269,7 @@ class AnalyzerWZ_HZZDijetFakeRate(AnalyzerWZ_DijetFakeRate):
         '''
         #singleTrigMatch_leg1 = getattr(rtrow,'%sMatchesSingleE_leg1' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg1' %self.objCand[0])
         singleTrigMatch_leg2 = getattr(rtrow,'%sMatchesSingleE_leg2' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg2' %self.objCand[0])
-        veto = (rtrow.eVetoMVAIsoVtx + rtrow.muVetoPt5 == 0)
+        veto = (rtrow.eVetoHZZIso + rtrow.muVetoHZZIso == 0)
         return singleTrigMatch_leg2 and veto
 
 
