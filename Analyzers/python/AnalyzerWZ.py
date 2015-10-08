@@ -264,7 +264,6 @@ class AnalyzerWZ(AnalyzerBase):
         o = ordered(leps[0], leps[1])
         m1 = getattr(rtrow,'%s_%s_Mass' % (o[0],o[1]))
         l0Pt = getattr(rtrow,'%sPt' %leps[0])
-        #return abs(m1-ZMASS)<20. and l0Pt>20.
         return (m1>=60. and m1<=120. and l0Pt>20.)
 
     def wSelection(self,rtrow):
@@ -331,8 +330,12 @@ class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
         o = ordered(leps[0], leps[1])
         m1 = getattr(rtrow,'%s_%s_Mass' % (o[0],o[1]))
         l0Pt = getattr(rtrow,'%sPt' %leps[0])
-        return abs(m1-ZMASS)<10. and l0Pt>20.
-
+        wl = leps[2]
+        o0 = ordered(leps[0],wl)
+        o1 = ordered(leps[1],wl)
+        dr0 = getattr(rtrow,'%s_%s_DR' % (o0[0],o0[1]))
+        dr1 = getattr(rtrow,'%s_%s_DR' % (o1[0],o1[1]))
+        return abs(m1-ZMASS)<10. and l0Pt>20. and dr0>0.02 and dr1>0.02
 
     def good_to_store(self, rtrow, cand1, cand2):
         '''
@@ -367,6 +370,7 @@ class AnalyzerWZ_HZZFakeRate(AnalyzerWZ):
         cuts.add(self.fiducial)
         cuts.add(self.ID_loose)
         cuts.add(self.ID_tight_Z)
+        cuts.add(self.crossCleaning)
         cuts.add(self.zSelection)
         cuts.add(self.metveto)
         return cuts
@@ -376,6 +380,7 @@ class AnalyzerWZ_HZZFakeRate(AnalyzerWZ):
         cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.ID_tight)
+        cuts.add(self.crossCleaning)
         cuts.add(self.zSelection)
         cuts.add(self.metveto)
         return cuts
@@ -407,8 +412,8 @@ class AnalyzerWZ_HZZFakeRate(AnalyzerWZ):
                 'm':'ZZLoose',
             }
             kwargs['isoCut'] = {
-                'e':0.5,
-                'm':0.4
+                'e': 999., # no iso
+                'm': 999., # no iso
             }
         if hasattr(self,'alternateIds'):
             if type in self.alternateIds:
@@ -427,12 +432,30 @@ class AnalyzerWZ_HZZFakeRate(AnalyzerWZ):
                 return True
         return False
 
+    def crossCleaning(self,rtrow):
+        leps = self.objCand
+        for l0 in leps:
+           for l1 in leps:
+               if l0[0]=='e' and l1[0]=='m':
+                   if self.ID(rtrow,l1,**self.getIdArgs('Tight')):
+                       o = ordered(l0,l1)
+                       dr = getattr(rtrow,'%s_%s_DR' % (o[0],o[1]))
+                       if dr > 0.05: return False
+        return True
+
     def zSelection(self,rtrow):
         leps = self.objCand
         o = ordered(leps[0], leps[1])
-        m1 = getattr(rtrow,'%s_%s_Mass' % (o[0],o[1]))
+        m = getattr(rtrow,'%s_%s_Mass' % (o[0],o[1]))
         l0Pt = getattr(rtrow,'%sPt' %leps[0])
-        return abs(m1-ZMASS)<10. and l0Pt>20.
+        wl = leps[2]
+        o0 = ordered(leps[0],wl)
+        o1 = ordered(leps[1],wl)
+        dr0 = getattr(rtrow,'%s_%s_DR' % (o0[0],o0[1]))
+        dr1 = getattr(rtrow,'%s_%s_DR' % (o1[0],o1[1]))
+        m0 = getattr(rtrow,'%s_%s_Mass' % (o0[0],o0[1]))
+        m1 = getattr(rtrow,'%s_%s_Mass' % (o1[0],o1[1]))
+        return abs(m-ZMASS)<10. and l0Pt>20. and dr0>0.02 and dr1>0.02 and m0>4. and m1>4.
 
     def good_to_store(self, rtrow, cand1, cand2):
         '''
@@ -450,7 +473,7 @@ class AnalyzerWZ_HZZFakeRate(AnalyzerWZ):
         match_1 = getattr(rtrow,'%sMatchesDoubleE' %self.objCand[1]) if self.objCand[1][0]=='e' else getattr(rtrow,'%sMatchesDoubleMu' %self.objCand[1])
         passTrig = match_0 > 0.5 and match_1 > 0.5
 
-        veto = (rtrow.eVetoHZZIso + rtrow.muVetoHZZIso == 0)
+        veto = (rtrow.eVetoHZZ + rtrow.muVetoHZZ == 0)
 
         return good and passTrig and veto
 

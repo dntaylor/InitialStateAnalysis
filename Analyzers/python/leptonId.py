@@ -82,6 +82,8 @@ def _muon_zz_loose(rtrow, l, period):
     if abs(getattr(rtrow, "%sEta" % l)) > 2.4: return False
     if abs(getattr(rtrow, '%sPVDZ' % l)) > 1.: return False
     if abs(getattr(rtrow, '%sPVDXY' % l)) > 0.5:return False
+    if abs(getattr(rtrow, '%sSIP3D' % l)) > 4.:return False
+    if getattr(rtrow, '%sBestTrackType' % l)==2: return False
     isGlobal = getattr(rtrow, '%sIsGlobal' % l)
     isTracker = getattr(rtrow, '%sIsTracker' % l)
     matchedStations = getattr(rtrow, '%sMatchedStations' % l)
@@ -97,6 +99,7 @@ def _elec_zz_loose(rtrow, l, period):
     if abs(getattr(rtrow, '%sPVDZ' % l)) > 1.: return False
     if abs(getattr(rtrow, '%sPVDXY' % l)) > 0.5:return False
     if getattr(rtrow,'%sMissingHits'%l) > 1: return False
+    if abs(getattr(rtrow, '%sSIP3D' % l)) > 4.:return False
     return True
 
 def _elec_zz_tight(rtrow, l, period):
@@ -109,9 +112,9 @@ def _elec_mva_nontriggering_zz(rtrow, l, period):
     mva = getattr(rtrow, "%sMVANonTrigID" % l) if period == 13 else getattr(rtrow, "%sMVANonTrig" % l)
 
     if 5.0 < pt < 10.0:
-        return (eta < 0.8 and mva > -0.586) or (0.8 < eta < 1.479 and mva > -0.712) or (1.479 < eta and mva > -0.662)
+        return (eta < 0.8 and mva > -0.265) or (0.8 < eta < 1.479 and mva > -0.556) or (1.479 < eta and mva > -0.551)
     elif 10.0 < pt:
-        return (eta < 0.8 and mva > -0.652) or (0.8 < eta < 1.479 and mva > -0.701) or (1.479 < eta and mva > -0.350)
+        return (eta < 0.8 and mva > -0.072) or (0.8 < eta < 1.479 and mva > -0.286) or (1.479 < eta and mva > -0.267)
     else:
         return False
 

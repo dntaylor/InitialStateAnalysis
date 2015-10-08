@@ -118,6 +118,24 @@ class AnalyzerHpp4l(AnalyzerBase):
                         bestSt = st2
                         bestLeptons = l
 
+            if not bestLeptons: # try to find just a Z candidate
+                for l in permutations(self.objects):
+                    if lep_order(l[0],l[1]) or lep_order(l[2],l[3]):
+                        continue
+
+                    os1 = getattr(rtrow,'%s_%s_SS' % (l[0], l[1])) < 0.5
+                    m1 = getattr(rtrow,'%s_%s_Mass' % (l[0], l[1]))
+                    st2 = getattr(rtrow,'%sPt' %l[2]) + getattr(rtrow,'%sPt' %l[3])
+
+                    if l[0][0] == l[1][0] and os1:
+                        if abs(m1-ZMASS) < bestZDiff:
+                            bestZDiff = abs(m1-ZMASS)
+                            bestSt = st2
+                            bestLeptons = l
+                        elif abs(m1-ZMASS)==bestZDiff and st2>bestSt:
+                            bestZDiff = abs(m1-ZMASS)
+                            bestSt = st2
+
             return bestLeptons
 
     # override getGenChannel
@@ -273,9 +291,9 @@ class AnalyzerHpp4l_ZZ(AnalyzerHpp4l):
         cuts = CutSequence()
         if self.isData: cuts.add(self.trigger)
         cuts.add(self.fiducial)
-        cuts.add(self.overlap)
-        cuts.add(self.trigger_threshold)
-        cuts.add(self.ID_loose)
+        #cuts.add(self.overlap)
+        #cuts.add(self.trigger_threshold)
+        cuts.add(self.ID_tight)
         cuts.add(self.zSelection)
         return cuts
 
@@ -283,8 +301,8 @@ class AnalyzerHpp4l_ZZ(AnalyzerHpp4l):
         cuts = CutSequence()
         if self.isData: cuts.add(self.trigger)
         cuts.add(self.fiducial)
-        cuts.add(self.overlap)
-        cuts.add(self.trigger_threshold)
+        #cuts.add(self.overlap)
+        #cuts.add(self.trigger_threshold)
         cuts.add(self.ID_tight)
         cuts.add(self.zSelection)
         return cuts

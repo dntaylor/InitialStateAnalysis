@@ -419,7 +419,7 @@ class AnalyzerBase(object):
                 finalObjects = theObjects[objStart:objStart+numObjects]
                 orderedFinalObjects = sorted(finalObjects, key = lambda x: getattr(rtrow,"%sPt" % x), reverse=True)
                 if len(self.object_definitions[i]) == 1:
-                    ntupleRow["%s.mass" %i] = float(-9)
+                    ntupleRow["%s.mass" %i] = float(-999)
                     ntupleRow["%s.Pt" %i] = float(-9)
                     ntupleRow["%s.Eta" %i] = float(-9)
                     ntupleRow["%s.Phi" %i] = float(-9)
@@ -442,7 +442,7 @@ class AnalyzerBase(object):
                         wpt = rt.TMath.Sqrt((px1+pxMet)**2 + (py1+pyMet)**2)
                     else:
                         wpt = -9
-                    ntupleRow["%s.mass" %i] = float(getattr(rtrow, "%sMtTo%s" % (finalObjects[0], mtVar))) if theObjects else float(-9)
+                    ntupleRow["%s.mass" %i] = float(getattr(rtrow, "%sMtTo%s" % (finalObjects[0], mtVar))) if theObjects else float(-999)
                     ntupleRow["%s.Pt" %i] = float(wpt)
                     ntupleRow["%s.sT" %i] = float(getattr(rtrow, "%sPt" % finalObjects[0]) + getattr(rtrow, '%sEt' %metVar)) if theObjects else float(-9)
                     ntupleRow["%s.dPhi" %i] = float(getattr(rtrow, "%sToMETDPhi" % finalObjects[0])) if theObjects else float(-9)
@@ -465,7 +465,7 @@ class AnalyzerBase(object):
                     #    vec3 = vec1+vec2
                     #else:
                     #    vec3 = 0
-                    ntupleRow["%s.mass" %i] = float(getattr(rtrow, "%s_%s_Mass" % (finalObjOrdered[0], finalObjOrdered[1]))) if theObjects else float(-9)
+                    ntupleRow["%s.mass" %i] = float(getattr(rtrow, "%s_%s_Mass" % (finalObjOrdered[0], finalObjOrdered[1]))) if theObjects else float(-999)
                     ntupleRow["%s.Pt" %i] = float(getattr(rtrow, "%s_%s_Pt" % (finalObjOrdered[0], finalObjOrdered[1]))) if theObjects else float(-9)
                     ntupleRow["%s.sT" %i]   = float(sum([getattr(rtrow, "%sPt" % x) for x in finalObjects])) if theObjects else float(-9)
                     ntupleRow["%s.dPhi" %i] = float(getattr(rtrow, "%s_%s_DPhi" % (finalObjOrdered[0], finalObjOrdered[1]))) if theObjects else float(-9)

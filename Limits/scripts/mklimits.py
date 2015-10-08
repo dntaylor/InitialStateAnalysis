@@ -120,9 +120,12 @@ def limit(analysis,region,period,mass,**kwargs):
         scaleMap = calculateChannelLeptonSystematic(mass,chanNames,do4l=do4l,doBoth=doBoth)
         eid = {signame: "%0.3f" %scaleMap[chanNames[0]]['e']}
         if doBoth: eid = {signame: "%0.3f" %scaleMap[chanNames[0]]['e'], signame_PP: "%0.3f" %scaleMap[chanNames[0]]['e']}
+        chgid = {signame: "%0.3f" %scaleMap[chanNames[0]]['chg']}
+        if doBoth: chgid = {signame: "%0.3f" %scaleMap[chanNames[0]]['chg'], signame_PP: "%0.3f" %scaleMap[chanNames[0]]['chg']}
         mid = {signame: "%0.3f" %scaleMap[chanNames[0]]['m']}
         if doBoth: mid = {signame: "%0.3f" %scaleMap[chanNames[0]]['m'], signame_PP: "%0.3f" %scaleMap[chanNames[0]]['m']}
         limits.add_systematics('eid', 'lnN', **eid)
+        limits.add_systematics('chgid', 'lnN', **chgid)
         limits.add_systematics('mid', 'lnN', **mid)
     
         # signal mc uncertainty
@@ -456,6 +459,22 @@ def calculateChannelLeptonSystematic(mass,chans,**kwargs):
         4: 1.044, # guess !
     }
 
+    chgUncertainties = {
+        3: {
+            0: 1.000,
+            1: 1.011,
+            2: 1.017,
+            3: 1.026,
+        },
+        4: {
+            0: 1.000,
+            1: 1.011,
+            2: 1.016,
+            3: 1.021,
+            4: 1.032,
+        },
+    }
+
     scaleMap = {}
     for c in chans:
         scaleMap[c] = {}
@@ -477,6 +496,8 @@ def calculateChannelLeptonSystematic(mass,chans,**kwargs):
 
             if l=='e': # get from WZ analysis note:
                scaleMap[c][l] = elecUncertainties[c.count('e')]
+               # electron charge systematic
+               scaleMap[c]['chg'] = chgUncertainties[len(c)][c.count('e')]
             if l=='m': # muon pog, 0.5% id 0.2% iso
                scaleMap[c][l] = (c.count('m') * (0.005 + 0.002)) + 1.
                

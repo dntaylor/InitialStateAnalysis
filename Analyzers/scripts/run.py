@@ -25,7 +25,7 @@ from InitialStateAnalysis.Analyzers.AnalyzerWZ_W import AnalyzerWZ_WFakeRate
 from InitialStateAnalysis.Analyzers.AnalyzerWZ_Dijet import AnalyzerWZ_DijetFakeRate, AnalyzerWZ_HZZDijetFakeRate
 from InitialStateAnalysis.Analyzers.AnalyzerHpp2l import AnalyzerHpp2l, AnalyzerHpp2l_Z, AnalyzerHpp2l_Charge, AnalyzerHpp2l_TT
 from InitialStateAnalysis.Analyzers.AnalyzerHpp3l import AnalyzerHpp3l, AnalyzerHpp3l_WZ, AnalyzerHpp3l_LowMass
-from InitialStateAnalysis.Analyzers.AnalyzerHpp4l import AnalyzerHpp4l
+from InitialStateAnalysis.Analyzers.AnalyzerHpp4l import AnalyzerHpp4l, AnalyzerHpp4l_ZZ
 
 def run_analyzer(args):
     '''Run the analysis'''
@@ -59,6 +59,7 @@ def run_analyzer(args):
                     },
         'Hpp4l'   : {
                     'Hpp4l'   : AnalyzerHpp4l,
+                    'ZZ'      : AnalyzerHpp4l_ZZ,
                     },
     }
     theAnalyzer = analyzerMap[analysis][channel]
@@ -88,12 +89,14 @@ def get_sample_names(analysis,period,samples):
             #'WZ'         : '2015-09-01-13TeV-WZ', # move dr 0.1 to 0.01 from veto definition
             #'WZ'         : '2015-09-13-13TeV-WZ', # corrected isolation to new effective areas
             #'WZ'         : '2015-09-18-13TeV-WZ', # add ht variable
-            'WZ'         : '2015-09-28-13TeV-WZ', # add summed weights
+            #'WZ'         : '2015-09-28-13TeV-WZ', # add summed weights
+            'WZ'         : '2015-10-06-13TeV-WZ', # add hzz veto
             'WZ_W'       : '2015-08-03-13TeV-2l',
             #'WZ_Dijet'   : '2015-08-17-13TeV-1l',
             #'WZ_Dijet'   : '2015-09-14-13TeV-1l', # updated with WZ changes
             #'WZ_Dijet'   : '2015-09-24-13TeV-1l', # add ht
-            'WZ_Dijet'   : '2015-09-28-13TeV-1l', # add summed weights
+            #'WZ_Dijet'   : '2015-09-28-13TeV-1l', # add summed weights
+            'WZ_Dijet'   : '2015-10-06-13TeV-1l', # add hzz veto
             'Hpp3l'      : '2015-03-30-13TeV-3l',
             'Hpp4l'      : '2015-03-30-13TeV-4l',
         },

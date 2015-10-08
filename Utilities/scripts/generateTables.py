@@ -7,7 +7,7 @@ import glob
 # a script to generate the needed tables for the hpp analysis note
 
 tableHeader = '\
-\\begin{table}\n\
+\\begin{table}[h]\n\
 \\begin{footnotesize}\n\
     \\centering\n\
 '
@@ -90,21 +90,18 @@ names = {
     't' : '\\tau',
 }
 
-for bp in ['ee100', 'em100', 'mm100', 'et100', 'mt100', 'BP1', 'BP2', 'BP3', 'BP4']:
-    # Background estimation
-    
-    replacements = {'STRUCTURE' : '|l|ll|ll|l|',
-                    'CAPTION' : 'Background estimation for three-lepton final states for %s.' % tableStrings[bp],
-                    'LABEL' : 'bg%s' % bp}
-    
-    elementstring = ''
-    for mass in _4L_MASSES:
-        #for fs in ['Hpp3l', 'Hpp4l']:
-        massblockstring = ''
-        for analysis,channel in [('Hpp3l','Hpp3l')]:
+for analysis,channel in [('Hpp3l','Hpp3l'),('Hpp4l','Hpp4l')]:
+    for bp in ['ee100', 'em100', 'mm100', 'et100', 'mt100', 'BP1', 'BP2', 'BP3', 'BP4']:
+        replacements = {'STRUCTURE' : '|l|ll|ll|l|',
+                        'CAPTION' : 'Background estimation for %s-lepton final states for %s.' % ('three' if analysis=='Hpp3l' else 'four',tableStrings[bp]),
+                        'LABEL' : 'bg%s_%s' % (bp,analysis)}
+        
+        elementstring = ''
+        for mass in _4L_MASSES:
+            massblockstring = ''
             valdict = {}
             valfile = valuenames['both'] if analysis=='Hpp3l' else valuenames['pp']
-            alphafile = alphavaluenames['both'] if analysis=='Hpp3l' else valuenames['pp']
+            alphafile = alphavaluenames['both'] if analysis=='Hpp3l' else alphavaluenames['pp']
             recochans = channels[analysis]
             for recochan in recochans:
                 vfname = valfile.format(analysis=analysis,channel=channel,bp=bp,mass=mass,recochan=recochan)
@@ -123,12 +120,13 @@ for bp in ['ee100', 'em100', 'mm100', 'et100', 'mt100', 'BP1', 'BP2', 'BP3', 'BP
                         valdict[recochan]['de'] = vals[5]
                         valdict[recochan]['pp'] = vals[7]
                         valdict[recochan]['ppe'] = vals[8]
-                        valdict[recochan]['ap'] = vals[9]
-                        valdict[recochan]['ape'] = vals[10]
+                        if analysis in ['Hpp3l'] and mass in _3L_MASSES:
+                            valdict[recochan]['ap'] = vals[9]
+                            valdict[recochan]['ape'] = vals[10]
                     with open(afname,'r') as f:
-                        text = f.read()
-                        vals = [float(x) for x in text.split(':')]
-                        nSB,eSB,nSR,eSR,alpha,nSBData,eSBData,nBGSR,eBGSR,nSRData,eSRData = vals
+                        atext = f.read()
+                        avals = [float(x) for x in atext.split(':')]
+                        nSB,eSB,nSR,eSR,alpha,nSBData,eSBData,nBGSR,eBGSR,nSRData,eSRData = avals
                         valdict[recochan]['nsb'] = int(nSBData)
                         valdict[recochan]['a'] = alpha
                         valdict[recochan]['bg'] = nBGSR
@@ -140,7 +138,9 @@ for bp in ['ee100', 'em100', 'mm100', 'et100', 'mt100', 'BP1', 'BP2', 'BP3', 'BP
             chans = valdict.keys()
             valdict['all'] = {}
             valdict['all']['mass'] = mass
-            for key in ['mc','mce','d','de','pp','ppe','ap','ape','bg','bge']:
+            valnames =  ['mc','mce','d','de','bg','bge','pp','ppe']
+            if analysis in ['Hpp3l'] and mass in _3L_MASSES: valnames += ['ap','ape']
+            for key in valnames:
                 if 'e' in key:
                     valdict['all'][key] = sum([valdict[x][key]**2 for x in chans])**0.5
                 else:
@@ -150,11 +150,11 @@ for bp in ['ee100', 'em100', 'mm100', 'et100', 'mt100', 'BP1', 'BP2', 'BP3', 'BP
             recochanstring = rowstring.format(**valdict['all'])
             massblockstring += recochanstring
             massblockstring += ' \\\\ \n' if mass != _4L_MASSES[-1] else ' \\\\ \\hline \n'
-        elementstring += massblockstring
+            elementstring += massblockstring
 
-    tables['bg%s' % bp] = tableHeader + tabularHeader + labels0 + labels1 + elementstring + tabularFooter + caption + tableFooter
-    for key, val in replacements.iteritems():
-        tables['bg%s' % bp] = tables['bg%s' % bp].replace(key,val)
+        tables['bg%s_%s' % (bp,analysis)] = tableHeader + tabularHeader + labels0 + labels1 + elementstring + tabularFooter + caption + tableFooter
+        for key, val in replacements.iteritems():
+            tables['bg%s_%s' % (bp,analysis)] = tables['bg%s_%s' % (bp,analysis)].replace(key,val)
 
-    print tables['bg%s' % bp]
+        print tables['bg%s_%s' % (bp,analysis)]
 

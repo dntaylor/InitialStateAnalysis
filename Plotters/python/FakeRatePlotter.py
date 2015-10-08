@@ -15,6 +15,27 @@ class FakeRatePlotter(PlotterBase):
     def __init__(self,analysis,**kwargs):
         PlotterBase.__init__(self,analysis,**kwargs)
 
+    def getFakeRateProjection(self, num, denom, bins, var, savename, **kwargs):
+        '''Get 1d histogram of fakerates'''
+        dataDriven = kwargs.pop('dataDriven',True)
+        fakeHist = ROOT.TH1F(savename,'',len(bins)-1,array('d',bins))
+        for b in range(len(bins)-1):
+            kincut = 'abs({var})>={lowbin} && abs({var})<{highbin}'.format(var=var,lowbin=bins[b],highbin=bins[b+1])
+            numcut = '{0} && {1}'.format(num,kincut)
+            denomcut = '{0} && {1}'.format(denom,kincut)
+            getEntries = getattr(self,'getDataEntries') if dataDriven else getattr(self,'getBackgroundEntries')
+            numVal, numErr = getEntries(numcut,doError=True)
+            denomVal, denomErr = getEntries(denomcut,doError=True)
+            if denomVal and numVal:
+                fakerate = float(numVal)/denomVal
+                err = fakerate * (numErr**2/(numVal**2) + denomErr**2/(denomVal**2)) ** 0.5
+            else:
+                fakerate = 0
+                err = 0
+            fakeHist.SetBinContent(b+1,fakerate)
+            fakeHist.SetBinError(b+1,err)
+        return fakeHist
+
     def getFakeRate(self,passSelection, failSelection, ptBins, etaBins, ptVar, etaVar, savename, **kwargs):
         '''Get 2d histogram of fakerates'''
         dataDriven = kwargs.pop('dataDriven',True)
@@ -103,4 +124,87 @@ class FakeRatePlotter(PlotterBase):
         # save everything
         self.canvas.cd()
         self.save(savename)
+        self.resetCanvas()
+
+    def plotFakeRateProjection(self, passSelection, failSelection, savename, projection, **kwargs):
+        '''A function to calculate and plot the fake rate for a given selection.
+           kwargs accepts:
+               cut         string           applied with all selections
+               ptBins      list (float)     list of pt bin edges for fakerate
+               etaBins     list (float)     list of eta bin edges for fakerate
+               ptVar       string           probe pt variable
+               etaVar      string           probe eta variable
+               logy        bool             set logy plot
+               logx        bool             set logx plot
+               lumitext    int              location of lumitext (from CMS_lumi)
+               isprelim    bool             The plot is CMS preliminary'''
+        cut = kwargs.pop('cut', '1')
+        logy = kwargs.pop('logy', 0)
+        logx = kwargs.pop('logx', 0)
+        lumitext = kwargs.pop('lumitext', 11)
+        isprelim = kwargs.pop('isprelim', 1)
+        ptBins = kwargs.pop('ptBins', [10,15,20,25,30,35,40,50])
+        etaBins = kwargs.pop('etaBins', [0,1,1.479,2,2.5])
+        ptVar = kwargs.pop('ptVar','w1.Pt1')
+        etaVar = kwargs.pop('etaVar','w1.Eta1')
+        xaxis = kwargs.pop('xaxis','')
+        yaxis = kwargs.pop('yaxis','Fake Rate')
+        dataDriven = kwargs.pop('dataDriven',True)
+        for key, value in kwargs.iteritems():
+            self.logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
+
+        if projection not in ['pt','eta']:
+            self.logger.warning("Must project in either pt or eta")
+
+        notproj = 'eta' if projection=='pt' else 'pt'
+
+        ROOT.gDirectory.Delete('h*') # clear histogram memory
+
+        self.canvas.SetLogy(logy)
+        self.canvas.SetLogx(logx)
+
+        # calculate fake rate
+        fakeBins, iterBins = (ptBins, etaBins) if projection=='pt' else (etaBins, ptBins)
+        fakeVar, iterVar = (ptVar, etaVar) if projection=='pt' else (etaVar, ptVar)
+        for b in range(len(iterBins)):
+            if b < len(iterBins)-1:
+                binCut = 'abs({var}) >= {lowbin} && abs({var}) < {highbin}'.format(var=iterVar,lowbin=iterBins[b],highbin=iterBins[b+1])
+                name = '{0}_{1}_{2}'.format(savename,notproj,b)
+                thisNum = '{0} && {1}'.format(passSelection,binCut)
+                thisDenom = '{0} && {1}'.format(failSelection,binCut)
+            else:
+                name = savename
+                thisNum = passSelection
+                thisDenom = failSelection
+            fakeRateHist = self.getFakeRateProjection(thisNum,thisDenom,fakeBins,fakeVar,name,dataDriven=dataDriven)
+            fakeRateHist.GetXaxis().SetTitle(xaxis)
+            fakeRateHist.GetYaxis().SetTitle(yaxis)
+            fakeRateHist.GetYaxis().SetTitleOffset(1.)
+            fakeRateHist.SetTitle('')
+            fakeRateHist.GetYaxis().SetRangeUser(0,1)
+            #fakeRateHist.SetLineColor(ROOT.kBlue)
+            self.savefile.WriteTObject(fakeRateHist)
+
+            # plot fakerate
+            fakeRateHist.Draw()
+
+            # plot legend
+            leg = ROOT.TLegend(0.65,0.72,0.95,0.77,'','NDC')
+            leg.SetTextFont(42)
+            leg.SetBorderSize(0)
+            leg.SetFillColor(0)
+            leg.AddEntry(fakeRateHist,'Fake Rate','ep')
+            leg.Draw()
+
+            # draw cms lumi
+            self.setStyle(lumitext,True,False,True)
+            self.canvas.cd()
+            self.canvas.Update()
+            self.canvas.RedrawAxis()
+            frame = self.canvas.GetFrame()
+            frame.Draw()
+
+            # save everything
+            self.canvas.cd()
+            self.save(name)
 

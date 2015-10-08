@@ -255,8 +255,8 @@ class AnalyzerWZ_HZZDijetFakeRate(AnalyzerWZ_DijetFakeRate):
                 'm':'ZZLoose',
             }
             kwargs['isoCut'] = {
-                'e':0.5,
-                'm':0.4
+                'e': 999., # no iso
+                'm': 999., # no iso
             }
         if hasattr(self,'alternateIds'):
             if type in self.alternateIds:
@@ -269,7 +269,7 @@ class AnalyzerWZ_HZZDijetFakeRate(AnalyzerWZ_DijetFakeRate):
         '''
         #singleTrigMatch_leg1 = getattr(rtrow,'%sMatchesSingleE_leg1' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg1' %self.objCand[0])
         singleTrigMatch_leg2 = getattr(rtrow,'%sMatchesSingleE_leg2' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg2' %self.objCand[0])
-        veto = (rtrow.eVetoHZZIso + rtrow.muVetoHZZIso == 0)
+        veto = (rtrow.eVetoHZZ + rtrow.muVetoHZZ == 0)
         return singleTrigMatch_leg2 and veto
 
 
