@@ -2,6 +2,7 @@ import sys
 import os
 import glob
 import pickle
+import json
 from operator import itemgetter, attrgetter
 
 sys.argv.append('-b')
@@ -213,20 +214,27 @@ class TriggerScaleFactors(object):
 class LeptonScaleFactors(object):
 
     def __init__(self):
-        # WZ ones
-        m_id_file = open(os.path.join(os.path.dirname(__file__),'MuonEfficiencies_Run2012ReReco_53X.pkl'),'r')
-        self.m_id_dict = pickle.load(m_id_file)
-        m_iso_file = open(os.path.join(os.path.dirname(__file__),'MuonEfficiencies_ISO_Run_2012ReReco_53X.pkl'),'r')
-        self.m_iso_dict = pickle.load(m_iso_file)
-
-        # 4l ones
-        path = os.path.join(os.path.dirname(__file__),'CombinedMethod_ScaleFactors_RecoIdIsoSip.root')
-        self.e_rtfile = rt.TFile(path, 'READ')
-        self.e_hist = self.e_rtfile.Get("h_electronScaleFactor_RecoIdIsoSip")
+        # WZ 8TeV
+        with open(os.path.join(os.path.dirname(__file__),'MuonEfficiencies_Run2012ReReco_53X.pkl'),'r') as mf:
+            self.m_id_dict = pickle.load(mf)
+        
+        with open(os.path.join(os.path.dirname(__file__),'MuonEfficiencies_ISO_Run_2012ReReco_53X.pkl'),'r') as mf:
+            self.m_iso_dict = pickle.load(mf)
 
         path = os.path.join(os.path.dirname(__file__), 'MuonScaleFactors_2011_2012.root')
         self.m_rtfile = rt.TFile(path, 'READ')
         self.m_hist = self.m_rtfile.Get("TH2D_ALL_2012")
+
+        # WZ 13TeV
+        with open(os.path.join(os.path.dirname(__file__),'muon.json'),'r') as mf:
+            self.m_id_dict_13tev = json.load(mf)
+        with open(os.path.join(os.path.dirname(__file__),'electron.json'),'r') as ef:
+            self.e_id_dict_13tev = json.load(ef)
+
+        # 4l 8TeV
+        path = os.path.join(os.path.dirname(__file__),'CombinedMethod_ScaleFactors_RecoIdIsoSip.root')
+        self.e_rtfile = rt.TFile(path, 'READ')
+        self.e_hist = self.e_rtfile.Get("h_electronScaleFactor_RecoIdIsoSip")
 
     def close(self):
         self.e_rtfile.Close()
@@ -235,15 +243,22 @@ class LeptonScaleFactors(object):
     def scale_factor(self, row, *lep_list, **kwargs):
         tight = kwargs.pop('tight',False)
         loose = kwargs.pop('loose',False)
+        period = kwargs.pop('period',8)
         out = 1.0
         out = []
         for l in lep_list:
             lep_type = l[0]
 
             if lep_type == 'm':
-                out += [self.m_4l_scale(row,l)] if loose else [self.m_tight_scale(row, l)]
+                if period==8:
+                    out += [self.m_4l_scale(row,l)] if loose else [self.m_tight_scale(row, l)]
+                if period==13:
+                    out += [self.m_wz_scale_loose(row,l)] if loose else [self.m_wz_scale_tight(row,l)]
             elif lep_type == 'e':
-                out += [self.e_4l_scale(row,l)] if loose else [self.e_ww_scale(row, l)]
+                if period==8:
+                    out += [self.e_4l_scale(row,l)] if loose else [self.e_ww_scale(row, l)]
+                if period==13:
+                    out += [self.e_wz_scale_loose(row,l)] if loose else [self.e_wz_scale_tight(row,l)]
             elif lep_type == 't':
                 out += [[1,1,1]] # TODO
             else:
@@ -256,6 +271,48 @@ class LeptonScaleFactors(object):
             final[2] *= o[2]
 
         return final
+
+    def get_scale_err(self,row,l,idname):
+        pt = getattr(row, "%sPt" % l)
+        eta = abs(getattr(row, "%sSCEta" % l)) if l[0]=='e' else abs(getattr(row, "%sEta" % l))
+        ldict = getattr(self,'{0}_id_dict_13tev'.format(l[0]))
+        idlist = ldict[idname]
+        pre = 'supercluster_' if l[0]=='e' else ''
+        for iddict in idlist:
+            ptlow = iddict['{0}et_lo'.format(pre)]
+            pthi = iddict['{0}et_hi'.format(pre)]
+            etalow = iddict['{0}eta_lo'.format(pre)]
+            etahi = iddict['{0}eta_hi'.format(pre)]
+            if pt>ptlow and pt<pthi and eta>etalow and eta<etahi:
+                scale = iddict['ratio']
+                err = iddict['ratio_err']
+                return scale, err
+        return 1.0, 0.0
+
+    def m_wz_scale_loose(self, row, l):
+        # id
+        idscale, iderr = self.get_scale_err(row,l,'MuonWZIDLoose')
+        # iso
+        isoscale, isoerr = self.get_scale_err(row,l,'MuonWZIsolationLooseFromIDLoose')
+        return [idscale*isoscale, (idscale+iderr)*(isoscale+isoerr), (idcale-iderr)*(isoscale-isoerr)]
+
+    def m_wz_scale_tight(self, row, l):
+        # id
+        idscale, iderr = self.get_scale_err(row,l,'MuonWZIDTight')
+        # iso
+        isoscale, isoerr = self.get_scale_err(row,l,'MuonWZIsolationTightFromIDTight')
+        return [idscale*isoscale, (idscale+iderr)*(isoscale+isoerr), (idcale-iderr)*(isoscale-isoerr)]
+
+    def e_wz_scale_loose(self, row, l):
+        # id
+        idscale, iderr = self.get_scale_err(row,l,'cutBasedElectronID-Spring15-25ns-V1-standalone-loose')
+        return [idscale, idscale+iderr, idcale-iderr]
+
+    def e_wz_scale_tight(self, row, l):
+        # id
+        idscale, iderr = self.get_scale_err(row,l,'cutBasedElectronID-Spring15-25ns-V1-standalone-medium')
+        return [idscale, idscale+iderr, idcale-iderr]
+
 
     def e_ww_scale(self, row, l):
         pt = getattr(row, "%sPt" % l)

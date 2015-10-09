@@ -53,7 +53,7 @@ tables = {}
 # ...
 labels0 = '        \\multicolumn{4}{|l|}{Signal}                                                & \\multicolumn{4}{|l|}{Background Estimation}                               & Data                    \\\\ \\hline\n'
 labels1 = '        Mass & Final state      & AP                      & PP                      & $N_{SB}$  & $\\alpha$  & Data-driven             & MC Estimate             & Observed                \\\\ \\hline\n'
-labels0 = '        \\multicolumn{3}{|l|}{Signal}                                 & multicolumn{2}{|l|}{Background Estimation}             & Data                      \\\\ \\hline\n'
+labels0 = '        \\multicolumn{3}{|l|}{Signal}                                 & \\multicolumn{2}{|l|}{Background Estimation}            & Data                      \\\\ \\hline\n'
 labels1 = '        Mass & AP                        & PP                        & Data-driven                & MC Estimate               & Observed                  \\\\ \\hline\n'
 
 rows = {

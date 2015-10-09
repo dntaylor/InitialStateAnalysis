@@ -732,16 +732,16 @@ class AnalyzerBase(object):
             'trigger_prescale': 1,
         }
         if self.period==8: # TODO: move when we have numbers for 13 tev
-            lepscales = self.lepscaler.scale_factor(rtrow, *objects, **lepargs)
             trigscale = self.trigscaler.scale_factor(rtrow, *objects)
             puweight  = self.pu_weights.weight(rtrow)
             chargeid  = self.chargeid.systematic(rtrow, *objects)
-            scales['lep']      = lepscales[0]
-            scales['lepup']    = lepscales[1]
-            scales['lepdown']  = lepscales[2]
             scales['trig']     = trigscale
             scales['puweight'] = puweight
             scales['chargeid'] = chargeid
+        lepscales = self.lepscaler.scale_factor(rtrow, *objects, **lepargs)
+        scales['lep']      = lepscales[0]
+        scales['lepup']    = lepscales[1]
+        scales['lepdown']  = lepscales[2]
         scales['trigger_prescale'] = self.getTriggerPrescale(rtrow)
         genweight = rtrow.GenWeight if hasattr(rtrow,'GenWeight') else 1.
         scales['genweight']= genweight
