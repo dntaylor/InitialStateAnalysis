@@ -210,6 +210,79 @@ class TriggerScaleFactors(object):
             if pt<pts[p+1]: return effs[p]
         return 1.0
 
+class LeptonEfficiency(object):
+
+    def __init__(self):
+        # WZ 13TeV
+        with open(os.path.join(os.path.dirname(__file__),'muon.json'),'r') as mf:
+            self.m_id_dict_13tev = json.load(mf)
+        with open(os.path.join(os.path.dirname(__file__),'electron.json'),'r') as ef:
+            self.e_id_dict_13tev = json.load(ef)
+
+    def close(self):
+        pass
+
+    def scale_factor(self, row, *lep_list, **kwargs):
+        tight = kwargs.pop('tight',False)
+        loose = kwargs.pop('loose',False)
+        period = kwargs.pop('period',8)
+        out = []
+        for l in lep_list:
+            lep_type = l[0]
+
+            if lep_type == 'm':
+                out += [[1,1,1]]
+            elif lep_type == 'e':
+                out += [[1,1,1]]
+            elif lep_type == 't':
+                out += [[1,1,1]] # TODO
+            else:
+                raise TypeError("Lepton type %s not recognized" % lep_type)
+
+        final = [1,1,1]
+        for o in out:
+            final[0] *= o[0]
+            final[1] *= o[1]
+            final[2] *= o[2]
+
+        return final
+
+class LeptonFakeRate(object):
+
+    def __init__(self):
+        # WZ 13TeV
+        with open(os.path.join(os.path.dirname(__file__),'muon.json'),'r') as mf:
+            self.m_id_dict_13tev = json.load(mf)
+        with open(os.path.join(os.path.dirname(__file__),'electron.json'),'r') as ef:
+            self.e_id_dict_13tev = json.load(ef)
+
+    def close(self):
+        pass
+
+    def scale_factor(self, row, *lep_list, **kwargs):
+        tight = kwargs.pop('tight',False)
+        loose = kwargs.pop('loose',False)
+        period = kwargs.pop('period',8)
+        out = []
+        for l in lep_list:
+            lep_type = l[0]
+
+            if lep_type == 'm':
+                out += [[0,0,0]]
+            elif lep_type == 'e':
+                out += [[0,0,0]]
+            elif lep_type == 't':
+                out += [[0,0,0]] # TODO
+            else:
+                raise TypeError("Lepton type %s not recognized" % lep_type)
+
+        final = [1,1,1]
+        for o in out:
+            final[0] *= 1-o[0]
+            final[1] *= 1-o[1]
+            final[2] *= 1-o[2]
+        result = [1-x for x in final]
+        return result
 
 class LeptonScaleFactors(object):
 

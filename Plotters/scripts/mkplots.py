@@ -29,6 +29,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     plotOverlay = kwargs.pop('plotOverlay',False)
     plotShapes = kwargs.pop('plotShapes',False)
     plotCutFlow = kwargs.pop('plotCutFlow',False)
+    plotFakeRegions = kwargs.pop('plotFakeRegions',False)
     finalStatesToPlot = kwargs.pop('finalStates','all')
     nostack = kwargs.pop('nostack',False)
     normalize = kwargs.pop('normalize',False)
@@ -282,6 +283,23 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
                sel = customFinalStates[analysis][c]
                logger.info("%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c))
                plotDistributions(plotMethod,'%s & %s'%(myCut,sel),nl,isControl,savedir=c,analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass,doDetailed=doDetailed)
+
+    if plotFakeRegions:
+        logger.info("%s:%s:%iTeV: Plotting control regions" % (analysis, channel, runPeriod))
+        labels = {0:'F',1:'T'}
+        cuts = {0:'!{0}.PassTight{1}',1:'{0}.PassTight{1}'}
+        for z1 in [0,1]:
+            for z2 in [0,1]:
+                for w1 in [0,1]:
+                    thisCut = '{0} && '.format(myCut) + ' && '.join([cuts[z1].format('z1','1'),cuts[z2].format('z1','2'),cuts[w1].format('w1','1')])
+                    thisName = ''.join([labels[z1],labels[z2],labels[w1]])
+                    logger.info("%s:%s:%iTeV: Plotting control regions - %s" % (analysis, channel, runPeriod, thisName))
+                    plotDistributions(plotMethod,thisCut,nl,isControl,savedir=thisName,analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass,doDetailed=doDetailed,doMinimal=True)
+                    if plotFinalStates:
+                        for c in fsToPlot:
+                            logger.info("%s:%s:%iTeV: Plotting control regions - %s - channel %s" % (analysis, channel, runPeriod, thisName, c))
+                            newCut = '{0} && channel=="{1}"'.format(thisCut,c)
+                            plotDistributions(plotMethod,newCut,nl,isControl,savedir='{0}/{1}'.format(thisName,c),analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass,doDetailed=doDetailed,doMinimal=True)
 
     # some partially blind plots for h++
     if runPeriod==8 and not dataplot and analysis in ['Hpp3l']:
@@ -590,6 +608,7 @@ def parse_command_line(argv):
     parser.add_argument('-po','--plotOverlay',action='store_true',help='Plot overlay')
     parser.add_argument('-ps','--plotShapes',action='store_true',help='Plot shapes')
     parser.add_argument('-pcf','--plotCutFlow',action='store_true',help='Plot cutflow distributions')
+    parser.add_argument('-pfr','--plotFakeRegions',action='store_true',help='Plot fake regions')
     parser.add_argument('-rt','--runTau',action='store_true',help='Run Tau finalStates (not implemented)')
     parser.add_argument('-ub','--unblind',action='store_false',help='Unblind signal channel')
     parser.add_argument('-ns','--nostack',action='store_true',help='Plot histograms unstacked')
@@ -638,7 +657,7 @@ def main(argv=None):
     elif args.doFakeRate:
         plotFakeRate(args.analysis,args.channel,args.period,mass=args.mass,loglevel=args.log,blind=args.unblind,doDetailed=args.doDetailed)
     else:
-        plotRegion(args.analysis,args.channel,args.period,plotFinalStates=args.plotFinalStates,runTau=args.runTau,blind=args.unblind,mass=args.mass,plotJetBins=args.plotJetBins,plotOverlay=args.plotOverlay,plotShapes=args.plotShapes,plotCutFlow=args.plotCutFlow,myCut=args.cut,finalStates=args.finalStates,nostack=args.nostack,normalize=args.normalize,scaleFactor=args.scaleFactor,loglevel=args.log,doDetailed=args.doDetailed)
+        plotRegion(args.analysis,args.channel,args.period,plotFinalStates=args.plotFinalStates,runTau=args.runTau,blind=args.unblind,mass=args.mass,plotJetBins=args.plotJetBins,plotOverlay=args.plotOverlay,plotShapes=args.plotShapes,plotCutFlow=args.plotCutFlow,myCut=args.cut,finalStates=args.finalStates,nostack=args.nostack,normalize=args.normalize,scaleFactor=args.scaleFactor,loglevel=args.log,doDetailed=args.doDetailed,plotFakeRegions=args.plotFakeRegions)
 
     return 0
 

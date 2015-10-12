@@ -67,6 +67,24 @@ def sync(analysis,channel,period,**kwargs):
             print '%s: %10.2f' % (chan, num)
         print ''
 
+    if analysis in ['WZ']:
+        print 'Data events for each category'
+        labels = {0:'F',1:'T'}
+        cuts = {0:'!{0}.PassTight{1}',1:'{0}.PassTight{1}'}
+        yields = {}
+        for chan in finalStates:
+            yields[chan] = {}
+            for z1 in [0,1]:
+                for z2 in [0,1]:
+                    for w1 in [0,1]:
+                        thisCut = '{0} && channel=="{1}" && '.format(cut,chan) + ' && '.join([cuts[z1].format('z1','1'),cuts[z2].format('z1','2'),cuts[w1].format('w1','1')])
+                        thisName = ''.join([labels[z1],labels[z2],labels[w1]])
+                        yields[chan][thisName]  = plotter.getDataEntries(thisCut)
+        print 'CAT | eee  | eem  | mme  | mmm '
+        for cat in ['TTT','TTF','TFT','FTT','TFF','FTF','FFT','FFF']:
+            print '{0} | {1:4d} | {2:4d} | {3:4d} | {4:4d}'.format(cat,int(yields['eee'][cat]),int(yields['eem'][cat]),int(yields['mme'][cat]),int(yields['mmm'][cat]))
+        print ''
+
     # yields in each channel
     if doYields:
         print 'Yields (scaled to %i pb-1)' % intLumi

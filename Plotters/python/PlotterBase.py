@@ -295,14 +295,12 @@ class PlotterBase(object):
         doError = kwargs.pop('doError',False)
         scaleup = kwargs.pop('scaleup',False)
         unweighted = kwargs.pop('doUnweighted',False)
-        doDataDriven = kwargs.pop('doDataDriven',False) # a custom weight (for datadriven background)
         customScale = kwargs.pop('customScale','')
         totalVal = 0
         totalErr2 = 0
         scalefactor = "event.gen_weight*event.lep_scale_up*event.trig_scale*event.pu_weight" if scaleup else self.scaleFactor
         if 'data' in sample:
             scalefactor = self.dataScaleFactor
-            if doDataDriven: scalefactor = 'event.datadriven_weight'
         if customScale: scalefactor = customScale
         self.j += 1
         self.logger.debug('Cut: %s'%selection)
@@ -502,8 +500,24 @@ class PlotterBase(object):
 
     def getDataDrivenHist(self, variable, binning, cut, noFormat=False, **kwargs):
         '''Return a histogram corresponding to the data driven estimation of a background'''
+        scalefactor
         histName = 'hdataDriven%s' % variable
         binEdges = binning
+        nameMap = {
+            0: 'z1.PassTight1',
+            1: 'z1.PassTight2',
+            2: 'w1.PassTight1',
+        }
+        effMap = {
+            0: 'z1.LepEffTight1',
+            1: 'z1.LepEffTight2',
+            2: 'w1.LepEffTight1',
+        }
+        fakeMap = {
+            0: 'z1.LepFakeTight1',
+            1: 'z1.LepFakeTight2',
+            2: 'w1.LepFakeTight1',
+        }
         if len(binning)==3:
             hist = ROOT.TH1F(histName, histName, *binning)
             binEdges = range(binning[1],binning[2],(binning[2]-binning[1])/binning[0])
@@ -511,32 +525,36 @@ class PlotterBase(object):
             hist = ROOT.TH1F(histName+'temp', histName+'temp', len(binning)-1, binning[0], binning[-1])
             hist.Rebin(len(binning)-1,histName+'new',array('d',binning))
             hist = ROOT.gDirectory.Get(histName+'new').Clone(histName)
-        for b in range(len(binning)-1):
+        for b in range(len(binning)):
             bin = b+1
-            cutString = '%s & %s >= %f & %s < %f' % (cut, variable, binEdges[b], variable, binEdges[b+1])
+            cutString = '%s && %s >= %f' % (cut, variable, binEdges[b])
+            if bin < len(binning): cutString += ' && %s < %f' % (variable, binEdges[b+1])
             vals = {}
             errs = {}
             for comb in itertools.product('PF', repeat=3): # hard code 3l for now
                 combCut = cutString
+                
                 for l in range(3):
                     if comb[l] == 'P':
-                        combCut += ' & l%i.passTight==1'
+                        combCut += ' && {0}==1'.format(nameMap[l])
                     else:
-                        combCut += ' & l%i.passTight==0'
-                val = 0
-                err2 = 0
-                for sample in self.data:
-                    # need to embed the weights, pt dependent, calculate in z->ll sample and QCD enriched smaple (prompt and fake rate, respectively)
-                    tempval, temperr = self.getNumEntries(combCut,sample,doError=True,doDataDriven=True,**kwargs)
-                    val += tempval
-                    err2 += temperr**2
-                err = err2**0.5
+                        combCut += ' && {0}==0'.format(nameMap[l])
+                denom = '1./(({0}-{1})*({2}-{3})*({4}-{5}))'.format(effMap[0],fakeMap[0],effMap[1],fakeMap[1],effMap[2],fakeMap[2])
+                num = '1'
+                for l in range(3):
+                    if comb[l] == 'P':
+                        combCut += '*(1-{0})'.format(fakeMap[l])
+                    else:
+                        combCut += '*({0})'.format(fakeMap[l])
+                scalefactor = denom + '*' + num
+                val, err = self.getDataEntries(combCut,doError=True,customScale=scalefactor,**kwargs)
                 vals[comb] = val
                 errs[comp] = err
             binContent = vals['PPP'] - vals['PPF'] - vals['PFP'] + vals['PFF'] - vals['FPP'] + vals['FPF'] + vals['FFP'] - vals['FFF']
             binError = sum([x**2 for x in errs.itervalues()])**0.5
             hist.SetBinContent(bin,binContent)
             hist.SetBinError(bin,binError)
+        return hist
 
     def getMCStack2D(self, var1, var2, bin1, bin2, cut, **kwargs):
         '''Return a stack of MC histograms'''

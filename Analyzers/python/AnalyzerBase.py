@@ -32,7 +32,7 @@ import datetime
 import math
 import logging
 
-from scale_factors import LeptonScaleFactors, TriggerScaleFactors, ChargeIdSystematics
+from scale_factors import LeptonScaleFactors, TriggerScaleFactors, ChargeIdSystematics, LeptonEfficiency, LeptonFakeRate
 from pu_weights import PileupWeights
 import leptonId as lepId
 from ntuples import *
@@ -165,6 +165,8 @@ class AnalyzerBase(object):
         self.trigscaler = TriggerScaleFactors()
         self.pu_weights = PileupWeights()
         self.chargeid = ChargeIdSystematics()
+        self.lepeff = LeptonEfficiency()
+        self.lepfake = LeptonFakeRate()
 
         self.file = rt.TFile(self.out_file, 'recreate')
         
@@ -534,17 +536,29 @@ class AnalyzerBase(object):
                         if theObjects and l[0] in 'emt':
                             ntupleRow["%s.JetBTag%i" % (i,objCount)] = float(getattr(rtrow, "%sJetCSVBtag" % l)) if period==8 else float(getattr(rtrow, "%sJetPFCISVBtag" % l))
                         if theObjects:
-                            looseScales = self.lepscaler.scale_factor(rtrow, l, loose=True) if self.period==8 else [1,1,1]
-                            tightScales = self.lepscaler.scale_factor(rtrow, l, loose=False) if self.period==8 else [1,1,1]
+                            looseScales = self.lepscaler.scale_factor(rtrow, l, loose=True)
+                            tightScales = self.lepscaler.scale_factor(rtrow, l, loose=False)
+                            looseEff = self.lepeff.scale_factor(rtrow, l, loose=True)
+                            tightEff = self.lepeff.scale_factor(rtrow, l, loose=False)
+                            looseFake = self.lepFake.scale_factor(rtrow, l, loose=True)
+                            tightFake = self.lepFake.scale_factor(rtrow, l, loose=False)
                         else:
                             looseScales = [-1,-1,-1]
                             tightScales = [-1,-1,-1]
+                            looseEff = [-1,-1,-1]
+                            tightEff = [-1,-1,-1]
+                            looseFake = [-1,-1,-1]
+                            tightFake = [-1,-1,-1]
                         ntupleRow["%s.LepScaleLoose%i" % (i,objCount)] = float(looseScales[0])
                         ntupleRow["%s.LepScaleTight%i" % (i,objCount)] = float(tightScales[0])
                         ntupleRow["%s.LepScaleLoose%i_up" % (i,objCount)] = float(looseScales[1])
                         ntupleRow["%s.LepScaleTight%i_up" % (i,objCount)] = float(tightScales[1])
                         ntupleRow["%s.LepScaleLoose%i_down" % (i,objCount)] = float(looseScales[2])
                         ntupleRow["%s.LepScaleTight%i_down" % (i,objCount)] = float(tightScales[2])
+                        ntupleRow["%s.LepEffLoose%i" % (i,objCount)] = float(looseEff[0])
+                        ntupleRow["%s.LepEffTight%i" % (i,objCount)] = float(tightEff[0])
+                        ntupleRow["%s.LepFakeLoose%i" % (i,objCount)] = float(looseFake[0])
+                        ntupleRow["%s.LepFakeTight%i" % (i,objCount)] = float(tightFake[0])
                         ntupleRow["%s.Chg%i" % (i,objCount)] = float(getattr(rtrow, "%sCharge" % l)) if theObjects else float(-9)
                         ntupleRow["%s.PassLoose%i" % (i,objCount)] = float(self.ID(rtrow,l,**self.getIdArgs('Loose'))) if theObjects else float(-9)
                         ntupleRow["%s.PassTight%i" % (i,objCount)] = float(self.ID(rtrow,l,**self.getIdArgs('Tight'))) if theObjects else float(-9)
@@ -633,14 +647,22 @@ class AnalyzerBase(object):
                 ntupleRow["%s%i.JetBTag" % (charName,objCount)] = float(getattr(rtrow, "%sJetCSVBtag" % obj)) if self.period==8 else float(getattr(rtrow, "%sJetPFCISVBtag" % obj))
                 ntupleRow["%s%i.Dxy" % (charName,objCount)] = float(getattr(rtrow, "%sPVDXY" % obj))
                 ntupleRow["%s%i.Dz" % (charName,objCount)] = float(getattr(rtrow, "%sPVDZ" % obj))
-            looseScales = self.lepscaler.scale_factor(rtrow, obj, loose=True) if self.period==8 else [1,1,1]
-            tightScales = self.lepscaler.scale_factor(rtrow, obj, loose=False) if self.period==8 else [1,1,1]
+            looseScales = self.lepscaler.scale_factor(rtrow, obj, loose=True)
+            tightScales = self.lepscaler.scale_factor(rtrow, obj, loose=False)
+            looseEff = self.lepeff.scale_factor(rtrow, obj, loose=True)
+            tightEff = self.lepeff.scale_factor(rtrow, obj, loose=False)
+            looseFake = self.lepfake.scale_factor(rtrow, obj, loose=True)
+            tightFake = self.lepfake.scale_factor(rtrow, obj, loose=False)
             ntupleRow["%s%i.LepScaleLoose" % (charName,objCount)] = float(looseScales[0])
             ntupleRow["%s%i.LepScaleTight" % (charName,objCount)] = float(tightScales[0])
             ntupleRow["%s%i.LepScaleLoose_up" % (charName,objCount)] = float(looseScales[1])
             ntupleRow["%s%i.LepScaleTight_up" % (charName,objCount)] = float(tightScales[1])
             ntupleRow["%s%i.LepScaleLoose_down" % (charName,objCount)] = float(looseScales[2])
             ntupleRow["%s%i.LepScaleTight_down" % (charName,objCount)] = float(tightScales[2])
+            ntupleRow["%s%i.LepEffLoose" % (charName,objCount)] = float(looseEff[0])
+            ntupleRow["%s%i.LepEffTight" % (charName,objCount)] = float(tightEff[0])
+            ntupleRow["%s%i.LepFakeLoose" % (charName,objCount)] = float(looseFake[0])
+            ntupleRow["%s%i.LepFakeTight" % (charName,objCount)] = float(tightFake[0])
             ntupleRow["%s%i.Chg" % (charName,objCount)] = float(getattr(rtrow, "%sCharge" % obj))
             ntupleRow["%s%i.PassLoose" % (charName,objCount)] = float(self.ID(rtrow,obj,**self.getIdArgs('Loose')))
             ntupleRow["%s%i.PassTight" % (charName,objCount)] = float(self.ID(rtrow,obj,**self.getIdArgs('Tight')))
@@ -752,13 +774,19 @@ class AnalyzerBase(object):
     def getScales(self,rtrow,objects,**lepargs):
         '''Return the scale factors in a dictionary'''
         scales = {
-            'lep'      : 1,
-            'lepup'    : 1,
-            'lepdown'  : 1,
-            'trig'     : 1,
-            'puweight' : 1,
-            'genweight': 1,
-            'chargeid' : 1,
+            'lep'             : 1,
+            'lepup'           : 1,
+            'lepdown'         : 1,
+            'lepeff'          : 1,
+            'lepeffup'        : 1,
+            'lepeffdown'      : 1,
+            'lepfake'         : 0,
+            'lepfakeup'       : 0,
+            'lepfakedown'     : 0,
+            'trig'            : 1,
+            'puweight'        : 1,
+            'genweight'       : 1,
+            'chargeid'        : 1,
             'trigger_prescale': 1,
         }
         if self.period==8: # TODO: move when we have numbers for 13 tev
@@ -772,6 +800,15 @@ class AnalyzerBase(object):
         scales['lep']      = lepscales[0]
         scales['lepup']    = lepscales[1]
         scales['lepdown']  = lepscales[2]
+        if self.period==13:
+            lepeff = self.lepeff.scale_factor(rtrow, *objects, **lepargs)
+            scales['lepeff'] = lepeff[0]
+            scales['lepeffup'] = lepeff[1]
+            scales['lepeffdown'] = lepeff[2]
+            lepfake = self.lepfake.scale_factor(rtrow, *objects, **lepargs)
+            scales['lepfake'] = lepfake[0]
+            scales['lepfakeup'] = lepfake[1]
+            scales['lepfakedown'] = lepfake[2]
         scales['trigger_prescale'] = self.getTriggerPrescale(rtrow)
         genweight = rtrow.GenWeight if hasattr(rtrow,'GenWeight') else 1.
         scales['genweight']= genweight
