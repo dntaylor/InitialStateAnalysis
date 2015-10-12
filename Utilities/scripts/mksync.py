@@ -60,11 +60,11 @@ def sync(analysis,channel,period,**kwargs):
     if analysis in ['Hpp3l', 'Hpp4l']: allMC += [s]
 
     if doCounts:
-        print '{0} event counts'.format(analysis)
+        print '{0} signal event counts'.format(analysis)
         tempCut = cut
         for chan in finalStates:
             num = plotter.getNumEntries('%s&channel=="%s"' %(tempCut,chan), sigMap[period][s], doUnweighted=True, do4l=do4l, bp=bp)
-            print '%s: %i' % (chan, num)
+            print '%s: %10.2f' % (chan, num)
         print ''
 
     # yields in each channel
@@ -77,13 +77,15 @@ def sync(analysis,channel,period,**kwargs):
             for b in allMC:
                 val = plotter.getNumEntries('%s&channel=="%s"' %(cut,chan), sigMap[period][b], do4l=do4l, bp=bp)
                 print '         | %10s | %10.2f' %(b,val)
+            val = plotter.getDataEntries('%s&channel=="%s"' %(cut,chan), do4l=do4l, bp=bp)
+            print '         | %10s | %10i' %('Data',val)
             print ''
 
     # cut flow
     if doCutflow:
         print 'Cutflows'
         for chan in finalStates:
-            print '%15s |        Sig |         BG |        S/B' % chan
+            print '%15s |        Sig |         BG |        S/B |       Data' % chan
             for c in range(len(cutflows)):
                 sig = 0
                 bg = 0
@@ -93,7 +95,8 @@ def sync(analysis,channel,period,**kwargs):
                     if b==s: sig += val
                     elif 'data' in b: pass
                     else: bg += val
-                print '%15s | %10.2f | %10.2f | %10.2f' %(cutflows[c],sig,bg,sig/bg)
+                data = plotter.getDataEntries('%s&channel=="%s"' %(theCut,chan), do4l=do4l, bp=bp)
+                print '%15s | %10.2f | %10.2f | %10.2f | %10i' %(cutflows[c],sig,bg,sig/bg,data)
             print ''
 
     # electron charge id efficiency

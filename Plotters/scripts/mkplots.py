@@ -522,10 +522,11 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
 
 
     # setup selections
-    ptBins = [10,20,40,100,200]
+    ptBins = [0,5,7,10,20,30,40,50,80]
     etaBins = {
         'e': [0,1.479,2.5],
-        'm': [0,1.2,2.4],
+        #'m': [0,1.2,2.4],
+        'm': [0,1.479,2.4],
     }
     for fakeRegion in fakeRegions['WZ']:
         logger.info("%s:%s:%iTeV: Fake Region: %s" % (analysis,channel, runPeriod, fakeRegion))

@@ -66,6 +66,32 @@ class CutSequence(object):
     def getResults(self):
         return self.results
 
+class CutTree(object):
+    '''
+    Tree for storing passing selection information.
+    '''
+    def __init__(self):
+        # create selections
+        self.selections = {}
+        self.results = {}
+
+    def add(self, fun, label):
+        self.selections[label] = fun
+
+    def evaluate(self,rtrow):
+        self.results['evt'] = rtrow.evt
+        self.results['run'] = rtrow.run
+        self.results['lumi'] = rtrow.lumi
+        passAll = True
+        for label in self.selections:
+            cut = self.selections[label]
+            self.results[label] = cut(rtrow)
+            if not self.results[label]: passAll = False
+        return passAll
+
+    def getResults(self):
+        return self.results
+
 def lep_order(a, b):
     '''
     A simple function to guarantee order of leptons in FSA ntuples.
@@ -150,6 +176,9 @@ class AnalyzerBase(object):
         if not hasattr(self,'doVBF'): self.doVBF = False
         self.ntuple, self.branches = buildNtuple(self.object_definitions,states,self.channel,self.final_states,altIds=self.alternateIds,doVBF=self.doVBF)
 
+        if hasattr(self,'cutTreeLabels'):
+            self.cutTree, self.eventBranch, self.cutsBranch = buildCutTree(self.cutTreeLabels)
+
     def analyze(self,**kwargs):
         '''
         The primary analyzer loop.
@@ -184,9 +213,6 @@ class AnalyzerBase(object):
                 for entry in xrange(metatree.GetEntries()):
                     metatree.GetEntry(entry)
                     tempEvts += metatree.nevents if self.isData or self.period==8 else metatree.summedWeights # gen level processed
-                #else: # THIS WAS MY PROBLEM AT 8 TEV: TODO: Check 13TeV in FSA with miniAOD
-                #    metatree = rtFile.Get("%s/eventCount" % fs)
-                #    tempEvts = metatree.GetEntries()
 
                 self.objects = self.enumerate_objects(fs)
 
@@ -209,6 +235,10 @@ class AnalyzerBase(object):
 
                     # event number for dictionary storing
                     eventkey = (rtrow.evt, rtrow.lumi, rtrow.run)
+
+                    # if we have a cutTree, do it
+                    if hasattr(self,'cutTree'):
+                        eventCutTree = 0
 
                     # can we define the object we want?
                     candidate = self.choose_objects(rtrow)

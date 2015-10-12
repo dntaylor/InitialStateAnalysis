@@ -8,6 +8,22 @@ from itertools import product
 import ROOT as rt
 from array import array
 
+def buildCutTree(cutlabels,**kwargs):
+    eventLeafs = ['evt','run','lumi']
+    eventBranchLineToProcess = "struct eventBranch_t {" + " ".join(["Int_t {0};".format(x) for x in eventLeafs]) + "}"
+    cutBranchLineToProcess = "struct cutBranch_t {" + " ".join(["Int_t {0};".format(x) for x in cutlabels]) + "}"
+    eventBranchStrForBranch = '{0}/I:'.format(eventLeafs[0]) + ':'.join(eventLeafs[1:])
+    cutBranchStrForBranch = '{0}/I:'.format(cutlabels[0]) + ':'.join(cutlabels[1:])
+    if not hasattr(rt,"eventBranch_t"): rt.gROOT.ProcessLine(eventBranchLineToProcess)
+    if not hasattr(rt,"cutBranch_t"): rt.gROOT.ProcessLine(cutBranchLineToProcess)
+    eventBranchStruct = rt.eventBranch_t()
+    cutBranchStruct = rt.cutBranch_t()
+    tree = rt.TTree('cutTree','cutTree')
+    tree.Branch('event',eventBranchStruct,eventBranchStrForBranch)
+    tree.Branch('selections',cutBranchStruct,cutBranchStrForBranch)
+    return (tree, eventBranchStruct, cutBranchStruct)
+
+
 def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
     '''
     A function to build an initial state ntuple for AnalyzerBase.py

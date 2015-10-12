@@ -39,6 +39,8 @@ class AnalyzerWZ(AnalyzerBase):
         self.cutflow_labels = ['Trigger','Fiducial','ID','Z Selection','W Selection']
         self.alternateIds, self.alternateIdMap = self.defineAlternateIds(period)
         self.doVBF = (period==13)
+        self.cutTreeLabels = ['trigger','fiducial','vetoID','looseID','tightID']
+
         super(AnalyzerWZ, self).__init__(sample_name, file_list, out_file, period, **kwargs)
 
     ###############################
@@ -63,7 +65,16 @@ class AnalyzerWZ(AnalyzerBase):
 
             ordList = [l[1], l[0], l[2]] if getattr(rtrow,'%sPt' % l[0]) < getattr(rtrow,'%sPt' % l[1]) else [l[0], l[1], l[2]]
 
-            if OS1 and l[0][0]==l[1][0]:
+            # make sure they are all separated (no split tracks)
+            o01 = ordered(l[0],l[1])
+            o02 = ordered(l[0],l[2])
+            o12 = ordered(l[1],l[2])
+            dr01 = getattr(rtrow,'%s_%s_DR' %(o01[0],o01[1])) > 0.02
+            dr02 = getattr(rtrow,'%s_%s_DR' %(o02[0],o02[1])) > 0.02
+            dr12 = getattr(rtrow,'%s_%s_DR' %(o12[0],o12[1])) > 0.02
+            dr = dr01 and dr02 and dr12 
+
+            if OS1 and l[0][0]==l[1][0] and dr:
                 cands.append((massdiff, -pt2, mass, ordList))
 
         if not len(cands): return 0
@@ -89,8 +100,21 @@ class AnalyzerWZ(AnalyzerBase):
         '''
         Veto on 4th lepton
         '''
-        return (rtrow.eVetoTight + rtrow.muVetoTight == 0) if self.period==13 else\
+        # first select best, (closest to Z and highest pt W)
+        good = False
+        for min1, min2 in zip(cand1, cand2):
+            if min1 < min2:
+                good = True
+                break
+            if min1 > min2:
+                good = False
+                break
+
+        # then veto on 4th tight lepton
+        veto = (rtrow.eVetoTight + rtrow.muVetoTight == 0) if self.period==13 else\
                (rtrow.elecVetoWZTight + rtrow.muonVetoWZTight == 0)
+
+        return good and veto
 
     def defineAlternateIds(self,period):
         if period==8:
@@ -139,14 +163,23 @@ class AnalyzerWZ(AnalyzerBase):
     ###########################
     ### Define preselection ###
     ###########################
+    def cutTreeSelections(self,rtrow):
+        cutTree = CutTree()
+        cutTree.add(self.trigger,'trigger')
+        cutTree.add(self.fiducial,'fiducial')
+        cutTree.add(self.ID_veto,'vetoID')
+        cutTree.add(self.ID_loose,'looseID')
+        cutTree.add(self.ID_tight,'tightID')
+        return cutTree
+
     def preselection(self,rtrow):
         cuts = CutSequence()
         if self.isData: cuts.add(self.trigger)
         cuts.add(self.fiducial)
         #if self.period=='13': cuts.add(self.passAnyId)
-        cuts.add(self.ID_tight)
+        #cuts.add(self.ID_tight)
         #cuts.add(self.ID_loose)
-        #cuts.add(self.ID_veto)
+        cuts.add(self.ID_veto)
         return cuts
 
     def selection(self,rtrow):
