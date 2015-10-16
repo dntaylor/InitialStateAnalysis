@@ -174,17 +174,16 @@ class AnalyzerWZ(AnalyzerBase):
 
     def preselection(self,rtrow):
         cuts = CutSequence()
-        if self.isData: cuts.add(self.trigger)
+        cuts.add(self.trigger)
         cuts.add(self.fiducial)
         #if self.period=='13': cuts.add(self.passAnyId)
         #cuts.add(self.ID_tight)
-        #cuts.add(self.ID_loose)
-        cuts.add(self.ID_veto)
+        cuts.add(self.ID_loose)
         return cuts
 
     def selection(self,rtrow):
         cuts = CutSequence()
-        if self.isData: cuts.add(self.trigger)
+        cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.ID_tight)
         cuts.add(self.mass3l)
@@ -212,7 +211,7 @@ class AnalyzerWZ(AnalyzerBase):
                 kwargs['isoCut']['e'] = 9999.
         if type=='Loose':
             kwargs['idDef'] = {
-                'e':'Loose',
+                'e':'LooseNoIso',
                 'm':'Loose',
                 't':'Loose'
             }
@@ -225,18 +224,7 @@ class AnalyzerWZ(AnalyzerBase):
                 kwargs['idDef']['m'] = 'WZLoose'
             if self.period==13:
                 kwargs['isoCut']['e'] = 9999.
-        if type=='Veto':
-            kwargs['idDef'] = {
-                'e':'Veto',
-                'm':'ZZLoose',
-                't':'Loose'
-            }
-            kwargs['isoCut'] = {
-                'e':0.4,
-                'm':0.4
-            }
-            if self.period==13:
-                kwargs['isoCut']['e'] = 9999.
+                kwargs['isoCut']['m'] = 9999.
         if hasattr(self,'alternateIds'):
             if type in self.alternateIds:
                 kwargs = self.alternateIdMap[type]
@@ -280,9 +268,6 @@ class AnalyzerWZ(AnalyzerBase):
            if self.ID(rtrow,*self.objects,**self.getIdArgs(altId)): passCheck[altId[0]] = True
         return passCheck['e'] and passCheck['m']
 
-    def ID_veto(self, rtrow):
-        return self.ID(rtrow,*self.objects,**self.getIdArgs('Veto'))
-
     def ID_loose(self, rtrow):
         return self.ID(rtrow,*self.objects,**self.getIdArgs('Loose'))
 
@@ -302,10 +287,7 @@ class AnalyzerWZ(AnalyzerBase):
     def wSelection(self,rtrow):
         leps = self.objCand
         if getattr(rtrow, '%sPt' %leps[2])<20.: return False
-        if self.period==8:
-            if rtrow.type1_pfMetEt < 30.: return False
-        else:
-            if rtrow.pfMetEt < 30.: return False
+        if rtrow.type1_pfMetEt < 30.: return False
         for l in leps[:2]:
             o = ordered(l,leps[2])
             dr = getattr(rtrow, '%s_%s_DR' % (o[0],o[1]))
@@ -321,7 +303,7 @@ class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
         cuts = CutSequence()
         cuts.add(self.trigger)
         cuts.add(self.fiducial)
-        cuts.add(self.ID_veto)
+        cuts.add(self.ID_loose)
         cuts.add(self.ID_tight_Z)
         cuts.add(self.zSelection)
         cuts.add(self.metveto)
@@ -340,10 +322,7 @@ class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
         return self.ID(rtrow,*self.objCand[:2],**self.getIdArgs('Tight'))
 
     def metveto(self,rtrow):
-        if self.period==8:
-            if rtrow.type1_pfMetEt > 25.: return False
-        else:
-            if rtrow.pfMetEt > 25.: return False
+        if rtrow.type1_pfMetEt > 25.: return False
         return True
 
     def trigger(self, rtrow):
@@ -382,11 +361,11 @@ class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
             if min1 > min2:
                 good = False
                 break
-        match_0 = getattr(rtrow,'%sMatchesDoubleE' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesDoubleMu' %self.objCand[0])
-        match_1 = getattr(rtrow,'%sMatchesDoubleE' %self.objCand[1]) if self.objCand[1][0]=='e' else getattr(rtrow,'%sMatchesDoubleMu' %self.objCand[1])
+        match_0 = getattr(rtrow,'%sMatchesDoubleE' %self.objCand[0])>0 if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesDoubleMu' %self.objCand[0])>0
+        match_1 = getattr(rtrow,'%sMatchesDoubleE' %self.objCand[1])>0 if self.objCand[1][0]=='e' else getattr(rtrow,'%sMatchesDoubleMu' %self.objCand[1])>0
         passTrig = match_0 > 0.5 and match_1 > 0.5
 
-        veto = (rtrow.eVeto + rtrow.muVeto == 0)
+        veto = (rtrow.eVetoNoIso + rtrow.muVetoNoIso == 0)
 
         return good and passTrig and veto
 
@@ -422,10 +401,7 @@ class AnalyzerWZ_HZZFakeRate(AnalyzerWZ):
         return self.ID(rtrow,*self.objCand[:2],**self.getIdArgs('Tight'))
 
     def metveto(self,rtrow):
-        if self.period==8:
-            if rtrow.type1_pfMetEt > 25.: return False
-        else:
-            if rtrow.pfMetEt > 25.: return False
+        if rtrow.type1_pfMetEt > 25.: return False
         return True
 
     def getIdArgs(self,type):
@@ -502,8 +478,8 @@ class AnalyzerWZ_HZZFakeRate(AnalyzerWZ):
             if min1 > min2:
                 good = False
                 break
-        match_0 = getattr(rtrow,'%sMatchesDoubleE' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesDoubleMu' %self.objCand[0])
-        match_1 = getattr(rtrow,'%sMatchesDoubleE' %self.objCand[1]) if self.objCand[1][0]=='e' else getattr(rtrow,'%sMatchesDoubleMu' %self.objCand[1])
+        match_0 = getattr(rtrow,'%sMatchesDoubleE' %self.objCand[0])>0 if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesDoubleMu' %self.objCand[0])>0
+        match_1 = getattr(rtrow,'%sMatchesDoubleE' %self.objCand[1])>0 if self.objCand[1][0]=='e' else getattr(rtrow,'%sMatchesDoubleMu' %self.objCand[1])>0
         passTrig = match_0 > 0.5 and match_1 > 0.5
 
         veto = (rtrow.eVetoHZZ + rtrow.muVetoHZZ == 0)

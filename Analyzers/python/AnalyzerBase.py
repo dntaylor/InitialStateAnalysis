@@ -347,6 +347,10 @@ class AnalyzerBase(object):
 
         ntupleRow["select.passTight"] = int(self.pass_selection(rtrow))
         ntupleRow["select.passLoose"] = int(self.pass_preselection(rtrow))
+        ntupleRow["select.passDoubleMuon"] = int(rtrow.doubleMuPass if self.period==13 else rtrow.doubleMuPass or rtrow.doubleMuTrkPass)
+        ntupleRow["select.passDoubleEG"] = int(rtrow.doubleEPass if self.period==13 else rtrow.doubleETightPass)
+        ntupleRow["select.passMuonEG"] = int(rtrow.singleMuSingleEPass if self.period==13 else rtrow.mu17ele8isoPass)
+        ntupleRow["select.passEGMuon"] = int(rtrow.singleESingleMuPass if self.period==13 else rtrow.mu8ele17isoPass)
         numObjs = len(self.final_states[0])
         finalStateObjects ='emtjgn'
         allowedObjects = ''
@@ -389,7 +393,7 @@ class AnalyzerBase(object):
 
         def getMT(rtrow,period,*objects):
             masses = {'e':0.511e-3, 'm':0.1056, 't':1.776, 'j':0}
-            metVar = 'pfMet' if period==13 else 'type1_pfMet'
+            metVar = 'type1_pfMet'
             mtVar = 'PFMET' if period==13 else 'PfMet_Ty1'
             visP4 = rt.TLorentzVector()
             for l in objects:
@@ -411,7 +415,7 @@ class AnalyzerBase(object):
         ntupleRow["finalstate.mT"] = float(getMT(rtrow,self.period,*objects))
         ntupleRow["finalstate.sT"] = float(sum([getattr(rtrow, "%sPt" % x) for x in objects]))
         ntupleRow["finalstate.hT"] = float(rtrow.Ht) if hasattr(rtrow,'Ht') else float(-1)
-        metVar = 'pfMet' if self.period==13 else 'type1_pfMet'
+        metVar = 'type1_pfMet'
         ntupleRow["finalstate.met"] = float(getattr(rtrow, '%sEt' %metVar))
         ntupleRow["finalstate.metPhi"] = float(getattr(rtrow,'%sPhi' %metVar))
         ntupleRow["finalstate.leadJetPt"] = float(rtrow.jet1Pt) if self.period==13 else float(-1)
@@ -444,8 +448,8 @@ class AnalyzerBase(object):
         def store_state(rtrow,ntupleRow,state,theObjects,period):
             masses = {'e':0.511e-3, 'm':0.1056, 't':1.776, 'j':0}
             objStart = 0
-            metVar = 'pfMet' if period==13 else 'type1_pfMet'
-            mtVar = 'PFMET' if period==13 else 'PfMet_Ty1'
+            metVar = 'type1_pfMet'
+            mtVar = 'PFMET_type1' if period==13 else 'PfMet_Ty1'
             for i in state:
                 numObjects = len([ x for x in self.object_definitions[i] if x != 'n']) if theObjects else 0
                 finalObjects = theObjects[objStart:objStart+numObjects]
@@ -540,14 +544,12 @@ class AnalyzerBase(object):
                             tightScales = self.lepscaler.scale_factor(rtrow, l, loose=False)
                             looseEff = self.lepeff.scale_factor(rtrow, l, loose=True)
                             tightEff = self.lepeff.scale_factor(rtrow, l, loose=False)
-                            looseFake = self.lepFake.scale_factor(rtrow, l, loose=True)
-                            tightFake = self.lepFake.scale_factor(rtrow, l, loose=False)
+                            tightFake = self.lepfake.scale_factor(rtrow, l, loose=False)
                         else:
                             looseScales = [-1,-1,-1]
                             tightScales = [-1,-1,-1]
                             looseEff = [-1,-1,-1]
                             tightEff = [-1,-1,-1]
-                            looseFake = [-1,-1,-1]
                             tightFake = [-1,-1,-1]
                         ntupleRow["%s.LepScaleLoose%i" % (i,objCount)] = float(looseScales[0])
                         ntupleRow["%s.LepScaleTight%i" % (i,objCount)] = float(tightScales[0])
@@ -557,8 +559,7 @@ class AnalyzerBase(object):
                         ntupleRow["%s.LepScaleTight%i_down" % (i,objCount)] = float(tightScales[2])
                         ntupleRow["%s.LepEffLoose%i" % (i,objCount)] = float(looseEff[0])
                         ntupleRow["%s.LepEffTight%i" % (i,objCount)] = float(tightEff[0])
-                        ntupleRow["%s.LepFakeLoose%i" % (i,objCount)] = float(looseFake[0])
-                        ntupleRow["%s.LepFakeTight%i" % (i,objCount)] = float(tightFake[0])
+                        ntupleRow["%s.LepFake%i" % (i,objCount)] = float(tightFake[0])
                         ntupleRow["%s.Chg%i" % (i,objCount)] = float(getattr(rtrow, "%sCharge" % l)) if theObjects else float(-9)
                         ntupleRow["%s.PassLoose%i" % (i,objCount)] = float(self.ID(rtrow,l,**self.getIdArgs('Loose'))) if theObjects else float(-9)
                         ntupleRow["%s.PassTight%i" % (i,objCount)] = float(self.ID(rtrow,l,**self.getIdArgs('Tight'))) if theObjects else float(-9)
@@ -651,7 +652,6 @@ class AnalyzerBase(object):
             tightScales = self.lepscaler.scale_factor(rtrow, obj, loose=False)
             looseEff = self.lepeff.scale_factor(rtrow, obj, loose=True)
             tightEff = self.lepeff.scale_factor(rtrow, obj, loose=False)
-            looseFake = self.lepfake.scale_factor(rtrow, obj, loose=True)
             tightFake = self.lepfake.scale_factor(rtrow, obj, loose=False)
             ntupleRow["%s%i.LepScaleLoose" % (charName,objCount)] = float(looseScales[0])
             ntupleRow["%s%i.LepScaleTight" % (charName,objCount)] = float(tightScales[0])
@@ -661,8 +661,7 @@ class AnalyzerBase(object):
             ntupleRow["%s%i.LepScaleTight_down" % (charName,objCount)] = float(tightScales[2])
             ntupleRow["%s%i.LepEffLoose" % (charName,objCount)] = float(looseEff[0])
             ntupleRow["%s%i.LepEffTight" % (charName,objCount)] = float(tightEff[0])
-            ntupleRow["%s%i.LepFakeLoose" % (charName,objCount)] = float(looseFake[0])
-            ntupleRow["%s%i.LepFakeTight" % (charName,objCount)] = float(tightFake[0])
+            ntupleRow["%s%i.LepFake" % (charName,objCount)] = float(tightFake[0])
             ntupleRow["%s%i.Chg" % (charName,objCount)] = float(getattr(rtrow, "%sCharge" % obj))
             ntupleRow["%s%i.PassLoose" % (charName,objCount)] = float(self.ID(rtrow,obj,**self.getIdArgs('Loose')))
             ntupleRow["%s%i.PassTight" % (charName,objCount)] = float(self.ID(rtrow,obj,**self.getIdArgs('Tight')))
@@ -821,3 +820,91 @@ class AnalyzerBase(object):
     def getGenChannel(self,rtrow):
         '''Dummy return gen channel string'''
         return 'a'
+
+    def getObject(self,rtrow,obj,var,**kwargs):
+        '''Get modified object'''
+        if obj=='met':
+            metVar = 'type1_pfMet'
+            shift = kwargs.pop('metShift','')
+            shiftMap = {
+              'jres': 'JetRes',
+              'jes' : 'JetEn',
+              'mes' : 'MuonEn',
+              'ees' : 'ElectronEn',
+              'tes' : 'TauEn',
+              'ues' : 'UnclusteredEn',
+              'pes' : 'PhotonEn',
+            }
+            change = {'+': 'Up', '-': 'Down'}
+            varName = {'pt': 'Pt', 'phi': 'Phi'}
+            varName2 = {'pt': 'Et', 'phi': 'Phi'}
+            shiftString = '{0}_shifted{1}_{2}{3}'.format(metVar,varNam[var],shiftMap[shift[:-1]],change[-1]) if shift else '{0}{1}'.format(metVar,varName2[var])
+            return getattr(rtrow,shiftString)
+        elif obj in self.object_definitions: # composite
+            masses = {'e':0.511e-3, 'm':0.1056, 't':1.776, 'j':0}
+            if self.object_definitions[obj] == 1:
+                return -9.
+            elif self.object_definitions[obj][1] == 'n':
+                o = kwargs.get('objects',[])
+                if not o: return -9
+                pt1 = self.getObject(rtrow,o[0],'pt',**kwargs)
+                eta1 = self.getObject(rtrow,o[0],'eta',**kwargs)
+                phi1 = self.getObject(rtrow,o[0],'phi',**kwargs)
+                mass1 = masses[o[0][0]]
+                vec1 = rt.TLorentzVector()
+                vec1.SetPtEtaPhiM(pt1,eta1,phi1,mass1)
+                px1 = vec1.Px()
+                py1 = vec1.Py()
+                ptMet = self.getObject(rtrow,'met','pt',**kwargs)
+                phiMet = self.getObject(rtrow,'met','phi',**kwargs)
+                vecMet = rt.TLorentzVector()
+                vecMet.SetPtEtaPhiM(ptMet,0.,phiMet,0.)
+                pxMet = vecMet.Px()
+                pyMet = vecMet.Py
+                vecW = vec1 + vecMet
+                if var=='pt':
+                    return vecW.Pt()
+                if var=='mass' or var=='mt' or var=='m':
+                    return vecW.Mt()
+                if var=='dphi':
+                    return deltaPhi(phi1,phiMet)
+                if var=='st':
+                    return pt1 + ptMet
+            else: # assumes two lepton constituents
+                o = kwargs.get('objects',[])
+                if len(o) != 2: return 0.
+                o = ordered(o[0],o[1])
+                vec1 = rt.TLorentzVector()
+                pt1 = self.getObject(rtrow,o[0],'pt',**kwargs)
+                eta1 = self.getObject(rtrow,o[0],'eta',**kwargs)
+                phi1 = self.getObject(rtrow,o[0],'phi',**kwargs)
+                mass1 = masses[o[0][0]]
+                vec1.SetPtEtaPhiM(pt1,eta1,phi1,mass1)
+                vec2 = rt.TLorentzVector()
+                pt2 = self.getObject(rtrow,o[1],'pt',**kwargs)
+                eta2 = self.getObject(rtrow,o[1],'eta',**kwargs)
+                phi2 = self.getObject(rtrow,o[1],'phi',**kwargs)
+                mass2 = masses[o[1][0]]
+                vec2.SetPtEtaPhiM(pt2,eta2,phi2,mass2)
+                vec3 = vec1+vec2
+                if var=='pt':
+                    return vec3.Pt()
+                if var=='mass' or var=='m':
+                    return vec3.M()
+                if var=='mt':
+                    return vec3.Mt()
+                if var=='dphi':
+                    return deltaPhi(phi1,phi2)
+                if var=='dr':
+                    return deltaR(eta1,phi1,eta2,phi2)
+                if var=='st':
+                    return pt1 + pt2
+
+
+        elif obj[0] in ['e','m','t']: # lepton
+            # pt
+            if var=='pt': return getattr(rtrow,'{0}Pt'.format(obj))
+            # eta
+            if var=='eta': return getattr(rtrow,'{0}Eta'.format(obj))
+            # phi
+            if var=='phi': return getattr(rtrow,'{0}Phi'.format(obj))

@@ -35,7 +35,7 @@ def plot_limits(analysis, region, period, savename, **kwargs):
     datacardBaseDir = kwargs.pop('datacardBaseDir','datacards')
     limitDataBaseDir = kwargs.pop('limitDataBaseDir','limitData')
     saveDir = kwargs.pop('saveDir','plots/limits')
-    blind = kwargs.pop('blind',True)
+    blind = not kwargs.pop('unblind',False)
     bp = kwargs.pop('branchingPoint','')
     bgMode = kwargs.pop('bgMode','sideband')
     do4l = kwargs.pop('do4l',False)
@@ -155,7 +155,7 @@ def plot_limits(analysis, region, period, savename, **kwargs):
     oneSigma.Draw('f')
     expected.Draw('same')
     ROOT.gPad.RedrawAxis()
-    if not blind: observed.Draw()
+    if not blind: observed.Draw('same')
 
     ratiounity = ROOT.TLine(expected.GetXaxis().GetXmin(),1,expected.GetXaxis().GetXmax(),1)
     ratiounity.Draw()
@@ -197,7 +197,7 @@ def plot_limits(analysis, region, period, savename, **kwargs):
     xexpected.Draw('same')
     xsecGraph.Draw('same')
     ROOT.gPad.RedrawAxis()
-    if not blind: xobserved.Draw()
+    if not blind: xobserved.Draw('same')
 
     legend = ROOT.TLegend(0.5,0.6,0.90,0.85)
     legend.SetFillColor(0)
@@ -244,7 +244,7 @@ def plot_combined_limits(period, savename, **kwargs):
     datacardBaseDir = kwargs.pop('datacardBaseDir','datacards')
     limitDataBaseDir = kwargs.pop('limitDataBaseDir','limitData')
     saveDir = kwargs.pop('saveDir','plots/limits')
-    blind = kwargs.pop('blind',True)
+    blind = not kwargs.pop('unblind',False)
     bp = kwargs.pop('branchingPoint','')
     bgMode = kwargs.pop('bgMode','sideband')
 
@@ -410,7 +410,7 @@ def plot_combined_limits(period, savename, **kwargs):
         xexpected[analysis].Draw('same')
         xsecGraph[analysis].Draw('same')
         ROOT.gPad.RedrawAxis()
-        if not blind: xobserved[analysis].Draw()
+        if not blind: xobserved[analysis].Draw('same')
 
         legend[analysis] = ROOT.TLegend(0.5,0.6,0.90,0.85)
         legend[analysis].SetFillColor(0)

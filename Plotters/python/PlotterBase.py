@@ -43,6 +43,7 @@ class PlotterBase(object):
         mergeDict = kwargs.pop('mergeDict',{})
         scaleFactor = kwargs.pop('scaleFactor','event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale')
         dataScaleFactor = kwargs.pop('dataScaleFactor','1')
+        datadriven = kwargs.pop('datadriven',False)
         for key, value in kwargs.iteritems():
             self.logger.warning("Unrecognized parameter '%s' = %s" %(key,str(value)))
 
@@ -95,6 +96,7 @@ class PlotterBase(object):
         self.sampleMergeDict = mergeDict
         self.scaleFactor = scaleFactor
         self.dataScaleFactor = dataScaleFactor
+        self.datadriven = datadriven
 
     def reset(self):
         '''Reset the plotter class'''
@@ -125,6 +127,10 @@ class PlotterBase(object):
     def initializeBackgroundSamples(self,sampleList):
         '''Initialize the background samples.'''
         self.backgrounds = sampleList
+        if self.datadriven:
+            self.backgrounds = ['datadriven']
+            self.backgrounds.extend([x for x in sampleList if x not in ['SingleTop', 'TTJets', 'ZJets']])
+            sampleList = self.backgrounds
         self.initializeSamples(sampleList)
         self.backgroundInitialized = True
 
@@ -144,6 +150,7 @@ class PlotterBase(object):
     def initializeSamplesHelper(self,sample):
         '''initialize single sample'''
         self.samples[sample] = {} 
+        if self.datadriven and sample == 'datadriven': return
         file = self.ntupleDir+'/%s.root' % sample
         self.samples[sample]['file'] = ROOT.TFile(file)
         if 'data' in sample:
@@ -272,16 +279,25 @@ class PlotterBase(object):
             return self.getScaledIndividualSampleEntries(sample,selection,scalefactor,**kwargs)
 
     def getScaledIndividualSampleEntries(self,sample,selection,scalefactor,**kwargs):
-        tree = self.samples[sample]['file'].Get(self.analysis)
-        tree.Draw('1>>h%s%i(1,0,2)'%(sample,self.j),'%s*(%s)' %(scalefactor,selection),'goff')
-        if not ROOT.gDirectory.Get("h%s%i" %(sample,self.j)):
-            self.logger.debug('%s: No entries'%sample)
-            val = 0
+        if 'datadriven' == sample:
+            hist = self.getDataDrivenHist('1', [1,0,2], selection, **kwargs)
+            if hist:
+                hist.Sumw2()
+                val = hist.Integral()
+                self.logger.debug('%s: Entries: %f'%(sample,val))
+            else:
+                val = 0
         else:
-            hist = ROOT.gDirectory.Get("h%s%i" %(sample,self.j)).Clone("hnew%s%i" %(sample,self.j))
-            hist.Sumw2()
-            val = hist.Integral()
-            self.logger.debug('%s: Entries: %f'%(sample,val))
+            tree = self.samples[sample]['file'].Get(self.analysis)
+            tree.Draw('1>>h%s%i(1,0,2)'%(sample,self.j),'%s*(%s)' %(scalefactor,selection),'goff')
+            if not ROOT.gDirectory.Get("h%s%i" %(sample,self.j)):
+                self.logger.debug('%s: No entries'%sample)
+                val = 0
+            else:
+                hist = ROOT.gDirectory.Get("h%s%i" %(sample,self.j)).Clone("hnew%s%i" %(sample,self.j))
+                hist.Sumw2()
+                val = hist.Integral()
+                self.logger.debug('%s: Entries: %f'%(sample,val))
         err = abs(val) ** 0.5
         if 'data' in sample: return val, err
         lumi = self.samples[sample]['lumi']
@@ -397,8 +413,9 @@ class PlotterBase(object):
         return hist
 
 
-    def getSingleVarHist(self,sample,variable,binning,cut):
+    def getSingleVarHist(self,sample,variable,binning,cut,**kwargs):
         '''Single variable, single sample hist'''
+        customScale = kwargs.pop('customScale','')
         tree = self.samples[sample]['file'].Get(self.analysis)
         self.j += 1
         histname = 'h%s%s' % (sample, variable.replace('(','_').replace(')','_'))
@@ -407,10 +424,13 @@ class PlotterBase(object):
         else: # we will need to rebin TODO: this might cause issue in root6, double check later
             drawString = "%s>>%s()" % (variable, histname)
         if not cut: cut = '1'
-        if 'data' not in sample:
-            tree.Draw(drawString,'%s*(%s)' % (self.scaleFactor,cut),'goff')
+        if customScale:
+            tree.Draw(drawString,'%s*(%s)' % (customScale,cut),'goff')
         else:
-            tree.Draw(drawString,'%s*(%s)' % (self.dataScaleFactor,cut),'goff')
+            if 'data' not in sample:
+                tree.Draw(drawString,'%s*(%s)' % (self.scaleFactor,cut),'goff')
+            else:
+                tree.Draw(drawString,'%s*(%s)' % (self.dataScaleFactor,cut),'goff')
         if not ROOT.gDirectory.Get(histname):
             return 0
         hist = ROOT.gDirectory.Get(histname).Clone(histname+'_mod')
@@ -434,23 +454,24 @@ class PlotterBase(object):
     def getHist(self, sample, variables, binning, cut, noFormat=False, **kwargs):
         '''Return a histogram of a given variable from the given dataset with a cut'''
         normalize = kwargs.pop('normalize',False)
+        if sample=='datadriven': return self.getDataDrivenHist(variables, binning, cut, noFormat=False, normalize=normalize, **kwargs)
         hists = ROOT.TList()
         for v in range(len(variables)):
             if sample in self.sampleMergeDict:
                 for s in self.sampleMergeDict[sample]:
                     if len(variables) != len(cut):
                         thisCut = cut + ' & ' + self.sampleMergeDict[sample][s]
-                        hist = self.getSingleVarHist(s,variables[v],binning,thisCut)
+                        hist = self.getSingleVarHist(s,variables[v],binning,thisCut,**kwargs)
                     else:
                         thisCut = cut[v] + ' & ' + self.sampleMergeDict[sample][s]
-                        hist = self.getSingleVarHist(s,variables[v],binning,thisCut)
+                        hist = self.getSingleVarHist(s,variables[v],binning,thisCut,**kwargs)
                     if hist:
                         hists.Add(hist)
             else:
                 if len(variables) != len(cut):
-                    hist = self.getSingleVarHist(sample,variables[v],binning,cut)
+                    hist = self.getSingleVarHist(sample,variables[v],binning,cut,**kwargs)
                 else:
-                    hist = self.getSingleVarHist(sample,variables[v],binning,cut[v])
+                    hist = self.getSingleVarHist(sample,variables[v],binning,cut[v],**kwargs)
                 if hist:
                     hists.Add(hist)
         if hists.IsEmpty():
@@ -498,11 +519,10 @@ class PlotterBase(object):
         hist.Merge(hists)
         return hist
 
-    def getDataDrivenHist(self, variable, binning, cut, noFormat=False, **kwargs):
+    def getDataDrivenHist(self, variables, binning, cut, noFormat=False, **kwargs):
         '''Return a histogram corresponding to the data driven estimation of a background'''
-        scalefactor
-        histName = 'hdataDriven%s' % variable
-        binEdges = binning
+        getPrompt = kwargs.pop('getPrompt',False)
+        doSimple = kwargs.pop('doSimple',True)
         nameMap = {
             0: 'z1.PassTight1',
             1: 'z1.PassTight2',
@@ -514,47 +534,72 @@ class PlotterBase(object):
             2: 'w1.LepEffTight1',
         }
         fakeMap = {
-            0: 'z1.LepFakeTight1',
-            1: 'z1.LepFakeTight2',
-            2: 'w1.LepFakeTight1',
+            0: 'z1.LepFake1',
+            1: 'z1.LepFake2',
+            2: 'w1.LepFake1',
         }
-        if len(binning)==3:
-            hist = ROOT.TH1F(histName, histName, *binning)
-            binEdges = range(binning[1],binning[2],(binning[2]-binning[1])/binning[0])
-        else:
-            hist = ROOT.TH1F(histName+'temp', histName+'temp', len(binning)-1, binning[0], binning[-1])
-            hist.Rebin(len(binning)-1,histName+'new',array('d',binning))
-            hist = ROOT.gDirectory.Get(histName+'new').Clone(histName)
-        for b in range(len(binning)):
-            bin = b+1
-            cutString = '%s && %s >= %f' % (cut, variable, binEdges[b])
-            if bin < len(binning): cutString += ' && %s < %f' % (variable, binEdges[b+1])
-            vals = {}
-            errs = {}
-            for comb in itertools.product('PF', repeat=3): # hard code 3l for now
-                combCut = cutString
-                
+        # remove any passTight cuts, assumes these are there, since it only returns the all tight stuff
+        if type(cut) is list:
+            for c in range(len(cut)):
                 for l in range(3):
-                    if comb[l] == 'P':
-                        combCut += ' && {0}==1'.format(nameMap[l])
+                    cut[c] = cut[c].replace(nameMap[l],'1')
+                    cut[c] = cut[c].replace('l{0}.PassTight'.format(l),'1')
+                allCuts = 'finalstate.mass>100. && (z1.Pt1>20.&&z1.Pt2>10.) && z1.mass>60. && z1.mass<120. && w1.dR1_z1_1>0.1 && w1.dR1_z1_2>0.1 && w1.Pt1>20. && w1.met>30.'
+                cut[c] = cut[c].replace('select.passTight',allCuts)
+        else:
+            for l in range(3):
+                cut = cut.replace(nameMap[l],'1')
+                cut = cut.replace('l{0}.PassTight'.format(l),'1')
+            allCuts = 'finalstate.mass>100. && (z1.Pt1>20.&&z1.Pt2>10.) && z1.mass>60. && z1.mass<120. && w1.dR1_z1_1>0.1 && w1.dR1_z1_2>0.1 && w1.Pt1>20. && w1.met>30.'
+            cut = cut.replace('select.passTight',allCuts)
+        hists = ROOT.TList()
+        for comb in itertools.product('PF', repeat=3): # hard code 3l for now
+            custCut = cut
+            for l in range(3):
+                if type(cut) is list:
+                    for c in range(len(cut)):
+                        if doSimple:
+                            custCut[c] += ' && {0}==1'.format(nameMap[l]) if comb[l] == 'P' else ' && {0}==0'.format(nameMap[l])
+                        else:
+                            custCut[c] += ' && {0}==1'.format(nameMap[l]) if comb[l] == 'P' else ' && {0}==0'.format(nameMap[l])
+                else:
+                    if doSimple:
+                        custCut += ' && {0}==1'.format(nameMap[l]) if comb[l] == 'P' else ' && {0}==0'.format(nameMap[l])
                     else:
-                        combCut += ' && {0}==0'.format(nameMap[l])
-                denom = '1./(({0}-{1})*({2}-{3})*({4}-{5}))'.format(effMap[0],fakeMap[0],effMap[1],fakeMap[1],effMap[2],fakeMap[2])
+                        custCut += ' && {0}==1'.format(nameMap[l]) if comb[l] == 'P' else ' && {0}==0'.format(nameMap[l])
+            denom = '1./(({0}-{1})*({2}-{3})*({4}-{5}))'.format(effMap[0],fakeMap[0],effMap[1],fakeMap[1],effMap[2],fakeMap[2])
+            num = '1' if comb.count('P') in [1,3] else '-1'
+            for l in range(3):
+                if comb[l] == 'P':
+                    num += '*(1-{0})'.format(fakeMap[l])
+                else:
+                    num += '*({0})'.format(fakeMap[l])
+            scalefactor = num + '*' + denom
+            if doSimple: # sascha's way
                 num = '1'
                 for l in range(3):
-                    if comb[l] == 'P':
-                        combCut += '*(1-{0})'.format(fakeMap[l])
-                    else:
-                        combCut += '*({0})'.format(fakeMap[l])
-                scalefactor = denom + '*' + num
-                val, err = self.getDataEntries(combCut,doError=True,customScale=scalefactor,**kwargs)
-                vals[comb] = val
-                errs[comp] = err
-            binContent = vals['PPP'] - vals['PPF'] - vals['PFP'] + vals['PFF'] - vals['FPP'] + vals['FPF'] + vals['FFP'] - vals['FFF']
-            binError = sum([x**2 for x in errs.itervalues()])**0.5
-            hist.SetBinContent(bin,binContent)
-            hist.SetBinError(bin,binError)
-        return hist
+                    if comb[l] == 'F': num += '*({0}/(1-{0}))'.format(fakeMap[l])
+                scalefactor = num
+                if comb.count('P')==3: continue
+            for sample in self.data:
+                hist = self.getHist(sample,variables,binning,custCut,customScale=scalefactor,**kwargs)
+                hists.Add(hist)
+        histname = 'h%s_datadriven' % variables[0].replace('(','_').replace(')','_')
+        hist = hists[0].Clone(histname)
+        hist.Reset()
+        hist.Merge(hists)
+        if getPrompt:
+            result = self.getData(variables,binning,cut,noFormat=True,**kwargs)
+            result.Add(hist,-1)
+        else:
+            result = hist
+        if not noFormat:
+            result.SetTitle(self.dataStyles['datadriven']['name'])
+            result.SetFillColor(self.dataStyles['datadriven']['fillcolor'])
+            result.SetLineColor(self.dataStyles['datadriven']['linecolor'])
+            result.SetFillStyle(self.dataStyles['datadriven']['fillstyle'])
+
+        return result
 
     def getMCStack2D(self, var1, var2, bin1, bin2, cut, **kwargs):
         '''Return a stack of MC histograms'''

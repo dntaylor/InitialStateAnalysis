@@ -39,6 +39,7 @@ class FakeRatePlotter(PlotterBase):
     def getFakeRate(self,passSelection, failSelection, ptBins, etaBins, ptVar, etaVar, savename, **kwargs):
         '''Get 2d histogram of fakerates'''
         dataDriven = kwargs.pop('dataDriven',True)
+        subtractSamples = kwargs.pop('subtractSamples',[])
         fakeHist = ROOT.TH2F(savename,'',len(ptBins)-1,array('d',ptBins),len(etaBins)-1,array('d',etaBins))
         for p in range(len(ptBins)-1):
             for e in range(len(etaBins)-1):
@@ -58,6 +59,14 @@ class FakeRatePlotter(PlotterBase):
                     numErr2 += nErr ** 2
                     denom += d
                     denomErr2 += dErr ** 2
+                for sample in subtractSamples:
+                    n, nErr = self.getNumEntries(numCut, sample, doError=True)
+                    d, dErr = self.getNumEntries(denomCut, sample, doError=True)
+                    num -= n
+                    numErr2 += nErr ** 2
+                    denom -= d
+                    denomErr2 += dErr ** 2
+                if num < 0: num = 0
                 if denom and num:
                     fakerate = float(num)/denom
                     err = fakerate * (numErr2/(num**2) + denomErr2/(denom**2)) ** 0.5

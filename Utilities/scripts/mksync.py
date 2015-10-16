@@ -17,9 +17,11 @@ def sync(analysis,channel,period,**kwargs):
     doYields = kwargs.pop('doYields',False)
     doCounts = kwargs.pop('doCounts',False)
     doCorrelation = kwargs.pop('doCorrelation',False)
+    doCategories = kwargs.pop('doCategories',False)
     doChargeId = kwargs.pop('doChargeId',False)
     do4l = kwargs.pop('do4l',False)
     doFinalStates = kwargs.pop('doFinalStates',False)
+    doDataDriven = kwargs.pop('doDataDriven',True)
     cut = kwargs.pop('cut','1')
     bp = kwargs.pop('bp','')
     mass = kwargs.pop('mass',500)
@@ -45,7 +47,7 @@ def sync(analysis,channel,period,**kwargs):
     if do4l: s = 'SigPP'
     sigMap = getSigMap(nl,mass)
     channelBackground =  getChannelBackgrounds(period)
-    plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=period,mergeDict=mergeDict)
+    plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=period,mergeDict=mergeDict,dataDriven=doDataDriven)
     plotter.initializeBackgroundSamples([sigMap[period][x] for x in channelBackground[channel]])
     if analysis in ['Hpp3l', 'Hpp4l']: plotter.initializeSignalSamples([sigMap[period][s]])
     plotter.initializeDataSamples([sigMap[period]['data']])
@@ -56,7 +58,7 @@ def sync(analysis,channel,period,**kwargs):
     for c,l in zip(cutflowMap['cuts'],cutflowMap['labels_simple']):
         cutflow[l] = c
     cutflows = cutflowMap['labels_simple']
-    allMC = channelBackground[channel]
+    allMC = [x for x in channelBackground[channel] if x not in ['Z','TT','T']] + ['datadriven'] if doDataDriven else channelBackground[channel]
     if analysis in ['Hpp3l', 'Hpp4l']: allMC += [s]
 
     if doCounts:
@@ -67,7 +69,7 @@ def sync(analysis,channel,period,**kwargs):
             print '%s: %10.2f' % (chan, num)
         print ''
 
-    if analysis in ['WZ']:
+    if doCategories:
         print 'Data events for each category'
         labels = {0:'F',1:'T'}
         cuts = {0:'!{0}.PassTight{1}',1:'{0}.PassTight{1}'}
@@ -386,6 +388,8 @@ def parse_command_line(argv):
     parser.add_argument('-rt','--runTau',action='store_true',help='Run Tau finalStates (not implemented)')
     parser.add_argument('-ub','--unblind',action='store_false',help='Unblind signal channel')
     parser.add_argument('-dc','--doCounts',action='store_true',help='run sig counts')
+    parser.add_argument('-dcat','--doCategories',action='store_true',help='categories for bg estimation')
+    parser.add_argument('-dd','--doDataDriven',action='store_true',help='run datadriven')
     parser.add_argument('-dcf','--doCutflow',action='store_true',help='run cutflow')
     parser.add_argument('-de','--doEfficiency',action='store_true',help='run efficiencies')
     parser.add_argument('-dy','--doYields',action='store_true',help='run yields')
@@ -432,7 +436,9 @@ def main(argv=None):
          doCorrelation=args.doCorrelation,
          do4l=args.do4l,
          bp=args.branchingPoint,
-         doFinalStates=args.doFinalStates
+         doFinalStates=args.doFinalStates,
+         doCategories=args.doCategories,
+         doDataDriven=args.doDataDriven
     )
 
     return 0

@@ -251,10 +251,8 @@ class LeptonFakeRate(object):
 
     def __init__(self):
         # WZ 13TeV
-        with open(os.path.join(os.path.dirname(__file__),'muon.json'),'r') as mf:
-            self.m_id_dict_13tev = json.load(mf)
-        with open(os.path.join(os.path.dirname(__file__),'electron.json'),'r') as ef:
-            self.e_id_dict_13tev = json.load(ef)
+        with open(os.path.join(os.path.dirname(__file__),'fakes.json'),'r') as f:
+            self.fake_dict_13tev = json.load(f)
 
     def close(self):
         pass
@@ -262,15 +260,16 @@ class LeptonFakeRate(object):
     def scale_factor(self, row, *lep_list, **kwargs):
         tight = kwargs.pop('tight',False)
         loose = kwargs.pop('loose',False)
-        period = kwargs.pop('period',8)
+        veto = kwargs.pop('veto',False)
+        period = kwargs.pop('period',13)
         out = []
         for l in lep_list:
             lep_type = l[0]
 
             if lep_type == 'm':
-                out += [[0,0,0]]
+                out += [self.m_wz_fake_veto(row,l)]
             elif lep_type == 'e':
-                out += [[0,0,0]]
+                out += [self.m_wz_fake_veto(row,l)]
             elif lep_type == 't':
                 out += [[0,0,0]] # TODO
             else:
@@ -283,6 +282,30 @@ class LeptonFakeRate(object):
             final[2] *= 1-o[2]
         result = [1-x for x in final]
         return result
+
+    def get_fake_err(self,row,l,fakename):
+        pt = getattr(row, "%sPt" % l)
+        eta = abs(getattr(row, "%sSCEta" % l)) if l[0]=='e' else abs(getattr(row, "%sEta" % l))
+        fakelist = self.fake_dict_13tev[fakename]
+        for fakedict in fakelist:
+            ptlow   = fakedict['pt_low']
+            pthigh  = fakedict['pt_high']
+            etalow  = fakedict['eta_low']
+            etahigh = fakedict['eta_high']
+            if pt>ptlow and pt<pthigh and eta>etalow and eta<etahigh:
+                fake = fakedict['fakerate']
+                err = fakedict['error']
+                return fake, err
+        return 0.0, 0.0
+
+    def e_wz_fake_veto(self, row, l):
+        fake, err = self.get_fake_err(row,l,'ZTightProbeElecTight')
+        return [fake, fake+err, fake-err]
+
+    def m_wz_fake_veto(self, row, l):
+        fake, err = self.get_fake_err(row,l,'ZTightProbeMuonTight')
+        return [fake, fake+err, fake-err]
+
 
 class LeptonScaleFactors(object):
 
@@ -378,12 +401,12 @@ class LeptonScaleFactors(object):
 
     def e_wz_scale_loose(self, row, l):
         # id
-        idscale, iderr = self.get_scale_err(row,l,'cutBasedElectronID-Spring15-25ns-V1-standalone-loose')
+        idscale, iderr = self.get_scale_err(row,l,'passingLoose') # has iso... 
         return [idscale, idscale+iderr, idcale-iderr]
 
     def e_wz_scale_tight(self, row, l):
         # id
-        idscale, iderr = self.get_scale_err(row,l,'cutBasedElectronID-Spring15-25ns-V1-standalone-medium')
+        idscale, iderr = self.get_scale_err(row,l,'passingMedium')
         return [idscale, idscale+iderr, idcale-iderr]
 
 

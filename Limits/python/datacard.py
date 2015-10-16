@@ -38,6 +38,10 @@ class Datacard(object):
 
         out += "-" * 30 + "\n"
 
+        out += 'shapes * * FAKE\n'
+
+        out += "-" * 30 + "\n"
+
         out += "bin 1\n"
         out += "observation %i\n" % self.observed
 

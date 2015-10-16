@@ -10,6 +10,8 @@ dataStyles = {}
 
 
 # Some colors
+Gray         = ROOT.TColor.GetColor('#B8B8B8')
+GrayA        = ROOT.TColor.GetColor('#C8C8C8')
 Purple       = ROOT.TColor.GetColor('#AD33FF')
 PurpleA      = ROOT.TColor.GetColor('#7924B2')
 Yellow       = ROOT.TColor.GetColor('#FFFF00')
@@ -45,6 +47,15 @@ dataStyles['data'] = {
     'legendstyle' : 'pe',
     'drawstyle' : 'pe',
     'name' : "Observed",
+}
+
+dataStyles['datadriven'] = {
+    'legendstyle' : 'f',
+    'drawstyle' : 'hist',
+    'linecolor' : GrayA,
+    'fillcolor' : Gray,
+    'name' : "Data driven",
+    'fillstyle': 1001,
 }
 
 dataStyles['ZZJets'] = {

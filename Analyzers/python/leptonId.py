@@ -36,6 +36,14 @@ def elec_id(rtrow, l, period, idType):
         if not getattr(rtrow, '%sCBIDMedium' % l): return False
     if idType=='Tight':
         if not getattr(rtrow, '%sCBIDTight' % l): return False
+    if idType=='VetoNoIso':
+        if not getattr(rtrow, '%sCBIDVetoNoIso' % l): return False
+    if idType=='LooseNoIso':
+        if not getattr(rtrow, '%sCBIDLooseNoIso' % l): return False
+    if idType=='MediumNoIso':
+        if not getattr(rtrow, '%sCBIDMediumNoIso' % l): return False
+    if idType=='TightNoIso':
+        if not getattr(rtrow, '%sCBIDTightNoIso' % l): return False
     if idType=='ZZLoose':
         if not _elec_zz_loose(rtrow,l,period): return False
     if idType=='ZZTight':

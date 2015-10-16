@@ -67,7 +67,7 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
         '''
         #singleTrigMatch_leg1 = getattr(rtrow,'%sMatchesSingleE_leg1' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg1' %self.objCand[0])
         singleTrigMatch_leg2 = getattr(rtrow,'%sMatchesSingleE_leg2' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg2' %self.objCand[0])
-        veto = (rtrow.eVeto + rtrow.muVeto == 0)
+        veto = (rtrow.eVetoNoIso + rtrow.muVetoNoIso == 0)
         return singleTrigMatch_leg2 and veto
 
     def getTriggerPrescale(self,rtrow):
@@ -83,8 +83,7 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
         cuts.add(self.trigger)
         cuts.add(self.fiducial)
         #cuts.add(self.ID_tight)
-        #cuts.add(self.ID_loose)
-        cuts.add(self.ID_veto)
+        cuts.add(self.ID_loose)
         cuts.add(self.zVeto)
         cuts.add(self.jPsiVeto)
         cuts.add(self.wVeto)
@@ -121,7 +120,7 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
                 kwargs['isoCut']['e'] = 9999.
         if type=='Loose':
             kwargs['idDef'] = {
-                'e':'Loose',
+                'e':'LooseNoIso',
                 'm':'Loose',
                 't':'Loose'
             }
@@ -134,6 +133,7 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
                 kwargs['idDef']['m'] = 'WZLoose'
             if self.period==13:
                 kwargs['isoCut']['e'] = 9999.
+                kwargs['isoCut']['m'] = 9999.
         if type=='Veto':
             kwargs['idDef'] = {
                 'e':'Veto',
@@ -193,12 +193,8 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
 
     def wVeto(self,rtrow):
         leps = self.objCand
-        if self.period==8:
-            if rtrow.type1_pfMetEt > 20.: return False
-            if getattr(rtrow, "%sMtToPfMet_Ty1" % (leps[0])) > 25.: return False
-        else:
-            if rtrow.pfMetEt > 20.: return False
-            if getattr(rtrow, "%sMtToPFMET" % (leps[0])) > 25.: return False
+        if rtrow.type1_pfMetEt > 20.: return False
+        if getattr(rtrow, "%sMtToPFMET_type1" % (leps[0])) > 25.: return False
         return True
 
     def jetSelection(self,rtrow):

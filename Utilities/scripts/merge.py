@@ -24,6 +24,7 @@ def parse_command_line(argv):
     parser = get_parser("Merge the output ISA ntuples")
 
     parser.add_argument('jobName',nargs='?',type=str,const='',help='Job Name for condor submission')
+    parser.add_argument('-d','--directory',type=str,default='',help='Custom subdirectory (to keep more than one ntuple at a time)')
     args = parser.parse_args(argv)
 
     return args
@@ -40,6 +41,7 @@ def main(argv=None):
 
     # merge individual samples
     ntupledir = 'ntuples/%s_%sTeV_%s' % (args.analysis, args.period, args.channel)
+    if args.directory: ntupledir += '/{0}'.format(args.directory)
     os.system('mkdir -p %s' % ntupledir)
     if args.jobName:
         sampledirs = ['%s/%s' % (args.jobName, name) for name in os.listdir(args.jobName)]

@@ -91,14 +91,16 @@ def get_sample_names(analysis,period,samples):
             #'WZ'         : '2015-09-18-13TeV-WZ', # add ht variable
             #'WZ'         : '2015-09-28-13TeV-WZ', # add summed weights
             #'WZ'         : '2015-10-06-13TeV-WZ', # add hzz veto
-            'WZ'         : '2015-10-12-13TeV-WZ', # lower trigger
+            #'WZ'         : '2015-10-12-13TeV-WZ', # lower trigger
+            'WZ'         : '2015-10-15-13TeV-WZ', # fixed trigger and add WZ no iso ID
             'WZ_W'       : '2015-08-03-13TeV-2l',
             #'WZ_Dijet'   : '2015-08-17-13TeV-1l',
             #'WZ_Dijet'   : '2015-09-14-13TeV-1l', # updated with WZ changes
             #'WZ_Dijet'   : '2015-09-24-13TeV-1l', # add ht
             #'WZ_Dijet'   : '2015-09-28-13TeV-1l', # add summed weights
             #'WZ_Dijet'   : '2015-10-06-13TeV-1l', # add hzz veto
-            'WZ_Dijet'   : '2015-10-12-13TeV-1l', # lower trigger
+            #'WZ_Dijet'   : '2015-10-12-13TeV-1l', # lower trigger
+            'WZ_Dijet'   : '2015-10-15-13TeV-1l', # fixed trigger and WZ no iso ID
             'Hpp3l'      : '2015-03-30-13TeV-3l',
             'Hpp4l'      : '2015-03-30-13TeV-4l',
         },
