@@ -23,6 +23,23 @@ def buildCutTree(cutlabels,**kwargs):
     tree.Branch('selections',cutBranchStruct,cutBranchStrForBranch)
     return (tree, eventBranchStruct, cutBranchStruct)
 
+def getStruct(name,varDict):
+    strToProcess = 'struct {0}'.format(name) + ' {'
+    strForBranch = ''
+    typeMap = {'I': 'Int_t', 'F': 'Float_t', 'C': 'Char_t'}
+    for t in ['F','I']:
+        if t not in varDict: continue
+        for v,var in enumerate(varDict[t]):
+            strToProcess += '{0} {1};'.format(typeMap[t],var)
+            if v==0:
+                strForBranch += '{0}/{1}:'.format(var,t)
+            else:
+                strForBranch += '{0}:'.format(var)
+    strToProcess += '};'
+    strForBranch = strForBranch[:-1]
+    if not hasattr(rt,name): rt.gROOT.ProcessLine(strToProcess)
+    struct = getattr(rt,name)()
+    return struct, strForBranch
 
 def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
     '''
@@ -35,7 +52,24 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
     structureDict = {}
     structOrder = []
 
-    # define selection bools and fake rate things
+    # some common things
+    metVars = []
+    for m in ['met','metPhi','mT']:
+        metVars += [m]
+        for s in ['JetRes','JetEn','MuonEn','ElectronEn','TauEn','UnclusteredEn','PhotonEn']:
+            for d in ['Up','Down']:
+                metVars += ['{0}{1}{2}'.format(m,s,d)]
+    lepFloats = ['Pt', 'Eta', 'Phi', 'Iso', 'Dxy', 'Dz', 'SigmaIEtaIEta', 'DEtaIn', 'DPhiIn', 'HOverE', 'OoEmOoP', 'TriggeringMVA', 'NonTriggeringMVA', 'NormalizedChi2', 'JetPt', 'JetBTag']
+    for l in ['Loose','Tight']:
+        for t in ['','_up','_down']:
+            lepFloats += ['LepScale{0}{1}'.format(l,t)]
+        lepFloats += ['LepEff{0}'.format(l,t)]
+    lepFloats += ['LepFake']
+    lepInts = ['Chg', 'PassLoose', 'PassTight', 'GenPdgId', 'MotherGenPdgId', 'ChargeConsistent', 'ExpectedMissingInnerHits', 'PassConversionVeto', 'IsGlobalMuon', 'IsPFMuon', 'IsTrackerMuon', 'ValidMuonHits', 'MatchedStations', 'ValidPixelHits', 'TrackerLayers']
+
+
+
+    # define selection bools
     numObjs = len(final_states[0])
     allowedObjects = ''
     for fsObj in finalStateObjects:
@@ -44,54 +78,32 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
                 allowedObjects += fsObj
                 break
     numObjTypes = len(allowedObjects)
-    strToProcess = "struct structSelect_t {"
-    strForBranch = ""
-    strToProcess += "Int_t passTight;"
-    strForBranch += "passTight/I:"
-    strToProcess += "Int_t passLoose;"
-    strForBranch += "passLoose:"
-    for trig in ['passDoubleMuon','passDoubleEG','passMuonEG','passEGMuon']:
-        strToProcess += "Int_t {0};".format(trig)
-        strForBranch += "{0}:".format(trig)
-    #for prompts in list(product(range(numObjs+1),repeat=numObjTypes)):
-    #    if sum(prompts) > numObjs: continue
-    #    promptString = ''.join([str(x) for x in prompts])
-    #    strToProcess += "Int_t pass_%s;" % promptString
-    #    strForBranch += "pass_%s:" % promptString
+
+    selectVars = {}
+    selectVars['I'] = ['passTight','passLoose']
+    for trig in ['DoubleMuon','DoubleEG','MuonEG','EGMuon']:
+        selectVars['I'] += ['pass{0}'.format(trig)]
     for altId in alternateIds:
-        strToProcess += "Int_t pass_%s;" % altId
-        strForBranch += "pass_%s:" % altId
-    strToProcess += "};"
-    strForBranch = strForBranch[:-1] # remove trailing :
-    if not hasattr(rt,'structSelect_t'): rt.gROOT.ProcessLine(strToProcess)
-    selectStruct = rt.structSelect_t()
-    structureDict['select'] = [selectStruct, selectStruct, strForBranch]
+        selectVars['I'] += ['pass_{0}'.format(altId)]
+    selectName = 'structSelect_t'
+    selectStruct, selectStrForBranch = getStruct(selectName,selectVars)
+
+    structureDict['select'] = [selectStruct, selectStruct, selectStrForBranch]
     structOrder += ['select']    
 
     # define common root classes
-    if not hasattr(rt,'structEvent_t'):
-        rt.gROOT.ProcessLine(
-        "struct structEvent_t {\
-           Int_t   evt;\
-           Int_t   run;\
-           Int_t   lumi;\
-           Int_t   nvtx;\
-           Int_t   GenNUP;\
-           Int_t   trig_prescale;\
-           Float_t lep_scale;\
-           Float_t lep_scale_up;\
-           Float_t lep_scale_down;\
-           Float_t trig_scale;\
-           Float_t pu_weight;\
-           Float_t pu_weight_up;\
-           Float_t pu_weight_down;\
-           Float_t gen_weight;\
-           Float_t charge_uncertainty;\
-        };");
-    eventStruct = rt.structEvent_t()
-    structureDict['event'] = [eventStruct, eventStruct,'evt/I:run:lumi:nvtx:GenNUP:trig_prescale:lep_scale/F:lep_scale_up:lep_scale_down:trig_scale:pu_weight:pu_weight_up:pu_weight_down:gen_weight:charge_uncertainty']
+    eventVars = {}
+    eventVars['I'] = ['evt','run','lumi','nvtx','GenNUP','trig_prescale']
+    eventVars['F'] = ['trig_scale','gen_weight','charge_uncertainty']
+    for v in ['lep_scale','pu_weight']:
+        for t in ['','_up','_down']:
+            eventVars['F'] += ['{0}{1}'.format(v,t)]
+    eventName = 'structEvent_t'
+    eventStruct, eventStrForBranch = getStruct(eventName,eventVars)
     structOrder += ['event']
+    structureDict['event'] = [eventStruct,eventStruct,eventStrForBranch]
 
+    # add channels
     if not hasattr(rt,'structChannel_t'):
         rt.gROOT.ProcessLine(
         "struct structChannel_t {\
@@ -104,105 +116,35 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
     structureDict['genChannel'] = [genChannelStruct, rt.AddressOf(genChannelStruct,'channel'),'channel/C']
     structOrder += ['genChannel']
 
-    fsStrToProcess = "struct structFinalState_t {\
-       Float_t mass;\
-       Float_t mT;\
-       Float_t sT;\
-       Float_t hT;\
-       Float_t met;\
-       Float_t metPhi;\
-       Float_t leadJetPt;\
-       Float_t leadJetEta;\
-       Float_t leadJetPhi;\
-       Float_t leadJetPUMVA;"
-    fsStrForBranch = "mass/F:mT:sT:hT:met:metPhi:leadJetPt:leadJetEta:leadJetPhi:leadJetPUMVA:"
-
+    # add final state structs
+    fsVars = {}
+    fsVars['F'] = ['mass','eta','phi','sT']
+    fsVars['F'] += metVars
+    fsVars['F'] += ['leadJetPt','leadJetEta','leadJetPhi','leadJetPUMVA']
+    fsVars['I'] = ['jetVeto20','jetVeto30','jetVeto40']
+    for pt in ['20','30']:
+        for l in ['Loose','Medium','Tight']:
+            fsVars['I'] += ['bjetVeto{0}{1}'.format(pt,l)]
     if doVBF:
-        fsStrToProcess += "Float_t vbfMass;\
-                           Float_t vbfPt;\
-                           Float_t vbfPt1;\
-                           Float_t vbfPt2;\
-                           Float_t vbfEta1;\
-                           Float_t vbfEta2;"
-        fsStrForBranch += "vbfMass:vbfPt:vbfPt1:vbfPt2:vbfEta1:vbfEta2:"
-
-    fsStrToProcess += "Int_t   jetVeto20;\
-       Int_t   jetVeto30;\
-       Int_t   jetVeto40;\
-       Int_t   bjetVeto20Loose;\
-       Int_t   bjetVeto30Loose;\
-       Int_t   bjetVeto20Medium;\
-       Int_t   bjetVeto30Medium;\
-       Int_t   bjetVeto20Tight;\
-       Int_t   bjetVeto30Tight;\
-       Int_t   muonVetoTight;\
-       Int_t   elecVetoTight;\
-       Int_t   muonVetoLoose;\
-       Int_t   elecVetoLoose;"
-    fsStrForBranch += "jetVeto20/I:jetVeto30:jetVeto40:bjetVeto20Loose:bjetVeto30Loose:bjetVeto20Medium:bjetVeto30Medium:bjetVeto20Tight:bjetVeto30Tight:muonVetoTight:elecVetoTight:muonVetoLoose:elecVetoLoose:"
-
-    if doVBF:
-        fsStrToProcess += "Int_t   centralJetVeto20;\
-                           Int_t   centralJetVeto30;"
-        fsStrForBranch += "centralJetVeto20:centralJetVeto30:"
-
-    fsStrToProcess += "};"
-    fsStrForBranch = fsStrForBranch[:-1]
-    if not hasattr(rt,'structFinalState_t'):
-        rt.gROOT.ProcessLine(fsStrToProcess);
-    finalStateStruct = rt.structFinalState_t()
-    structureDict['finalstate'] = [finalStateStruct, finalStateStruct, fsStrForBranch]
+        fsVars['F'] += ['vbfMass','vbfPt','vbfPt1','vbfPt2','vbfEta1','vbfEta2']
+        fsVars['I'] += ['centralJetVeto20','centralJetVeto30']
+    fsName = 'structFinalState_t'
+    fsStruct, fsStrForBranch = getStruct(fsName,fsVars)
+    structureDict['finalstate'] = [fsStruct, fsStruct, fsStrForBranch]
     structOrder += ['finalstate']
 
-    if not hasattr(rt,'structObject_t'):
-        rt.gROOT.ProcessLine(
-        "struct structObject_t {\
-           Float_t Pt;\
-           Float_t Eta;\
-           Float_t Phi;\
-           Float_t Iso;\
-           Float_t Dxy;\
-           Float_t Dz;\
-           Float_t SigmaIEtaIEta;\
-           Float_t DEtaIn;\
-           Float_t DPhiIn;\
-           Float_t HOverE;\
-           Float_t OoEmOoP;\
-           Float_t TriggeringMVA;\
-           Float_t NonTriggeringMVA;\
-           Float_t NormalizedChi2;\
-           Float_t JetPt;\
-           Float_t JetBTag;\
-           Float_t LepScaleLoose;\
-           Float_t LepScaleTight;\
-           Float_t LepScaleLoose_up;\
-           Float_t LepScaleTight_up;\
-           Float_t LepScaleLoose_down;\
-           Float_t LepScaleTight_down;\
-           Float_t LepEffLoose;\
-           Float_t LepEffTight;\
-           Float_t LepFake;\
-           Int_t   Chg;\
-           Int_t   PassLoose;\
-           Int_t   PassTight;\
-           Int_t   GenPdgId;\
-           Int_t   MotherGenPdgId;\
-           Int_t   ChargeConsistent;\
-           Int_t   ExpectedMissingInnerHits;\
-           Int_t   PassConversionVeto;\
-           Int_t   IsGlobalMuon;\
-           Int_t   IsPFMuon;\
-           Int_t   IsTrackerMuon;\
-           Int_t   ValidMuonHits;\
-           Int_t   MatchedStations;\
-           Int_t   ValidPixelHits;\
-           Int_t   TrackerLayers;\
-        };");
+    # add object struct
+    objVars = {}
+    objVars['F'] = lepFloats
+    objVars['I'] = lepInts
+    objName = 'structObject_t'
+
     if not hasattr(rt,'structObjChar_t'):
         rt.gROOT.ProcessLine(
         "struct structObjChar_t {\
            Char_t  Flv[2];\
         };");
+
     lepCount = 0
     jetCount = 0
     phoCount = 0
@@ -211,7 +153,7 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
         for obj in val:
             if obj=='n': continue
             else:
-                objStruct = rt.structObject_t()
+                objStruct, objStrForBranch = getStruct(objName,objVars)
                 flvStruct = rt.structObjChar_t()
                 if obj in 'emt': 
                     charName = 'l'
@@ -225,7 +167,7 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
                     charName = 'g'
                     phoCount += 1
                     objCount = phoCount
-                structureDict['%s%i' % (charName, objCount)] = [objStruct, objStruct, 'Pt/F:Eta:Phi:Iso:Dxy:Dz:SigmaIEtaIEta:DEtaIn:DPhiIn:HOverE:OoEmOoP:TriggeringMVA:NonTriggeringMVA:NormalizedChi2:JetPt:JetBTag:LepScaleLoose:LepScaleTight:LepScaleLoose_up:LepScaleTight_up:LepScaleLoose_down:LepScaleTight_down:LepEffLoose:LepEffTight:LepFake:Chg/I:PassLoose:PassTight:GenPdgId:MotherGenPdgId:ChargeConsistent:ExpectedMissingInnerHits:PassConversionVeto:IsGlobalMuon:IsPFMuon:IsTrackerMuon:ValidMuonHits:MatchedStations:ValidPixelHits:TrackerLayers']
+                structureDict['%s%i' % (charName, objCount)] = [objStruct, objStruct, objStrForBranch]
                 structureDict['%s%iFlv' % (charName, objCount)] = [flvStruct, rt.AddressOf(flvStruct,'Flv'),'Flv/C']
                 structOrder += ['%s%i' % (charName, objCount)]
                 structOrder += ['%s%iFlv' % (charName, objCount)]
@@ -234,102 +176,28 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
     for state in states:
         for key in state:
             val = object_definitions[key]
-            strForBranch = ""
-            strToProcess = "struct struct%s_t {" % (key.upper())
-            strForBranch += "mass/F:Pt:sT:dPhi:"
-            strToProcess += "\
-                Float_t mass;\
-                Float_t Pt;\
-                Float_t sT;\
-                Float_t dPhi;"
+            stateVars = {'I':[],'F':[]}
+            stateName = 'struct{0}_t'.format(key.upper())
+            stateVars['F'] += ['mass','Pt','sT','dPhi']
             if 'n' not in val:
-                strToProcess += "Float_t dR;"
-                strForBranch += "dR:"
+                stateVars['F'] += ['dR']
             objCount = 0
             for obj in val:
                 if obj == 'n':
-                    strForBranch += "met:metPhi:"
-                    strToProcess += "\
-                        Float_t met;\
-                        Float_t metPhi;"
+                    stateVars['F'] += metVars
                 else:
                     objCount += 1
-                    strForBranch += "Pt{0}:Eta{0}:Phi{0}:Iso{0}:Dxy{0}:Dz{0}:SigmaIEtaIEta{0}:DEtaIn{0}:DPhiIn{0}:HOverE{0}:OoEmOoP{0}:TriggeringMVA{0}:NonTriggeringMVA{0}:NormalizedChi2{0}:JetPt{0}:JetBTag{0}:LepScaleLoose{0}:LepScaleTight{0}:LepScaleLoose{0}_up:LepScaleTight{0}_up:LepScaleLoose{0}_down:LepScaleTight{0}_down:LepEffLoose{0}:LepEffTight{0}:LepFake{0}:".format(objCount)
-                    strToProcess += "\
-                        Float_t Pt{0};\
-                        Float_t Eta{0};\
-                        Float_t Phi{0};\
-                        Float_t Iso{0};\
-                        Float_t Dxy{0};\
-                        Float_t Dz{0};\
-                        Float_t SigmaIEtaIEta{0};\
-                        Float_t DEtaIn{0};\
-                        Float_t DPhiIn{0};\
-                        Float_t HOverE{0};\
-                        Float_t OoEmOoP{0};\
-                        Float_t TriggeringMVA{0};\
-                        Float_t NonTriggeringMVA{0};\
-                        Float_t NormalizedChi2{0};\
-                        Float_t JetPt{0};\
-                        Float_t JetBTag{0};\
-                        Float_t LepScaleLoose{0};\
-                        Float_t LepScaleTight{0};\
-                        Float_t LepScaleLoose{0}_up;\
-                        Float_t LepScaleTight{0}_up;\
-                        Float_t LepScaleLoose{0}_down;\
-                        Float_t LepScaleTight{0}_down;\
-                        Float_t LepEffLoose{0};\
-                        Float_t LepEffTight{0};\
-                        Float_t LepFake{0};".format(objCount)
-                    # do the deltaRs
-                    #for s in states:
-                    #    for k in state:
-                    #        if k==key and s==state: continue # dont dR the same object
-                    #        v = object_definitions[k]
-                    #        oCount = 0
-                    #        for o in v:
-                    #            if o == 'n': continue
-                    #            else:
-                    #                oCount += 1
-                    #                strForBranch += "dR%i_%s_%i:" % (objCount,k,oCount)
-                    #                strToProcess += "Float_t dR%i_%s_%i;" % (objCount,k,oCount)
+                    for v in lepFloats:
+                        stateVars['F'] += ['{0}{1}'.format(v,objCount)]
+                    for v in lepInts:
+                        stateVars['I'] += ['{0}{1}'.format(v,objCount)]
                     # manually add the W Z deltaRs for now
                     if key == 'w1':
-                        strForBranch += "dR1_z1_1:dR1_z1_2:mll_z1_1:mll_z1_2:dR1_leadJet:"
-                        strToProcess += "Float_t dR1_z1_1; Float_t dR1_z1_2; Float_t mll_z1_1; Float_t mll_z1_2; Float_t dR1_leadJet;"
-            # do the alt IDs
-            objCount = 0
-            for obj in val:
-                if obj == 'n': continue
-                else:
-                    objCount += 1
-                    strForBranch += "Chg{0}/I:PassLoose{0}:PassTight{0}:GenPdgId{0}:MotherGenPdgId{0}:ChargeConsistent{0}:ExpectedMissingInnerHits{0}:PassConversionVeto{0}:IsGlobalMuon{0}:IsPFMuon{0}:IsTrackerMuon{0}:ValidMuonHits{0}:MatchedStations{0}:ValidPixelHits{0}:TrackerLayers{0}:".format(objCount)
-                    strToProcess += "\
-                        Int_t   Chg{0};\
-                        Int_t   PassLoose{0};\
-                        Int_t   PassTight{0};\
-                        Int_t   GenPdgId{0};\
-                        Int_t   MotherGenPdgId{0};\
-                        Int_t   ChargeConsistent{0};\
-                        Int_t   ExpectedMissingInnerHits{0};\
-                        Int_t   PassConversionVeto{0};\
-                        Int_t   IsGlobalMuon{0};\
-                        Int_t   IsPFMuon{0};\
-                        Int_t   IsTrackerMuon{0};\
-                        Int_t   ValidMuonHits{0};\
-                        Int_t   MatchedStations{0};\
-                        Int_t   ValidPixelHits{0};\
-                        Int_t   TrackerLayers{0};".format(objCount)
+                        stateVars['F'] += ['dR1_z1_1','dR1_z1_2','mll_z1_1','mll_z1_2','dR1_leadJet']
                     for altId in alternateIds:
-                        strToProcess += "Int_t pass_{0}_{1};".format(altId, objCount)
-                        strForBranch += "pass_{0}_{1}:".format(altId, objCount)
-            strForBranch = strForBranch[:-1] # remove trailing :
-            strToProcess += "\
-                };"
-            if not hasattr(rt,'struct%s_t' % (key.upper())):
-                rt.gROOT.ProcessLine(strToProcess)
-            initialStruct = getattr(rt,"struct{0}_t".format(key.upper()))()
-            structureDict[key] = [initialStruct, initialStruct, strForBranch]
+                        stateVars['I'] += ['pass_{0}_{1}'.format(altId, objCount)]
+            initialStruct, initialStrForBranch = getStruct(stateName,stateVars)
+            structureDict[key] = [initialStruct, initialStruct, initialStrForBranch]
             structOrder += [key]
 
     if not hasattr(rt,'structInitialChar_t'):
