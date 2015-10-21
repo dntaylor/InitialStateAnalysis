@@ -576,19 +576,19 @@ def getMergeDict(period):
             'TTJetsSemiLepMGDecays': '1',
         }
         sampleMergeDict['ZJets']     = {
-            #'DYJetsToLL_M-10To50filter_8TeV-madgraph'         : '1',
-            #'Z1jets_M50'                                      : '1',
-            #'Z2jets_M50_S10'                                  : '1',
-            #'Z3jets_M50'                                      : '1',
-            #'Z4jets_M50'                                      : '1',
-            #'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball': 'event.GenNUP==5',
+            'DYJetsToLL_M-10To50filter_8TeV-madgraph'         : '1',
+            'Z1jets_M50'                                      : '1',
+            'Z2jets_M50_S10'                                  : '1',
+            'Z3jets_M50'                                      : '1',
+            'Z4jets_M50'                                      : '1',
+            'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball': 'event.GenNUP==5',
             #'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball': '1',
-            'DYJetsToLL_M-10To50filter_8TeV-madgraph_filtered'         : '1',
-            'Z1jets_M50_filtered'                                      : '1',
-            'Z2jets_M50_S10_filtered'                                  : '1',
-            'Z3jets_M50_filtered'                                      : '1',
-            'Z4jets_M50_filtered'                                      : '1',
-            'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball_filtered': 'event.GenNUP==5',
+            #'DYJetsToLL_M-10To50filter_8TeV-madgraph_filtered'         : '1',
+            #'Z1jets_M50_filtered'                                      : '1',
+            #'Z2jets_M50_S10_filtered'                                  : '1',
+            #'Z3jets_M50_filtered'                                      : '1',
+            #'Z4jets_M50_filtered'                                      : '1',
+            #'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball_filtered': 'event.GenNUP==5',
             #'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball_filtered': '1',
         }
         sampleMergeDict['WJets']     = {
@@ -746,6 +746,7 @@ def getChannelBackgrounds(runPeriod):
         'HZZFakeRate': ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
         'Hpp3l'   : ['TT', 'TTV', 'Z', 'ZG', 'VVV', 'ZZ', 'WZ'],
         'WZ'      : ['TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WZ'],
+        'NoVeto'  : ['TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WZ'],
         'LowMass' : ['TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WZ'],
         'Hpp4l'   : ['TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WZ'],
         'ZZ'      : ['TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WZ'],
@@ -753,6 +754,7 @@ def getChannelBackgrounds(runPeriod):
     if runPeriod==13:
         channelBackground = {
             'WZ'      : ['T', 'TT', 'TTV', 'Z', 'VVV', 'WW', 'ZZ', 'WZ'],
+            'NoVeto'  : ['T', 'TT', 'TTV', 'Z', 'VVV', 'WW', 'ZZ', 'WZ'],
             'W'       : ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'ZZ', 'WZ'],
             'FakeRate': ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'ZZ', 'WZ'],
             'HZZFakeRate': ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'ZZ', 'WZ'],
@@ -775,10 +777,10 @@ def plotLepton(plotMethod,myCut,obj,**kwargs):
     name = kwargs.pop('name','')
     pretty = kwargs.pop('pretty','')
     plotMethod('%s.%sPt%s' %(obj,pre,post), [20,0,200],           savedir+'%s/Pt' %name, yaxis='Events/10.0 GeV',xaxis='p_{T}^{%s} (GeV)' %pretty,       legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+    plotMethod('%s.%sIso%s' %(obj,pre,post),[50,0,.5],            savedir+'%s/Iso' %name,yaxis='Events',        xaxis='Relative Isolation (%s)' %pretty,legendpos=43,logy=0,cut=myCut,**kwargs)
+    plotMethod('%s.%sEta%s' %(obj,pre,post),[30,-3.0,3.0],        savedir+'%s/Eta' %name,yaxis='Events',        xaxis='\\eta^{%s}' %pretty,             legendpos=43,logy=0,cut=myCut,numcol=3,**kwargs)
+    plotMethod('%s.%sPhi%s' %(obj,pre,post),[30,-3.14159,3.14159],savedir+'%s/Phi' %name,yaxis='Events',        xaxis='\\phi^{%s}' %pretty,             legendpos=43,logy=0,cut=myCut,numcol=3,**kwargs)
     if not doMinimal:
-        plotMethod('%s.%sEta%s' %(obj,pre,post),[30,-3.0,3.0],        savedir+'%s/Eta' %name,yaxis='Events',        xaxis='\\eta^{%s}' %pretty,             legendpos=43,logy=0,cut=myCut,numcol=3,**kwargs)
-        plotMethod('%s.%sPhi%s' %(obj,pre,post),[30,-3.14159,3.14159],savedir+'%s/Phi' %name,yaxis='Events',        xaxis='\\phi^{%s}' %pretty,             legendpos=43,logy=0,cut=myCut,numcol=3,**kwargs)
-        plotMethod('%s.%sIso%s' %(obj,pre,post),[50,0,.5],            savedir+'%s/Iso' %name,yaxis='Events',        xaxis='Relative Isolation (%s)' %pretty,legendpos=43,logy=0,cut=myCut,**kwargs)
         #plotMethod('%s.ChargeConsistent' %name,[3,-1.5,1.5],savedir+'%sChargeId' %name,yaxis='Events',xaxis='Charge ID (\\ell%i)' %(l+1),legendpos=31,logy=0,cut=myCut,**kwargs)    
         if doDetailed:
             plotMethod('%s.%sDxy%s' %(obj,pre,post),                     [50,-0.1,0.1],savedir+'%s/Dxy' %name,             yaxis='Events',xaxis='d_{0}^{%s}' %pretty,                      legendpos=43,logy=0,cut=myCut,**kwargs)
@@ -859,49 +861,48 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
         'm': '\\mu',
         't': '\\tau',
     }
-    if doDetailed:
-        for l in ['e','m']:
-            name = names[l]
-            t = tex[l]
-            cuts = ['%s & %s' %(myCut,'l%iFlv=="%s"' %((x+1),l)) for x in range(nl)]
-            plotMethod(['l%i.Pt'  %(x+1) for x in range(nl)], [40,0,200],            savedir+'%s/Pt'  %name, yaxis='Events/5.0 GeV', xaxis='p_{T}^{%s} (GeV)' %t,        legendpos=43, logy=0, cut=cuts, overflow=True, **kwargs)
-            if not doMinimal:
-                plotMethod(['l%i.Eta' %(x+1) for x in range(nl)], [30,-3.0,3.0],         savedir+'%s/Eta' %name, yaxis='Events',         xaxis='\\eta^{%s}' %t,              legendpos=43, logy=0, cut=cuts, numcol=3, **kwargs)
-                plotMethod(['l%i.Phi' %(x+1) for x in range(nl)], [30,-3.14159,3.14159], savedir+'%s/Phi' %name, yaxis='Events',         xaxis='\\phi^{%s}' %t,              legendpos=43, logy=0, cut=cuts, numcol=3, **kwargs)
-                plotMethod(['l%i.Iso' %(x+1) for x in range(nl)], [50,0,.5],             savedir+'%s/Iso' %name, yaxis='Events',         xaxis='Relative Isolation (%s)' %t, legendpos=43, logy=0, cut=cuts, **kwargs)
-                plotMethod(['l%i.ChargeConsistent' %(x+1) for x in range(nl)], [3,-1.5,1.5], savedir+'%s/ChargeId' %name, yaxis='Events', xaxis='Charge ID (%s)' %t,         legendpos=43, logy=0, cut=cuts, numcol=3, **kwargs)
+    for l in ['e','m']:
+        name = names[l]
+        t = tex[l]
+        cuts = ['%s & %s' %(myCut,'l%iFlv=="%s"' %((x+1),l)) for x in range(nl)]
+        plotMethod(['l%i.Pt'  %(x+1) for x in range(nl)], [40,0,200],            savedir+'%s/Pt'  %name, yaxis='Events/5.0 GeV', xaxis='p_{T}^{%s} (GeV)' %t,        legendpos=43, logy=0, cut=cuts, overflow=True, **kwargs)
+        plotMethod(['l%i.Iso' %(x+1) for x in range(nl)], [50,0,.5],             savedir+'%s/Iso' %name, yaxis='Events',         xaxis='Relative Isolation (%s)' %t, legendpos=43, logy=0, cut=cuts, **kwargs)
+        plotMethod(['l%i.Eta' %(x+1) for x in range(nl)], [30,-3.0,3.0],         savedir+'%s/Eta' %name, yaxis='Events',         xaxis='\\eta^{%s}' %t,              legendpos=43, logy=0, cut=cuts, numcol=3, **kwargs)
+        plotMethod(['l%i.Phi' %(x+1) for x in range(nl)], [30,-3.14159,3.14159], savedir+'%s/Phi' %name, yaxis='Events',         xaxis='\\phi^{%s}' %t,              legendpos=43, logy=0, cut=cuts, numcol=3, **kwargs)
+        if not doMinimal:
+            pass
+            #plotMethod(['l%i.ChargeConsistent' %(x+1) for x in range(nl)], [3,-1.5,1.5], savedir+'%s/ChargeId' %name, yaxis='Events', xaxis='Charge ID (%s)' %t,         legendpos=43, logy=0, cut=cuts, numcol=3, **kwargs)
 
     # plot doubly charged higgs stuff
     if analysis in ['Hpp3l','Hpp4l'] or region in ['Hpp2l']:
-        plotMethod('event.charge_uncertainty', [80,0.99,1.15],savedir+'charge_unc',yaxis='Events',      xaxis='Charge Uncertainty',                              lumitext=33,cut=myCut,**kwargs)
+        #plotMethod('event.charge_uncertainty', [80,0.99,1.15],savedir+'charge_unc',yaxis='Events',      xaxis='Charge Uncertainty',                              lumitext=33,cut=myCut,**kwargs)
         plotMethod('h1.mass', [24,0,600],savedir+'hpp/Mass',              yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})',        lumitext=33,logy=1,cut=myCut,overflow=True,**kwargs)
         #plotMethod('h1.mass', [24,0,600],savedir+'hpp/Mass_mod',          yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{+}\\ell^{+}} (GeV/c^{2})',              lumitext=33,legendpos=41,logy=1,cut=myCut,overflow=True,**kwargs)
         plotMethod('h1.mass', [32,0,800],savedir+'hpp/Mass_alpha',        yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})', lumitext=33,logy=1,cut=myCut,boxes=[[12,0.9*mass,1],[1.1*mass,800,1],[0.9*mass,1.1*mass,2]],**kwargs)
         plotMethod('h1.dPhi', [32,0,3.2],savedir+'hpp/Dphi',              yaxis='Events/0.1 rad',       xaxis='\\Delta\\phi_{\\ell^{\\pm}\\ell^{\\pm}} (rad)',   legendpos=41,lumitext=33,logy=0,cut=myCut,**kwargs)
         plotMethod('h1.Pt',   [40,0,400],savedir+'hpp/Pt',                yaxis='Events/10.0 GeV',      xaxis='p_{T}^{\\Phi^{\\pm\\pm}} (GeV)',                  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h1.Pt1',  [40,0,200],savedir+'hpp/LeadingLeptonPt',   yaxis='Events/5.0 GeV',       xaxis='p_{T}^{\\Phi^{\\pm\\pm} Leading Lepton} (GeV)',   legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h1.Pt2',  [40,0,200],savedir+'hpp/SubleadingLeptonPt',yaxis='Events/5.0 GeV',       xaxis='p_{T}^{\\Phi^{\\pm\\pm} Subleading Lepton} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h1.Iso1', [50,0,0.5],savedir+'hpp/LeadingIso',        yaxis='Events',               xaxis='Iso/p_{T} (\\Phi^{\\pm\\pm} Leading Lepton)',     legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h1.Iso2', [50,0,0.5],savedir+'hpp/SubleadingIso',     yaxis='Events',               xaxis='Iso/p_{T} (\\Phi^{\\pm\\pm} Subleading Lepton)',  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('h1.dR',   [60,0,6], savedir+'hpp/dR',                 yaxis='Events',               xaxis='\\Delta R(\\ell^{\\pm}\\ell^{\\pm})',             legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod('abs(h1.mass-h2.mass)', [30,0,300],savedir+'massdiff',yaxis='Events/10.0 GeV/c^{2}',xaxis='|M_{\\ell^{\\pm}\\ell^{\\pm}}-M_{\\ell^{\\mp}}| (GeV/c^{2})',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
+        if analysis in ['Hpp3l','Hpp2l']:
+            plotLepton(plotMethod,myCut,'h1',post='1',name='hpp/Leading',pretty='\\Phi^{\\pm\\pm} Leading Lepton',savedir=savedir,doDetailed=doDetailed,doMinimal=doMinimal,**kwargs)
+            plotLepton(plotMethod,myCut,'h1',post='2',name='hpp/SubLeading',pretty='\\Phi^{\\pm\\pm} SubLeading Lepton',savedir=savedir,doDetailed=doDetailed,doMinimal=doMinimal,**kwargs)
+        if analysis in ['Hpp4l']:
+            plotLepton(plotMethod,myCut,'h1',post='1',name='hpp/Leading',pretty='\\Phi^{++} Leading Lepton',savedir=savedir,doDetailed=doDetailed,doMinimal=doMinimal,**kwargs)
+            plotLepton(plotMethod,myCut,'h1',post='2',name='hpp/SubLeading',pretty='\\Phi^{++} SubLeading Lepton',savedir=savedir,doDetailed=doDetailed,doMinimal=doMinimal,**kwargs)
     if analysis in ['Hpp4l']:
         plotMethod('h2.mass', [24,0,600],savedir+'hmm/Mass',              yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})',        lumitext=33,logy=1,cut=myCut,overflow=True,**kwargs)
         plotMethod('h2.mass', [32,0,800],savedir+'hmm/Mass_alpha',        yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})', lumitext=33,logy=1,cut=myCut,boxes=[[12,0.9*mass,1],[1.1*mass,800,1],[0.9*mass,1.1*mass,2]],**kwargs)
         plotMethod('h2.dPhi', [32,0,3.2],savedir+'hmm/Dphi',              yaxis='Events/0.1 rad',       xaxis='\\Delta\\phi_{\\ell^{\\pm}\\ell^{\\pm}} (rad)',   legendpos=41,lumitext=33,logy=0,cut=myCut,**kwargs)
         plotMethod('h2.Pt',   [40,0,400],savedir+'hmm/Pt',                yaxis='Events/10.0 GeV',      xaxis='p_{T}^{\\Phi^{\\pm\\pm}} (GeV)',                  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h2.Pt1',  [40,0,200],savedir+'hmm/LeadingLeptonPt',   yaxis='Events/5.0 GeV',       xaxis='p_{T}^{\\Phi^{\\pm\\pm} Leading Lepton} (GeV)',   legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h2.Pt2',  [40,0,200],savedir+'hmm/SubleadingLeptonPt',yaxis='Events/5.0 GeV',       xaxis='p_{T}^{\\Phi^{\\pm\\pm} Subleading Lepton} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h2.Iso1', [50,0,0.5],savedir+'hmm/LeadingIso',        yaxis='Events',               xaxis='Iso/p_{T} (\\Phi^{\\pm\\pm} Leading Lepton)',     legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h2.Iso2', [50,0,0.5],savedir+'hmm/SubleadingIso',     yaxis='Events',               xaxis='Iso/p_{T} (\\Phi^{\\pm\\pm} Subleading Lepton)',  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('h2.dR',   [60,0,6], savedir+'hmm/dR',                 yaxis='Events',               xaxis='\\Delta R(\\ell^{\\pm}\\ell^{\\pm})',             legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotLepton(plotMethod,myCut,'h2',post='1',name='hmm/Leading',pretty='\\Phi^{--} Leading Lepton',savedir=savedir,doDetailed=doDetailed,doMinimal=doMinimal,**kwargs)
+        plotLepton(plotMethod,myCut,'h2',post='2',name='hmm/SubLeading',pretty='\\Phi^{--} SubLeading Lepton',savedir=savedir,doDetailed=doDetailed,doMinimal=doMinimal,**kwargs)
     if analysis in ['Hpp3l']:
         plotMethod('h2.mass', [24,0,600],savedir+'hm/Mass',              yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{\\pm},E_{T}^{miss}} (GeV/c^{2})',        lumitext=33,logy=1,cut=myCut,overflow=True,**kwargs)
         plotMethod('h2.dPhi', [32,0,3.2],savedir+'hm/Dphi',              yaxis='Events/0.1 rad',       xaxis='\\Delta\\phi_{\\ell^{\\pm},E_{T}^{miss}} (rad)',   legendpos=41,lumitext=33,logy=0,cut=myCut,**kwargs)
         plotMethod('h2.Pt',   [40,0,400],savedir+'hm/Pt',                yaxis='Events/10.0 GeV',      xaxis='p_{T}^{\\Phi^{\\pm}} (GeV)',                  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h2.Pt1',  [40,0,200],savedir+'hm/LeadingLeptonPt',   yaxis='Events/5.0 GeV',       xaxis='p_{T}^{\\Phi^{\\pm} Leading Lepton} (GeV)',   legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h2.Iso1', [50,0,0.5],savedir+'hm/LeadingIso',        yaxis='Events',               xaxis='Iso/p_{T} (\\Phi^{\\pm} Leading Lepton)',     legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('h2.dR',   [60,0,6], savedir+'hm/dR',                 yaxis='Events',               xaxis='\\Delta R(\\ell^{\\pm},E_{T}^{miss})',             legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotLepton(plotMethod,myCut,'h2',post='1',name='hm/Lepton',pretty='\\Phi^{\\mp} Lepton',savedir=savedir,doDetailed=doDetailed,doMinimal=doMinimal,**kwargs)
     # plot Z stuff
     if analysis in ['Z', 'Hpp3l', 'Hpp4l', 'WZ', 'WZ_W'] or region in ['Z', 'TT']:
         plotMethod('z1.mass', [60,60,120],   savedir+'z1/Mass_newWidth',      yaxis='Events/1.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (GeV)',     legendpos=43,logy=0,cut=myCut,**kwargs)
@@ -951,3 +952,66 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
         plotMethod(['w1.dR1_z1_1','w1.dR1_z1_2'],[60,0,6],savedir+'w1/dR_z1_l',yaxis='Events',xaxis='#DeltaR(W^{lepton},Z^{lepton})',legendpos=43,logy=0,cut=myCut,**kwargs)
 
 
+def getFakeParams(analysis):
+    # define fake regions
+    lepName = {'e': 'Elec', 'm': 'Muon', 't': 'Tau'}
+    fakeRegions = {}
+    fakeRegions[analysis] = {}
+    for f in ['e', 'm']:
+        #for p in ['Loose', 'Tight']:
+        for p in ['Tight']:
+            # select leading Z pt, Z window [60,120], tight (or loose) Z, low met, m3l>100, w1 mass < 30
+            if analysis in ['WZ']:
+                #for z in ['Loose', 'Tight']:
+                for z in ['Tight']:
+                    fakeRegion = 'Z{0}Probe{1}{2}'.format(z,lepName[f],p)
+                    #denom = 'z1.Pass{0}1 && z1.Pass{0}2 && w1.dR1_z1_1>0.02 && w1.dR1_z1_2>0.02 && w1.mass<25. && w1Flv=="{1}"'.format(z,f)
+                    denom = 'z1.Pass{0}1 && z1.Pass{0}2 && w1.dR1_z1_1>0.02 && w1.dR1_z1_2>0.02 && finalstate.met<25. && w1.mass<30. && w1Flv=="{1}"'.format(z,f)
+                    numer = '{0} && w1.Pass{1}1'.format(denom,p)
+                    fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
+                    #if p=='Tight' and channel not in ['HZZFakeRate']:
+                    #   fakeRegion += '_LooseProbe'
+                    #   denom += ' && w1.PassLoose1'
+                    #   numer += ' && w1.PassLoose1'
+                    #   fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
+            # select w lepton pt, z veto, met
+            #'W' : 'w1.Pt1>20. & (z1.mass<60. | z1.mass>120.) & finalstate.met>30. & w1.mass>30.',
+            if analysis in ['WZ_W']:
+                #for w in ['Loose','Tight']:
+                for w in ['Tight']:
+                    fakeRegion = 'W{0}Probe{1}{2}'.format(w,lepName[f],p)
+                    denom = 'w1.Pt1>20. && w1.mass>30. && finalstate.met>30. && (z1.mass<60. || z1.mass>120.) && l1.Chg==l2.Chg && z1.dR>0.1 && w1.Pass{0}1 && w2Flv=="{1}"'.format(w,f)
+                    numer = '{0} && w2.Pass{1}1'.format(denom,p)
+                    fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w2.Pt1', 'etaVar': 'w2.Eta1'}
+                    #if p=='Tight' and channel not in ['HZZFakeRate']:
+                    #   fakeRegion += '_LooseProbe'
+                    #   denom += ' && w2.PassLoose1'
+                    #   numer += ' && w2.PassLoose1'
+                    #   fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w2.Pt1', 'etaVar': 'w2.Eta1'}
+            # ntuple cuts: zVeto 60-120, met vet 20, w veto 20, jet pt > 20, jet dr > 1.0
+            if analysis in ['WZ_Dijet']:
+               fakeRegion = 'FakeRateProbe{0}{1}'.format(lepName[f],p)
+               denom = 'l1Flv=="{0}"'.format(f)
+               numer = '{0} && w1.Pass{1}1'.format(denom,p)
+               fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
+               #if p=='Tight' and channel not in ['HZZFakeRate']:
+               #   fakeRegion += '_LooseProbe'
+               #   denom += ' && w1.PassLoose1'
+               #   numer += ' && w1.PassLoose1'
+               #   fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
+
+
+
+    # setup selections
+    ptBins = [1,10,20,30,200]
+    ptBins = [1,10,20,200]
+    #if analysis in ['WZ_Dijet']: ptBins = [0,5,10,20,30,40,60,80,200]
+
+    etaBins = {
+        #'e': [0,1.479,2.5],
+        #'m': [0,1.2,2.4],
+        'e': [0,2.5],
+        'm': [0,2.4],
+    }
+
+    return fakeRegions, ptBins, etaBins

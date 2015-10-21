@@ -20,7 +20,7 @@ from multiprocessing import Pool
 
 from InitialStateAnalysis.Utilities.utilities import *
 from InitialStateAnalysis.Analyzers.AnalyzerZ import AnalyzerZ
-from InitialStateAnalysis.Analyzers.AnalyzerWZ import AnalyzerWZ, AnalyzerWZ_ZFakeRate, AnalyzerWZ_HZZFakeRate
+from InitialStateAnalysis.Analyzers.AnalyzerWZ import AnalyzerWZ, AnalyzerWZ_ZFakeRate, AnalyzerWZ_HZZFakeRate, AnalyzerWZ_NoVeto
 from InitialStateAnalysis.Analyzers.AnalyzerWZ_W import AnalyzerWZ_WFakeRate
 from InitialStateAnalysis.Analyzers.AnalyzerWZ_Dijet import AnalyzerWZ_DijetFakeRate, AnalyzerWZ_HZZDijetFakeRate
 from InitialStateAnalysis.Analyzers.AnalyzerHpp2l import AnalyzerHpp2l, AnalyzerHpp2l_Z, AnalyzerHpp2l_Charge, AnalyzerHpp2l_TT
@@ -42,6 +42,7 @@ def run_analyzer(args):
                     },
         'WZ'      : {
                     'WZ'      : AnalyzerWZ,
+                    'NoVeto'  : AnalyzerWZ_NoVeto,
                     'FakeRate': AnalyzerWZ_ZFakeRate,
                     'HZZFakeRate': AnalyzerWZ_HZZFakeRate,
                      },
@@ -74,11 +75,14 @@ def get_sample_names(analysis,period,samples):
             'Charge'     : '2015-06-01-8TeV-2l',
             'TT'         : '2015-06-01-8TeV-2l',
             'Hpp2l'      : '2015-06-01-8TeV-2l',
-            'WZ'         : '2015-06-01-8TeV', 
+            #'WZ'         : '2015-06-01-8TeV', 
+            'WZ'         : '2015-10-17-8TeV-3l', # add fakerate no iso variables 
             'WZ_W'       : 'N/A',
             'WZ_Dijet'   : 'N/A',
-            'Hpp3l'      : '2015-06-01-8TeV',
-            'Hpp4l'      : '2015-08-26-8TeV-4l', 
+            #'Hpp3l'      : '2015-06-01-8TeV',
+            'Hpp3l'      : '2015-10-17-8TeV-3l', # add fakerate no iso variables
+            #'Hpp4l'      : '2015-08-26-8TeV-4l', 
+            'Hpp4l'      : '2015-10-17-8TeV-4l', # add fakerate no iso variables
         },
         13: {
             'Z'          : 'N/A',

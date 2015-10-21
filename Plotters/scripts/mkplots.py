@@ -266,7 +266,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         plotter.plotMCDataSignalRatio2D('finalstate.sT', 'event.nvtx',[40,0,1000],[50,0,50],'sT_v_pu_mc',      xaxis='S_{T} (GeV/c^{2})',                            yaxis='Number PU Vertices',cut=myCut, plotdata=0, plotmc=1, plotsig=0)
         plotter.plotMCDataSignalRatio2D('finalstate.met','event.nvtx',[40,0,200], [50,0,50],'met_v_pu_mc',     xaxis='E_{T}^{miss} (GeV)',                           yaxis='Number PU Vertices',cut=myCut, plotdata=0, plotmc=1, plotsig=0)
 
-    if analysis in ['WZ'] and doDataDriven:
+    if analysis in ['WZ', 'Hpp3l'] and doDataDriven:
         plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,scaleFactor=scaleFactor,loglevel=loglevel,datadriven=True,rootName='plots_datadriven')
         if useSignal:
             plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]+['Sig']])
@@ -333,12 +333,14 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         labels = {0:'F',1:'T'}
         cuts = {0:'!{0}.PassTight{1}',1:'{0}.PassTight{1}'}
         allCuts = 'finalstate.mass>100. && (z1.Pt1>20.&&z1.Pt2>10.) && z1.mass>60. && z1.mass<120. && w1.dR1_z1_1>0.1 && w1.dR1_z1_2>0.1 && w1.Pt1>20. && w1.met>30.'
+        if analysis in ['Hpp3l']: allCuts = '1'
         fakeCut = myCut.replace('select.passTight',allCuts)
-        for z1 in [0,1]:
-            for z2 in [0,1]:
-                for w1 in [0,1]:
-                    thisCut = '{0} && '.format(fakeCut) + ' && '.join([cuts[z1].format('z1','1'),cuts[z2].format('z1','2'),cuts[w1].format('w1','1')])
-                    thisName = ''.join([labels[z1],labels[z2],labels[w1]])
+        for l1 in [0,1]:
+            for l2 in [0,1]:
+                for l3 in [0,1]:
+                    thisCut = '{0} && '.format(fakeCut) + ' && '.join([cuts[l1].format('z1','1'),cuts[l2].format('z1','2'),cuts[l3].format('w1','1')])
+                    if analysis in ['Hpp3l']: thisCut = '{0} && '.format(fakeCut) + ' && '.join([cuts[l1].format('h1','1'),cuts[l2].format('h1','2'),cuts[l3].format('h2','1')])
+                    thisName = ''.join([labels[l1],labels[l2],labels[l3]])
                     logger.info("%s:%s:%iTeV: Plotting control regions - %s" % (analysis, channel, runPeriod, thisName))
                     plotDistributions(plotMethod,thisCut,nl,isControl,savedir=thisName,analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass,doDetailed=doDetailed,doMinimal=True)
                     if plotFinalStates:
@@ -534,71 +536,74 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
     dataplot = (isControl or not blind)
     mergeDict = getMergeDict(runPeriod)
 
-    # TODO: load from pickle file
-    # define fake regions
-    lepName = {'e': 'Elec', 'm': 'Muon', 't': 'Tau'}
-    fakeRegions = {}
-    fakeRegions['WZ'] = {}
-    for f in ['e', 'm']:
-        #for p in ['Loose', 'Tight']:
-        for p in ['Tight']:
-            # select leading Z pt, Z window [60,120], tight (or loose) Z, low met, m3l>100, w1 mass < 30
-            if analysis in ['WZ']:
-                #for z in ['Loose', 'Tight']:
-                for z in ['Tight']:
-                    fakeRegion = 'Z{0}Probe{1}{2}'.format(z,lepName[f],p)
-                    denom = 'z1.Pass{0}1 && z1.Pass{0}2 && w1.dR1_z1_1>0.02 && w1.dR1_z1_2>0.02 && w1.mass<25. && w1Flv=="{1}"'.format(z,f)
-                    numer = '{0} & w1.Pass{1}1'.format(denom,p)
-                    fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
-                    #if p=='Tight' and channel not in ['HZZFakeRate']:
-                    #   fakeRegion += '_LooseProbe'
-                    #   denom += ' && w1.PassLoose1'
-                    #   numer += ' && w1.PassLoose1'
-                    #   fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
-            # select w lepton pt, z veto, met
-            #'W' : 'w1.Pt1>20. & (z1.mass<60. | z1.mass>120.) & finalstate.met>30. & w1.mass>30.',
-            if analysis in ['WZ_W']:
-                #for w in ['Loose','Tight']:
-                for w in ['Tight']:
-                    fakeRegion = 'W{0}Probe{1}{2}'.format(w,lepName[f],p)
-                    denom = 'w1.Pt1>20. && w1.mass>30. && finalstate.met>30. && (z1.mass<60. || z1.mass>120.) && l1.Chg==l2.Chg && z1.dR>0.1 && w1.Pass{0}1 && w2Flv=="{1}"'.format(w,f)
-                    numer = '{0} && w2.Pass{1}1'.format(denom,p)
-                    fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w2.Pt1', 'etaVar': 'w2.Eta1'}
-                    #if p=='Tight' and channel not in ['HZZFakeRate']:
-                    #   fakeRegion += '_LooseProbe'
-                    #   denom += ' && w2.PassLoose1'
-                    #   numer += ' && w2.PassLoose1'
-                    #   fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w2.Pt1', 'etaVar': 'w2.Eta1'}
-            # ntuple cuts: zVeto 60-120, met vet 20, w veto 20, jet pt > 20, jet dr > 1.0
-            if analysis in ['WZ_Dijet']:
-               fakeRegion = 'FakeRateProbe{0}{1}'.format(lepName[f],p)
-               denom = 'l1Flv=="{0}"'.format(f)
-               numer = '{0} && w1.Pass{1}1'.format(denom,p)
-               fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
-               #if p=='Tight' and channel not in ['HZZFakeRate']:
-               #   fakeRegion += '_LooseProbe'
-               #   denom += ' && w1.PassLoose1'
-               #   numer += ' && w1.PassLoose1'
-               #   fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
+    fakeRegions, ptBins, etaBins = getFakeParams(analysis)
+
+    ## TODO: load from pickle file
+    ## define fake regions
+    #lepName = {'e': 'Elec', 'm': 'Muon', 't': 'Tau'}
+    #fakeRegions = {}
+    #fakeRegions['WZ'] = {}
+    #for f in ['e', 'm']:
+    #    #for p in ['Loose', 'Tight']:
+    #    for p in ['Tight']:
+    #        # select leading Z pt, Z window [60,120], tight (or loose) Z, low met, m3l>100, w1 mass < 30
+    #        if analysis in ['WZ']:
+    #            #for z in ['Loose', 'Tight']:
+    #            for z in ['Tight']:
+    #                fakeRegion = 'Z{0}Probe{1}{2}'.format(z,lepName[f],p)
+    #                #denom = 'z1.Pass{0}1 && z1.Pass{0}2 && w1.dR1_z1_1>0.02 && w1.dR1_z1_2>0.02 && w1.mass<25. && w1Flv=="{1}"'.format(z,f)
+    #                denom = 'z1.Pass{0}1 && z1.Pass{0}2 && w1.dR1_z1_1>0.02 && w1.dR1_z1_2>0.02 && finalstate.met<25. && w1Flv=="{1}"'.format(z,f)
+    #                numer = '{0} && w1.Pass{1}1'.format(denom,p)
+    #                fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
+    #                #if p=='Tight' and channel not in ['HZZFakeRate']:
+    #                #   fakeRegion += '_LooseProbe'
+    #                #   denom += ' && w1.PassLoose1'
+    #                #   numer += ' && w1.PassLoose1'
+    #                #   fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
+    #        # select w lepton pt, z veto, met
+    #        #'W' : 'w1.Pt1>20. & (z1.mass<60. | z1.mass>120.) & finalstate.met>30. & w1.mass>30.',
+    #        if analysis in ['WZ_W']:
+    #            #for w in ['Loose','Tight']:
+    #            for w in ['Tight']:
+    #                fakeRegion = 'W{0}Probe{1}{2}'.format(w,lepName[f],p)
+    #                denom = 'w1.Pt1>20. && w1.mass>30. && finalstate.met>30. && (z1.mass<60. || z1.mass>120.) && l1.Chg==l2.Chg && z1.dR>0.1 && w1.Pass{0}1 && w2Flv=="{1}"'.format(w,f)
+    #                numer = '{0} && w2.Pass{1}1'.format(denom,p)
+    #                fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w2.Pt1', 'etaVar': 'w2.Eta1'}
+    #                #if p=='Tight' and channel not in ['HZZFakeRate']:
+    #                #   fakeRegion += '_LooseProbe'
+    #                #   denom += ' && w2.PassLoose1'
+    #                #   numer += ' && w2.PassLoose1'
+    #                #   fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w2.Pt1', 'etaVar': 'w2.Eta1'}
+    #        # ntuple cuts: zVeto 60-120, met vet 20, w veto 20, jet pt > 20, jet dr > 1.0
+    #        if analysis in ['WZ_Dijet']:
+    #           fakeRegion = 'FakeRateProbe{0}{1}'.format(lepName[f],p)
+    #           denom = 'l1Flv=="{0}"'.format(f)
+    #           numer = '{0} && w1.Pass{1}1'.format(denom,p)
+    #           fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
+    #           #if p=='Tight' and channel not in ['HZZFakeRate']:
+    #           #   fakeRegion += '_LooseProbe'
+    #           #   denom += ' && w1.PassLoose1'
+    #           #   numer += ' && w1.PassLoose1'
+    #           #   fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
 
 
 
-    # setup selections
-    ptBins = [0,5,10,20,40,80]
-    #if analysis in ['WZ_Dijet']: ptBins = [0,5,10,20,30,40,60,80,200]
+    ## setup selections
+    #ptBins = [0,5,10,20,30,200]
+    ##if analysis in ['WZ_Dijet']: ptBins = [0,5,10,20,30,40,60,80,200]
 
-    etaBins = {
+    etaBinsA = {
         'e': [0,1.479,2.5],
         #'m': [0,1.2,2.4],
         'm': [0,1.2,2.4],
     }
-    for fakeRegion in fakeRegions['WZ']:
+    for fakeRegion in fakeRegions[analysis]:
         logger.info("%s:%s:%iTeV: Fake Region: %s" % (analysis,channel, runPeriod, fakeRegion))
-        denom = fakeRegions['WZ'][fakeRegion]['denom']
-        numer = fakeRegions['WZ'][fakeRegion]['numer']
-        probe = fakeRegions['WZ'][fakeRegion]['probe']
-        ptvar = fakeRegions['WZ'][fakeRegion]['ptVar']
-        etavar = fakeRegions['WZ'][fakeRegion]['etaVar']
+        denom = fakeRegions[analysis][fakeRegion]['denom']
+        numer = fakeRegions[analysis][fakeRegion]['numer']
+        probe = fakeRegions[analysis][fakeRegion]['probe']
+        ptvar = fakeRegions[analysis][fakeRegion]['ptVar']
+        etavar = fakeRegions[analysis][fakeRegion]['etaVar']
         ptcut = '{0} >= {1} && {0} < {2}'
         etacut = 'abs({0}) >= {1} && abs({0}) < {2}'
 
@@ -613,28 +618,28 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
             logger.info("%s:%s:%iTeV: Plotting discriminating variables: All Probes" % (analysis,channel, runPeriod))
             plotDistributions(plotMethod,denom,nl,isControl,analysis=analysis,savedir='fakeRate/{0}_all'.format(fakeRegion),doDetailed=doDetailed)
             logger.info("%s:%s:%iTeV: Plotting discriminating variables: All Probes - barrel" % (analysis,channel, runPeriod))
-            thiscut = '{0} && {1}'.format(denom,etacut.format(etavar,etaBins[probe][0],etaBins[probe][1]))
+            thiscut = '{0} && {1}'.format(denom,etacut.format(etavar,etaBinsA[probe][0],etaBinsA[probe][1]))
             plotDistributions(plotMethod,thiscut,nl,isControl,analysis=analysis,savedir='fakeRate/{0}_all/barrel'.format(fakeRegion),doDetailed=doDetailed)
             logger.info("%s:%s:%iTeV: Plotting discriminating variables: All Probes - endcap" % (analysis,channel, runPeriod))
-            thiscut = '{0} && {1}'.format(denom,etacut.format(etavar,etaBins[probe][1],etaBins[probe][2]))
+            thiscut = '{0} && {1}'.format(denom,etacut.format(etavar,etaBinsA[probe][1],etaBinsA[probe][2]))
             plotDistributions(plotMethod,thiscut,nl,isControl,analysis=analysis,savedir='fakeRate/{0}_all/endcap'.format(fakeRegion),doDetailed=doDetailed)
 
             logger.info("%s:%s:%iTeV: Plotting discriminating variables: Passing" % (analysis,channel, runPeriod))
             plotDistributions(plotMethod,numer,nl,isControl,analysis=analysis,savedir='fakeRate/{0}_prompts'.format(fakeRegion),doDetailed=doDetailed)
             logger.info("%s:%s:%iTeV: Plotting discriminating variables: Passing - barrel" % (analysis,channel, runPeriod))
-            thiscut = '{0} && {1}'.format(numer,etacut.format(etavar,etaBins[probe][0],etaBins[probe][1]))
+            thiscut = '{0} && {1}'.format(numer,etacut.format(etavar,etaBinsA[probe][0],etaBinsA[probe][1]))
             plotDistributions(plotMethod,thiscut,nl,isControl,analysis=analysis,savedir='fakeRate/{0}_prompts/barrel'.format(fakeRegion),doDetailed=doDetailed)
             logger.info("%s:%s:%iTeV: Plotting discriminating variables: Passing - endcap" % (analysis,channel, runPeriod))
-            thiscut = '{0} && {1}'.format(numer,etacut.format(etavar,etaBins[probe][1],etaBins[probe][2]))
+            thiscut = '{0} && {1}'.format(numer,etacut.format(etavar,etaBinsA[probe][1],etaBinsA[probe][2]))
             plotDistributions(plotMethod,thiscut,nl,isControl,analysis=analysis,savedir='fakeRate/{0}_prompts/endcap'.format(fakeRegion),doDetailed=doDetailed)
 
             logger.info("%s:%s:%iTeV: Plotting discriminating variables: Failing" % (analysis,channel, runPeriod))
             plotDistributions(plotMethod,'{0} & !({1})'.format(denom,numer),nl,isControl,analysis=analysis,savedir='fakeRate/{0}_fakes'.format(fakeRegion),doDetailed=doDetailed)
             logger.info("%s:%s:%iTeV: Plotting discriminating variables: Failing - barrel" % (analysis,channel, runPeriod))
-            thiscut = '{0} && {1}'.format('{0} & !({1})'.format(denom,numer),etacut.format(etavar,etaBins[probe][0],etaBins[probe][1]))
+            thiscut = '{0} && {1}'.format('{0} & !({1})'.format(denom,numer),etacut.format(etavar,etaBinsA[probe][0],etaBinsA[probe][1]))
             plotDistributions(plotMethod,thiscut,nl,isControl,analysis=analysis,savedir='fakeRate/{0}_fakes/barrel'.format(fakeRegion),doDetailed=doDetailed)
             logger.info("%s:%s:%iTeV: Plotting discriminating variables: Failing - endcap" % (analysis,channel, runPeriod))
-            thiscut = '{0} && {1}'.format('{0} & !({1})'.format(denom,numer),etacut.format(etavar,etaBins[probe][1],etaBins[probe][2]))
+            thiscut = '{0} && {1}'.format('{0} & !({1})'.format(denom,numer),etacut.format(etavar,etaBinsA[probe][1],etaBinsA[probe][2]))
             plotDistributions(plotMethod,thiscut,nl,isControl,analysis=analysis,savedir='fakeRate/{0}_fakes/endcap'.format(fakeRegion),doDetailed=doDetailed)
 
         # now plot the fake rates
@@ -643,9 +648,9 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
         plotter.initializeDataSamples([sigMap[runPeriod]['data']])
         plotter.setIntLumi(intLumiMap[runPeriod])
-        plotter.plotFakeRate(numer, denom, 'fakeRate/{0}_fakerate'.format(fakeRegion), ptBins=ptBins, etaBins=etaBins[probe], logx=1, ptVar=ptvar, etaVar=etavar, dataDriven=dataDriven)
-        plotter.plotFakeRateProjection(numer, denom, 'fakeRate/{0}_pt_fakerate'.format(fakeRegion), 'pt', ptBins=ptBins, etaBins=etaBins[probe], logx=0, ptVar=ptvar, etaVar=etavar, dataDriven=dataDriven, xaxis='p_{T} (GeV)')
-        plotter.plotFakeRateProjection(numer, denom, 'fakeRate/{0}_eta_fakerate'.format(fakeRegion), 'eta', ptBins=ptBins, etaBins=etaBins[probe], logx=0, ptVar=ptvar, etaVar=etavar, dataDriven=dataDriven, xaxis='\eta')
+        plotter.plotFakeRate(numer, denom, 'fakeRate/{0}_fakerate'.format(fakeRegion), ptBins=ptBins, etaBins=etaBins[probe], logx=1, ptVar=ptvar, etaVar=etavar, dataDriven=dataDriven, subtractSamples=['WZJets','ZZJets'])
+        plotter.plotFakeRateProjection(numer, denom, 'fakeRate/{0}_pt_fakerate'.format(fakeRegion), 'pt', ptBins=ptBins, etaBins=etaBins[probe], logx=0, ptVar=ptvar, etaVar=etavar, dataDriven=dataDriven, xaxis='p_{T} (GeV)',subtractSamples=['WZJets','ZZJets'])
+        plotter.plotFakeRateProjection(numer, denom, 'fakeRate/{0}_eta_fakerate'.format(fakeRegion), 'eta', ptBins=ptBins, etaBins=etaBins[probe], logx=0, ptVar=ptvar, etaVar=etavar, dataDriven=dataDriven, xaxis='\eta',subtractSamples=['WZJets','ZZJets'])
 
 def parse_command_line(argv):
     parser = get_parser("Plot a given channel and period")

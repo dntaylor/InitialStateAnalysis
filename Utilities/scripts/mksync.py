@@ -33,6 +33,7 @@ def sync(analysis,channel,period,**kwargs):
     if analysis in ['Hpp3l','Hpp4l']:
         print 'Mass %i' % mass
     print ''
+    sys.stdout.flush()
 
     # sync on WZ sample
     # sync on channels: eee, eem, emm, mmm
@@ -68,24 +69,142 @@ def sync(analysis,channel,period,**kwargs):
             num = plotter.getNumEntries('%s&channel=="%s"' %(tempCut,chan), sigMap[period][s], doUnweighted=True, do4l=do4l, bp=bp)
             print '%s: %10.2f' % (chan, num)
         print ''
+        sys.stdout.flush()
 
     if doCategories:
-        print 'Data events for each category'
         labels = {0:'F',1:'T'}
-        cuts = {0:'!{0}.PassTight{1}',1:'{0}.PassTight{1}'}
+        cuts = {0:'{0}.PassTight{1}==0',1:'{0}.PassTight{1}==1'}
         yields = {}
+        yieldsMC = {}
+        yieldsWeightedData = {}
+        yieldsWeightedMC = {}
+        yieldsWeighted = {}
+        nameMap = {
+            0: 'z1.PassTight1',
+            1: 'z1.PassTight2',
+            2: 'w1.PassTight1',
+        }
+        effMap = {
+            0: 'z1.LepEffTight1',
+            1: 'z1.LepEffTight2',
+            2: 'w1.LepEffTight1',
+        }
+        fakeMap = {
+            0: 'z1.LepFake1',
+            1: 'z1.LepFake2',
+            2: 'w1.LepFake1',
+        }
+
+        if analysis in ['Hpp3l']:
+            nameMap = {
+                0: 'h1.PassTight1',
+                1: 'h1.PassTight2',
+                2: 'h2.PassTight1',
+            }
+            effMap = {
+                0: 'h1.LepEffTight1',
+                1: 'h1.LepEffTight2',
+                2: 'h2.LepEffTight1',
+            }
+            fakeMap = {
+                0: 'h1.LepFake1',
+                1: 'h1.LepFake2',
+                2: 'h2.LepFake1',
+            }
+
+        allCuts = 'finalstate.mass>100. && (z1.Pt1>20.&&z1.Pt2>10.) && z1.mass>60. && z1.mass<120. && w1.dR1_z1_1>0.1 && w1.dR1_z1_2>0.1 && w1.Pt1>20. && w1.met>30.'
+        if analysis in ['Hpp3l']:
+            allCuts = '1' # no special cuts at select.passTight
+        myCut = cut
+        for l in range(3):
+            myCut = myCut.replace(nameMap[l],'1')
+            myCut = myCut.replace('l{0}.PassTight'.format(l),'1')
+        myCut = myCut.replace('select.passTight',allCuts)
+        #isocuts = ' && ((l{0}.Iso<0.4 && l{0}Flv=="e") || (l{0}.Iso<1.0 && l{0}Flv=="m"))'
+        #for l in range(3):
+        #    myCut += isocuts.format(l+1)
         for chan in finalStates:
             yields[chan] = {}
-            for z1 in [0,1]:
-                for z2 in [0,1]:
-                    for w1 in [0,1]:
-                        thisCut = '{0} && channel=="{1}" && '.format(cut,chan) + ' && '.join([cuts[z1].format('z1','1'),cuts[z2].format('z1','2'),cuts[w1].format('w1','1')])
-                        thisName = ''.join([labels[z1],labels[z2],labels[w1]])
+            yieldsMC[chan] = {}
+            yieldsWeighted[chan] = {}
+            yieldsWeightedMC[chan] = {}
+            yieldsWeightedData[chan] = {}
+            for l1 in [0,1]:
+                for l2 in [0,1]:
+                    for l3 in [0,1]:
+                        thisCut = '{0} && channel=="{1}" && '.format(myCut,chan) + ' && '.join([cuts[l1].format('z1','1'),cuts[l2].format('z1','2'),cuts[l3].format('w1','1')])
+                        if analysis=='Hpp3l': thisCut = '{0} && channel=="{1}" && '.format(myCut,chan) + ' && '.join([cuts[l1].format('h1','1'),cuts[l2].format('h1','2'),cuts[l3].format('h2','1')])
+                        #if not (l1 and l2 and l3): thisCut += ' && finalstate.bjetVeto30Medium==0'
+                        thisName = ''.join([labels[l1],labels[l2],labels[l3]])
                         yields[chan][thisName]  = plotter.getDataEntries(thisCut)
-        print 'CAT | eee  | eem  | mme  | mmm '
+                        num = '1' if thisName.count('F') in [1,3] else '-1'
+                        for l in range(3):
+                            if thisName[l] == 'F': num += '*({0}/(1-{0}))'.format(fakeMap[l])
+                        scalefactor = num
+                        if thisName=='TTT': scalefactor = '1'
+                        yieldsWeightedData[chan][thisName] = plotter.getDataEntries(thisCut,customScale=scalefactor)
+                        yieldsWeighted[chan][thisName] = yieldsWeightedData[chan][thisName]
+                        if thisName=='TTT':
+                            yieldsWeightedMC[chan][thisName] = 0.
+                        else:
+                            yieldsWeightedMC[chan][thisName] = 0.
+                            for bg in allMC:
+                                if bg in ['TT','Z','ZG','Sig']: continue
+                                mcscale = plotter.getScaleFactor() + '*' + scalefactor
+                                yieldsWeightedMC[chan][thisName] += plotter.getNumEntries(thisCut,sigMap[period][bg],customScale=mcscale)
+                            yieldsWeighted[chan][thisName] -= yieldsWeightedMC[chan][thisName]
+                        # yields in each channel
+                        if doYields:
+                            yieldsMC[chan][thisName] = {}
+                            #print 'MC Yields (scaled to %i pb-1)' % intLumi
+                            #theCut = '&'.join([cutflow[x] for x in cutflows])
+                            #print 'Selection applied: %s' % thisCut
+                            #print '%8s |    Channel |      Yield' % chan
+                            for b in allMC:
+                                val = plotter.getNumEntries('%s&channel=="%s"' %(thisCut,chan), sigMap[period][b], do4l=do4l, bp=bp)
+                                yieldsMC[chan][thisName][b] = val
+                                #print '         | %10s | %10.2f' %(b,val)
+                            val = plotter.getDataEntries('%s&channel=="%s"' %(thisCut,chan), do4l=do4l, bp=bp)
+                            yieldsMC[chan][thisName]['data'] = val
+                            #print '         | %10s | %10i' %('Data',val)
+                            #print ''
+                            sys.stdout.flush()
+
+                            
+
+        print 'Data events for each category'
+        print 'CAT | {0}'.format(' | '.join(['{0:8}'.format(x) for x in finalStates + ['Total']]))
         for cat in ['TTT','TTF','TFT','FTT','TFF','FTF','FFT','FFF']:
-            print '{0} | {1:4d} | {2:4d} | {3:4d} | {4:4d}'.format(cat,int(yields['eee'][cat]),int(yields['eem'][cat]),int(yields['mme'][cat]),int(yields['mmm'][cat]))
+            print '{0} | {1}'.format(cat,' | '.join(['{0:8d}'.format(int(yields[x][cat])) for x in finalStates])) + ' | {0:8d}'.format(sum([int(yields[x][cat]) for x in finalStates]))
         print ''
+
+        print 'Weighted events: Data'
+        print 'CAT | {0}'.format(' | '.join(['{0:8}'.format(x) for x in finalStates + ['Total']]))
+        for cat in ['TTT','TTF','TFT','FTT','TFF','FTF','FFT','FFF']:
+            print '{0} | {1}'.format(cat,' | '.join(['{0:8.2f}'.format(yieldsWeightedData[x][cat]) for x in finalStates])) + ' | {0:8.2f}'.format(sum([yieldsWeightedData[x][cat] for x in finalStates]))
+        print ''
+        
+        print 'Weighted events: MC'
+        print 'CAT | {0}'.format(' | '.join(['{0:8}'.format(x) for x in finalStates + ['Total']]))
+        for cat in ['TTT','TTF','TFT','FTT','TFF','FTF','FFT','FFF']:
+            print '{0} | {1}'.format(cat,' | '.join(['{0:8.2f}'.format(yieldsWeightedMC[x][cat]) for x in finalStates])) + ' | {0:8.2f}'.format(sum([yieldsWeightedMC[x][cat] for x in finalStates]))
+        print ''
+
+        print 'Weighted events: Total'
+        print 'CAT | {0}'.format(' | '.join(['{0:8}'.format(x) for x in finalStates + ['Total']]))
+        for cat in ['TTT','TTF','TFT','FTT','TFF','FTF','FFT','FFF']:
+            print '{0} | {1}'.format(cat,' | '.join(['{0:8.2f}'.format(yieldsWeighted[x][cat]) for x in finalStates])) + ' | {0:8.2f}'.format(sum([yieldsWeighted[x][cat] for x in finalStates]))
+        print ''
+        sys.stdout.flush()
+
+        if doYields:
+            for chan in finalStates:
+                print 'MC Yields: {0}'.format(chan)
+                print 'CAT | {0}'.format(' | '.join(['{0:8}'.format(x) for x in allMC + ['Data']]))
+                for cat in ['TTT','TTF','TFT','FTT','TFF','FTF','FFT','FFF']:
+                    print '{0} | {1}'.format(cat,' | '.join(['{0:8.2f}'.format(yieldsMC[chan][cat][x]) for x in allMC + ['data']]))
+                print ''
+
 
     # yields in each channel
     if doYields:
@@ -100,6 +219,7 @@ def sync(analysis,channel,period,**kwargs):
             val = plotter.getDataEntries('%s&channel=="%s"' %(cut,chan), do4l=do4l, bp=bp)
             print '         | %10s | %10i' %('Data',val)
             print ''
+            sys.stdout.flush()
 
     # cut flow
     if doCutflow:
@@ -118,6 +238,7 @@ def sync(analysis,channel,period,**kwargs):
                 data = plotter.getDataEntries('%s&channel=="%s"' %(theCut,chan), do4l=do4l, bp=bp)
                 print '%15s | %10.2f | %10.2f | %10.2f | %10i' %(cutflows[c],sig,bg,sig/bg,data)
             print ''
+            sys.stdout.flush()
 
     # electron charge id efficiency
     if doChargeId:

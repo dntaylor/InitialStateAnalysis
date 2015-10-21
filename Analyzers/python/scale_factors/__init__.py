@@ -253,6 +253,9 @@ class LeptonFakeRate(object):
         # WZ 13TeV
         with open(os.path.join(os.path.dirname(__file__),'fakes.json'),'r') as f:
             self.fake_dict_13tev = json.load(f)
+        # WZ 8TeV
+        with open(os.path.join(os.path.dirname(__file__),'fakes_8TeV_withIso.json'),'r') as f:
+            self.fake_dict_8tev = json.load(f)
 
     def close(self):
         pass
@@ -261,15 +264,15 @@ class LeptonFakeRate(object):
         tight = kwargs.pop('tight',False)
         loose = kwargs.pop('loose',False)
         veto = kwargs.pop('veto',False)
-        period = kwargs.pop('period',13)
+        period = kwargs.pop('period',8)
         out = []
         for l in lep_list:
             lep_type = l[0]
 
             if lep_type == 'm':
-                out += [self.m_wz_fake_veto(row,l)]
+                out += [self.m_wz_fake_veto(row,l,period)]
             elif lep_type == 'e':
-                out += [self.m_wz_fake_veto(row,l)]
+                out += [self.m_wz_fake_veto(row,l,period)]
             elif lep_type == 't':
                 out += [[0,0,0]] # TODO
             else:
@@ -283,10 +286,10 @@ class LeptonFakeRate(object):
         result = [1-x for x in final]
         return result
 
-    def get_fake_err(self,row,l,fakename):
+    def get_fake_err(self,row,l,fakename,period):
         pt = getattr(row, "%sPt" % l)
         eta = abs(getattr(row, "%sSCEta" % l)) if l[0]=='e' else abs(getattr(row, "%sEta" % l))
-        fakelist = self.fake_dict_13tev[fakename]
+        fakelist = self.fake_dict_13tev[fakename] if period == 13 else self.fake_dict_8tev[fakename]
         for fakedict in fakelist:
             ptlow   = fakedict['pt_low']
             pthigh  = fakedict['pt_high']
@@ -298,12 +301,12 @@ class LeptonFakeRate(object):
                 return fake, err
         return 0.0, 0.0
 
-    def e_wz_fake_veto(self, row, l):
-        fake, err = self.get_fake_err(row,l,'ZTightProbeElecTight')
+    def e_wz_fake_veto(self, row, l, period):
+        fake, err = self.get_fake_err(row,l,'ZTightProbeElecTight',period)
         return [fake, fake+err, fake-err]
 
-    def m_wz_fake_veto(self, row, l):
-        fake, err = self.get_fake_err(row,l,'ZTightProbeMuonTight')
+    def m_wz_fake_veto(self, row, l, period):
+        fake, err = self.get_fake_err(row,l,'ZTightProbeMuonTight',period)
         return [fake, fake+err, fake-err]
 
 
@@ -373,12 +376,11 @@ class LeptonScaleFactors(object):
         eta = abs(getattr(row, "%sSCEta" % l)) if l[0]=='e' else abs(getattr(row, "%sEta" % l))
         ldict = getattr(self,'{0}_id_dict_13tev'.format(l[0]))
         idlist = ldict[idname]
-        pre = 'supercluster_' if l[0]=='e' else ''
         for iddict in idlist:
-            ptlow = iddict['{0}et_lo'.format(pre)]
-            pthi = iddict['{0}et_hi'.format(pre)]
-            etalow = iddict['{0}eta_lo'.format(pre)]
-            etahi = iddict['{0}eta_hi'.format(pre)]
+            ptlow = iddict['pt_lo'] if l[0]=='e' else iddict['et_lo']
+            pthi = iddict['pt_hi'] if l[0]=='e' else iddict['et_hi']
+            etalow = iddict['abseta_lo'] if l[0]=='e' else iddict['eta_lo']
+            etahi = iddict['abseta_hi'] if l[0]=='e' else iddict['eta_hi']
             if pt>ptlow and pt<pthi and eta>etalow and eta<etahi:
                 scale = iddict['ratio']
                 err = iddict['ratio_err']
@@ -390,24 +392,24 @@ class LeptonScaleFactors(object):
         idscale, iderr = self.get_scale_err(row,l,'MuonWZIDLoose')
         # iso
         isoscale, isoerr = self.get_scale_err(row,l,'MuonWZIsolationLooseFromIDLoose')
-        return [idscale*isoscale, (idscale+iderr)*(isoscale+isoerr), (idcale-iderr)*(isoscale-isoerr)]
+        return [idscale*isoscale, (idscale+iderr)*(isoscale+isoerr), (idscale-iderr)*(isoscale-isoerr)]
 
     def m_wz_scale_tight(self, row, l):
         # id
         idscale, iderr = self.get_scale_err(row,l,'MuonWZIDTight')
         # iso
         isoscale, isoerr = self.get_scale_err(row,l,'MuonWZIsolationTightFromIDTight')
-        return [idscale*isoscale, (idscale+iderr)*(isoscale+isoerr), (idcale-iderr)*(isoscale-isoerr)]
+        return [idscale*isoscale, (idscale+iderr)*(isoscale+isoerr), (idscale-iderr)*(isoscale-isoerr)]
 
     def e_wz_scale_loose(self, row, l):
         # id
         idscale, iderr = self.get_scale_err(row,l,'passingLoose') # has iso... 
-        return [idscale, idscale+iderr, idcale-iderr]
+        return [idscale, idscale+iderr, idscale-iderr]
 
     def e_wz_scale_tight(self, row, l):
         # id
         idscale, iderr = self.get_scale_err(row,l,'passingMedium')
-        return [idscale, idscale+iderr, idcale-iderr]
+        return [idscale, idscale+iderr, idscale-iderr]
 
 
     def e_ww_scale(self, row, l):

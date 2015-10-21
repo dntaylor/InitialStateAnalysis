@@ -129,7 +129,7 @@ class PlotterBase(object):
         self.backgrounds = sampleList
         if self.datadriven:
             self.backgrounds = ['datadriven']
-            self.backgrounds.extend([x for x in sampleList if x not in ['SingleTop', 'TTJets', 'ZJets']])
+            self.backgrounds.extend([x for x in sampleList if x not in ['SingleTop', 'TTJets', 'ZJets', 'ZG']])
             sampleList = self.backgrounds
         self.initializeSamples(sampleList)
         self.backgroundInitialized = True
@@ -188,6 +188,10 @@ class PlotterBase(object):
         if self.backgroundInitialized: self.logger.info('Backgrounds: ' + ' '.join(self.backgrounds))
         if self.dataInitialized: self.logger.info('Data: ' + ' '.join(self.data))
         if self.signalInitialized: self.logger.info('Signal: ' + ' '.join(self.signal))
+
+    def getScaleFactor(self):
+        '''Set Scale factor'''
+        return self.scaleFactor
 
     def setScaleFactor(self,scalefactor):
         '''Set Scale factor'''
@@ -538,19 +542,37 @@ class PlotterBase(object):
             1: 'z1.LepFake2',
             2: 'w1.LepFake1',
         }
+        if self.analysis in ['Hpp3l']:
+            nameMap = {
+                0: 'h1.PassTight1',
+                1: 'h1.PassTight2',
+                2: 'h2.PassTight1',
+            }
+            effMap = {
+                0: 'h1.LepEffTight1',
+                1: 'h1.LepEffTight2',
+                2: 'h2.LepEffTight1',
+            }
+            fakeMap = {
+                0: 'h1.LepFake1',
+                1: 'h1.LepFake2',
+                2: 'h2.LepFake1',
+            }
+
         # remove any passTight cuts, assumes these are there, since it only returns the all tight stuff
+        allCuts = 'finalstate.mass>100. && (z1.Pt1>20.&&z1.Pt2>10.) && z1.mass>60. && z1.mass<120. && w1.dR1_z1_1>0.1 && w1.dR1_z1_2>0.1 && w1.Pt1>20. && w1.met>30.'
+        if self.analysis in ['Hpp3l']:
+            allCuts = '1' # no special cuts at select.passTight
         if type(cut) is list:
             for c in range(len(cut)):
                 for l in range(3):
                     cut[c] = cut[c].replace(nameMap[l],'1')
                     cut[c] = cut[c].replace('l{0}.PassTight'.format(l),'1')
-                allCuts = 'finalstate.mass>100. && (z1.Pt1>20.&&z1.Pt2>10.) && z1.mass>60. && z1.mass<120. && w1.dR1_z1_1>0.1 && w1.dR1_z1_2>0.1 && w1.Pt1>20. && w1.met>30.'
                 cut[c] = cut[c].replace('select.passTight',allCuts)
         else:
             for l in range(3):
                 cut = cut.replace(nameMap[l],'1')
                 cut = cut.replace('l{0}.PassTight'.format(l),'1')
-            allCuts = 'finalstate.mass>100. && (z1.Pt1>20.&&z1.Pt2>10.) && z1.mass>60. && z1.mass<120. && w1.dR1_z1_1>0.1 && w1.dR1_z1_2>0.1 && w1.Pt1>20. && w1.met>30.'
             cut = cut.replace('select.passTight',allCuts)
         hists = ROOT.TList()
         for comb in itertools.product('PF', repeat=3): # hard code 3l for now
@@ -576,14 +598,23 @@ class PlotterBase(object):
                     num += '*({0})'.format(fakeMap[l])
             scalefactor = num + '*' + denom
             if doSimple: # sascha's way
-                num = '1'
+                num = '1' if comb.count('F') in [1,3] else '-1'
                 for l in range(3):
                     if comb[l] == 'F': num += '*({0}/(1-{0}))'.format(fakeMap[l])
                 scalefactor = num
                 if comb.count('P')==3: continue
+            # get contribution from data
             for sample in self.data:
                 hist = self.getHist(sample,variables,binning,custCut,customScale=scalefactor,**kwargs)
                 hists.Add(hist)
+            # subtract contribution from signal MC
+            mcScalefactor = self.scaleFactor + '*(-1*' + scalefactor + ')'
+            for sample in self.backgrounds:
+                if sample=='datadriven': continue
+                if 'HPlusPlus' in sample: continue # dont include signal in subtraction
+                hist = self.getHist(sample,variables,binning,custCut,customScale=mcScalefactor,**kwargs)
+                hists.Add(hist)
+
         histname = 'h%s_datadriven' % variables[0].replace('(','_').replace(')','_')
         hist = hists[0].Clone(histname)
         hist.Reset()

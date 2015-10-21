@@ -1,0 +1,102 @@
+{
+    "ZTightProbeElecTight": [
+        {
+            "error": 0.0, 
+            "eta_high": 1.47, 
+            "eta_low": 0.0, 
+            "fakerate": 0.0, 
+            "pt_high": 10, 
+            "pt_low": 0
+        }, 
+        {
+            "error": 0.0, 
+            "eta_high": 2.5, 
+            "eta_low": 1.47, 
+            "fakerate": 0.0, 
+            "pt_high": 10, 
+            "pt_low": 0
+        }, 
+        {
+            "error": 0.02196491589692176, 
+            "eta_high": 1.47, 
+            "eta_low": 0.0, 
+            "fakerate": 0.05390377342700958, 
+            "pt_high": 20, 
+            "pt_low": 10
+        }, 
+        {
+            "error": 0.0, 
+            "eta_high": 2.5, 
+            "eta_low": 1.47, 
+            "fakerate": 0.0, 
+            "pt_high": 20, 
+            "pt_low": 10
+        }, 
+        {
+            "error": 0.03431500998425801, 
+            "eta_high": 1.47, 
+            "eta_low": 0.0, 
+            "fakerate": 0.09401073306798935, 
+            "pt_high": 200, 
+            "pt_low": 20
+        }, 
+        {
+            "error": 0.0, 
+            "eta_high": 2.5, 
+            "eta_low": 1.47, 
+            "fakerate": 0.0, 
+            "pt_high": 200, 
+            "pt_low": 20
+        }
+    ], 
+    "ZTightProbeMuonTight": [
+        {
+            "error": 0.0, 
+            "eta_high": 1.2, 
+            "eta_low": 0.0, 
+            "fakerate": 0.0, 
+            "pt_high": 10, 
+            "pt_low": 0
+        }, 
+        {
+            "error": 0.0, 
+            "eta_high": 2.4, 
+            "eta_low": 1.2, 
+            "fakerate": 0.0, 
+            "pt_high": 10, 
+            "pt_low": 0
+        }, 
+        {
+            "error": 0.005483244671873096, 
+            "eta_high": 1.2, 
+            "eta_low": 0.0, 
+            "fakerate": 0.024608507752418518, 
+            "pt_high": 20, 
+            "pt_low": 10
+        }, 
+        {
+            "error": 0.010004523096580533, 
+            "eta_high": 2.4, 
+            "eta_low": 1.2, 
+            "fakerate": 0.04827164486050606, 
+            "pt_high": 20, 
+            "pt_low": 10
+        }, 
+        {
+            "error": 0.023217335538191268, 
+            "eta_high": 1.2, 
+            "eta_low": 0.0, 
+            "fakerate": 0.039585184305906296, 
+            "pt_high": 200, 
+            "pt_low": 20
+        }, 
+        {
+            "error": 0.046845426071021164, 
+            "eta_high": 2.4, 
+            "eta_low": 1.2, 
+            "fakerate": 0.1317639946937561, 
+            "pt_high": 200, 
+            "pt_low": 20
+        }
+    ]
+}

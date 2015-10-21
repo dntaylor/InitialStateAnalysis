@@ -216,12 +216,14 @@ class AnalyzerWZ(AnalyzerBase):
                 't':'Loose'
             }
             kwargs['isoCut'] = {
-                'e':0.2,
-                'm':0.2
+                'e':0.4,
+                'm':1.0,
             }
             if self.period==8:
                 kwargs['idDef']['e'] = 'WZLoose'
                 kwargs['idDef']['m'] = 'WZLoose'
+                #kwargs['isoCut']['e'] = 9999.
+                #kwargs['isoCut']['m'] = 9999.
             if self.period==13:
                 kwargs['isoCut']['e'] = 9999.
                 kwargs['isoCut']['m'] = 9999.
@@ -294,6 +296,30 @@ class AnalyzerWZ(AnalyzerBase):
             if dr < 0.1: return False
         return True
 
+class AnalyzerWZ_NoVeto(AnalyzerWZ):
+    def __init__(self, sample_name, file_list, out_file, period, **kwargs):
+        super(AnalyzerWZ_NoVeto, self).__init__(sample_name, file_list, out_file, period, **kwargs)
+        self.channel = 'NoVeto'
+
+    # reoveride good_to_store
+    #@staticmethod
+    def good_to_store(self,rtrow, cand1, cand2):
+        '''
+        Veto on 4th lepton
+        '''
+        # first select best, (closest to Z and highest pt W)
+        good = False
+        for min1, min2 in zip(cand1, cand2):
+            if min1 < min2:
+                good = True
+                break
+            if min1 > min2:
+                good = False
+                break
+
+        return good
+
+
 class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
     def __init__(self, sample_name, file_list, out_file, period, **kwargs):
         super(AnalyzerWZ_ZFakeRate, self).__init__(sample_name, file_list, out_file, period, **kwargs)
@@ -306,7 +332,7 @@ class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
         cuts.add(self.ID_loose)
         cuts.add(self.ID_tight_Z)
         cuts.add(self.zSelection)
-        cuts.add(self.metveto)
+        #cuts.add(self.metveto)
         return cuts
 
     def selection(self,rtrow):
@@ -315,7 +341,7 @@ class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
         cuts.add(self.fiducial)
         cuts.add(self.ID_tight)
         cuts.add(self.zSelection)
-        cuts.add(self.metveto)
+        #cuts.add(self.metveto)
         return cuts
 
     def ID_tight_Z(self, rtrow):
@@ -354,18 +380,30 @@ class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
         Iterate through minimizing variables.
         '''
         good = False
-        for min1, min2 in zip([cand1[0]], [cand2[0]]):
+        for min1, min2 in zip(cand1, cand2):
             if min1 < min2:
                 good = True
                 break
             if min1 > min2:
                 good = False
                 break
-        match_0 = getattr(rtrow,'%sMatchesDoubleE' %self.objCand[0])>0 if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesDoubleMu' %self.objCand[0])>0
-        match_1 = getattr(rtrow,'%sMatchesDoubleE' %self.objCand[1])>0 if self.objCand[1][0]=='e' else getattr(rtrow,'%sMatchesDoubleMu' %self.objCand[1])>0
+        if self.objCand[0][0]=='e' and self.objCand[1][0]=='e':
+            ename = 'MatchesDoubleE' if self.period == 13 else 'MatchesDoubleEPath'
+            match_0 = getattr(rtrow,'%s%s' %(self.objCand[0],ename))
+            match_1 = getattr(rtrow,'%s%s' %(self.objCand[1],ename))
+        elif self.objCand[0][0]=='m' and self.objCand[1][0]=='m':
+            if self.period==13:
+                match_0 = getattr(rtrow,'%sMatchesDoubleMu' %self.objCand[0])
+                match_1 = getattr(rtrow,'%sMatchesDoubleMu' %self.objCand[1])
+            else:
+                match_0 = getattr(rtrow,'%sMatchesMu17Mu8Path' %self.objCand[0])>0 + getattr(rtrow,'%sMatchesMu17TrkMu8Path' %self.objCand[0])
+                match_1 = getattr(rtrow,'%sMatchesMu17Mu8Path' %self.objCand[1])>0 + getattr(rtrow,'%sMatchesMu17TrkMu8Path' %self.objCand[1])
+        else:
+            match_0 = 0
+            match_1 = 0
         passTrig = match_0 > 0.5 and match_1 > 0.5
 
-        veto = (rtrow.eVetoNoIso + rtrow.muVetoNoIso == 0)
+        veto = (rtrow.eVetoNoIso + rtrow.muVetoNoIso == 0) if self.period==13 else (rtrow.elecVetoWZLoose + rtrow.muonVetoWZLoose == 0)
 
         return good and passTrig and veto
 
@@ -509,6 +547,7 @@ def main(argv=None):
     args = parse_command_line(argv)
 
     if args.analyzer == 'WZ': analyzer = AnalyzerWZ(args.sample_name,args.file_list,args.out_file,args.period)
+    if args.analyzer == 'NoVeto': analyzer = AnalyzerWZ_NoVeto(args.sample_name,args.file_list,args.out_file,args.period)
     if args.analyzer == 'FakeRate': analyzer = AnalyzerWZ_ZFakeRate(args.sample_name,args.file_list,args.out_file,args.period)
     if args.analyzer == 'HZZFakeRate': analyzer = AnalyzerWZ_HZZFakeRate(args.sample_name,args.file_list,args.out_file,args.period)
     with analyzer as thisAnalyzer:

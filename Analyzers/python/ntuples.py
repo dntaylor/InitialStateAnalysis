@@ -83,11 +83,13 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
            Float_t lep_scale_down;\
            Float_t trig_scale;\
            Float_t pu_weight;\
+           Float_t pu_weight_up;\
+           Float_t pu_weight_down;\
            Float_t gen_weight;\
            Float_t charge_uncertainty;\
         };");
     eventStruct = rt.structEvent_t()
-    structureDict['event'] = [eventStruct, eventStruct,'evt/I:run:lumi:nvtx:GenNUP:trig_prescale:lep_scale/F:lep_scale_up:lep_scale_down:trig_scale:pu_weight:gen_weight:charge_uncertainty']
+    structureDict['event'] = [eventStruct, eventStruct,'evt/I:run:lumi:nvtx:GenNUP:trig_prescale:lep_scale/F:lep_scale_up:lep_scale_down:trig_scale:pu_weight:pu_weight_up:pu_weight_down:gen_weight:charge_uncertainty']
     structOrder += ['event']
 
     if not hasattr(rt,'structChannel_t'):

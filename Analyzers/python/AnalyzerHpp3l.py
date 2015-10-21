@@ -64,11 +64,11 @@ class AnalyzerHpp3l(AnalyzerBase):
             SS1 = getattr(rtrow, "%s_%s_SS" % (l[0], l[1])) > 0 # select same sign
             OS = getattr(rtrow, "%sCharge" % l[0]) != getattr(rtrow, "%sCharge" % l[2]) # select opposite sign
             pts = [getattr(rtrow, "%sPt" %x) for x in l]
+            sumpt = sum(pts)
 
             if SS1 and OS:
                 ordList = [l[1], l[0], l[2]] if getattr(rtrow,'%sPt' % l[0]) < getattr(rtrow,'%sPt' % l[1]) else l
-                cands.append([[0],list(ordList)]) # minimization is by veto, not variable
-                #cands.append([[1./sum(pts)],list(ordList)]) # minimization is 3 largest pt leptons
+                cands.append([[-sumpt],list(ordList)]) # minimization is by veto, but pass sumpts for loose id
 
         if not len(cands): return 0
 
@@ -104,8 +104,17 @@ class AnalyzerHpp3l(AnalyzerBase):
         '''
         Veto on 4th lepton (considered in 4l analysis)
         '''
-        #return (rtrow.elecVeto4l + rtrow.muonVeto4l == 0)
-        return (rtrow.elecVetoWZTight + rtrow.muonVetoWZTight == 0)
+        good = False
+        for min1, min2 in zip(cand1, cand2):
+            if min1 < min2:
+                good = True
+                break
+            if min1 > min2:
+                good = False
+                break
+
+        veto = (rtrow.elecVetoWZTight + rtrow.muonVetoWZTight == 0)
+        return veto and good
 
     # override getGenChannel
     def getGenChannel(self, rtrow):
@@ -137,7 +146,7 @@ class AnalyzerHpp3l(AnalyzerBase):
         cuts.add(self.fiducial,'Fiducial')
         cuts.add(self.overlap,'Overlap')
         cuts.add(self.trigger_threshold,'Trigger threshold')
-        cuts.add(self.ID_tight,'Tight ID')
+        cuts.add(self.ID_loose,'Loose ID')
         cuts.add(self.qcd_rejection,'QCD Rejection')
         cuts.add(self.mass3l,'3l Mass')
         return cuts
@@ -179,16 +188,18 @@ class AnalyzerHpp3l(AnalyzerBase):
                 't':'Loose'
             }
             kwargs['isoCut'] = {
-                'e':0.2,
-                'm':0.2
+                'e':0.4,
+                'm':1.0,
             }
             if self.period==8:
-                #kwargs['idDef']['e'] = 'WZLoose'
-                #kwargs['idDef']['m'] = 'WZLoose'
-                kwargs['idDef']['e'] = '4l'
-                kwargs['idDef']['m'] = '4l'
-                kwargs['isoCut']['e'] = 0.4
-                kwargs['isoCut']['m'] = 0.4
+                kwargs['idDef']['e'] = 'WZLoose'
+                kwargs['idDef']['m'] = 'WZLoose'
+                #kwargs['isoCut']['e'] = 9999
+                #kwargs['isoCut']['m'] = 9999
+                #kwargs['idDef']['e'] = '4l'
+                #kwargs['idDef']['m'] = '4l'
+                #kwargs['isoCut']['e'] = 0.4
+                #kwargs['isoCut']['m'] = 0.4
         return kwargs
 
     def trigger(self, rtrow):

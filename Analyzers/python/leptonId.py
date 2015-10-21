@@ -219,7 +219,7 @@ def muon_WZ_loose(rtrow, l, period):
     if pt < 10: passid = False
     if eta > 2.4: passid = False
     if not tightid: passid = False
-    if reliso > 0.2: passid = False
+    #if reliso > 0.2: passid = False
 
     return passid
 

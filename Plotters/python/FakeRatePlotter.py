@@ -15,20 +15,43 @@ class FakeRatePlotter(PlotterBase):
     def __init__(self,analysis,**kwargs):
         PlotterBase.__init__(self,analysis,**kwargs)
 
-    def getFakeRateProjection(self, num, denom, bins, var, savename, **kwargs):
+    def getFakeRateProjection(self, numString, denomString, bins, var, savename, **kwargs):
         '''Get 1d histogram of fakerates'''
         dataDriven = kwargs.pop('dataDriven',True)
+        subtractSamples = kwargs.pop('subtractSamples',[])
         fakeHist = ROOT.TH1F(savename,'',len(bins)-1,array('d',bins))
         for b in range(len(bins)-1):
-            kincut = 'abs({var})>={lowbin} && abs({var})<{highbin}'.format(var=var,lowbin=bins[b],highbin=bins[b+1])
-            numcut = '{0} && {1}'.format(num,kincut)
-            denomcut = '{0} && {1}'.format(denom,kincut)
-            getEntries = getattr(self,'getDataEntries') if dataDriven else getattr(self,'getBackgroundEntries')
-            numVal, numErr = getEntries(numcut,doError=True)
-            denomVal, denomErr = getEntries(denomcut,doError=True)
-            if denomVal and numVal:
-                fakerate = float(numVal)/denomVal
-                err = fakerate * (numErr**2/(numVal**2) + denomErr**2/(denomVal**2)) ** 0.5
+            print '{0}: [{1},{2}]'.format(var,bins[b],bins[b+1])
+            kinCut = 'abs({var})>={lowbin} && abs({var})<{highbin}'.format(var=var,lowbin=bins[b],highbin=bins[b+1])
+            numCut = '{0} && {1}'.format(numString,kinCut)
+            denomCut = '{0} && {1}'.format(denomString,kinCut)
+            print numCut
+            print denomCut
+            num = 0
+            denom = 0
+            numErr2 = 0
+            denomErr2 = 0
+            samples = self.data if dataDriven else self.backgrounds
+            for sample in samples:
+                n, nErr = self.getNumEntries(numCut, sample, doError=True)
+                d, dErr = self.getNumEntries(denomCut, sample, doError=True)
+                print 'Sample {0}: num: {1}; denom: {2}'.format(sample,n,d)
+                num += n
+                numErr2 += nErr ** 2
+                denom += d
+                denomErr2 += dErr ** 2
+            for sample in subtractSamples:
+                n, nErr = self.getNumEntries(numCut, sample, doError=True)
+                d, dErr = self.getNumEntries(denomCut, sample, doError=True)
+                print 'Subtract Sample {0}: num: {1}; denom: {2}'.format(sample,n,d)
+                num -= n
+                numErr2 += nErr ** 2
+                denom -= d
+                denomErr2 += dErr ** 2
+            if num < 0: num = 0
+            if denom and num:
+                fakerate = float(num)/denom
+                err = fakerate * (numErr2/(num**2) + denomErr2/(denom**2)) ** 0.5
             else:
                 fakerate = 0
                 err = 0
@@ -36,17 +59,20 @@ class FakeRatePlotter(PlotterBase):
             fakeHist.SetBinError(b+1,err)
         return fakeHist
 
-    def getFakeRate(self,passSelection, failSelection, ptBins, etaBins, ptVar, etaVar, savename, **kwargs):
+    def getFakeRate(self,numString, denomString, ptBins, etaBins, ptVar, etaVar, savename, **kwargs):
         '''Get 2d histogram of fakerates'''
         dataDriven = kwargs.pop('dataDriven',True)
         subtractSamples = kwargs.pop('subtractSamples',[])
         fakeHist = ROOT.TH2F(savename,'',len(ptBins)-1,array('d',ptBins),len(etaBins)-1,array('d',etaBins))
         for p in range(len(ptBins)-1):
             for e in range(len(etaBins)-1):
+                print '{0}: [{1},{2}]; {3}: [{4},{5}]'.format(ptVar,ptBins[p],ptBins[p+1],etaVar,etaBins[e],etaBins[e+1])
                 kinCut = '%s>=%f & %s<%f & abs(%s)>=%f & abs(%s)<%f' %\
                          (ptVar, ptBins[p], ptVar, ptBins[p+1], etaVar, etaBins[e], etaVar, etaBins[e+1])
-                numCut = '%s & %s' % (kinCut, passSelection)
-                denomCut = '%s & %s' % (kinCut, failSelection)
+                numCut = '%s && %s' % (kinCut, numString)
+                denomCut = '%s && %s' % (kinCut, denomString)
+                print numCut
+                print denomCut
                 num = 0
                 denom = 0
                 numErr2 = 0
@@ -55,6 +81,7 @@ class FakeRatePlotter(PlotterBase):
                 for sample in samples:
                     n, nErr = self.getNumEntries(numCut, sample, doError=True)
                     d, dErr = self.getNumEntries(denomCut, sample, doError=True)
+                    print 'Sample {0}: num: {1}; denom: {2}'.format(sample,n,d)
                     num += n
                     numErr2 += nErr ** 2
                     denom += d
@@ -62,6 +89,7 @@ class FakeRatePlotter(PlotterBase):
                 for sample in subtractSamples:
                     n, nErr = self.getNumEntries(numCut, sample, doError=True)
                     d, dErr = self.getNumEntries(denomCut, sample, doError=True)
+                    print 'Subtract Sample {0}: num: {1}; denom: {2}'.format(sample,n,d)
                     num -= n
                     numErr2 += nErr ** 2
                     denom -= d
@@ -101,6 +129,7 @@ class FakeRatePlotter(PlotterBase):
         xaxis = kwargs.pop('xaxis','p_{T} (GeV)')
         yaxis = kwargs.pop('yaxis','#eta')
         dataDriven = kwargs.pop('dataDriven',True)
+        subtractSamples = kwargs.pop('subtractSamples',[])
         for key, value in kwargs.iteritems():
             self.logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
 
@@ -111,7 +140,7 @@ class FakeRatePlotter(PlotterBase):
         self.canvas.SetRightMargin(0.14)
 
         # calculate fake rate
-        fakeRateHist = self.getFakeRate(passSelection,failSelection,ptBins,etaBins,ptVar,etaVar,savename,dataDriven=dataDriven)
+        fakeRateHist = self.getFakeRate(passSelection,failSelection,ptBins,etaBins,ptVar,etaVar,savename,dataDriven=dataDriven,subtractSamples=subtractSamples)
         fakeRateHist.GetXaxis().SetTitle(xaxis)
         fakeRateHist.GetYaxis().SetTitle(yaxis)
         fakeRateHist.GetYaxis().SetTitleOffset(1.)
@@ -159,6 +188,7 @@ class FakeRatePlotter(PlotterBase):
         xaxis = kwargs.pop('xaxis','')
         yaxis = kwargs.pop('yaxis','Fake Rate')
         dataDriven = kwargs.pop('dataDriven',True)
+        subtractSamples = kwargs.pop('subtractSamples',[])
         for key, value in kwargs.iteritems():
             self.logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
 
@@ -185,7 +215,7 @@ class FakeRatePlotter(PlotterBase):
                 name = savename
                 thisNum = passSelection
                 thisDenom = failSelection
-            fakeRateHist = self.getFakeRateProjection(thisNum,thisDenom,fakeBins,fakeVar,name,dataDriven=dataDriven)
+            fakeRateHist = self.getFakeRateProjection(thisNum,thisDenom,fakeBins,fakeVar,name,dataDriven=dataDriven,subtractSamples=subtractSamples)
             fakeRateHist.GetXaxis().SetTitle(xaxis)
             fakeRateHist.GetYaxis().SetTitle(yaxis)
             fakeRateHist.GetYaxis().SetTitleOffset(1.)
