@@ -27,7 +27,7 @@ class Datacard(object):
         smax = len(self.signal)
         bmax = len(self.bkg)
         imax = 1
-        jmax = smax
+        jmax = smax + bmax - 1
         kmax = len(self.syst)
 
         out = ""

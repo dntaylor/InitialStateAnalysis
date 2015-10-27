@@ -43,10 +43,10 @@ def limit(analysis,region,period,chan,**kwargs):
     # eff uncertainty
     # take scale factors for leptons, propagate up and down based on statistical uncertainty
     lepvals = {
-        'eee' : 1.01, # placeholder
-        'eem' : 1.01,
-        'mme' : 1.01,
-        'mmm' : 1.01,
+        'eee' : 1.018,
+        'eem' : 1.013,
+        'mme' : 1.006,
+        'mmm' : 1.002,
     }
     lep = {}
     for m in mcnames: lep[m] = lepvals[chan]
@@ -67,10 +67,10 @@ def limit(analysis,region,period,chan,**kwargs):
     # met
     # scale all components up and down independently, add in quadrature the largest
     metvals = {
-        'eee' : 1.02, # placeholder
-        'eem' : 1.02,
-        'mme' : 1.02,
-        'mmm' : 1.02,
+        'eee' : 1.0146, # placeholder from 8 tev
+        'eem' : 1.0150,
+        'mme' : 1.0159,
+        'mmm' : 1.0117,
     }
     met = {}
     for m in mcnames: met[m] = metvals[chan]
