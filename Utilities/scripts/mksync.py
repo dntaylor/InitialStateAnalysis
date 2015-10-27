@@ -2,11 +2,10 @@
 
 from InitialStateAnalysis.Plotters.Plotter import Plotter
 from InitialStateAnalysis.Plotters.plotUtils import *
+from InitialStateAnalysis.Plotters.plotUtils import ZMASS
 import argparse
 import itertools
 import sys
-
-ZMASS = 91.1876
 
 def sync(analysis,channel,period,**kwargs):
     '''Print sync information to file.'''
@@ -112,7 +111,7 @@ def sync(analysis,channel,period,**kwargs):
                 2: 'h2.LepFake1',
             }
 
-        allCuts = 'finalstate.mass>100. && (z1.Pt1>20.&&z1.Pt2>10.) && z1.mass>60. && z1.mass<120. && w1.dR1_z1_1>0.1 && w1.dR1_z1_2>0.1 && w1.Pt1>20. && w1.met>30.'
+        allCuts = 'finalstate.mass>100. && (z1.Pt1>20.&&z1.Pt2>10.) && z1.mass>60. && z1.mass<120. && w1.dR1_z1_1>0.1 && w1.dR1_z1_2>0.1 && w1.Pt1>20. && finalstate.met>30.'
         if analysis in ['Hpp3l']:
             allCuts = '1' # no special cuts at select.passTight
         myCut = cut
@@ -139,7 +138,7 @@ def sync(analysis,channel,period,**kwargs):
                         yields[chan][thisName]  = plotter.getDataEntries(thisCut)
                         num = '1' if thisName.count('F') in [1,3] else '-1'
                         for l in range(3):
-                            if thisName[l] == 'F': num += '*({0}/(1-{0}))'.format(fakeMap[l])
+                            if thisName[l] == 'F': num += '*{0}'.format(fakeMap[l])
                         scalefactor = num
                         if thisName=='TTT': scalefactor = '1'
                         yieldsWeightedData[chan][thisName] = plotter.getDataEntries(thisCut,customScale=scalefactor)

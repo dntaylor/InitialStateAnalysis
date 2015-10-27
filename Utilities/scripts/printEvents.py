@@ -262,9 +262,10 @@ def main(argv=None):
             logging.debug('Copying tree with cut {0}.'.format(args.cut))
             tree = fulltree.CopyTree(args.cut) if args.cut else fulltree
             tree.SetBranchAddress("select",ROOT.AddressOf(branches['select'],"passTight"))
-            tree.SetBranchAddress("event",ROOT.AddressOf(branches['event'],"evt"))
+            tree.SetBranchAddress("event",ROOT.AddressOf(branches['event'],"trig_scale"))
             tree.SetBranchAddress("channel",ROOT.AddressOf(branches['channel'],"channel"))
             tree.SetBranchAddress("genChannel",ROOT.AddressOf(branches['genChannel'],"channel"))
+            tree.SetBranchAddress("fakeChannel",ROOT.AddressOf(branches['fakeChannel'],"channel"))
             tree.SetBranchAddress("finalstate",ROOT.AddressOf(branches['finalstate'],"mass"))
             tree.SetBranchAddress("l1",ROOT.AddressOf(branches['l1'],"Pt"))
             tree.SetBranchAddress("l1Flv",ROOT.AddressOf(branches['l1Flv'],"Flv"))

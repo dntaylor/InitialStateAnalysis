@@ -71,7 +71,7 @@ def main(argv=None):
         events = set()
         numToSubtract = 0
         numEntries = tchain.GetEntries()
-        tchain.SetBranchAddress('event',rt.AddressOf(event,'evt'))
+        tchain.SetBranchAddress('event',rt.AddressOf(event,'trig_scale'))
         # clone tree
         tfile = rt.TFile('%s/data_%s.root' % (ntupledir,dataset), 'recreate')
         tree = tchain.CloneTree(0)

@@ -2,61 +2,77 @@
     "ZTightProbeElecTight": [
         {
             "error": 0.0, 
-            "eta_high": 1.47, 
-            "eta_low": 0.0, 
+            "eta_high": 1.479, 
+            "eta_low": 0, 
             "fakerate": 0.0, 
             "pt_high": 10, 
-            "pt_low": 0
+            "pt_low": 1
         }, 
         {
             "error": 0.0, 
             "eta_high": 2.5, 
-            "eta_low": 1.47, 
+            "eta_low": 1.479, 
             "fakerate": 0.0, 
             "pt_high": 10, 
-            "pt_low": 0
+            "pt_low": 1
         }, 
         {
-            "error": 0.02196491589692176, 
-            "eta_high": 1.47, 
-            "eta_low": 0.0, 
-            "fakerate": 0.05390377342700958, 
+            "error": 0.01748753503634903, 
+            "eta_high": 1.479, 
+            "eta_low": 0, 
+            "fakerate": 0.06363770365715027, 
             "pt_high": 20, 
             "pt_low": 10
         }, 
         {
-            "error": 0.0, 
+            "error": 0.005669315447811998, 
             "eta_high": 2.5, 
-            "eta_low": 1.47, 
-            "fakerate": 0.0, 
+            "eta_low": 1.479, 
+            "fakerate": 0.010918926447629929, 
             "pt_high": 20, 
             "pt_low": 10
         }, 
         {
-            "error": 0.03431500998425801, 
-            "eta_high": 1.47, 
-            "eta_low": 0.0, 
-            "fakerate": 0.09401073306798935, 
-            "pt_high": 200, 
+            "error": 0.053236758649814586, 
+            "eta_high": 1.479, 
+            "eta_low": 0, 
+            "fakerate": 0.13597355782985687, 
+            "pt_high": 30, 
             "pt_low": 20
         }, 
         {
-            "error": 0.0, 
+            "error": 0.020007550403196142, 
             "eta_high": 2.5, 
-            "eta_low": 1.47, 
-            "fakerate": 0.0, 
-            "pt_high": 200, 
+            "eta_low": 1.479, 
+            "fakerate": 0.03198546916246414, 
+            "pt_high": 30, 
             "pt_low": 20
+        }, 
+        {
+            "error": 0.06038182719798568, 
+            "eta_high": 1.479, 
+            "eta_low": 0, 
+            "fakerate": 0.1301732212305069, 
+            "pt_high": 200, 
+            "pt_low": 30
+        }, 
+        {
+            "error": 0.029053726829819597, 
+            "eta_high": 2.5, 
+            "eta_low": 1.479, 
+            "fakerate": 0.05458937585353851, 
+            "pt_high": 200, 
+            "pt_low": 30
         }
     ], 
     "ZTightProbeMuonTight": [
         {
             "error": 0.0, 
             "eta_high": 1.2, 
-            "eta_low": 0.0, 
+            "eta_low": 0, 
             "fakerate": 0.0, 
             "pt_high": 10, 
-            "pt_low": 0
+            "pt_low": 1
         }, 
         {
             "error": 0.0, 
@@ -64,39 +80,55 @@
             "eta_low": 1.2, 
             "fakerate": 0.0, 
             "pt_high": 10, 
-            "pt_low": 0
+            "pt_low": 1
         }, 
         {
-            "error": 0.005483244671873096, 
+            "error": 0.011469856982628602, 
             "eta_high": 1.2, 
-            "eta_low": 0.0, 
-            "fakerate": 0.024608507752418518, 
+            "eta_low": 0, 
+            "fakerate": 0.09304356575012207, 
             "pt_high": 20, 
             "pt_low": 10
         }, 
         {
-            "error": 0.010004523096580533, 
+            "error": 0.01511110934868597, 
             "eta_high": 2.4, 
             "eta_low": 1.2, 
-            "fakerate": 0.04827164486050606, 
+            "fakerate": 0.13315704464912415, 
             "pt_high": 20, 
             "pt_low": 10
         }, 
         {
-            "error": 0.023217335538191268, 
+            "error": 0.03810802171800761, 
             "eta_high": 1.2, 
-            "eta_low": 0.0, 
-            "fakerate": 0.039585184305906296, 
-            "pt_high": 200, 
+            "eta_low": 0, 
+            "fakerate": 0.12099200487136841, 
+            "pt_high": 30, 
             "pt_low": 20
         }, 
         {
-            "error": 0.046845426071021164, 
+            "error": 0.06644238047679177, 
             "eta_high": 2.4, 
             "eta_low": 1.2, 
-            "fakerate": 0.1317639946937561, 
-            "pt_high": 200, 
+            "fakerate": 0.25342217087745667, 
+            "pt_high": 30, 
             "pt_low": 20
+        }, 
+        {
+            "error": 0.07984972594938973, 
+            "eta_high": 1.2, 
+            "eta_low": 0, 
+            "fakerate": 0.05690041929483414, 
+            "pt_high": 200, 
+            "pt_low": 30
+        }, 
+        {
+            "error": 0.17520456484666477, 
+            "eta_high": 2.4, 
+            "eta_low": 1.2, 
+            "fakerate": 0.4043833017349243, 
+            "pt_high": 200, 
+            "pt_low": 30
         }
     ]
 }

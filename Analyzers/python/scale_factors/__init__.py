@@ -254,7 +254,7 @@ class LeptonFakeRate(object):
         with open(os.path.join(os.path.dirname(__file__),'fakes.json'),'r') as f:
             self.fake_dict_13tev = json.load(f)
         # WZ 8TeV
-        with open(os.path.join(os.path.dirname(__file__),'fakes_8TeV_withIso.json'),'r') as f:
+        with open(os.path.join(os.path.dirname(__file__),'fakes_8TeV.json'),'r') as f:
             self.fake_dict_8tev = json.load(f)
 
     def close(self):

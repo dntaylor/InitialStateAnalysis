@@ -21,12 +21,12 @@ class FakeRatePlotter(PlotterBase):
         subtractSamples = kwargs.pop('subtractSamples',[])
         fakeHist = ROOT.TH1F(savename,'',len(bins)-1,array('d',bins))
         for b in range(len(bins)-1):
-            print '{0}: [{1},{2}]'.format(var,bins[b],bins[b+1])
+            #print '{0}: [{1},{2}]'.format(var,bins[b],bins[b+1])
             kinCut = 'abs({var})>={lowbin} && abs({var})<{highbin}'.format(var=var,lowbin=bins[b],highbin=bins[b+1])
             numCut = '{0} && {1}'.format(numString,kinCut)
             denomCut = '{0} && {1}'.format(denomString,kinCut)
-            print numCut
-            print denomCut
+            #print numCut
+            #print denomCut
             num = 0
             denom = 0
             numErr2 = 0
@@ -35,7 +35,7 @@ class FakeRatePlotter(PlotterBase):
             for sample in samples:
                 n, nErr = self.getNumEntries(numCut, sample, doError=True)
                 d, dErr = self.getNumEntries(denomCut, sample, doError=True)
-                print 'Sample {0}: num: {1}; denom: {2}'.format(sample,n,d)
+                #print 'Sample {0}: num: {1}; denom: {2}'.format(sample,n,d)
                 num += n
                 numErr2 += nErr ** 2
                 denom += d
@@ -43,7 +43,7 @@ class FakeRatePlotter(PlotterBase):
             for sample in subtractSamples:
                 n, nErr = self.getNumEntries(numCut, sample, doError=True)
                 d, dErr = self.getNumEntries(denomCut, sample, doError=True)
-                print 'Subtract Sample {0}: num: {1}; denom: {2}'.format(sample,n,d)
+                #print 'Subtract Sample {0}: num: {1}; denom: {2}'.format(sample,n,d)
                 num -= n
                 numErr2 += nErr ** 2
                 denom -= d
@@ -66,13 +66,13 @@ class FakeRatePlotter(PlotterBase):
         fakeHist = ROOT.TH2F(savename,'',len(ptBins)-1,array('d',ptBins),len(etaBins)-1,array('d',etaBins))
         for p in range(len(ptBins)-1):
             for e in range(len(etaBins)-1):
-                print '{0}: [{1},{2}]; {3}: [{4},{5}]'.format(ptVar,ptBins[p],ptBins[p+1],etaVar,etaBins[e],etaBins[e+1])
+                #print '{0}: [{1},{2}]; {3}: [{4},{5}]'.format(ptVar,ptBins[p],ptBins[p+1],etaVar,etaBins[e],etaBins[e+1])
                 kinCut = '%s>=%f & %s<%f & abs(%s)>=%f & abs(%s)<%f' %\
                          (ptVar, ptBins[p], ptVar, ptBins[p+1], etaVar, etaBins[e], etaVar, etaBins[e+1])
                 numCut = '%s && %s' % (kinCut, numString)
                 denomCut = '%s && %s' % (kinCut, denomString)
-                print numCut
-                print denomCut
+                #print numCut
+                #print denomCut
                 num = 0
                 denom = 0
                 numErr2 = 0
@@ -81,7 +81,7 @@ class FakeRatePlotter(PlotterBase):
                 for sample in samples:
                     n, nErr = self.getNumEntries(numCut, sample, doError=True)
                     d, dErr = self.getNumEntries(denomCut, sample, doError=True)
-                    print 'Sample {0}: num: {1}; denom: {2}'.format(sample,n,d)
+                    #print 'Sample {0}: num: {1}; denom: {2}'.format(sample,n,d)
                     num += n
                     numErr2 += nErr ** 2
                     denom += d
@@ -89,7 +89,7 @@ class FakeRatePlotter(PlotterBase):
                 for sample in subtractSamples:
                     n, nErr = self.getNumEntries(numCut, sample, doError=True)
                     d, dErr = self.getNumEntries(denomCut, sample, doError=True)
-                    print 'Subtract Sample {0}: num: {1}; denom: {2}'.format(sample,n,d)
+                    #print 'Subtract Sample {0}: num: {1}; denom: {2}'.format(sample,n,d)
                     num -= n
                     numErr2 += nErr ** 2
                     denom -= d

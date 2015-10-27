@@ -39,6 +39,7 @@ class AnalyzerWZ(AnalyzerBase):
         self.cutflow_labels = ['Trigger','Fiducial','ID','Z Selection','W Selection']
         self.alternateIds, self.alternateIdMap = self.defineAlternateIds(period)
         self.doVBF = (period==13)
+        self.doMetUnc = (period==13)
         self.cutTreeLabels = ['trigger','fiducial','vetoID','looseID','tightID']
 
         super(AnalyzerWZ, self).__init__(sample_name, file_list, out_file, period, **kwargs)
@@ -158,7 +159,24 @@ class AnalyzerWZ(AnalyzerBase):
                         'm': iso
                     }
         return idList, idMap
-                
+
+    def getGenChannel(self,rtrow):
+        '''Dummy return gen channel string'''
+        if 'WZJets' not in self.file_name or 'WZTo3LNu' not in self.file_name: return 'a'
+        flav = {'e':'E','m':'Mu','t':'Tau'}
+        for z in ['e','m','t']:
+            for w in ['e','m','t']:
+                zll = getattr(rtrow,'GenDecayZ{0}{0}'.format(flav[z]))
+                wln = getattr(rtrow,'GenDecayW{0}Nu'.format(flav[w]))
+                if zll and wln: return '{0}{0}{1}'.format(z,w)
+        return 'a'
+
+    def getFakeChannel(self,rtrow):
+        chan = ''
+        for obj in self.objCand:
+            chan += 'P' if self.ID(rtrow,obj,**self.getIdArgs('Tight')) else 'F'
+        return chan
+        
 
     ###########################
     ### Define preselection ###

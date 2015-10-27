@@ -96,7 +96,9 @@ def get_sample_names(analysis,period,samples):
             #'WZ'         : '2015-09-28-13TeV-WZ', # add summed weights
             #'WZ'         : '2015-10-06-13TeV-WZ', # add hzz veto
             #'WZ'         : '2015-10-12-13TeV-WZ', # lower trigger
-            'WZ'         : '2015-10-15-13TeV-WZ', # fixed trigger and add WZ no iso ID
+            #'WZ'         : '2015-10-15-13TeV-WZ', # fixed trigger and add WZ no iso ID
+            #'WZ'         : '2015-10-24-13TeV-WZ', # miniaodv2, metfilters, new met uncertainty
+            'WZ'         : '2015-10-25-13TeV-WZ', # all samples and bug fix
             'WZ_W'       : '2015-08-03-13TeV-2l',
             #'WZ_Dijet'   : '2015-08-17-13TeV-1l',
             #'WZ_Dijet'   : '2015-09-14-13TeV-1l', # updated with WZ changes
@@ -181,7 +183,7 @@ def submitFwkliteJob(sampledir,args):
     numfiles = len(filelist)
     totalsize = sum([os.path.getsize(f) for f in filelist])
     averagesize = totalsize/numfiles
-    filesperjob = int(math.ceil(100000000./averagesize)) # average them to 100MB per job
+    filesperjob = int(math.ceil(50000000./averagesize)) # average them to 50MB per job
     input_name = '%s/%s.txt' % (dag_dir+'inputs', sample_name)
     with open(input_name,'w') as file:
         for f in filelist:

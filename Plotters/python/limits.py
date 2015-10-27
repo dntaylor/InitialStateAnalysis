@@ -236,8 +236,19 @@ def plot_limits(analysis, region, period, savename, **kwargs):
         y = oneSigma_high.Eval(h)
         if y > 1: break
 
+    # get observed limit
+    if not blind:
+        dy = 0
+        for dx in range(1,1000):
+            dy = observed.Eval(dx)
+            if dy > 1: break
+    else:
+        dx = 0
+
+
     print "Expected Limit: %i GeV (+%i, -%i)" % (x, h-x, x-l)
-    return [x,h-x,x-l]
+    if not blind: print "Observed Limit: %i GeV" % (dx)
+    return [x,h-x,x-l,dx]
 
 def plot_combined_limits(period, savename, **kwargs):
     '''Plot limits and get exclusion limits'''

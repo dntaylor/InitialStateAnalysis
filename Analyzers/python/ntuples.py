@@ -47,18 +47,43 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
     '''
     alternateIds = kwargs.pop('altIds',[])
     doVBF = kwargs.pop('doVBF',False)
+    doMetUnc = kwargs.pop('doMetUnc',False)
 
     finalStateObjects = 'emtjgn'
     structureDict = {}
     structOrder = []
 
+    # count objects
+    nl = 0
+    nj = 0
+    np = 0
+    for key in states[0]:
+        val = object_definitions[key]
+        for obj in val:
+            if obj=='n': continue
+            else:
+                if obj in 'emt':
+                    nl += 1
+                if obj == 'j':
+                    nj += 1
+                if obj == 'g':
+                    np += 1
+
+
     # some common things
+    baseMetVars = ['met','metPhi','mT']
     metVars = []
-    for m in ['met','metPhi','mT']:
-        metVars += [m]
+    metVars += baseMetVars
+    baseLepMetVars = ['mass','Pt','sT','dPhi']
+    lepMetVars = []
+    if doMetUnc:
         for s in ['JetRes','JetEn','MuonEn','ElectronEn','TauEn','UnclusteredEn','PhotonEn']:
             for d in ['Up','Down']:
-                metVars += ['{0}{1}{2}'.format(m,s,d)]
+                for m in baseMetVars:
+                    metVars += ['{0}{1}{2}'.format(m,s,d)]
+                for m in baseLepMetVars:
+                    lepMetVars += ['{0}{1}{2}'.format(m,s,d)]
+
     lepFloats = ['Pt', 'Eta', 'Phi', 'Iso', 'Dxy', 'Dz', 'SigmaIEtaIEta', 'DEtaIn', 'DPhiIn', 'HOverE', 'OoEmOoP', 'TriggeringMVA', 'NonTriggeringMVA', 'NormalizedChi2', 'JetPt', 'JetBTag']
     for l in ['Loose','Tight']:
         for t in ['','_up','_down']:
@@ -78,7 +103,7 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
                 allowedObjects += fsObj
                 break
     numObjTypes = len(allowedObjects)
-
+    
     selectVars = {}
     selectVars['I'] = ['passTight','passLoose']
     for trig in ['DoubleMuon','DoubleEG','MuonEG','EGMuon']:
@@ -95,7 +120,7 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
     eventVars = {}
     eventVars['I'] = ['evt','run','lumi','nvtx','GenNUP','trig_prescale']
     eventVars['F'] = ['trig_scale','gen_weight','charge_uncertainty']
-    for v in ['lep_scale','pu_weight']:
+    for v in ['lep_scale','pu_weight','fakerate']:
         for t in ['','_up','_down']:
             eventVars['F'] += ['{0}{1}'.format(v,t)]
     eventName = 'structEvent_t'
@@ -115,6 +140,9 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
     genChannelStruct = rt.structChannel_t()
     structureDict['genChannel'] = [genChannelStruct, rt.AddressOf(genChannelStruct,'channel'),'channel/C']
     structOrder += ['genChannel']
+    fakeChannelStruct = rt.structChannel_t()
+    structureDict['fakeChannel'] = [fakeChannelStruct, rt.AddressOf(fakeChannelStruct,'channel'),'channel/C']
+    structOrder += ['fakeChannel']
 
     # add final state structs
     fsVars = {}
@@ -184,7 +212,8 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
             objCount = 0
             for obj in val:
                 if obj == 'n':
-                    stateVars['F'] += metVars
+                    #stateVars['F'] += metVars
+                    stateVars['F'] += lepMetVars
                 else:
                     objCount += 1
                     for v in lepFloats:

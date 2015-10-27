@@ -59,7 +59,8 @@ def getChannelSidebandSignalRegion(region,channel,**kwargs):
         h2Map = regionMap['Hpp4l'][h2Taus]
         cutMap = {
             'srcut': h1Map['sr'].replace('hN','h1') + ' && ' + h2Map['sr'].replace('hN','h2'),
-            'sbcut': h1Map['sb'].replace('hN','h1') + ' && ' + h2Map['sb'].replace('hN','h2'),
+            #'sbcut': h1Map['sb'].replace('hN','h1') + ' && ' + h2Map['sb'].replace('hN','h2'),
+            'sbcut': '!(' + h1Map['sr'].replace('hN','h1') + ' && ' + h2Map['sr'].replace('hN','h2') + ')',
         }
     return cutMap
 
@@ -220,7 +221,7 @@ def defineCutFlowMap(region,channels,mass):
         'bveto' : 'finalstate.bjetVeto30Medium==0',
         'wdr' : 'w1.dR1_z1_1>0.1 & w1.dR1_z1_2>0.1',
         'wpt' : 'w1.Pt1>20.',
-        'met' : 'w1.met>30.',
+        'met' : 'finalstate.met>30.',
     }
     regionMap['Z'][0] = {
         'zpt' : '(z1.Pt1>20.&z1.Pt2>10.)',
@@ -453,7 +454,7 @@ def getMergeDict(period):
             #'WZ_TuneCUETP8M1_13TeV-pythia8'                  : '1',
         }
         sampleMergeDict['ZZJets'] = {
-            'ZZTo2L2Q_13TeV_amcatnloFXFX_madspin_pythia8'   : '1',
+            #'ZZTo2L2Q_13TeV_amcatnloFXFX_madspin_pythia8'   : '1',
             'ZZTo4L_13TeV_powheg_pythia8'                   : '1',
             #'ZZTo4Q_13TeV_amcatnloFXFX_madspin_pythia8'     : '1',
             #'ZZ_TuneCUETP8M1_13TeV-pythia8'                 : '1',
@@ -576,19 +577,19 @@ def getMergeDict(period):
             'TTJetsSemiLepMGDecays': '1',
         }
         sampleMergeDict['ZJets']     = {
-            'DYJetsToLL_M-10To50filter_8TeV-madgraph'         : '1',
-            'Z1jets_M50'                                      : '1',
-            'Z2jets_M50_S10'                                  : '1',
-            'Z3jets_M50'                                      : '1',
-            'Z4jets_M50'                                      : '1',
-            'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball': 'event.GenNUP==5',
+            #'DYJetsToLL_M-10To50filter_8TeV-madgraph'         : '1',
+            #'Z1jets_M50'                                      : '1',
+            #'Z2jets_M50_S10'                                  : '1',
+            #'Z3jets_M50'                                      : '1',
+            #'Z4jets_M50'                                      : '1',
+            #'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball': 'event.GenNUP==5',
             #'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball': '1',
-            #'DYJetsToLL_M-10To50filter_8TeV-madgraph_filtered'         : '1',
-            #'Z1jets_M50_filtered'                                      : '1',
-            #'Z2jets_M50_S10_filtered'                                  : '1',
-            #'Z3jets_M50_filtered'                                      : '1',
-            #'Z4jets_M50_filtered'                                      : '1',
-            #'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball_filtered': 'event.GenNUP==5',
+            'DYJetsToLL_M-10To50filter_8TeV-madgraph_filtered'         : '1',
+            'Z1jets_M50_filtered'                                      : '1',
+            'Z2jets_M50_S10_filtered'                                  : '1',
+            'Z3jets_M50_filtered'                                      : '1',
+            'Z4jets_M50_filtered'                                      : '1',
+            'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball_filtered': 'event.GenNUP==5',
             #'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball_filtered': '1',
         }
         sampleMergeDict['WJets']     = {
@@ -631,7 +632,7 @@ def getMergeDict(period):
     return sampleMergeDict
 
 
-def getSigMap(numLeptons,mass):
+def getSigMap(numLeptons,mass=500):
     '''Return a signal map for a given running period'''
     sigMap = {
         8 : {
@@ -691,8 +692,7 @@ def getIntLumiMap():
         7 : 4900,
         8 : 19700,
         #13: 42, # 50ns
-        13: 594.65 # 25ns
-        #13: 1000, # ideal
+        13: 1280.23 # 25ns, AN freeze
     }
     return intLumiMap
 
@@ -777,7 +777,7 @@ def plotLepton(plotMethod,myCut,obj,**kwargs):
     name = kwargs.pop('name','')
     pretty = kwargs.pop('pretty','')
     plotMethod('%s.%sPt%s' %(obj,pre,post), [20,0,200],           savedir+'%s/Pt' %name, yaxis='Events/10.0 GeV',xaxis='p_{T}^{%s} (GeV)' %pretty,       legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
-    plotMethod('%s.%sIso%s' %(obj,pre,post),[50,0,.5],            savedir+'%s/Iso' %name,yaxis='Events',        xaxis='Relative Isolation (%s)' %pretty,legendpos=43,logy=0,cut=myCut,**kwargs)
+    plotMethod('%s.%sIso%s' %(obj,pre,post),[50,0,.5],            savedir+'%s/Iso' %name,yaxis='Events',        xaxis='Relative Isolation (%s)' %pretty,legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
     plotMethod('%s.%sEta%s' %(obj,pre,post),[30,-3.0,3.0],        savedir+'%s/Eta' %name,yaxis='Events',        xaxis='\\eta^{%s}' %pretty,             legendpos=43,logy=0,cut=myCut,numcol=3,**kwargs)
     plotMethod('%s.%sPhi%s' %(obj,pre,post),[30,-3.14159,3.14159],savedir+'%s/Phi' %name,yaxis='Events',        xaxis='\\phi^{%s}' %pretty,             legendpos=43,logy=0,cut=myCut,numcol=3,**kwargs)
     if not doMinimal:
@@ -866,7 +866,7 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
         t = tex[l]
         cuts = ['%s & %s' %(myCut,'l%iFlv=="%s"' %((x+1),l)) for x in range(nl)]
         plotMethod(['l%i.Pt'  %(x+1) for x in range(nl)], [40,0,200],            savedir+'%s/Pt'  %name, yaxis='Events/5.0 GeV', xaxis='p_{T}^{%s} (GeV)' %t,        legendpos=43, logy=0, cut=cuts, overflow=True, **kwargs)
-        plotMethod(['l%i.Iso' %(x+1) for x in range(nl)], [50,0,.5],             savedir+'%s/Iso' %name, yaxis='Events',         xaxis='Relative Isolation (%s)' %t, legendpos=43, logy=0, cut=cuts, **kwargs)
+        plotMethod(['l%i.Iso' %(x+1) for x in range(nl)], [50,0,.5],             savedir+'%s/Iso' %name, yaxis='Events',         xaxis='Relative Isolation (%s)' %t, legendpos=43, logy=0, cut=cuts, overflow=True, **kwargs)
         plotMethod(['l%i.Eta' %(x+1) for x in range(nl)], [30,-3.0,3.0],         savedir+'%s/Eta' %name, yaxis='Events',         xaxis='\\eta^{%s}' %t,              legendpos=43, logy=0, cut=cuts, numcol=3, **kwargs)
         plotMethod(['l%i.Phi' %(x+1) for x in range(nl)], [30,-3.14159,3.14159], savedir+'%s/Phi' %name, yaxis='Events',         xaxis='\\phi^{%s}' %t,              legendpos=43, logy=0, cut=cuts, numcol=3, **kwargs)
         if not doMinimal:
@@ -966,8 +966,9 @@ def getFakeParams(analysis):
                 for z in ['Tight']:
                     fakeRegion = 'Z{0}Probe{1}{2}'.format(z,lepName[f],p)
                     #denom = 'z1.Pass{0}1 && z1.Pass{0}2 && w1.dR1_z1_1>0.02 && w1.dR1_z1_2>0.02 && w1.mass<25. && w1Flv=="{1}"'.format(z,f)
-                    denom = 'z1.Pass{0}1 && z1.Pass{0}2 && w1.dR1_z1_1>0.02 && w1.dR1_z1_2>0.02 && finalstate.met<25. && w1.mass<30. && w1Flv=="{1}"'.format(z,f)
-                    numer = '{0} && w1.Pass{1}1'.format(denom,p)
+                    basecut = 'z1.Pass{0}1 && z1.Pass{0}2 && w1.dR1_z1_1>0.02 && w1.dR1_z1_2>0.02 && finalstate.met<25. && w1.mass<30. && w1Flv=="{1}"'.format(z,f)
+                    numer = '{0} && w1.Pass{1}1==1'.format(basecut,p)
+                    denom = '{0} && w1.Pass{1}1==0'.format(basecut,p)
                     fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
                     #if p=='Tight' and channel not in ['HZZFakeRate']:
                     #   fakeRegion += '_LooseProbe'
@@ -980,8 +981,9 @@ def getFakeParams(analysis):
                 #for w in ['Loose','Tight']:
                 for w in ['Tight']:
                     fakeRegion = 'W{0}Probe{1}{2}'.format(w,lepName[f],p)
-                    denom = 'w1.Pt1>20. && w1.mass>30. && finalstate.met>30. && (z1.mass<60. || z1.mass>120.) && l1.Chg==l2.Chg && z1.dR>0.1 && w1.Pass{0}1 && w2Flv=="{1}"'.format(w,f)
-                    numer = '{0} && w2.Pass{1}1'.format(denom,p)
+                    basecut = 'w1.Pt1>20. && w1.mass>30. && finalstate.met>30. && (z1.mass<60. || z1.mass>120.) && l1.Chg==l2.Chg && z1.dR>0.1 && w1.Pass{0}1 && w2Flv=="{1}"'.format(w,f)
+                    numer = '{0} && w2.Pass{1}1==1'.format(basecut,p)
+                    denom = '{0} && w2.Pass{1}1==0'.format(basecut,p)
                     fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w2.Pt1', 'etaVar': 'w2.Eta1'}
                     #if p=='Tight' and channel not in ['HZZFakeRate']:
                     #   fakeRegion += '_LooseProbe'
@@ -991,8 +993,9 @@ def getFakeParams(analysis):
             # ntuple cuts: zVeto 60-120, met vet 20, w veto 20, jet pt > 20, jet dr > 1.0
             if analysis in ['WZ_Dijet']:
                fakeRegion = 'FakeRateProbe{0}{1}'.format(lepName[f],p)
-               denom = 'l1Flv=="{0}"'.format(f)
-               numer = '{0} && w1.Pass{1}1'.format(denom,p)
+               basecut = 'l1Flv=="{0}"'.format(f)
+               numer = '{0} && w1.Pass{1}1==1'.format(basecut,p)
+               denom = '{0} && w1.Pass{1}1==0'.format(basecut,p)
                fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
                #if p=='Tight' and channel not in ['HZZFakeRate']:
                #   fakeRegion += '_LooseProbe'
@@ -1004,14 +1007,85 @@ def getFakeParams(analysis):
 
     # setup selections
     ptBins = [1,10,20,30,200]
-    ptBins = [1,10,20,200]
     #if analysis in ['WZ_Dijet']: ptBins = [0,5,10,20,30,40,60,80,200]
 
     etaBins = {
-        #'e': [0,1.479,2.5],
-        #'m': [0,1.2,2.4],
-        'e': [0,2.5],
-        'm': [0,2.4],
+        'e': [0,1.479,2.5],
+        'm': [0,1.2,2.4],
+        #'e': [0,2.5],
+        #'m': [0,2.4],
     }
 
     return fakeRegions, ptBins, etaBins
+
+def getWZGenYields():
+    yields = {
+        'fiducial' : {
+            'eee' : 34092,
+            'eem' : 33937,
+            'mme' : 34480,
+            'mmm' : 34276,
+        },
+        'zWindow' : {
+            'eee' : 66171,
+            'eem' : 66448,
+            'mme' : 66954,
+            'mmm' : 66398,
+        },
+    }
+
+def getAcceptanceEfficiency(analysis):
+    '''Return dictionary of acceptance times efficiency'''
+    accEff = {
+        'zWindow' : {
+            'eee' : 0.1450,
+            'eem' : 0.1637,
+            'mme' : 0.1950,
+            'mmm' : 0.2385,
+        },
+        'fiducial' : {
+            'eee' : 0.2814,
+            'eem' : 0.3205,
+            'mme' : 0.3786,
+            'mmm' : 0.4621,
+        },
+    }
+    return accEff
+
+def getCrossSections(plotter,cut,**kwargs):
+    doDataDriven = kwargs.pop('doDataDriven',True)
+    sigMap = getSigMap(3)
+    analysis = plotter.getAnalysis()
+    channel = analysis
+    period = plotter.getPeriod()
+    channelBackground = getChannelBackgrounds(period)
+    if doDataDriven:
+        backgroundMC = [x for x in channelBackground[channel] if x not in ['Z','ZG','TT','T','WZ']] + ['datadriven']
+    else:
+        backgroundMC = [x for x in channelBackground[channel] if x not in ['WZ']]
+
+    yields = {}
+    for chan in ['eee','eem','mme','mmm']:
+        thisCut = '{0} && channel=="{1}"'.format(cut,chan)
+        yields[chan] = {}
+        # get signal yield
+        wz, wzErr = plotter.getNumEntries(thisCut,sigMap[period]['WZ'],doError=True)
+        wzErr2 = wzErr**2
+        # get data yield
+        data, dataErr = plotter.getDataEntries(thisCut,doError=True)
+        dataErr2 = dataErr**2
+        # get background
+        bg = 0
+        bgErr2 = 0
+        for b in backgroundMC:
+            bgyield = plotter.getNumEntries(thisCut,sigMap[period][b],doError=True)
+            bg += bgyield[0]
+            bgErr2 += bgyield[1]**2
+        # subtract background from data
+        extractedYield = data - bg
+        extractedErr2 = dataErr2 + bgErr2
+        # fill the dict
+        yields[chan]['mc'] = [wz, wzErr]
+        yields[chan]['data'] = [extractedYield, extractedErr2**0.5]
+
+    return yields

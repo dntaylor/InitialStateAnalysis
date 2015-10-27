@@ -205,6 +205,7 @@ class CutFlowPlotter(PlotterBase):
         nosum = kwargs.pop('nosum',False)
         isprecf = kwargs.pop('isprecf',False)
         isprelim = kwargs.pop('isprelim', 1)
+        yscale = kwargs.pop('yscale',1.2)
         for key, value in kwargs.iteritems():
             self.logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
 
@@ -239,7 +240,7 @@ class CutFlowPlotter(PlotterBase):
         mc.GetYaxis().SetTitleOffset(1)
         newymax = max(datamax,mc.GetMaximum()) if plotdata else mc.GetMaximum()
         newymax = max(sigmax,newymax) if plotsig else newymax
-        mc.SetMaximum(1.2*newymax)
+        mc.SetMaximum(yscale*newymax)
         if isprecf: mc.SetMinimum(1)
         mc.SetMinimum(1) if logy else mc.SetMinimum(0)
         if labels:

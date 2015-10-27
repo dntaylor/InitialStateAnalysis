@@ -176,7 +176,8 @@ class AnalyzerBase(object):
             states = [self.initial_states]
         if not hasattr(self,'alternateIds'): self.alternateIds = []
         if not hasattr(self,'doVBF'): self.doVBF = False
-        self.ntuple, self.branches = buildNtuple(self.object_definitions,states,self.channel,self.final_states,altIds=self.alternateIds,doVBF=self.doVBF)
+        if not hasattr(self,'doMetUnc'): self.doMetUnc = False
+        self.ntuple, self.branches = buildNtuple(self.object_definitions,states,self.channel,self.final_states,altIds=self.alternateIds,doVBF=self.doVBF,doMetUnc=self.doMetUnc)
 
         if hasattr(self,'cutTreeLabels'):
             self.cutTree, self.eventBranch, self.cutsBranch = buildCutTree(self.cutTreeLabels)
@@ -370,7 +371,7 @@ class AnalyzerBase(object):
         for altId in self.alternateIds:
             ntupleRow["select.pass_%s"%altId] = int(self.ID(rtrow,*self.objects,**self.alternateIdMap[altId]))
 
-        scales = self.getScales(rtrow,objects,**self.lepargs)
+        scales = self.getScales(rtrow,self.objCand,**self.lepargs)
         
         ntupleRow["event.evt"] = int(rtrow.evt)
         ntupleRow["event.lumi"] = int(rtrow.lumi)
@@ -385,6 +386,9 @@ class AnalyzerBase(object):
         ntupleRow["event.pu_weight"] = float(scales['puweight'][0])
         ntupleRow["event.pu_weight_up"] = float(scales['puweight'][1])
         ntupleRow["event.pu_weight_down"] = float(scales['puweight'][2])
+        ntupleRow["event.fakerate"] = float(scales['lepfake'])
+        ntupleRow["event.fakerate_up"] = float(scales['lepfakeup'])
+        ntupleRow["event.fakerate_down"] = float(scales['lepfakedown'])
         ntupleRow["event.gen_weight"] = float(scales['genweight'])
         ntupleRow["event.charge_uncertainty"] = float(scales['chargeid'])
 
@@ -392,11 +396,12 @@ class AnalyzerBase(object):
         for x in objects: channelString += x[0]
         ntupleRow["channel.channel"] = channelString
         ntupleRow["genChannel.channel"] = self.getGenChannel(rtrow)
+        ntupleRow["fakeChannel.channel"] = self.getFakeChannel(rtrow)
 
         def getMT(rtrow,period,*objects):
             masses = {'e':0.511e-3, 'm':0.1056, 't':1.776, 'j':0}
             metVar = 'type1_pfMet'
-            mtVar = 'PFMET' if period==13 else 'PfMet_Ty1'
+            mtVar = 'PfMet_type1' if period==13 else 'PfMet_Ty1'
             visP4 = rt.TLorentzVector()
             for l in objects:
                 p4 = rt.TLorentzVector()
@@ -422,6 +427,12 @@ class AnalyzerBase(object):
         metVar = 'type1_pfMet'
         ntupleRow["finalstate.met"] = float(getattr(rtrow, '%sEt' %metVar))
         ntupleRow["finalstate.metPhi"] = float(getattr(rtrow,'%sPhi' %metVar))
+        if self.doMetUnc:
+            varMap = {'mT':'mt','met':'pt','metPhi':'phi'}
+            for mv in ['met','metPhi']:
+                for cor in ['JetRes','JetEn','MuonEn','ElectronEn','TauEn','UnclusteredEn','PhotonEn']:
+                    for d in ['Up','Down']:
+                        ntupleRow['finalstate.{0}{1}{2}'.format(mv,cor,d)] = self.getObject(rtrow,'met',varMap[mv],shift='{0}{1}'.format(cor,d))
         ntupleRow["finalstate.leadJetPt"] = float(rtrow.jet1Pt) if self.period==13 else float(-1)
         ntupleRow["finalstate.leadJetEta"] = float(rtrow.jet1Eta) if self.period==13 else float(-10)
         ntupleRow["finalstate.leadJetPhi"] = float(rtrow.jet1Phi) if self.period==13 else float(-10)
@@ -453,7 +464,7 @@ class AnalyzerBase(object):
             masses = {'e':0.511e-3, 'm':0.1056, 't':1.776, 'j':0}
             objStart = 0
             metVar = 'type1_pfMet'
-            mtVar = 'PfMet_Ty1' if period==13 else 'PfMet_Ty1'
+            mtVar = 'PfMet_type1' if period==13 else 'PfMet_Ty1'
             for i in state:
                 numObjects = len([ x for x in self.object_definitions[i] if x != 'n']) if theObjects else 0
                 finalObjects = theObjects[objStart:objStart+numObjects]
@@ -486,6 +497,13 @@ class AnalyzerBase(object):
                     ntupleRow["%s.Pt" %i] = float(wpt)
                     ntupleRow["%s.sT" %i] = float(getattr(rtrow, "%sPt" % finalObjects[0]) + getattr(rtrow, '%sEt' %metVar)) if theObjects else float(-9)
                     ntupleRow["%s.dPhi" %i] = float(getattr(rtrow, "%sToMETDPhi" % finalObjects[0])) if theObjects else float(-9)
+                    if self.doMetUnc:
+                        varMap = {'mass':'mass','Pt':'pt','sT':'st','dPhi':'dphi'}
+                        for mv in ['mass','Pt','sT','dPhi']:
+                            for cor in ['JetRes','JetEn','MuonEn','ElectronEn','TauEn','UnclusteredEn','PhotonEn']:
+                                for d in ['Up','Down']:
+                                    ntupleRow['{0}.{1}{2}{3}'.format(i,mv,cor,d)] = self.getObject(rtrow,i,varMap[mv],objects=finalObjects,shift='{0}{1}'.format(cor,d))
+
                     ntupleRow["%sFlv.Flv" %i] = finalObjects[0][0] if theObjects else 'a'
                 else:
                     finalObjOrdered = ordered(finalObjects[0], finalObjects[1]) if theObjects else []
@@ -516,6 +534,7 @@ class AnalyzerBase(object):
                     if obj=='n':
                         ntupleRow["%s.met" %i] = float(getattr(rtrow,'%sEt' %metVar)) if theObjects else float(-9)
                         ntupleRow["%s.metPhi" %i] = float(getattr(rtrow, '%sPhi' %metVar)) if theObjects else float(-9)
+
                     else:
                         objCount += 1
                         l = orderedFinalObjects[objCount-1] if theObjects else 'a'
@@ -808,13 +827,22 @@ class AnalyzerBase(object):
             scales['lepeff'] = lepeff[0]
             scales['lepeffup'] = lepeff[1]
             scales['lepeffdown'] = lepeff[2]
-            lepfake = self.lepfake.scale_factor(rtrow, *objects, period=self.period, **lepargs)
-            scales['lepfake'] = lepfake[0]
-            scales['lepfakeup'] = lepfake[1]
-            scales['lepfakedown'] = lepfake[2]
+        passtight = []
+        for obj in objects:
+            passtight += [1 if self.ID(rtrow,obj,**self.getIdArgs('Tight')) else 0]
+        totalfake = [1.,1.,1.] if sum(passtight) in [3,2,0] else [-1.,-1.,-1.]
+        for o in range(len(objects)):
+            lepfake = self.lepfake.scale_factor(rtrow, objects[o], period=self.period, **lepargs)
+            if not passtight[o]:
+                totalfake[0] *= lepfake[0]
+                totalfake[1] *= lepfake[1]
+                totalfake[2] *= lepfake[2]
+        scales['lepfake'] = totalfake[0]
+        scales['lepfakeup'] = totalfake[1]
+        scales['lepfakedown'] = totalfake[2]
         scales['trigger_prescale'] = self.getTriggerPrescale(rtrow)
         genweight = rtrow.GenWeight if hasattr(rtrow,'GenWeight') else 1.
-        scales['genweight']= genweight
+        scales['genweight'] = genweight
         return scales
 
     def getTriggerPrescale(self,rtrow):
@@ -825,24 +853,20 @@ class AnalyzerBase(object):
         '''Dummy return gen channel string'''
         return 'a'
 
+    def getFakeChannel(self,rtrow):
+        chan = ''
+        for obj in self.objects:
+            chan += 'P' if self.ID(rtrow,obj,**self.getIdArgs('Tight')) else 'F'
+        return chan
+
     def getObject(self,rtrow,obj,var,**kwargs):
         '''Get modified object'''
         if obj=='met':
             metVar = 'type1_pfMet'
-            shift = kwargs.pop('metShift','')
-            shiftMap = {
-              'jres': 'JetRes',
-              'jes' : 'JetEn',
-              'mes' : 'MuonEn',
-              'ees' : 'ElectronEn',
-              'tes' : 'TauEn',
-              'ues' : 'UnclusteredEn',
-              'pes' : 'PhotonEn',
-            }
-            change = {'+': 'Up', '-': 'Down'}
+            shift = kwargs.pop('shift','')
             varName = {'pt': 'Pt', 'phi': 'Phi'}
             varName2 = {'pt': 'Et', 'phi': 'Phi'}
-            shiftString = '{0}_shifted{1}_{2}{3}'.format(metVar,varNam[var],shiftMap[shift[:-1]],change[-1]) if shift else '{0}{1}'.format(metVar,varName2[var])
+            shiftString = '{0}_shifted{1}_{2}'.format(metVar,varName[var],shift) if shift else '{0}{1}'.format(metVar,varName2[var])
             return getattr(rtrow,shiftString)
         elif obj in self.object_definitions: # composite
             masses = {'e':0.511e-3, 'm':0.1056, 't':1.776, 'j':0}
@@ -851,6 +875,18 @@ class AnalyzerBase(object):
             elif self.object_definitions[obj][1] == 'n':
                 o = kwargs.get('objects',[])
                 if not o: return -9
+                shift = kwargs.pop('shift','type1')
+                # precalculated ones
+                if var=='mass':
+                    varString = '{0}MtToPfMet_{1}'.format(o[0],shift)
+                    return getattr(rtrow,varString) if hasattr(rtrow,varString) else -9.
+                if var=='dphi':
+                    varString = '{0}DPhiToPfMet_{1}'.format(o[0],shift)
+                    return getattr(rtrow,varString) if hasattr(rtrow,varString) else -9.
+                if var=='st':
+                    varString = 'type1_pfMetEt' if shift=='type1' else 'type1_pfMet_shiftedPt_{0}'.format(shift)
+                    return getattr(rtrow,varString)+getattr(rtrow,'{0}Pt'.format(o[0])) if hasattr(rtrow,varString) else -9.
+                # if we need to calculate here
                 pt1 = self.getObject(rtrow,o[0],'pt',**kwargs)
                 eta1 = self.getObject(rtrow,o[0],'eta',**kwargs)
                 phi1 = self.getObject(rtrow,o[0],'phi',**kwargs)
@@ -859,8 +895,8 @@ class AnalyzerBase(object):
                 vec1.SetPtEtaPhiM(pt1,eta1,phi1,mass1)
                 px1 = vec1.Px()
                 py1 = vec1.Py()
-                ptMet = self.getObject(rtrow,'met','pt',**kwargs)
-                phiMet = self.getObject(rtrow,'met','phi',**kwargs)
+                ptMet = self.getObject(rtrow,'met','pt',shift=shift,**kwargs)
+                phiMet = self.getObject(rtrow,'met','phi',shift=shift,**kwargs)
                 vecMet = rt.TLorentzVector()
                 vecMet.SetPtEtaPhiM(ptMet,0.,phiMet,0.)
                 pxMet = vecMet.Px()
@@ -878,6 +914,24 @@ class AnalyzerBase(object):
                 o = kwargs.get('objects',[])
                 if len(o) != 2: return 0.
                 o = ordered(o[0],o[1])
+                # precalculated ones
+                if var=='pt':
+                    return getattr(rtrow,'{0}_{1}_Pt'.format(*o))
+                if var=='mass' or var=='m':
+                    return getattr(rtrow,'{0}_{1}_Mass'.format(*o))
+                if var=='mt':
+                    return getattr(rtrow,'{0}_{1}_Mt'.format(*o))
+                if var=='eta':
+                    return getattr(rtrow,'{0}_{1}_Eta'.format(*o))
+                if var=='phi':
+                    return getattr(rtrow,'{0}_{1}_Phi'.format(*o))
+                if var=='dr':
+                    return getattr(rtrow,'{0}_{1}_DR'.format(*o))
+                if var=='dphi':
+                    return getattr(rtrow,'{0}_{1}_DPhi'.format(*o))
+                if var=='st':
+                    return getattr(rtrow,'{0}Pt'.format(o[0])) + getattr(rtrow,'{0}Pt'.format(o[1]))
+                # if we need to calculate here
                 vec1 = rt.TLorentzVector()
                 pt1 = self.getObject(rtrow,o[0],'pt',**kwargs)
                 eta1 = self.getObject(rtrow,o[0],'eta',**kwargs)
