@@ -31,7 +31,7 @@ class FakeRatePlotter(PlotterBase):
             denom = 0
             numErr2 = 0
             denomErr2 = 0
-            samples = self.data if dataDriven else self.backgrounds
+            samples = self.data if dataDriven else [x for x in self.backgrounds if x not in subtractSamples]
             for sample in samples:
                 n, nErr = self.getNumEntries(numCut, sample, doError=True)
                 d, dErr = self.getNumEntries(denomCut, sample, doError=True)
@@ -40,14 +40,15 @@ class FakeRatePlotter(PlotterBase):
                 numErr2 += nErr ** 2
                 denom += d
                 denomErr2 += dErr ** 2
-            for sample in subtractSamples:
-                n, nErr = self.getNumEntries(numCut, sample, doError=True)
-                d, dErr = self.getNumEntries(denomCut, sample, doError=True)
-                #print 'Subtract Sample {0}: num: {1}; denom: {2}'.format(sample,n,d)
-                num -= n
-                numErr2 += nErr ** 2
-                denom -= d
-                denomErr2 += dErr ** 2
+            if dataDriven:
+                for sample in subtractSamples:
+                    n, nErr = self.getNumEntries(numCut, sample, doError=True)
+                    d, dErr = self.getNumEntries(denomCut, sample, doError=True)
+                    #print 'Subtract Sample {0}: num: {1}; denom: {2}'.format(sample,n,d)
+                    num -= n
+                    numErr2 += nErr ** 2
+                    denom -= d
+                    denomErr2 += dErr ** 2
             if num < 0: num = 0
             if denom and num:
                 fakerate = float(num)/denom
@@ -77,7 +78,7 @@ class FakeRatePlotter(PlotterBase):
                 denom = 0
                 numErr2 = 0
                 denomErr2 = 0
-                samples = self.data if dataDriven else self.backgrounds
+                samples = self.data if dataDriven else [x for x in self.backgrounds if x not in subtractSamples]
                 for sample in samples:
                     n, nErr = self.getNumEntries(numCut, sample, doError=True)
                     d, dErr = self.getNumEntries(denomCut, sample, doError=True)
@@ -86,14 +87,15 @@ class FakeRatePlotter(PlotterBase):
                     numErr2 += nErr ** 2
                     denom += d
                     denomErr2 += dErr ** 2
-                for sample in subtractSamples:
-                    n, nErr = self.getNumEntries(numCut, sample, doError=True)
-                    d, dErr = self.getNumEntries(denomCut, sample, doError=True)
-                    #print 'Subtract Sample {0}: num: {1}; denom: {2}'.format(sample,n,d)
-                    num -= n
-                    numErr2 += nErr ** 2
-                    denom -= d
-                    denomErr2 += dErr ** 2
+                if dataDriven:
+                    for sample in subtractSamples:
+                        n, nErr = self.getNumEntries(numCut, sample, doError=True)
+                        d, dErr = self.getNumEntries(denomCut, sample, doError=True)
+                        #print 'Subtract Sample {0}: num: {1}; denom: {2}'.format(sample,n,d)
+                        num -= n
+                        numErr2 += nErr ** 2
+                        denom -= d
+                        denomErr2 += dErr ** 2
                 if num < 0: num = 0
                 if denom and num:
                     fakerate = float(num)/denom
@@ -223,9 +225,22 @@ class FakeRatePlotter(PlotterBase):
             fakeRateHist.GetYaxis().SetRangeUser(0,1)
             #fakeRateHist.SetLineColor(ROOT.kBlue)
             self.savefile.WriteTObject(fakeRateHist)
+            if dataDriven: # also plot mc
+                fakeRateHistMC = self.getFakeRateProjection(thisNum,thisDenom,fakeBins,fakeVar,name+'_mc',dataDriven=False,subtractSamples=subtractSamples)
+                fakeRateHistMC.GetXaxis().SetTitle(xaxis)
+                fakeRateHistMC.GetYaxis().SetTitle(yaxis)
+                fakeRateHistMC.GetYaxis().SetTitleOffset(1.)
+                fakeRateHistMC.SetTitle('')
+                fakeRateHistMC.GetYaxis().SetRangeUser(0,1)
+                fakeRateHistMC.SetLineColor(ROOT.kBlue)
+                fakeRateHistMC.SetMarkerColor(ROOT.kBlue)
+                fakeRateHistMC.SetMarkerStyle(4)
+
 
             # plot fakerate
             fakeRateHist.Draw()
+            if dataDriven:
+                fakeRateHistMC.Draw('same')
 
             # plot legend
             leg = ROOT.TLegend(0.65,0.72,0.95,0.77,'','NDC')
@@ -233,6 +248,7 @@ class FakeRatePlotter(PlotterBase):
             leg.SetBorderSize(0)
             leg.SetFillColor(0)
             leg.AddEntry(fakeRateHist,'Fake Rate','ep')
+            if dataDriven: leg.AddEntry(fakeRateHistMC,'Fake Rate (MC)','ep')
             leg.Draw()
 
             # draw cms lumi

@@ -261,7 +261,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         plotMethod('finalstate.sT', [250,0,2000], 'signal/sT',               yaxis='A.U.',xaxis='S_{T} (GeV/c^{2})',                            legendpos=43,logy=0,cut=myCut,overflow=True,normalize=1)
         plotMethod('z1.mass',       [250,0,1000], 'signal/z1Mass_fullWindow',yaxis='A.U.',xaxis='M_{\\ell^{+}\\ell^{-}} (Z) (GeV)',             legendpos=43,logy=0,cut=myCut,overflow=True,normalize=1)
         plotMethod('finalstate.met',[200,0,1000], 'signal/met',              yaxis='A.U.',xaxis='E_{T}^{miss} (GeV/c^{2})',                     legendpos=43,logy=0,cut=myCut,overflow=True,normalize=1)
-        plotMethod('abs(h1.mass-h2.mass)', [200,0,400],'signal/massdiff',    yaxis='A.U.',xaxis='|M_{\\ell^{+}\\ell^{+}}-M_{\\ell^{-}\\ell^{-}}| (GeV/c^{2})',lumitext=33,logy=0,cut=myCut,overflow=True,normalize=1)
+        plotMethod('abs(h1.mass-h2.mass)', [100,0,100],'signal/massdiff',    yaxis='A.U.',xaxis='|M_{\\ell^{+}\\ell^{+}}-M_{\\ell^{-}\\ell^{-}}| (GeV/c^{2})',lumitext=33,logy=0,cut=myCut,overflow=True,normalize=1)
         for nt in range(3):
             if analysis not in ['Hpp3l','Hpp4l']: continue
             theCut = numTauCuts[analysis][nt] + ' && ' + myCut
@@ -323,6 +323,15 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         plotter.plotMCDataSignalRatio2D('finalstate.sT', 'event.nvtx',[40,0,1000],[50,0,50],'sT_v_pu_mc',      xaxis='S_{T} (GeV/c^{2})',                            yaxis='Number PU Vertices',cut=myCut, plotdata=0, plotmc=1, plotsig=0)
         plotter.plotMCDataSignalRatio2D('finalstate.met','event.nvtx',[40,0,200], [50,0,50],'met_v_pu_mc',     xaxis='E_{T}^{miss} (GeV)',                           yaxis='Number PU Vertices',cut=myCut, plotdata=0, plotmc=1, plotsig=0)
 
+
+
+    #####################
+    ### The old stuff ###
+    #####################
+
+    ##################
+    ### Datadriven ###
+    ##################
     if analysis in ['WZ', 'Hpp3l'] and doDataDriven:
         plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,scaleFactor=scaleFactor,loglevel=loglevel,datadriven=True,rootName='plots_datadriven')
         if useSignal:
@@ -357,88 +366,9 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         logger.info("%s:%s:%iTeV: Plotting individual channels - datadriven" % (analysis,channel, runPeriod))
         plotMethod([myCut]+['%s&&%s' %(x,myCut) for x in plotChannelCuts],'datadriven/individualChannels',labels=['Total']+plotChannelStrings,nosum=True,lumitext=33,logy=0,signalscale=1000,numcol=2)
 
-
-    ####################################
-    ### Setup the plotter parameters ###
-    ####################################
-    basicPlotParams = {
-        # common plotter parameters
-        'type' : 'Plotter',
-        'channel' : channel,
-        'plotterArgs' : {
-            'ntupleDir': ntuples,
-            'saveDir' : saves,
-            'period' : runPeriod,
-            'mergeDict' : mergeDict,
-            'scaleFactor' : scaleFactor,
-            'loglevel' : loglevel
-        },
-        'backgroundSamples' : [sigMap[runPeriod][x] for x in channelBackground[channel] + ['Sig']] if useSignal else [sigMap[runPeriod][x] for x in channelBackground[channel]],
-        'dataSamples' : [sigMap[runPeriod]['data']] if dataplot else [],
-        'intLumi' : intLumiMap[runPeriod],
-        'plotMode' : 'plotMCDataRatio' if dataplot else 'plotMC',
-        # common distribution parameters
-        'cut' : myCut,
-        'numLeps' : nl,
-        'isControl' : isControl,
-        'distributionArgs' : {
-            'analysis': analysis,
-            'region' : channel,
-            'nostack' : nostack,
-            'normalize' : normalize,
-            'mass' : mass,
-            'doDetailed' : doDetailed,
-        },
-    }
-    # paramers
-    plotParams = {}
-    plotParams['distributions'] = basicPlotParams
-    plotParams['distributions'].update({
-        'plotterArgs' : {
-            'baseSelection' : myCut,
-            'rootName' : 'plots_distributions',
-        },
-    })
-    if plotFinalStates:
-        for c in fsToPlot:
-            name = 'distributions_{0}'.format(c)
-            plotParams[name] = basicPlotParams
-            plotParams[name].update({
-                'plotterArgs' : {
-                    'baseSelection' : '{0} && channel=="{1}"'.format(myCut,c),
-                    'rootName' : 'plots_distributions_{0}'.format(c),
-                },
-                'cut' : '{0} && channel=="{1}"'.format(myCut,c),
-                'distributionArgs' : {
-                    'savedir' : c,
-                },
-            })
-        if analysis in customFinalStates:
-            for c in customFinalStates[analysis]:
-                sel = customFinalStates[analysis][c]
-                name = 'distributions_{0}'.format(c)
-                plotParams[name] = basicPlotParams
-                plotParams[name].update({
-                    'plotterArgs' : {
-                        'baseSelection' : '{0} && {1}'.format(myCut,sel),
-                        'rootName' : 'plots_distributions_{0}'.format(c),
-                    },
-                    'cut' : '{0} && {1}'.format(myCut,sel),
-                    'distributionArgs' : {
-                        'savedir' : c,
-                    },
-                })
-    if plotFakeRegions:
-        labels = {0:'F',1:'T'}
-        cuts = {0:'{0}.PassTight{1}==0',1:'{0}.PassTight{1}==0'}
-        allCuts = 'finalstate.mass>100. && (z1.Pt1>20.&&z1.Pt2>10.) && z1.mass>60. && z1.mass<120. && w1.dR1_z1_1>0.1 && w1.dR1_z1_2>0.1 && w1.Pt1>20. && finalstate.met>30.'
-        if analysis in ['Hpp3l']: allCuts = '1'
-        fakeCut = myCut.replace('select.passTight',allCuts)
-        for f in itertools.product('PF',repeat=nl):
-            thisName = ''.join(f)
-            thisCut = '{0} && fakeChannel=="{1}"'.format(fakeCut,thisName)
-            
-
+    #########################
+    ### Standard plotting ###
+    #########################
     plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,scaleFactor=scaleFactor,loglevel=loglevel,baseSelection=myCut)
     if useSignal:
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]+['Sig']])
@@ -490,6 +420,10 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
                 plotMethodUnblind('finalstate.sT',[50,0,500], c+'/sT_unblind',               yaxis='Events/10.0 GeV/c^{2}',xaxis='S_{T} (GeV/c^{2})',                       lumitext=33,logy=0,cut=myCut+'&&channel=="%s"'%c,overflow=True,blinder=[200,99999])
                 plotMethodUnblind('z1.mass',      [42,70,112],c+'/z1Mass_unblind',           yaxis='Events/1.0 GeV',xaxis='M_{\\ell^{+}\\ell^{-}} (Z) (GeV)',               legendpos=43,logy=0,cut=myCut+'&&channel=="%s"'%c,blinder=[112,99999])
                 plotMethodUnblind('z1.mass',      [80,0,240], c+'/z1Mass_fullWindow_unblind',yaxis='Events/3.0 GeV',xaxis='M_{\\ell^{+}\\ell^{-}} (Z) (GeV)',               legendpos=43,logy=0,cut=myCut+'&&channel=="%s"'%c,blinder=[112,99999])
+
+    ############################
+    ### Fake region plotting ###
+    ############################
     if plotFakeRegions:
         plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,scaleFactor=scaleFactor,loglevel=loglevel)
         if useSignal:
@@ -518,21 +452,10 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
                     newCut = '{0} && channel=="{1}"'.format(thisCut,c)
                     plotDistributions(plotMethod,newCut,nl,isControl,savedir='{0}/{1}'.format(thisName,c),analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass,doDetailed=doDetailed,doMinimal=True)
 
-        #for l1 in [0,1]:
-        #    for l2 in [0,1]:
-        #        for l3 in [0,1]:
-        #            thisCut = '{0} && '.format(fakeCut) + ' && '.join([cuts[l1].format('z1','1'),cuts[l2].format('z1','2'),cuts[l3].format('w1','1')])
-        #            if analysis in ['Hpp3l']: thisCut = '{0} && '.format(fakeCut) + ' && '.join([cuts[l1].format('h1','1'),cuts[l2].format('h1','2'),cuts[l3].format('h2','1')])
-        #            thisName = ''.join([labels[l1],labels[l2],labels[l3]])
-        #            logger.info("%s:%s:%iTeV: Plotting control regions - %s" % (analysis, channel, runPeriod, thisName))
-        #            plotDistributions(plotMethod,thisCut,nl,isControl,savedir=thisName,analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass,doDetailed=doDetailed,doMinimal=True)
-        #            if plotFinalStates:
-        #                for c in fsToPlot:
-        #                    logger.info("%s:%s:%iTeV: Plotting control regions - %s - channel %s" % (analysis, channel, runPeriod, thisName, c))
-        #                    newCut = '{0} && channel=="{1}"'.format(thisCut,c)
-        #                    plotDistributions(plotMethod,newCut,nl,isControl,savedir='{0}/{1}'.format(thisName,c),analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass,doDetailed=doDetailed,doMinimal=True)
 
-
+    ######################
+    ### Signal overlay ###
+    ######################
     # setup signal overlay plots
     if useSignal:
         plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_overlay',mergeDict=mergeDict,scaleFactor=scaleFactor,loglevel=loglevel)
@@ -564,6 +487,9 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
         plotter.plotMC('z1.mass',['channel=="eee"','channel=="eme"'],[42,70,112],'zMass_mc_ee',yaxis='Normalized',xaxis='M(l^{+}l^{-}) (GeV)',logy=0,cut=myCut,cutNames=['eee','eme'])
         if dataplot: plotter.plotData('z1.mass',['channel=="eee"','channel=="eme"'],[42,70,112],'zMass_data_ee',yaxis='Normalized',xaxis='M_{\\ell^{+}\\ell^{-}} (GeV)',logy=0,cut=myCut,cutNames=['eee','eme'])
 
+    ######################
+    ### Cut flow plots ###
+    ######################
     # plot cut flows (each cut)
     logger.info("%s:%s:%iTeV: Plotting cut flow" % (analysis, channel, runPeriod))
     plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_cutFlowSelections',mergeDict=mergeDict,scaleFactor=scaleFactor,loglevel=loglevel)
@@ -576,23 +502,54 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     plotMode = 'plotMCDataRatio' if dataplot else 'plotMC'
     plotMethod = getattr(plotter,plotMode)
     if plotCutFlow:
+        baseCut = 'z1.PassTight1==1 && z1.PassTight2==1 && w1.PassTight1==1'
+        if analysis in ['Hpp3l']: baseCut = 'h1.PassTight1==1 && h1.PassTight2==1 && h2.PassTight1==1'
+        
         for i in range(len(cutFlowMap[channel]['cuts'])):
             logger.info('%s:%s:%iTeV: Plotting cut flow selections %s' % (analysis, channel, runPeriod, cutFlowMap[channel]['labels_simple'][i]))
             thisCut = '&&'.join(cutFlowMap[channel]['cuts'][:i+1])
-            plotDistributions(plotMethod,'%s&%s'%(myCut,thisCut),nl,isControl,savedir='cutflow/%s'%cutFlowMap[channel]['labels_simple'][i],analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass,doDetailed=doDetailed)
+            plotDistributions(plotMethod,'%s&%s'%(baseCut,thisCut),nl,isControl,savedir='cutflow/%s'%cutFlowMap[channel]['labels_simple'][i],analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass,doDetailed=doDetailed)
             if plotFinalStates:
                 logger.info("%s:%s:%iTeV: Plotting individual finalStates" % (analysis, channel, runPeriod))
                 for c in fsToPlot:
                     logger.info("%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c))
-                    plotDistributions(plotMethod,'%s&channel=="%s"&%s'%(myCut,c,thisCut),nl,isControl,savedir='cutflow/%s/%s' %(cutFlowMap[channel]['labels_simple'][i],c),analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass,doDetailed=doDetailed)
-            thisCut = cutFlowMap[channel]['cuts'][i]
-            plotDistributions(plotMethod,'%s&%s'%(myCut,thisCut),nl,isControl,savedir='cutflow/%s_only'%cutFlowMap[channel]['labels_simple'][i],analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass,doDetailed=doDetailed)
-            if plotFinalStates:
-                logger.info("%s:%s:%iTeV: Plotting individual finalStates" % (analysis, channel, runPeriod))
-                for c in fsToPlot:
-                    logger.info("%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c))
-                    plotDistributions(plotMethod,'%s&channel=="%s"&%s'%(myCut,c,thisCut),nl,isControl,savedir='cutflow/%s_only/%s' %(cutFlowMap[channel]['labels_simple'][i],c),analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass,doDetailed=doDetailed)
+                    plotDistributions(plotMethod,'%s&channel=="%s"&%s'%(baseCut,c,thisCut),nl,isControl,savedir='cutflow/%s/%s' %(cutFlowMap[channel]['labels_simple'][i],c),analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass,doDetailed=doDetailed)
 
+            ## exclusive
+            #thisCut = cutFlowMap[channel]['cuts'][i]
+            #plotDistributions(plotMethod,'%s&%s'%(baseCut,thisCut),nl,isControl,savedir='cutflow/%s_only'%cutFlowMap[channel]['labels_simple'][i],analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass,doDetailed=doDetailed)
+            #if plotFinalStates:
+            #    logger.info("%s:%s:%iTeV: Plotting individual finalStates" % (analysis, channel, runPeriod))
+            #    for c in fsToPlot:
+            #        logger.info("%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c))
+            #        plotDistributions(plotMethod,'%s&channel=="%s"&%s'%(baseCut,c,thisCut),nl,isControl,savedir='cutflow/%s_only/%s' %(cutFlowMap[channel]['labels_simple'][i],c),analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass,doDetailed=doDetailed)
+
+        if analysis in ['WZ', 'Hpp3l'] and doDataDriven:
+            plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,scaleFactor=scaleFactor,loglevel=loglevel,datadriven=True,rootName='plots_datadriven')
+            if useSignal:
+                plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]+['Sig']])
+            else:
+                plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
+            if dataplot: plotter.initializeDataSamples([sigMap[runPeriod]['data']])
+            plotter.setIntLumi(intLumiMap[runPeriod])
+    
+            plotMode = 'plotMCDataRatio' if dataplot else 'plotMC'
+            plotMethod = getattr(plotter,plotMode)
+            logger.info("%s:%s:%iTeV: Plotting cut flow discriminating variables - datadriven" % (analysis,channel, runPeriod))
+            for i in range(len(cutFlowMap[channel]['cuts'])):
+                logger.info('%s:%s:%iTeV: Plotting cut flow selections %s' % (analysis, channel, runPeriod, cutFlowMap[channel]['labels_simple'][i]))
+                thisCut = '&&'.join(cutFlowMap[channel]['cuts'][:i+1])
+                plotDistributions(plotMethod,'%s&%s'%(baseCut,thisCut),nl,isControl,savedir='datadriven/cutflow/%s'%cutFlowMap[channel]['labels_simple'][i],analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass,doDetailed=doDetailed)
+                if plotFinalStates:
+                    logger.info("%s:%s:%iTeV: Plotting cutflow individual finalStates - datadriven" % (analysis, channel, runPeriod))
+                    for c in fsToPlot:
+                        logger.info("%s:%s:%iTeV: Channel %s" % (analysis, channel, runPeriod, c))
+                        plotDistributions(plotMethod,'%s&channel=="%s"&%s'%(baseCut,c,thisCut),nl,isControl,savedir='datadriven/cutflow/%s/%s' %(cutFlowMap[channel]['labels_simple'][i],c),analysis=analysis,region=channel,nostack=nostack,normalize=normalize,mass=mass,doDetailed=doDetailed)
+
+
+    ############################
+    ### Cutflow on same plot ###
+    ############################
     # plot cut flows on same plot
     plotter = CutFlowPlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='plots_cutflow',mergeDict=mergeDict,scaleFactor=scaleFactor,loglevel=loglevel)
     plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
@@ -620,7 +577,9 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
                logger.info("%s:%s:%iTeV: Plotting cut flow  %s" % (analysis, channel, runPeriod, c))
                plotMethod(['%s&& %s &&%s' %(x,sel,myCut) for x in cutFlowMap[channel]['cuts']],'%s/cutFlow'%c,labels=cutFlowMap[channel]['labels'],lumitext=33,logy=1)
 
-
+    ###########################
+    ### Individual channels ###
+    ###########################
     # setup individual channel cuts on same plot
     plotChannelStrings, plotChannelCuts = getChannelStringsCuts(channel,finalStates)
     plotMode = 'plotCutFlowMCData' if dataplot else 'plotCutFlowMC'
@@ -827,9 +786,9 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
         plotter.initializeDataSamples([sigMap[runPeriod]['data']])
         plotter.setIntLumi(intLumiMap[runPeriod])
-        plotter.plotFakeRate(numer, denom, 'fakeRate/{0}_fakerate'.format(fakeRegion), ptBins=ptBins, etaBins=etaBins[probe], logx=1, ptVar=ptvar, etaVar=etavar, dataDriven=dataDriven, subtractSamples=['WZJets','ZZJets'])
-        plotter.plotFakeRateProjection(numer, denom, 'fakeRate/{0}_pt_fakerate'.format(fakeRegion), 'pt', ptBins=ptBins, etaBins=etaBins[probe], logx=0, ptVar=ptvar, etaVar=etavar, dataDriven=dataDriven, xaxis='p_{T} (GeV)',subtractSamples=['WZJets','ZZJets'])
-        plotter.plotFakeRateProjection(numer, denom, 'fakeRate/{0}_eta_fakerate'.format(fakeRegion), 'eta', ptBins=ptBins, etaBins=etaBins[probe], logx=0, ptVar=ptvar, etaVar=etavar, dataDriven=dataDriven, xaxis='\eta',subtractSamples=['WZJets','ZZJets'])
+        plotter.plotFakeRate(numer, denom, 'fakeRate/{0}_fakerate'.format(fakeRegion), ptBins=ptBins, etaBins=etaBins[probe], logx=1, ptVar=ptvar, etaVar=etavar, dataDriven=dataDriven, subtractSamples=['WZJets','ZZJets','TTVJets','VVVJets'])
+        plotter.plotFakeRateProjection(numer, denom, 'fakeRate/{0}_pt_fakerate'.format(fakeRegion), 'pt', ptBins=ptBins, etaBins=etaBins[probe], logx=0, ptVar=ptvar, etaVar=etavar, dataDriven=dataDriven, xaxis='p_{T} (GeV)',subtractSamples=['WZJets','ZZJets','TTVJets','VVVJets'])
+        plotter.plotFakeRateProjection(numer, denom, 'fakeRate/{0}_eta_fakerate'.format(fakeRegion), 'eta', ptBins=ptBins, etaBins=etaBins[probe], logx=0, ptVar=ptvar, etaVar=etavar, dataDriven=dataDriven, xaxis='\eta',subtractSamples=['WZJets','ZZJets','TTVJets','VVVJets'])
 
 def parse_command_line(argv):
     parser = get_parser("Plot a given channel and period")
@@ -838,7 +797,7 @@ def parse_command_line(argv):
     parser.add_argument('-pj','--plotJetBins',action='store_true',help='Plot jet bins')
     parser.add_argument('-pe','--plotEfficiency',action='store_true',help='Plot efficiency')
     parser.add_argument('-po','--plotOverlay',action='store_true',help='Plot overlay')
-    parser.add_argument('-ps','--plotShapes',action='store_true',help='Plot shapes')
+    parser.add_argument('-ps','--plotSignal',action='store_true',help='Plot signal')
     parser.add_argument('-pcf','--plotCutFlow',action='store_true',help='Plot cutflow distributions')
     parser.add_argument('-pfr','--plotFakeRegions',action='store_true',help='Plot fake regions')
     parser.add_argument('-pd','--plotDataDriven',action='store_true',help='Plot data driven')
@@ -891,7 +850,7 @@ def main(argv=None):
     elif args.doFakeRate:
         plotFakeRate(args.analysis,args.channel,args.period,mass=args.mass,loglevel=args.log,blind=args.unblind,doDetailed=args.doDetailed)
     else:
-        plotRegion(args.analysis,args.channel,args.period,plotFinalStates=args.plotFinalStates,runTau=args.runTau,blind=args.unblind,mass=args.mass,plotJetBins=args.plotJetBins,plotOverlay=args.plotOverlay,plotShapes=args.plotShapes,plotCutFlow=args.plotCutFlow,myCut=args.cut,finalStates=args.finalStates,nostack=args.nostack,normalize=args.normalize,scaleFactor=args.scaleFactor,loglevel=args.log,doDetailed=args.doDetailed,plotFakeRegions=args.plotFakeRegions,doDataDriven=args.plotDataDriven,plotEfficiency=args.plotEfficiency,directory=args.directory)
+        plotRegion(args.analysis,args.channel,args.period,plotFinalStates=args.plotFinalStates,runTau=args.runTau,blind=args.unblind,mass=args.mass,plotJetBins=args.plotJetBins,plotOverlay=args.plotOverlay,plotSignal=args.plotSignal,plotCutFlow=args.plotCutFlow,myCut=args.cut,finalStates=args.finalStates,nostack=args.nostack,normalize=args.normalize,scaleFactor=args.scaleFactor,loglevel=args.log,doDetailed=args.doDetailed,plotFakeRegions=args.plotFakeRegions,doDataDriven=args.plotDataDriven,plotEfficiency=args.plotEfficiency,directory=args.directory)
 
     return 0
 

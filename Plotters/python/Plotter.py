@@ -119,7 +119,6 @@ class Plotter(PlotterBase):
 
         if type(variables) is not list: variables = [variables]
 
-        print savename
 
         ROOT.gDirectory.Delete('h*') # clear histogram memory
 

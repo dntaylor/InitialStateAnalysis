@@ -79,10 +79,10 @@ def limit(analysis,region,period,chan,**kwargs):
     # pdf
     # propagate pdf ucnertainties through the selection, scale up and down, take largest
     pdfvals = {
-        'eee' : 1.0110, # for now just taking gen, figure it out later after new fsa
-        'eem' : 1.0109,
-        'mme' : 1.0111,
-        'mmm' : 1.0110,
+        'eee' : 1.01407, # for now just taking gen, figure it out later after new fsa
+        'eem' : 1.01394,
+        'mme' : 1.01399,
+        'mmm' : 1.01395,
     }
     pdf = {}
     for s in signames: pdf[s] = pdfvals[chan]
@@ -91,10 +91,10 @@ def limit(analysis,region,period,chan,**kwargs):
     # scale
     # propagate scale uncertainties through the selection, scale up and down, take largest
     scalevals = {
-        'eee' : 1.0337, # again, now just taking gen, fix fsa later
-        'eem' : 1.0336,
-        'mme' : 1.0340,
-        'mmm' : 1.0339,
+        'eee' : 1.04296, # again, now just taking gen, fix fsa later
+        'eem' : 1.04298,
+        'mme' : 1.04285,
+        'mmm' : 1.04298,
     }
     scale = {}
     for s in signames: scale[s] = scalevals[chan]

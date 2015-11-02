@@ -377,10 +377,10 @@ class LeptonScaleFactors(object):
         ldict = getattr(self,'{0}_id_dict_13tev'.format(l[0]))
         idlist = ldict[idname]
         for iddict in idlist:
-            ptlow = iddict['pt_lo'] if l[0]=='e' else iddict['et_lo']
-            pthi = iddict['pt_hi'] if l[0]=='e' else iddict['et_hi']
-            etalow = iddict['abseta_lo'] if l[0]=='e' else iddict['eta_lo']
-            etahi = iddict['abseta_hi'] if l[0]=='e' else iddict['eta_hi']
+            ptlow = iddict['pt_lo']
+            pthi = iddict['pt_hi']
+            etalow = iddict['abseta_lo']
+            etahi = iddict['abseta_hi']
             if pt>ptlow and pt<pthi and eta>etalow and eta<etahi:
                 scale = iddict['ratio']
                 err = iddict['ratio_err']
@@ -389,16 +389,17 @@ class LeptonScaleFactors(object):
 
     def m_wz_scale_loose(self, row, l):
         # id
-        idscale, iderr = self.get_scale_err(row,l,'MuonWZIDLoose')
+        idscale, iderr = self.get_scale_err(row,l,'passingIDWZLoose')
         # iso
-        isoscale, isoerr = self.get_scale_err(row,l,'MuonWZIsolationLooseFromIDLoose')
-        return [idscale*isoscale, (idscale+iderr)*(isoscale+isoerr), (idscale-iderr)*(isoscale-isoerr)]
+        isoscale, isoerr = self.get_scale_err(row,l,'passingIsoWZLoose_passingIDWZLoose')
+        #return [idscale*isoscale, (idscale+iderr)*(isoscale+isoerr), (idscale-iderr)*(isoscale-isoerr)]
+        return [idscale, idscale+iderr, idscale-iderr]
 
     def m_wz_scale_tight(self, row, l):
         # id
-        idscale, iderr = self.get_scale_err(row,l,'MuonWZIDTight')
+        idscale, iderr = self.get_scale_err(row,l,'passingIDWZTight')
         # iso
-        isoscale, isoerr = self.get_scale_err(row,l,'MuonWZIsolationTightFromIDTight')
+        isoscale, isoerr = self.get_scale_err(row,l,'passingIsoWZTight_passingIDWZTight')
         return [idscale*isoscale, (idscale+iderr)*(isoscale+isoerr), (idscale-iderr)*(isoscale-isoerr)]
 
     def e_wz_scale_loose(self, row, l):

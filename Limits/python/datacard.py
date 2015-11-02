@@ -2,7 +2,7 @@ _EPSILON = 1.0e-10
 
 class Datacard(object):
 
-    def __init__(self, name):
+    def __init__(self, name, **kwargs):
         self.card_name = name
         self.bkg = []
         self.syst = []
@@ -36,9 +36,9 @@ class Datacard(object):
         out += "jmax %2i number of processes minus 1\n" % jmax
         out += "kmax %2i number of nuisance parameters\n" % kmax
 
-        out += "-" * 30 + "\n"
-
-        out += 'shapes * * FAKE\n'
+        if self.card_name in ['Hpp3l','Hpp4l','HppAP','HppPP','HppComb','']:
+            out += "-" * 30 + "\n"
+            out += 'shapes * * FAKE\n'
 
         out += "-" * 30 + "\n"
 
