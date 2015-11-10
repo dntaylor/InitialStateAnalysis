@@ -67,8 +67,9 @@ def run_analyzer(args):
     with theAnalyzer(sample_name,filelist,outfile,period,loglevel=loglevel) as analyzer:
         analyzer.analyze()
 
-def get_sample_names(analysis,period,samples):
+def get_sample_names(analysis,period,samples,**kwargs):
     '''Get unix sample names'''
+    customDir = kwargs.pop('customDir','')
     ntupleDict = {
         8: {
             'Z'          : '2015-06-01-8TeV-2l',
@@ -98,7 +99,9 @@ def get_sample_names(analysis,period,samples):
             #'WZ'         : '2015-10-12-13TeV-WZ', # lower trigger
             #'WZ'         : '2015-10-15-13TeV-WZ', # fixed trigger and add WZ no iso ID
             #'WZ'         : '2015-10-24-13TeV-WZ', # miniaodv2, metfilters, new met uncertainty
-            'WZ'         : '2015-10-25-13TeV-WZ', # all samples and bug fix
+            #'WZ'         : '2015-10-25-13TeV-WZ', # all samples and bug fix
+            #'WZ'         : '2015-11-06-13TeV-WZ', # latest jec, metfilters, metuncertainty, new samples
+            'WZ'         : '2015-11-07-13TeV-WZ', # update to met uncertainty, also met shifts
             'WZ_W'       : '2015-08-03-13TeV-2l',
             #'WZ_Dijet'   : '2015-08-17-13TeV-1l',
             #'WZ_Dijet'   : '2015-09-14-13TeV-1l', # updated with WZ changes
@@ -106,12 +109,22 @@ def get_sample_names(analysis,period,samples):
             #'WZ_Dijet'   : '2015-09-28-13TeV-1l', # add summed weights
             #'WZ_Dijet'   : '2015-10-06-13TeV-1l', # add hzz veto
             #'WZ_Dijet'   : '2015-10-12-13TeV-1l', # lower trigger
-            'WZ_Dijet'   : '2015-10-15-13TeV-1l', # fixed trigger and WZ no iso ID
+            #'WZ_Dijet'   : '2015-10-15-13TeV-1l', # fixed trigger and WZ no iso ID
+            'WZ_Dijet'   : '2015-11-06-13TeV-1l', # latest jec, metfilters, metuncertainty, new samples
             'Hpp3l'      : '2015-03-30-13TeV-3l',
             'Hpp4l'      : '2015-03-30-13TeV-4l',
         },
     }
-    root_dir = '/hdfs/store/user/dntaylor/data/%s' % ntupleDict[period][analysis]
+    base_dir = '/hdfs/store/user/dntaylor/data'
+    root_dir = '%s/%s' % (base_dir, ntupleDict[period][analysis])
+
+    if customDir: # use a custom directory (or path ind data)
+        if os.path.isdir(customDir):
+            root_dir = customDir
+        elif os.path.isdir('{0}/{1}'.format(base_dir,customDir)):
+            root_dir = '{0}/{1}'.format(base_dir,customDir)
+        else:
+            logging.warning('Warning: directory {0} does not exist, using default'.format(customDir))
 
     sample_names = [os.path.basename(fname)
                     for string in samples
@@ -119,12 +132,12 @@ def get_sample_names(analysis,period,samples):
 
     return root_dir, sample_names
 
-def run_ntuples(analysis, channel, period, samples, loglevel):
-    '''Run a given analyzer for the H++ analysis'''
+def run_ntuples(analysis, channel, period, samples, loglevel, **kwargs):
+    '''Run a given analyzer for the analysis'''
     logger = logging.getLogger(__name__)
     ntup_dir = './ntuples/%s_%iTeV_%s' % (analysis, period, channel)
     python_mkdir(ntup_dir)
-    root_dir, sample_names = get_sample_names(analysis,period,samples)
+    root_dir, sample_names = get_sample_names(analysis,period,samples,**kwargs)
 
 
     filelists = {}
@@ -216,6 +229,7 @@ def parse_command_line(argv):
     parser.add_argument('sample_names', nargs='+',help='Sample names w/ UNIX wildcards')
     parser.add_argument('-s','--submit',action='store_true',help='Submit jobs to condor')
     parser.add_argument('-jn','--jobName',nargs='?',type=str,const='',help='Job Name for condor submission')
+    parser.add_argument('-d','--customDir',nargs='?',type=str,const='',help='Custom input directory')
     args = parser.parse_args(argv)
 
     return args
@@ -235,12 +249,12 @@ def main(argv=None):
     else:
         logger.info("Running %s:%s %i TeV analyzer" %(args.analysis, args.channel, args.period))
         if args.submit:
-            root_dir, sample_names = get_sample_names(args.analysis, args.period, args.sample_names)
+            root_dir, sample_names = get_sample_names(args.analysis, args.period, args.sample_names, customDir=args.customDir)
             for sample in sample_names:
                 sampledir = '%s/%s' % (root_dir, sample)
                 submitFwkliteJob(sampledir,args)
         else:
-            run_ntuples(args.analysis, args.channel, args.period, args.sample_names, args.log)
+            run_ntuples(args.analysis, args.channel, args.period, args.sample_names, args.log, customDir=args.customDir)
 
     return 0
 

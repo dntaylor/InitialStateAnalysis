@@ -92,8 +92,10 @@ dataStyles['ZG'] = {
 
 dataStyles['ZGToLLG_8TeV-madgraph'] = copy.deepcopy(dataStyles['ZG'])
 
-dataStyles['WGJets'] = copy.deepcopy(dataStyles['ZG'])
-dataStyles['WGJets']['name'] = 'W#gamma*'
+dataStyles['WG'] = copy.deepcopy(dataStyles['ZG'])
+dataStyles['WG']['name'] = 'W#gamma*'
+dataStyles['WG']['fillcolor'] = DarkYellow
+dataStyles['WG']['linecolor'] = DarkYellowA
 
 
 dataStyles['WZJets'] = {

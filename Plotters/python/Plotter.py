@@ -111,6 +111,7 @@ class Plotter(PlotterBase):
         numcol = kwargs.pop('numcol',1)
         signalscale = kwargs.pop('signalscale',1)
         isprelim = kwargs.pop('isprelim', 1)
+        scalefactor = kwargs.pop('scalefactor','')
         if not xmin and len(xrange)==2: xmin = xrange[0]
         if not xmax and len(xrange)==2: xmax = xrange[1]
         if xmin or xmax: xrange = [xmin, xmax]
@@ -119,6 +120,9 @@ class Plotter(PlotterBase):
 
         if type(variables) is not list: variables = [variables]
 
+        if scalefactor:
+            oldscalefactor = self.getScaleFactor()
+            self.setScaleFactor(scalefactor)
 
         ROOT.gDirectory.Delete('h*') # clear histogram memory
 
@@ -405,3 +409,5 @@ class Plotter(PlotterBase):
         self.canvas.cd()
         self.save(savename)
 
+        if scalefactor:
+            self.setScaleFactor(oldscalefactor)

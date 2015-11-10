@@ -37,9 +37,9 @@ class AnalyzerWZ(AnalyzerBase):
         }
         self.lepargs = {'tight':True}
         self.cutflow_labels = ['Trigger','Fiducial','ID','Z Selection','W Selection']
-        self.alternateIds, self.alternateIdMap = self.defineAlternateIds(period)
-        self.doVBF = (period==13)
-        self.doMetUnc = (period==13)
+        #self.alternateIds, self.alternateIdMap = self.defineAlternateIds(period)
+        #self.doVBF = (period==13)
+        #self.doMetUnc = (period==13)
         self.cutTreeLabels = ['trigger','fiducial','vetoID','looseID','tightID']
 
         super(AnalyzerWZ, self).__init__(sample_name, file_list, out_file, period, **kwargs)
@@ -229,7 +229,9 @@ class AnalyzerWZ(AnalyzerBase):
                 kwargs['isoCut']['e'] = 9999.
         if type=='Loose':
             kwargs['idDef'] = {
+                #'e':'WZLooseTrigIso',
                 'e':'LooseNoIso',
+                #'m':'WZLooseTrigIso',
                 'm':'Loose',
                 't':'Loose'
             }
@@ -421,7 +423,7 @@ class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
             match_1 = 0
         passTrig = match_0 > 0.5 and match_1 > 0.5
 
-        veto = (rtrow.eVetoNoIso + rtrow.muVetoNoIso == 0) if self.period==13 else (rtrow.elecVetoWZLoose + rtrow.muonVetoWZLoose == 0)
+        veto = (rtrow.eVetoTrigIso + rtrow.muVetoTrigIso == 0) if self.period==13 else (rtrow.elecVetoWZLoose + rtrow.muonVetoWZLoose == 0)
 
         return good and passTrig and veto
 

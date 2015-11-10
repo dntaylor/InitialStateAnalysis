@@ -53,19 +53,19 @@ tables = {}
 # ...
 labels0 = '        \\multicolumn{4}{|l|}{Signal}                                                & \\multicolumn{4}{|l|}{Background Estimation}                               & Data                    \\\\ \\hline\n'
 labels1 = '        Mass & Final state      & AP                      & PP                      & $N_{SB}$  & $\\alpha$  & Data-driven             & MC Estimate             & Observed                \\\\ \\hline\n'
-labels0 = '        \\multicolumn{3}{|l|}{Signal}                                 & \\multicolumn{2}{|l|}{Background Estimation}            & Data                      \\\\ \\hline\n'
-labels1 = '        Mass & AP                        & PP                        & Data-driven                & MC Estimate               & Observed                  \\\\ \\hline\n'
+labels0 = '        \\multicolumn{3}{|l|}{Signal}                                                             & \\multicolumn{2}{|l|}{Background Estimation}                          & Data        \\\\ \\hline\n'
+labels1 = '        Mass & AP                                      & PP                                      & Data-driven                              & MC Estimate               & Observed    \\\\ \\hline\n'
+
+#rows = {
+#    'pp'  : '        {mass:<4} & {recochan:16} & ---                     & {pp:9.3f} \\pm {ppe:9.3f} & {nsb:9d} & {a:9.3g} & {bg:9.3g} \\pm {bge:9.3g} & {mc:9.3g} \\pm {mce:9.3f} & {d:9d}',
+#    'ap'  : '        {mass:<4} & {recochan:16} & {ap:9.3f} \\pm {ape:9.3f} & ---                       & {nsb:9d} & {a:9.3g} & {bg:9.3g} \\pm {bge:9.3g} & {mc:9.3g} \\pm {mce:9.3f} & {d:9d}',
+#    'both': '        {mass:<4} & {recochan:16} & {ap:9.3f} \\pm {ape:9.3f} & {pp:9.3f} \\pm {ppe:9.3f} & {nsb:9d} & {a:9.3g} & {bg:9.3g} \\pm {bge:9.3g} & {mc:9.3g} \\pm {mce:9.3f} & {d:9d}',
+#}
 
 rows = {
-    'pp'  : '        {mass:<4} & {recochan:16} & ---                     & {pp:9.3f} \\pm {ppe:9.3f} & {nsb:9d} & {a:9.3g} & {bg:9.3g} \\pm {bge:9.3g} & {mc:9.3g} \\pm {mce:9.3f} & {d:9d} \\pm {de:9.3}',
-    'ap'  : '        {mass:<4} & {recochan:16} & {ap:9.3f} \\pm {ape:9.3f} & ---                       & {nsb:9d} & {a:9.3g} & {bg:9.3g} \\pm {bge:9.3g} & {mc:9.3g} \\pm {mce:9.3f} & {d:9d} \\pm {de:9.3}',
-    'both': '        {mass:<4} & {recochan:16} & {ap:9.3f} \\pm {ape:9.3f} & {pp:9.3f} \\pm {ppe:9.3f} & {nsb:9d} & {a:9.3g} & {bg:9.3g} \\pm {bge:9.3g} & {mc:9.3g} \\pm {mce:9.3f} & {d:9d} \\pm {de:9.3}',
-}
-
-rows = {
-    'pp'  : '        {mass:<4} & ---                       & ${pp:9.3f} \\pm {ppe:9.3f}$ &  ${bg:9.3g} \\pm {bge:9.3g}$ & ${mc:9.3g} \\pm {mce:9.3f}$ & ${d:9d} \\pm {de:9.3}$',
-    'ap'  : '        {mass:<4} & ${ap:9.3f} \\pm {ape:9.3f}$ & ---                         &  ${bg:9.3g} \\pm {bge:9.3g}$ & ${mc:9.3g} \\pm {mce:9.3f}$ & ${d:9d} \\pm {de:9.3}$',
-    'both': '        {mass:<4} & ${ap:9.3f} \\pm {ape:9.3f}$ & ${pp:9.3f} \\pm {ppe:9.3f}$ &  ${bg:9.3g} \\pm {bge:9.3g}$ & ${mc:9.3g} \\pm {mce:9.3f}$ & ${d:9d} \\pm {de:9.3}$',
+    'pp'  : '        {mass:<4} & ---                                     & ${pp:9.4f} \\pm {ppe:9.4f} \\pm {pps:9.4f}$ &  ${bg:9.4f} \\pm {bge:9.4f} \\pm {bgs:9.4f}$ & ${mc:9.4f} \\pm {mce:9.4f}$ & ${d:9d}$',
+    'ap'  : '        {mass:<4} & ${ap:9.4f} \\pm {ape:9.4f} \\pm {aps:9.4f}$ & ---                                     &  ${bg:9.4f} \\pm {bge:9.4f} \\pm {bgs:9.4f}$ & ${mc:9.4f} \\pm {mce:9.4f}$ & ${d:9d}$',
+    'both': '        {mass:<4} & ${ap:9.4f} \\pm {ape:9.4f} \\pm {aps:9.4f}$ & ${pp:9.4f} \\pm {ppe:9.4f} \\pm {pps:9.4f}$ &  ${bg:9.4f} \\pm {bge:9.4f} \\pm {bgs:9.4f}$ & ${mc:9.4f} \\pm {mce:9.4f}$ & ${d:9d}$',
 }
 
 valuenames = {
@@ -90,10 +90,38 @@ names = {
     't' : '\\tau',
 }
 
+elecUncertainties = {
+    0: 1.000,
+    1: 1.011,
+    2: 1.022,
+    3: 1.034,
+    4: 1.044, # guess !
+}
+
+
+
+chgUncertainties = {
+    3: {
+        0: 1.000,
+        1: 1.011,
+        2: 1.017,
+        3: 1.026,
+    },
+    4: {
+        0: 1.000,
+        1: 1.011,
+        2: 1.016,
+        3: 1.021,
+        4: 1.032,
+    },
+}
+
+
 for analysis,channel in [('Hpp3l','Hpp3l'),('Hpp4l','Hpp4l')]:
+    recochans = channels[analysis]
     for bp in ['ee100', 'em100', 'mm100', 'et100', 'mt100', 'BP1', 'BP2', 'BP3', 'BP4']:
         replacements = {'STRUCTURE' : '|l|ll|ll|l|',
-                        'CAPTION' : 'Background estimation for %s-lepton final states for %s.' % ('three' if analysis=='Hpp3l' else 'four',tableStrings[bp]),
+                        'CAPTION' : 'Background estimation for %s-lepton final states for %s. Signal and datadriven background are reported as N + (stat.) + (syst.).' % ('three' if analysis=='Hpp3l' else 'four',tableStrings[bp]),
                         'LABEL' : 'bg%s_%s' % (bp,analysis)}
         
         elementstring = ''
@@ -102,8 +130,15 @@ for analysis,channel in [('Hpp3l','Hpp3l'),('Hpp4l','Hpp4l')]:
             valdict = {}
             valfile = valuenames['both'] if analysis=='Hpp3l' else valuenames['pp']
             alphafile = alphavaluenames['both'] if analysis=='Hpp3l' else alphavaluenames['pp']
-            recochans = channels[analysis]
             for recochan in recochans:
+                dsyst = {'alpha': 0.1}
+                hsyst = {
+                    'lumi': 0.026,
+                    'sig' : 0.15,
+                    'mid' : recochan.count('m') * (0.005 + 0.002),
+                    'eid' : elecUncertainties[recochan.count('e')]-1,
+                    'chg' : chgUncertainties[len(recochan)][recochan.count('e')]-1,
+                }
                 vfname = valfile.format(analysis=analysis,channel=channel,bp=bp,mass=mass,recochan=recochan)
                 afname = alphafile.format(analysis=analysis,channel=channel,bp=bp,mass=mass,recochan=recochan)
                 if os.path.isfile(vfname) and os.path.isfile(afname):
@@ -117,12 +152,20 @@ for analysis,channel in [('Hpp3l','Hpp3l'),('Hpp4l','Hpp4l')]:
                         valdict[recochan]['mc'] = vals[0]
                         valdict[recochan]['mce'] = vals[1]
                         valdict[recochan]['d'] = int(vals[4])
-                        valdict[recochan]['de'] = vals[5]
+                        #valdict[recochan]['de'] = vals[5]
                         valdict[recochan]['pp'] = vals[7]
                         valdict[recochan]['ppe'] = vals[8]
+                        pps2 = 0
+                        for s in hsyst:
+                            pps2 += (hsyst[s]*vals[7])**2
+                        valdict[recochan]['pps'] = pps2**0.5
                         if analysis in ['Hpp3l'] and mass in _3L_MASSES:
                             valdict[recochan]['ap'] = vals[9]
                             valdict[recochan]['ape'] = vals[10]
+                            aps2 = 0
+                            for s in hsyst:
+                                aps2 += (hsyst[s]*vals[9])**2
+                            valdict[recochan]['aps'] = aps2**0.5
                     with open(afname,'r') as f:
                         atext = f.read()
                         avals = [float(x) for x in atext.split(':')]
@@ -131,6 +174,7 @@ for analysis,channel in [('Hpp3l','Hpp3l'),('Hpp4l','Hpp4l')]:
                         valdict[recochan]['a'] = alpha
                         valdict[recochan]['bg'] = nBGSR
                         valdict[recochan]['bge'] = eBGSR
+                        valdict[recochan]['bgs'] = nBGSR * dsyst['alpha']
                     #rowstring = rows['both'] if analysis=='Hpp3l' and mass in _3L_MASSES else rows['pp']
                     #recochanstring = rowstring.format(**valdict[recochan])
                     #massblockstring += recochanstring
@@ -138,10 +182,10 @@ for analysis,channel in [('Hpp3l','Hpp3l'),('Hpp4l','Hpp4l')]:
             chans = valdict.keys()
             valdict['all'] = {}
             valdict['all']['mass'] = mass
-            valnames =  ['mc','mce','d','de','bg','bge','pp','ppe']
-            if analysis in ['Hpp3l'] and mass in _3L_MASSES: valnames += ['ap','ape']
+            valnames =  ['mc','mce','d','bg','bge', 'bgs','pp','ppe','pps']
+            if analysis in ['Hpp3l'] and mass in _3L_MASSES: valnames += ['ap','ape','aps']
             for key in valnames:
-                if 'e' in key:
+                if 'e' in key or 's' in key:
                     valdict['all'][key] = sum([valdict[x][key]**2 for x in chans])**0.5
                 else:
                     valdict['all'][key] = sum([valdict[x][key] for x in chans])

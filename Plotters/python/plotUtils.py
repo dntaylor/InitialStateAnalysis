@@ -485,6 +485,12 @@ def getMergeDict(period):
             'WWZ_TuneCUETP8M1_13TeV-amcatnlo-pythia8': '1',
             #'WWW_TuneCUETP8M1_13TeV-amcatnlo-pythia8': '1',
         }
+        sampleMergeDict['ZG'] = {
+            'ZGTo2LG_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8' : '1',
+        }
+        sampleMergeDict['WG'] = {
+            'WGToLNuG_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8' : '1',
+        }
         sampleMergeDict['QCD'] = {
             #'QCD_Pt-15to20_MuEnrichedPt5_TuneCUETP8M1_13TeV_pythia8'    : '1',
             #'QCD_Pt-20to30_MuEnrichedPt5_TuneCUETP8M1_13TeV_pythia8'    : '1',
@@ -673,6 +679,8 @@ def getSigMap(numLeptons,mass=500):
              'TTV' : 'TTVJets',
              'VVV' : 'VVVJets',
              'QCD' : 'QCD',
+             'WG'  : 'WG',
+             'ZG'  : 'ZG',
              'Sig' : 'DBLH_m500',
              'data': 'data',
              'datadriven': 'datadriven',
@@ -753,7 +761,7 @@ def getChannelBackgrounds(runPeriod):
     }   
     if runPeriod==13:
         channelBackground = {
-            'WZ'      : ['T', 'TT', 'TTV', 'Z', 'VVV', 'WW', 'ZZ', 'WZ'],
+            'WZ'      : ['T', 'TT', 'TTV', 'Z', 'WG', 'VVV', 'WW', 'ZZ', 'WZ'],
             'NoVeto'  : ['T', 'TT', 'TTV', 'Z', 'VVV', 'WW', 'ZZ', 'WZ'],
             'W'       : ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'ZZ', 'WZ'],
             'FakeRate': ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'VVV', 'ZZ', 'WZ'],
@@ -841,6 +849,7 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
     #plotMethod('finalstate.mT',[150,0,300],savedir+'mT_zoom',yaxis='Events/2.0 GeV',xaxis='M_T^{3\\ell+MET} (GeV)',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
     #plotMethod('finalstate.hT',[40,0,800],savedir+'hT',yaxis='Events/20.0 GeV',xaxis='H_{T} (GeV)',lumitext=33,logy=1,cut=myCut,overflow=True,**kwargs)
     plotMethod('event.nvtx',[50,0,50],savedir+'puVertices',yaxis='Events',xaxis='Number PU Vertices',legendpos=43,logy=0,cut=myCut,**kwargs)
+    plotMethod('event.nvtx',[50,0,50],savedir+'puVertices_noreweight',yaxis='Events',xaxis='Number PU Vertices',legendpos=43,logy=0,cut=myCut, scalefactor='event.gen_weight*event.lep_scale*event.trig_scale',**kwargs)
     if analysis in ['WZ','WZ_Dijet']:
         plotMethod('finalstate.leadJetPt',[60,0,300],savedir+'JetPt',yaxis='Events/5.0 GeV',xaxis='p_{T}^{jet} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('finalstate.leadJetEta',[50,-5.0,5.0],savedir+'JetEta',yaxis='Events',xaxis='\\eta^{jet}',legendpos=43,logy=0,cut=myCut,**kwargs)

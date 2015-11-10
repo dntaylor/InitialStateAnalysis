@@ -52,7 +52,7 @@ class WZLimits(object):
         plotter.setIntLumi(intLumiMap[self.period])
 
         # set expected and observed yields
-        sources = [x for x in channelBackground[self.region] if x not in ['TT','T','DY','ZG','Z']] + ['datadriven'] if doDataDriven else channelBackground[self.region]
+        sources = [x for x in channelBackground[self.region] if x not in ['TT','T','DY','Z']] + ['datadriven'] if doDataDriven else channelBackground[self.region]
         for bg in sources:
             self.log.info('Processing {0}'.format(bg))
             val = plotter.getNumEntries(self.selection,sigMap[self.period][bg])

@@ -426,6 +426,9 @@ class AnalyzerBase(object):
         ntupleRow["finalstate.hT"] = float(rtrow.Ht) if hasattr(rtrow,'Ht') else float(-1)
         metVar = 'type1_pfMet'
         ntupleRow["finalstate.met"] = float(getattr(rtrow, '%sEt' %metVar))
+        # temp for unclustered
+        #ntupleRow["finalstate.met"] = rtrow.type1_pfMet_shiftedPt_UnclusteredEnUp
+        #ntupleRow["finalstate.met"] = rtrow.type1_pfMet_shiftedPt_UnclusteredEnDown
         ntupleRow["finalstate.metPhi"] = float(getattr(rtrow,'%sPhi' %metVar))
         if self.doMetUnc:
             varMap = {'mT':'mt','met':'pt','metPhi':'phi'}
@@ -496,7 +499,7 @@ class AnalyzerBase(object):
                     ntupleRow["%s.mass" %i] = float(getattr(rtrow, "%sMtTo%s" % (finalObjects[0], mtVar))) if theObjects else float(-999)
                     ntupleRow["%s.Pt" %i] = float(wpt)
                     ntupleRow["%s.sT" %i] = float(getattr(rtrow, "%sPt" % finalObjects[0]) + getattr(rtrow, '%sEt' %metVar)) if theObjects else float(-9)
-                    ntupleRow["%s.dPhi" %i] = float(getattr(rtrow, "%sToMETDPhi" % finalObjects[0])) if theObjects else float(-9)
+                    ntupleRow["%s.dPhi" %i] = float(getattr(rtrow, "%sDPhiToPfMet_type1" % finalObjects[0])) if theObjects else float(-9)
                     if self.doMetUnc:
                         varMap = {'mass':'mass','Pt':'pt','sT':'st','dPhi':'dphi'}
                         for mv in ['mass','Pt','sT','dPhi']:

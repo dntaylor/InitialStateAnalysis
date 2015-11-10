@@ -114,6 +114,9 @@ xsecs[13] = {
 
     'WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8' : 61526.7 * PB,
 
+    'ZGTo2LG_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8'  : 117.864 * PB,
+    'WGToLNuG_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8' : 489     * PB,
+
     'WWTo2L2Nu_13TeV-powheg'        : 10.481 * PB,
     'WWTo4Q_13TeV-powheg'           : 45.20  * PB,
     'WWToLNuQQ_13TeV-powheg'        : 43.53  * PB,

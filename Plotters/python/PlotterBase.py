@@ -21,7 +21,7 @@ from xsec import xsecs
 from dataStyles import dataStyles
 import CMS_lumi, tdrstyle
 from plotUtils import *
-from InitialStateAnalysis.Limits.limitUtils import *
+#from InitialStateAnalysis.Limits.limitUtils import 
 
 ROOT.gROOT.SetBatch(ROOT.kTRUE)
 ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 2001;")
@@ -99,22 +99,25 @@ class PlotterBase(object):
         self.dataScaleFactor = dataScaleFactor
         self.datadriven = datadriven
         self.baseSelection = baseSelection
-        self.tempNtupleFileName = self.plotDir+"/"+rootName+"_temp.root"
-        self.tempNtupleFile = ROOT.TFile(self.tempNtupleFileName,"recreate")
+        if self.baseSelection:
+            self.tempNtupleFileName = self.plotDir+"/"+rootName+"_temp.root"
+            self.tempNtupleFile = ROOT.TFile(self.tempNtupleFileName,"recreate")
         self.period=period
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.logger.debug('Cleaning up plotter')
-        self.tempNtupleFile.Delete("all")
-        os.remove(self.tempNtupleFileName)
+        if self.baseSelection:
+            self.logger.debug('Cleaning up plotter')
+            self.tempNtupleFile.Delete("all")
+            os.remove(self.tempNtupleFileName)
 
     def __del__(self):
-        self.logger.debug('Cleaning up plotter')
-        self.tempNtupleFile.Delete("all")
-        os.remove(self.tempNtupleFileName)
+        if self.baseSelection:
+            self.logger.debug('Cleaning up plotter')
+            self.tempNtupleFile.Delete("all")
+            os.remove(self.tempNtupleFileName)
 
     def reset(self):
         '''Reset the plotter class'''
@@ -147,7 +150,7 @@ class PlotterBase(object):
         self.backgrounds = sampleList
         if self.datadriven:
             self.backgrounds = ['datadriven']
-            self.backgrounds.extend([x for x in sampleList if x not in ['SingleTop', 'TTJets', 'ZJets', 'ZG']])
+            self.backgrounds.extend([x for x in sampleList if x not in ['SingleTop', 'TTJets', 'ZJets']])
             sampleList = self.backgrounds
         self.initializeSamples(sampleList)
         self.backgroundInitialized = True
@@ -554,6 +557,8 @@ class PlotterBase(object):
         hist = hists[0].Clone(histname)
         hist.Reset()
         hist.Merge(hists)
+        # asymmetric errors
+        hist.SetBinErrorOption(ROOT.TH1.kPoisson)
         return hist
 
     def getDataDrivenHist(self, variables, binning, cut, noFormat=False, **kwargs):
