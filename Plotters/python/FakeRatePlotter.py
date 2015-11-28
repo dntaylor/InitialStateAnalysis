@@ -240,7 +240,8 @@ class FakeRatePlotter(PlotterBase):
             # plot fakerate
             fakeRateHist.Draw()
             if dataDriven:
-                fakeRateHistMC.Draw('same')
+                pass
+                #fakeRateHistMC.Draw('same')
 
             # plot legend
             leg = ROOT.TLegend(0.65,0.72,0.95,0.77,'','NDC')
@@ -248,7 +249,7 @@ class FakeRatePlotter(PlotterBase):
             leg.SetBorderSize(0)
             leg.SetFillColor(0)
             leg.AddEntry(fakeRateHist,'Fake Rate','ep')
-            if dataDriven: leg.AddEntry(fakeRateHistMC,'Fake Rate (MC)','ep')
+            #if dataDriven: leg.AddEntry(fakeRateHistMC,'Fake Rate (MC)','ep')
             leg.Draw()
 
             # draw cms lumi

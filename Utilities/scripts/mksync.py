@@ -111,7 +111,9 @@ def sync(analysis,channel,period,**kwargs):
                 2: 'h2.LepFake1',
             }
 
-        allCuts = 'finalstate.mass>100. && (z1.Pt1>20.&&z1.Pt2>10.) && z1.mass>60. && z1.mass<120. && w1.dR1_z1_1>0.1 && w1.dR1_z1_2>0.1 && w1.Pt1>20. && finalstate.met>30.'
+        #allCuts = 'finalstate.mass>100. && (z1.Pt1>20.&&z1.Pt2>10.) && z1.mass>60. && z1.mass<120. && w1.dR1_z1_1>0.1 && w1.dR1_z1_2>0.1 && w1.Pt1>20. && finalstate.met>30.'
+        #allCuts = 'finalstate.mass>100. && (z1.Pt1>20.&&z1.Pt2>10.) && z1.mass>60. && z1.mass<120. && w1.mll_z1_1>4 && w1.mll_z1_2>4 && w1.Pt1>20. && finalstate.met>30.'
+        allCuts = getPassTightDefinition(analysis,channel,period)
         if analysis in ['Hpp3l']:
             allCuts = '1' # no special cuts at select.passTight
         myCut = cut

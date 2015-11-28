@@ -27,16 +27,16 @@ limitNames = ['ee100','em100','mm100','et100','mt100','BP1','BP2','BP3','BP4']
 #}
 # observed limits
 limits = {
-    'ee100' : {'name' : '100% H^{#pm#pm}#rightarrow ee',      'PP4l' : 533, 'AP3l' : 511, 'PP3l' : 508, 'AP': 511, 'PP': 593, 'Comb' : 620,},
-    'em100' : {'name' : '100% H^{#pm#pm}#rightarrow e#mu',    'PP4l' : 545, 'AP3l' : 513, 'PP3l' : 517, 'AP': 513, 'PP': 607, 'Comb' : 629,},
-    'mm100' : {'name' : '100% H^{#pm#pm}#rightarrow #mu#mu',  'PP4l' : 562, 'AP3l' : 518, 'PP3l' : 518, 'AP': 518, 'PP': 611, 'Comb' : 636,},
-    'et100' : {'name' : '100% H^{#pm#pm}#rightarrow e#tau',   'PP4l' : 266, 'AP3l' : 306, 'PP3l' : 344, 'AP': 306, 'PP': 355, 'Comb' : 363,},
-    'mt100' : {'name' : '100% H^{#pm#pm}#rightarrow #mu#tau', 'PP4l' : 289, 'AP3l' : 310, 'PP3l' : 350, 'AP': 310, 'PP': 392, 'Comb' : 412,},
-    'tt100' : {'name' : '100% H^{#pm#pm}#rightarrow #tau#tau','PP4l' :   1, 'AP3l' : 141, 'PP3l' :  54, 'AP': 141, 'PP':   1, 'Comb' :   1,},
-    'BP1'   : {'name' : 'BP1',                                'PP4l' : 373, 'AP3l' : 425, 'PP3l' : 457, 'AP': 425, 'PP': 483, 'Comb' : 514,},
-    'BP2'   : {'name' : 'BP2',                                'PP4l' : 463, 'AP3l' : 475, 'PP3l' : 503, 'AP': 475, 'PP': 539, 'Comb' : 578,},
-    'BP3'   : {'name' : 'BP3',                                'PP4l' : 483, 'AP3l' : 483, 'PP3l' : 484, 'AP': 483, 'PP': 537, 'Comb' : 579,},
-    'BP4'   : {'name' : 'BP4',                                'PP4l' : 434, 'AP3l' : 458, 'PP3l' : 489, 'AP': 458, 'PP': 520, 'Comb' : 552,},
+    'ee100' : {'name' : '100% #Phi^{#pm#pm}#rightarrow ee',      'PP4l' : 533, 'AP3l' : 511, 'PP3l' : 508, 'AP': 511, 'PP': 593, 'Comb' : 620,},
+    'em100' : {'name' : '100% #Phi^{#pm#pm}#rightarrow e#mu',    'PP4l' : 545, 'AP3l' : 513, 'PP3l' : 517, 'AP': 513, 'PP': 607, 'Comb' : 629,},
+    'mm100' : {'name' : '100% #Phi^{#pm#pm}#rightarrow #mu#mu',  'PP4l' : 562, 'AP3l' : 518, 'PP3l' : 518, 'AP': 518, 'PP': 611, 'Comb' : 636,},
+    'et100' : {'name' : '100% #Phi^{#pm#pm}#rightarrow e#tau',   'PP4l' : 266, 'AP3l' : 306, 'PP3l' : 344, 'AP': 306, 'PP': 355, 'Comb' : 363,},
+    'mt100' : {'name' : '100% #Phi^{#pm#pm}#rightarrow #mu#tau', 'PP4l' : 289, 'AP3l' : 310, 'PP3l' : 350, 'AP': 310, 'PP': 392, 'Comb' : 412,},
+    'tt100' : {'name' : '100% #Phi^{#pm#pm}#rightarrow #tau#tau','PP4l' :   1, 'AP3l' : 141, 'PP3l' :  54, 'AP': 141, 'PP':   1, 'Comb' :   1,},
+    'BP1'   : {'name' : 'Benchmark 1',                           'PP4l' : 373, 'AP3l' : 425, 'PP3l' : 457, 'AP': 425, 'PP': 483, 'Comb' : 514,},
+    'BP2'   : {'name' : 'Benchmark 2',                           'PP4l' : 463, 'AP3l' : 475, 'PP3l' : 503, 'AP': 475, 'PP': 539, 'Comb' : 578,},
+    'BP3'   : {'name' : 'Benchmark 3',                           'PP4l' : 483, 'AP3l' : 483, 'PP3l' : 484, 'AP': 483, 'PP': 537, 'Comb' : 579,},
+    'BP4'   : {'name' : 'Benchmark 4',                           'PP4l' : 434, 'AP3l' : 458, 'PP3l' : 489, 'AP': 458, 'PP': 520, 'Comb' : 552,},
 }
 
 
@@ -53,14 +53,14 @@ canvas.SetBottomMargin(0.12)
 
 
 nl = len(limitNames)
-h =  ROOT.TH2F("h", "h; Excluded Masses (GeV/c^{2}); ", 1,0,1000,nl+2,0.5,nl+2.5)
+h =  ROOT.TH2F("h", "h; Excluded Masses (GeV}); ", 1,0,1000,nl+2,0.5,nl+2.5)
 h.GetYaxis().SetRangeUser(2,nl+1)
 h.Draw()
 
-pp4l = ROOT.TColor.GetColor('#FFAE03')
-pp3l = ROOT.TColor.GetColor('#E67F0D')
-ap3l = ROOT.TColor.GetColor('#FE4E00')
-comb = ROOT.TColor.GetColor('#E9190F')
+pp3l = ROOT.TColor.GetColor('#00BD39')
+pp4l = ROOT.TColor.GetColor('#760BAA')
+ap3l = ROOT.TColor.GetColor('#0B5FA5')
+comb = ROOT.TColor.GetColor('#FF9400')
 
 binPos = nl+2
 limitBars = {}

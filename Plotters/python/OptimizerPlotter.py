@@ -67,7 +67,7 @@ def plotOptimization(analysis,period,variable,numTaus):
             for b,val in enumerate(optVals[mass][plotType]):
                 hist.SetBinContent(m+1,b+1,val[0])
                 hist.SetBinError(m+1,b+1,val[1])
-        hist.GetXaxis().SetTitle('M(\\ell^{\\pm}\\ell^{\\pm}) (GeV/c^2)')
+        hist.GetXaxis().SetTitle('M(\\ell^{\\pm}\\ell^{\\pm}) (GeV)')
         hist.Draw('colz goff')
         # draw a fit line
         if 'significance' in plotType:

@@ -5,7 +5,7 @@ import subprocess
 import glob
 from multiprocessing import Pool
 
-from InitialStateAnalysis.Plotters.plotUtils import getSigMap, getIntLumiMap, getChannels, getMergeDict, ZMASS, getChannelBackgrounds
+from InitialStateAnalysis.Plotters.plotUtils import getSigMap, getIntLumiMap, getChannels, getMergeDict, ZMASS, getChannelBackgrounds, getNtupleDirectory
 from InitialStateAnalysis.Plotters.plotUtils import *
 from InitialStateAnalysis.Limits.WZLimits import WZLimits
 from InitialStateAnalysis.Utilities.utilities import *
@@ -170,19 +170,19 @@ def wzlimit(analysis,region,period,chan,**kwargs):
 
     chanCut = '{0} && channel=="{1}"'.format(cut,chan)
 
-    limits = WZLimits(analysis,region, period, chanCut, './ntuples/%s_%iTeV_%s' % (analysis, period, region),
+    limits = WZLimits(analysis,region, period, chanCut,  getNtupleDirectory(analysis,region,period),
                     '%s/%s_%itev_%s' % (datacardDir, analysis, period, region), scalefactor=scalefactor)
 
     # add systematic
-    bgnames = ['datadriven','ZZ','WW','TTV','VVV','WG']
+    bgnames = ['datadriven','ZZ','WW','TTV','VVV','ZG']
     signames = ['WZ']
-    mcnames = ['WZ','ZZ','WW','TTV','VVV','WG']
+    mcnames = ['WZ','ZZ','WW','TTV','VVV','ZG']
 
     # lumi
     # current recommendation: 12%
-    lumi = {}
-    for b in mcnames: lumi[b] = 1.12
-    limits.add_systematics("lumi", "lnN", **lumi)
+    #lumi = {}
+    #for b in mcnames: lumi[b] = 1.12
+    #limits.add_systematics("lumi", "lnN", **lumi)
 
     # datadriven
     # assume 40%
@@ -192,10 +192,10 @@ def wzlimit(analysis,region,period,chan,**kwargs):
     # eff uncertainty
     # take scale factors for leptons, propagate up and down based on statistical uncertainty
     lepvals = {
-        'eee' : 1.018,
-        'eem' : 1.013,
-        'mme' : 1.006,
-        'mmm' : 1.002,
+        'eee' : 1.019,
+        'eem' : 1.016,
+        'mme' : 1.016,
+        'mmm' : 1.016,
     }
     lep = {}
     for m in mcnames: lep[m] = lepvals[chan]
@@ -204,10 +204,10 @@ def wzlimit(analysis,region,period,chan,**kwargs):
     # pu
     # assume 10% uncertainty on min bias cross section, scale up and down, take largest difference in wz yield
     puvals = {
-        'eee' : 1.0042,
-        'eem' : 1.0015,
-        'mme' : 1.0039,
-        'mmm' : 1.0024,
+        'eee' : 1.0064,
+        'eem' : 1.0088,
+        'mme' : 1.0124,
+        'mmm' : 1.0020,
     }
     pu = {}
     for m in mcnames: pu[m] = puvals[chan]
@@ -292,17 +292,21 @@ def getSignalStrength(cut,**kwargs):
     '''Get WZ signal strength'''
     scalefactor = kwargs.pop('scalefactor','event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale')
     datacardDir = kwargs.pop('datacardDir','datacards_temp')
+    statonly = kwargs.pop('statonly',False)
     # produce limits
     wzlimits('WZ','WZ',13,cut=cut,scalefactor=scalefactor,datacardDir=datacardDir)
-    # run combine
+    # merge cards
     combineDir = '/cms/dntaylor/HIGGSCOMBINE_71X/CMSSW_7_1_5/src'
+    command = 'pushd {0}; eval `scramv1 runtime -sh`; pushd {1}/WZ_13tev_WZ/; combineCards.py [em][em][em].txt > wz.txt;'.format(combineDir,datacardDir)
+    outString = subprocess.Popen(command, shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT).communicate()[0]
+    # run combine
     sigStrengths = {}
-    for chan in ['eee','eem','mme','mmm']:
+    for chan in ['eee','eem','mme','mmm','wz']:
         # cp card
         command = 'cp {0}/WZ_13tev_WZ/{1}.txt {2};'.format(datacardDir,chan,combineDir)
         # run tool, grepping for signal strength
         command += 'pushd {0}; eval `scramv1 runtime -sh`;'.format(combineDir)
-        command += 'combine -M MaxLikelihoodFit {0}.txt 2>&1'.format(chan)
+        command += 'combine -M MaxLikelihoodFit {0}.txt {1} 2>&1'.format(chan,'-S 0' if statonly else '')
         outString = subprocess.Popen(command, shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT).communicate()[0]
         sigString = [x for x in outString.split('\n') if 'Best' in x][0]
         sigStrength = sigString.split()[3]

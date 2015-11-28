@@ -49,6 +49,18 @@ class TriggerScaleFactors(object):
 
     def __init__(self):
         self.ww_scales = self.init_ww_scales()
+        # WZ 13 TeV
+        with open(os.path.join(os.path.dirname(__file__),'muons_13TeV.json'),'r') as ef:
+            self.muons_13TeV = json.load(ef)
+        with open(os.path.join(os.path.dirname(__file__),'electrons_13TeV.json'),'r') as ef:
+            self.electrons_13TeV = json.load(ef)
+        with open(os.path.join(os.path.dirname(__file__),'electronTrigger_13TeV.json'),'r') as ef:
+            self.electronTrigger_13TeV = json.load(ef)
+        with open(os.path.join(os.path.dirname(__file__),'trackerMuonDZ_13TeV.json'),'r') as ef:
+            self.trackerMuonDZ_13TeV = json.load(ef)
+        with open(os.path.join(os.path.dirname(__file__),'globalMuonDZ_13TeV.json'),'r') as ef:
+            self.globalMuonDZ_13TeV = json.load(ef)
+
 
     def init_ww_scales(self):
         scales = {}
@@ -64,51 +76,168 @@ class TriggerScaleFactors(object):
     def scale_factor(self, rtrow, *lep_list, **kwargs):
         lep_objs = [(x, getattr(rtrow,"%sPt"%x), abs(getattr(rtrow,"%sEta"%x))) for x in lep_list]
         lep_ord = sorted(lep_objs, key=itemgetter(1), reverse=True)
-        if len(lep_ord)==3:
-            eff = 1-(\
-                    (1-self.double_lead_eff(*lep_ord[0])) * (1-self.double_lead_eff(*lep_ord[1])) * (1-self.double_lead_eff(*lep_ord[2]))\
-                    + self.double_lead_eff(*lep_ord[0]) * (1-self.double_trail_eff(*lep_ord[1])) * (1-self.double_trail_eff(*lep_ord[2]))\
-                    + self.double_lead_eff(*lep_ord[1]) * (1-self.double_trail_eff(*lep_ord[2])) * (1-self.double_trail_eff(*lep_ord[0]))\
-                    + self.double_lead_eff(*lep_ord[2]) * (1-self.double_trail_eff(*lep_ord[0])) * (1-self.double_trail_eff(*lep_ord[1]))\
-                    )
-        elif len(lep_ord) == 4:
-            eff = 1 - (\
-                    (1 - self.double_lead_eff(*lep_ord[0])) * \
-                    (1 - self.double_lead_eff(*lep_ord[1])) * \
-                    (1 - self.double_lead_eff(*lep_ord[2])) * \
-                    (1 - self.double_lead_eff(*lep_ord[3])) \
+        period = kwargs.pop('period',8)
+        if period==8:
+            if len(lep_ord)==3:
+                eff = 1-(\
+                        (1-self.double_lead_eff(*lep_ord[0])) * (1-self.double_lead_eff(*lep_ord[1])) * (1-self.double_lead_eff(*lep_ord[2]))\
+                        + self.double_lead_eff(*lep_ord[0]) * (1-self.double_trail_eff(*lep_ord[1])) * (1-self.double_trail_eff(*lep_ord[2]))\
+                        + self.double_lead_eff(*lep_ord[1]) * (1-self.double_trail_eff(*lep_ord[2])) * (1-self.double_trail_eff(*lep_ord[0]))\
+                        + self.double_lead_eff(*lep_ord[2]) * (1-self.double_trail_eff(*lep_ord[0])) * (1-self.double_trail_eff(*lep_ord[1]))\
+                        )
+            elif len(lep_ord) == 4:
+                eff = 1 - (\
+                        (1 - self.double_lead_eff(*lep_ord[0])) * \
+                        (1 - self.double_lead_eff(*lep_ord[1])) * \
+                        (1 - self.double_lead_eff(*lep_ord[2])) * \
+                        (1 - self.double_lead_eff(*lep_ord[3])) \
 
-                  + self.double_lead_eff(*lep_ord[0]) * \
-                    (1 - self.double_trail_eff(*lep_ord[1])) * \
-                    (1 - self.double_trail_eff(*lep_ord[2])) * \
-                    (1 - self.double_trail_eff(*lep_ord[3])) \
+                      + self.double_lead_eff(*lep_ord[0]) * \
+                        (1 - self.double_trail_eff(*lep_ord[1])) * \
+                        (1 - self.double_trail_eff(*lep_ord[2])) * \
+                        (1 - self.double_trail_eff(*lep_ord[3])) \
 
-                  + self.double_lead_eff(*lep_ord[1]) * \
-                    (1 - self.double_trail_eff(*lep_ord[2])) * \
-                    (1 - self.double_trail_eff(*lep_ord[3])) * \
-                    (1 - self.double_trail_eff(*lep_ord[0])) \
+                      + self.double_lead_eff(*lep_ord[1]) * \
+                        (1 - self.double_trail_eff(*lep_ord[2])) * \
+                        (1 - self.double_trail_eff(*lep_ord[3])) * \
+                        (1 - self.double_trail_eff(*lep_ord[0])) \
 
-                  + self.double_lead_eff(*lep_ord[2]) * \
-                    (1 - self.double_trail_eff(*lep_ord[3])) * \
-                    (1 - self.double_trail_eff(*lep_ord[0])) * \
-                    (1 - self.double_trail_eff(*lep_ord[1])) \
+                      + self.double_lead_eff(*lep_ord[2]) * \
+                        (1 - self.double_trail_eff(*lep_ord[3])) * \
+                        (1 - self.double_trail_eff(*lep_ord[0])) * \
+                        (1 - self.double_trail_eff(*lep_ord[1])) \
 
-                  + self.double_lead_eff(*lep_ord[3]) * \
-                    (1 - self.double_trail_eff(*lep_ord[0])) * \
-                    (1 - self.double_trail_eff(*lep_ord[1])) * \
-                    (1 - self.double_trail_eff(*lep_ord[2])) \
-                    )
-        elif len(lep_ord)==2:
-            eff = 1-(\
-                    (1-self.double_lead_eff(*lep_ord[0])) * (1-self.double_lead_eff(*lep_ord[1]))\
-                    + self.double_lead_eff(*lep_ord[0]) * (1-self.double_trail_eff(*lep_ord[1]))\
-                    + self.double_lead_eff(*lep_ord[1]) * (1-self.double_trail_eff(*lep_ord[0]))\
-                    )
-            #eff = self.double_lead_eff(*lep_ord[0]) * self.double_trail_eff(*lep_ord[1])
+                      + self.double_lead_eff(*lep_ord[3]) * \
+                        (1 - self.double_trail_eff(*lep_ord[0])) * \
+                        (1 - self.double_trail_eff(*lep_ord[1])) * \
+                        (1 - self.double_trail_eff(*lep_ord[2])) \
+                        )
+            elif len(lep_ord)==2:
+                eff = 1-(\
+                        (1-self.double_lead_eff(*lep_ord[0])) * (1-self.double_lead_eff(*lep_ord[1]))\
+                        + self.double_lead_eff(*lep_ord[0]) * (1-self.double_trail_eff(*lep_ord[1]))\
+                        + self.double_lead_eff(*lep_ord[1]) * (1-self.double_trail_eff(*lep_ord[0]))\
+                        )
+                #eff = self.double_lead_eff(*lep_ord[0]) * self.double_trail_eff(*lep_ord[1])
+            else:
+                eff = 1
         else:
-            eff = 1
+            if len(lep_ord)==3:
+                eff = 1-(\
+                        # none pass lead
+                        (1-self.double_lead_eff_13(*lep_ord[0],**kwargs)) * (1-self.double_lead_eff_13(*lep_ord[1],**kwargs)) * (1-self.double_lead_eff_13(*lep_ord[2],**kwargs))\
+                        # one pass lead but none pass trail
+                        + self.double_lead_eff_13(*lep_ord[0],**kwargs) * (1-self.double_trail_eff_13(*lep_ord[1],**kwargs)) * (1-self.double_trail_eff_13(*lep_ord[2],**kwargs))\
+                        + self.double_lead_eff_13(*lep_ord[1],**kwargs) * (1-self.double_trail_eff_13(*lep_ord[2],**kwargs)) * (1-self.double_trail_eff_13(*lep_ord[0],**kwargs))\
+                        + self.double_lead_eff_13(*lep_ord[2],**kwargs) * (1-self.double_trail_eff_13(*lep_ord[0],**kwargs)) * (1-self.double_trail_eff_13(*lep_ord[1],**kwargs))\
+                        # one pass lead, one pass trail, one fail trail, fail dz
+                        + self.double_lead_eff_13(*lep_ord[0],**kwargs) * self.double_trail_eff_13(*lep_ord[1],**kwargs) * (1-self.double_trail_eff_13(*lep_ord[2])) * (1-self.double_dz_eff_13(lep_ord[0][0],*lep_ord[1],**kwargs))\
+                        + self.double_lead_eff_13(*lep_ord[0],**kwargs) * self.double_trail_eff_13(*lep_ord[2],**kwargs) * (1-self.double_trail_eff_13(*lep_ord[1])) * (1-self.double_dz_eff_13(lep_ord[0][0],*lep_ord[2],**kwargs))\
+                        + self.double_lead_eff_13(*lep_ord[1],**kwargs) * self.double_trail_eff_13(*lep_ord[2],**kwargs) * (1-self.double_trail_eff_13(*lep_ord[0])) * (1-self.double_dz_eff_13(lep_ord[1][0],*lep_ord[2],**kwargs))\
+                        + self.double_lead_eff_13(*lep_ord[1],**kwargs) * self.double_trail_eff_13(*lep_ord[0],**kwargs) * (1-self.double_trail_eff_13(*lep_ord[2])) * (1-self.double_dz_eff_13(lep_ord[1][0],*lep_ord[0],**kwargs))\
+                        + self.double_lead_eff_13(*lep_ord[2],**kwargs) * self.double_trail_eff_13(*lep_ord[0],**kwargs) * (1-self.double_trail_eff_13(*lep_ord[1])) * (1-self.double_dz_eff_13(lep_ord[2][0],*lep_ord[0],**kwargs))\
+                        + self.double_lead_eff_13(*lep_ord[2],**kwargs) * self.double_trail_eff_13(*lep_ord[1],**kwargs) * (1-self.double_trail_eff_13(*lep_ord[0])) * (1-self.double_dz_eff_13(lep_ord[2][0],*lep_ord[1],**kwargs))\
+                        # one pass lead, two pass trail, both fail
+                        + self.double_lead_eff_13(*lep_ord[0],**kwargs) * self.double_trail_eff_13(*lep_ord[1],**kwargs) * self.double_trail_eff_13(*lep_ord[2])\
+                          * (1-self.double_dz_eff_13(lep_ord[0][0],*lep_ord[1],**kwargs)) * (1-self.double_dz_eff_13(lep_ord[0][0],*lep_ord[2],**kwargs))\
+                        + self.double_lead_eff_13(*lep_ord[1],**kwargs) * self.double_trail_eff_13(*lep_ord[2],**kwargs) * self.double_trail_eff_13(*lep_ord[0])\
+                          * (1-self.double_dz_eff_13(lep_ord[1][0],*lep_ord[2],**kwargs)) * (1-self.double_dz_eff_13(lep_ord[1][0],*lep_ord[0],**kwargs))\
+                        + self.double_lead_eff_13(*lep_ord[2],**kwargs) * self.double_trail_eff_13(*lep_ord[0],**kwargs) * self.double_trail_eff_13(*lep_ord[1])\
+                          * (1-self.double_dz_eff_13(lep_ord[2][0],*lep_ord[0],**kwargs)) * (1-self.double_dz_eff_13(lep_ord[2][0],*lep_ord[1],**kwargs))\
+                        )
+            else:
+                eff = 1.
         return eff
 
+    def double_lead_eff_13(self,l,pt,eta,**kwargs):
+        if l[0]=='e': return self.double_lead_e_13(pt,eta,**kwargs)
+        if l[0]=='m': return self.double_lead_m_13(pt,eta,**kwargs)
+        return 1.
+
+    def double_trail_eff_13(self,l,pt,eta,**kwargs):
+        if l[0]=='e': return self.double_trail_e_13(pt,eta,**kwargs)
+        if l[0]=='m': return self.double_trail_m_13(pt,eta,**kwargs)
+        return 1.
+
+    def double_dz_eff_13(self,l0,l1,pt,eta,**kwargs):
+        if l0[0]=='e' and l1[0]=='e': return self.double_dz_e_13(pt,eta,**kwargs)
+        if l0[0]=='m' and l1[0]=='m': return self.double_dz_m_13(pt,eta,**kwargs)
+        return 1.
+
+    # electron
+    def double_lead_e_13(self,pt,eta,**kwargs):
+        shiftUp = kwargs.pop('shiftUp',False)
+        shiftDown = kwargs.pop('shiftDown',False)
+        val,err = self.get_eff_err(pt,eta,self.electronTrigger_13TeV,'passingHLTEle17Ele12Leg1',**kwargs)
+        if shiftUp: return val+err
+        if shiftDown: return val-err
+        return val
+
+    def double_trail_e_13(self,pt,eta,**kwargs):
+        shiftUp = kwargs.pop('shiftUp',False)
+        shiftDown = kwargs.pop('shiftDown',False)
+        val,err = self.get_eff_err(pt,eta,self.electronTrigger_13TeV,'passingHLTEle17Ele12Leg2',**kwargs)
+        if shiftUp: return val+err
+        if shiftDown: return val-err
+        return val
+
+    def double_dz_e_13(self,pt,eta,**kwargs):
+        shiftUp = kwargs.pop('shiftUp',False)
+        shiftDown = kwargs.pop('shiftDown',False)
+        val,err = self.get_eff_err(pt,eta,self.electronTrigger_13TeV,'passingHLTDZFilter',**kwargs)
+        if shiftUp: return val+err
+        if shiftDown: return val-err
+        return val
+
+    # muon
+    def double_lead_m_13(self,pt,eta,**kwargs):
+        shiftUp = kwargs.pop('shiftUp',False)
+        shiftDown = kwargs.pop('shiftDown',False)
+        val,err = self.get_eff_err(pt,eta,self.muons_13TeV,'passingMu17',**kwargs)
+        if shiftUp: return val+err
+        if shiftDown: return val-err
+        return val
+
+    def double_trail_m_13(self,pt,eta,**kwargs):
+        shiftUp = kwargs.pop('shiftUp',False)
+        shiftDown = kwargs.pop('shiftDown',False)
+        valMu,errMu = self.get_eff_err(pt,eta,self.muons_13TeV,'passingMu8',**kwargs)
+        valTkMu,errTkMu = self.get_eff_err(pt,eta,self.muons_13TeV,'passingTkMu8',**kwargs)
+        val = (valMu+valTkMu)/2.
+        valUp = (valMu+errMu+valTkMu+errTkMu)/2.
+        valDown = (valMu-errMu+valTkMu-errTkMu)/2.
+        if shiftUp: return valUp
+        if shiftDown: return valDown
+        return val
+
+    def double_dz_m_13(self,pt,eta,**kwargs):
+        shiftUp = kwargs.pop('shiftUp',False)
+        shiftDown = kwargs.pop('shiftDown',False)
+        valMu,errMu = self.get_eff_err(pt,eta,self.globalMuonDZ_13TeV,'passingDZ',**kwargs)
+        valTkMu,errTkMu = self.get_eff_err(pt,eta,self.trackerMuonDZ_13TeV,'passingDZ',**kwargs)
+        val = (valMu+valTkMu)/2.
+        valUp = (valMu+errMu+valTkMu+errTkMu)/2.
+        valDown = (valMu-errMu+valTkMu-errTkMu)/2.
+        if shiftUp: return valUp
+        if shiftDown: return valDown
+        return val
+
+    def get_eff_err(self,pt,eta,effDict,effKey,**kwargs):
+        useData = kwargs.pop('useData',True)
+        efflist = effDict[effKey]
+        for eff in efflist:
+            ptlow = eff['pt_lo']
+            pthi = eff['pt_hi']
+            etalow = eff['abseta_lo']
+            etahi = eff['abseta_hi']
+            if pt>=ptlow and pt<pthi and eta>=etalow and eta<etahi:
+                val = eff['data'] if useData else eff['mc']
+                err = eff['data_err'] if useData else eff['mc_err']
+                return val, err
+        return 1.0, 0.0
+
+
+    # 8TeV stuff
     def single_eff(self,l,pt,eta):
         if l[0]=='e': return self.single_e(pt,eta)
         if l[0]=='m': return self.single_m(pt,eta)
@@ -214,26 +343,24 @@ class LeptonEfficiency(object):
 
     def __init__(self):
         # WZ 13TeV
-        with open(os.path.join(os.path.dirname(__file__),'muon.json'),'r') as mf:
+        with open(os.path.join(os.path.dirname(__file__),'muons_13TeV.json'),'r') as mf:
             self.m_id_dict_13tev = json.load(mf)
-        with open(os.path.join(os.path.dirname(__file__),'electron.json'),'r') as ef:
+        with open(os.path.join(os.path.dirname(__file__),'electrons_13TeV.json'),'r') as ef:
             self.e_id_dict_13tev = json.load(ef)
 
     def close(self):
         pass
 
     def scale_factor(self, row, *lep_list, **kwargs):
-        tight = kwargs.pop('tight',False)
-        loose = kwargs.pop('loose',False)
-        period = kwargs.pop('period',8)
+        period = kwargs.pop('period',13)
         out = []
         for l in lep_list:
             lep_type = l[0]
 
             if lep_type == 'm':
-                out += [[1,1,1]]
+                out += [self.getMuonEfficiency(l,row)]
             elif lep_type == 'e':
-                out += [[1,1,1]]
+                out += [self.getElectronEfficiency(l,row)]
             elif lep_type == 't':
                 out += [[1,1,1]] # TODO
             else:
@@ -247,12 +374,53 @@ class LeptonEfficiency(object):
 
         return final
 
+    def getMuonEfficiency(self,l,row):
+        pt = getattr(row,'{0}Pt'.format(l))
+        eta = getattr(row,'{0}Eta'.format(l))
+        # loose to tight efficiency = tight/loose
+        tid  = self.get_eff_err(pt,eta,self.m_id_dict_13tev,'passingIDWZTight')
+        tiso = self.get_eff_err(pt,eta,self.m_id_dict_13tev,'passingIsoWZTight_passingIDWZTight')
+        lid  = self.get_eff_err(pt,eta,self.m_id_dict_13tev,'passingIDWZLoose')
+        liso = self.get_eff_err(pt,eta,self.m_id_dict_13tev,'passingIsoWZLoose_passingIDWZLoose')
+        default = (tid[0]*tiso[0])/(lid[0]*liso[0])
+        up = ((tid[0]+tid[1])*(tiso[0]+tiso[1]))/((lid[0]+lid[1])*(liso[0]+liso[1]))
+        down = ((tid[0]-tid[1])*(tiso[0]-tiso[1]))/((lid[0]-lid[1])*(liso[0]-liso[1]))
+        return [default, up, down]
+
+    def getElectronEfficiency(self,l,row):
+        pt = getattr(row,'{0}Pt'.format(l))
+        eta = getattr(row,'{0}SCEta'.format(l))
+        # loose to tight efficiency = tight/loose
+        tid = self.get_eff_err(pt,eta,self.e_id_dict_13tev,'passingMedium')
+        lid = self.get_eff_err(pt,eta,self.e_id_dict_13tev,'passingLoose')
+        default = (tid[0])/(lid[0])
+        up = (tid[0]+tid[1])/(lid[0]+lid[1])
+        down = (tid[0]-tid[1])/(lid[0]-lid[1])
+        return [default, up, down]
+
+
+    def get_eff_err(self,pt,eta,effDict,effKey,**kwargs):
+        useData = kwargs.pop('useData',True)
+        efflist = effDict[effKey]
+        for eff in efflist:
+            ptlow = eff['pt_lo']
+            pthi = eff['pt_hi']
+            etalow = eff['abseta_lo']
+            etahi = eff['abseta_hi']
+            if pt>=ptlow and pt<pthi and eta>=etalow and eta<etahi:
+                val = eff['data'] if useData else eff['mc']
+                err = eff['data_err'] if useData else eff['mc_err']
+                return val, err
+        return 1.0, 0.0
+
+
 class LeptonFakeRate(object):
 
     def __init__(self):
         # WZ 13TeV
-        #with open(os.path.join(os.path.dirname(__file__),'fakes_trigIso_13TeV.json'),'r') as f:
-        with open(os.path.join(os.path.dirname(__file__),'fakes.json'),'r') as f:
+        #with open(os.path.join(os.path.dirname(__file__),'fakes.json'),'r') as f:
+        #with open(os.path.join(os.path.dirname(__file__),'fakes_trigIso_dijet_13TeV.json'),'r') as f:
+        with open(os.path.join(os.path.dirname(__file__),'fakes_trigIso_13TeV.json'),'r') as f:
             self.fake_dict_13tev = json.load(f)
         # WZ 8TeV
         with open(os.path.join(os.path.dirname(__file__),'fakes_8TeV.json'),'r') as f:
@@ -265,7 +433,7 @@ class LeptonFakeRate(object):
         tight = kwargs.pop('tight',False)
         loose = kwargs.pop('loose',False)
         veto = kwargs.pop('veto',False)
-        period = kwargs.pop('period',8)
+        period = kwargs.pop('period',13)
         out = []
         for l in lep_list:
             lep_type = l[0]
@@ -273,7 +441,7 @@ class LeptonFakeRate(object):
             if lep_type == 'm':
                 out += [self.m_wz_fake_veto(row,l,period)]
             elif lep_type == 'e':
-                out += [self.m_wz_fake_veto(row,l,period)]
+                out += [self.e_wz_fake_veto(row,l,period)]
             elif lep_type == 't':
                 out += [[0,0,0]] # TODO
             else:
@@ -281,11 +449,10 @@ class LeptonFakeRate(object):
 
         final = [1,1,1]
         for o in out:
-            final[0] *= 1-o[0]
-            final[1] *= 1-o[1]
-            final[2] *= 1-o[2]
-        result = [1-x for x in final]
-        return result
+            final[0] *= o[0]
+            final[1] *= o[1]
+            final[2] *= o[2]
+        return final
 
     def get_fake_err(self,row,l,fakename,period):
         pt = getattr(row, "%sPt" % l)
@@ -296,7 +463,7 @@ class LeptonFakeRate(object):
             pthigh  = fakedict['pt_high']
             etalow  = fakedict['eta_low']
             etahigh = fakedict['eta_high']
-            if pt>ptlow and pt<pthigh and eta>etalow and eta<etahigh:
+            if pt>=ptlow and pt<pthigh and eta>=etalow and eta<etahigh:
                 fake = fakedict['fakerate']
                 err = fakedict['error']
                 return fake, err
@@ -304,11 +471,19 @@ class LeptonFakeRate(object):
 
     def e_wz_fake_veto(self, row, l, period):
         fake, err = self.get_fake_err(row,l,'ZTightProbeElecTight',period)
-        return [fake, fake+err, fake-err]
+        #fake, err = self.get_fake_err(row,l,"FakeRateProbeElecTight",period)
+        default = fake
+        up = min([fake+err,1.])
+        down = max([fake-err,0.])
+        return [default, up, down]
 
     def m_wz_fake_veto(self, row, l, period):
         fake, err = self.get_fake_err(row,l,'ZTightProbeMuonTight',period)
-        return [fake, fake+err, fake-err]
+        #fake, err = self.get_fake_err(row,l,"FakeRateProbeMuonTight",period)
+        default = fake
+        up = min([fake+err,1.])
+        down = max([fake-err,0.])
+        return [default, up, down]
 
 
 class LeptonScaleFactors(object):
@@ -326,9 +501,9 @@ class LeptonScaleFactors(object):
         self.m_hist = self.m_rtfile.Get("TH2D_ALL_2012")
 
         # WZ 13TeV
-        with open(os.path.join(os.path.dirname(__file__),'muon.json'),'r') as mf:
+        with open(os.path.join(os.path.dirname(__file__),'muons_13TeV.json'),'r') as mf:
             self.m_id_dict_13tev = json.load(mf)
-        with open(os.path.join(os.path.dirname(__file__),'electron.json'),'r') as ef:
+        with open(os.path.join(os.path.dirname(__file__),'electrons_13TeV.json'),'r') as ef:
             self.e_id_dict_13tev = json.load(ef)
 
         # 4l 8TeV
@@ -382,7 +557,7 @@ class LeptonScaleFactors(object):
             pthi = iddict['pt_hi']
             etalow = iddict['abseta_lo']
             etahi = iddict['abseta_hi']
-            if pt>ptlow and pt<pthi and eta>etalow and eta<etahi:
+            if pt>=ptlow and pt<pthi and eta>=etalow and eta<etahi:
                 scale = iddict['ratio']
                 err = iddict['ratio_err']
                 return scale, err

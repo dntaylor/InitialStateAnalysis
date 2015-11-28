@@ -47,12 +47,12 @@ class WZLimits(object):
         saves = '%s_%s_%iTeV' % (self.analysis,self.region,self.period)
 
         plotter = Plotter(self.region,ntupleDir=self.ntuple_dir,saveDir=saves,period=self.period,rootName='plots_limits_wz',mergeDict=mergeDict,scaleFactor=self.scalefactor,datadriven=True)
-        plotter.initializeBackgroundSamples([sigMap[self.period][x] for x in channelBackground[self.region]])
+        plotter.initializeBackgroundSamples([sigMap[self.period][x] for x in channelBackground[self.region+'datadriven']])
         plotter.initializeDataSamples([sigMap[self.period]['data']])
         plotter.setIntLumi(intLumiMap[self.period])
 
         # set expected and observed yields
-        sources = [x for x in channelBackground[self.region] if x not in ['TT','T','DY','Z']] + ['datadriven'] if doDataDriven else channelBackground[self.region]
+        sources = [x for x in channelBackground[self.region+'datadriven'] if x not in ['TT','T','DY','Z','Zfiltered']] + ['datadriven'] if doDataDriven else channelBackground[self.region]
         for bg in sources:
             self.log.info('Processing {0}'.format(bg))
             val = plotter.getNumEntries(self.selection,sigMap[self.period][bg])

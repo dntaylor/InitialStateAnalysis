@@ -216,10 +216,11 @@ def defineCutFlowMap(region,channels,mass):
     }
     regionMap['WZ'][0] = {
         'mass' : 'finalstate.mass>100.',
-        'zpt' : '(z1.Pt1>20.&z1.Pt2>10.)',
+        'zpt' : '(z1.Pt1>20. && z1.Pt2>10.)',
         'zmass' : 'z1.mass>60. && z1.mass<120.',
         'bveto' : 'finalstate.bjetVeto30Medium==0',
-        'wdr' : 'w1.dR1_z1_1>0.1 & w1.dR1_z1_2>0.1',
+        'wdr' : 'w1.dR1_z1_1>0.1 && w1.dR1_z1_2>0.1',
+        'wmll' : 'w1.mll_z1_1>4. && w1.mll_z1_2>4.',
         'wpt' : 'w1.Pt1>20.',
         'met' : 'finalstate.met>30.',
     }
@@ -243,7 +244,7 @@ def defineCutFlowMap(region,channels,mass):
         #cutMap['labels'] = ['Preselection','s_{T}','Z Veto','#Delta#phi','Mass window']
         cutMap['labels'] = ['Preselection','s_{T}','Z Veto','#Delta R','Mass window']
         #cutMap['labels_simple'] = ['Preselection','sT','Z Veto','dPhi','Mass window']
-        cutMap['labels_simple'] = ['Preselection','sT','Z Veto','dR','Mass window']
+        cutMap['labels_simple'] = ['Preselection','sT','ZVeto','dR','MassWindow']
         cutMap['preselection'] = ['All events', 'Three Lepton', 'Trigger', 'Fiducial',\
                                   'Trigger threshold', 'Lepton ID', 'Isolation', 'QCD Rejection',\
                                   'Lepton Charge', '4th Lepton Veto']
@@ -260,7 +261,7 @@ def defineCutFlowMap(region,channels,mass):
         cutMap['labels'] = ['Preselection','s_{T}','Mass window']
         #cutMap['labels_simple'] = ['Preselection','sT','Z Veto','dPhi','Mass window']
         #cutMap['labels_simple'] = ['Preselection','sT','Z Veto','dR','Mass window']
-        cutMap['labels_simple'] = ['Preselection','sT','Mass window']
+        cutMap['labels_simple'] = ['Preselection','sT','MassWindow']
         cutMap['preselection'] = ['All events', 'Four Lepton', 'Trigger', 'Fiducial',\
                                   'Trigger threshold', 'Lepton ID', 'Isolation', 'QCD Rejection',\
                                   'Lepton Charge']
@@ -276,17 +277,19 @@ def defineCutFlowMap(region,channels,mass):
                             'Z lepton p_{T}',\
                             'Z window',\
                             #'b-jet Veto',\
-                            'W #DeltaR to Z',\
+                            #'W #DeltaR to Z',\
+                            'M(W_\\ell,Z_\\ell)',\
                             'W lepton p_{T}',\
                             'E_{T}^{miss}',\
                             'Mass 3l'\
                            ]
-        cutMap['labels_simple'] = ['Presel (ID)',\
-                                   'Z lep pt',\
-                                   'Z window',\
-                                   #'bjet Veto',\
-                                   'W dR',\
-                                   'W lep pt',\
+        cutMap['labels_simple'] = ['Preselection',\
+                                   'ZLepPt',\
+                                   'Zwindow',\
+                                   #'bjetVeto',\
+                                   #'WDR',\
+                                   'WMll',\
+                                   'WLepPt',\
                                    'MET',\
                                    'mass3l'\
                                   ]
@@ -294,7 +297,8 @@ def defineCutFlowMap(region,channels,mass):
                           regionMap['WZ'][0]['zpt'],\
                           regionMap['WZ'][0]['zmass'],\
                           #regionMap['WZ'][0]['bveto'],\
-                          regionMap['WZ'][0]['wdr'],\
+                          #regionMap['WZ'][0]['wdr'],\
+                          regionMap['WZ'][0]['wmll'],\
                           regionMap['WZ'][0]['wpt'],\
                           regionMap['WZ'][0]['met'],\
                           regionMap['WZ'][0]['mass']\
@@ -435,6 +439,10 @@ def getMergeDict(period):
             #'TTTo2L2Nu_13TeV-powheg'                         : '1',
             #'TT_TuneCUETP8M1_13TeV-powheg-pythia8'           : '1',
         }
+        sampleMergeDict['ZJetsFiltered'] = {
+            'DYJetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_filtered' : '1',
+            'DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_filtered'     : '1',
+        }
         sampleMergeDict['ZJets'] = {
             'DYJetsToLL_M-10to50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8' : '1',
             'DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8'     : '1',
@@ -484,6 +492,9 @@ def getMergeDict(period):
             'WZZ_TuneCUETP8M1_13TeV-amcatnlo-pythia8': '1',
             'WWZ_TuneCUETP8M1_13TeV-amcatnlo-pythia8': '1',
             #'WWW_TuneCUETP8M1_13TeV-amcatnlo-pythia8': '1',
+        }
+        sampleMergeDict['ZGFiltered'] = {
+            'ZGTo2LG_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8_filtered' : '1',
         }
         sampleMergeDict['ZG'] = {
             'ZGTo2LG_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8' : '1',
@@ -537,6 +548,15 @@ def getMergeDict(period):
             #'data_Run2015B': '1', # 50 ns
             'data_Run2015C': '1', # 25 ns and 50 ns
             'data_Run2015D': '1', # 25 ns
+            #'data_DoubleEG_Run2015C_05Oct2015_25ns'       : '1',
+            #'data_DoubleEG_Run2015D_05Oct2015_25ns'       : '1',
+            #'data_DoubleEG_Run2015D_PromptReco-v4_25ns'   : '1',
+            #'data_DoubleMuon_Run2015C_05Oct2015_25ns'     : '1',
+            #'data_DoubleMuon_Run2015D_05Oct2015_25ns'     : '1',
+            #'data_DoubleMuon_Run2015D_PromptReco-v4_25ns' : '1',
+            #'data_MuonEG_Run2015C_05Oct2015_25ns'         : '1',
+            #'data_MuonEG_Run2015D_05Oct2015_25ns'         : '1',
+            #'data_MuonEG_Run2015D_PromptReco-v4_25ns'     : '1',
         }
     # 8 TeV sample aliases
     if period==8:
@@ -673,6 +693,7 @@ def getSigMap(numLeptons,mass=500):
              'WZ'  : 'WZJets',
              'WW'  : 'WWJets',
              'Z'   : 'ZJets',
+             'Zfiltered'   : 'ZJetsFiltered',
              'W'   : 'WJets',
              'TT'  : 'TTJets',
              'T'   : 'SingleTop',
@@ -681,6 +702,7 @@ def getSigMap(numLeptons,mass=500):
              'QCD' : 'QCD',
              'WG'  : 'WG',
              'ZG'  : 'ZG',
+             'ZGfiltered'  : 'ZGFiltered',
              'Sig' : 'DBLH_m500',
              'data': 'data',
              'datadriven': 'datadriven',
@@ -761,7 +783,8 @@ def getChannelBackgrounds(runPeriod):
     }   
     if runPeriod==13:
         channelBackground = {
-            'WZ'      : ['T', 'TT', 'TTV', 'Z', 'WG', 'VVV', 'WW', 'ZZ', 'WZ'],
+            'WZ'      : ['T', 'TT', 'TTV', 'Zfiltered', 'ZGfiltered', 'VVV', 'WW', 'ZZ', 'WZ'],
+            'WZdatadriven' : ['TTV', 'ZG', 'VVV', 'WW', 'ZZ', 'WZ'],
             'NoVeto'  : ['T', 'TT', 'TTV', 'Z', 'VVV', 'WW', 'ZZ', 'WZ'],
             'W'       : ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'ZZ', 'WZ'],
             'FakeRate': ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'VVV', 'ZZ', 'WZ'],
@@ -825,17 +848,16 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
     doDetailed = kwargs.pop('doDetailed',False)
     doMinimal = kwargs.pop('doMinimal',False)
     if savedir: savedir += '/'
-    plotMethod('finalstate.sT',[40,0,1000],savedir+'sT',yaxis='Events/25.0 GeV/c^{2}',xaxis='S_{T} (GeV/c^{2})',lumitext=33,logy=1,ymin=0.1,cut=myCut,overflow=True,**kwargs)
-    #plotMethod('finalstate.sT',[50,0,500],savedir+'sT_zoom',yaxis='Events/10.0 GeV/c^{2}',xaxis='S_{T} (GeV/c^{2})',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
-    #plotMethod('finalstate.jetVeto20',[8,0,8],savedir+'numJets20',yaxis='Events',xaxis='Number of Jets (p_{T}>20 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
+    plotMethod('finalstate.sT',[40,0,1000],savedir+'sT',yaxis='Events/25.0 GeV',xaxis='S_{T} (GeV)',lumitext=33,logy=1,ymin=0.1,cut=myCut,overflow=True,**kwargs)
+    plotMethod('finalstate.elecVetoLoose',[8,0,8],savedir+'numElectronsLoose',yaxis='Events',xaxis='Number of Electrons (p_{T}>10 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
+    plotMethod('finalstate.muonVetoLoose',[8,0,8],savedir+'numMuonsLoose',yaxis='Events',xaxis='Number of Muons (p_{T}>10 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
+    plotMethod('finalstate.elecVetoLoose+finalstate.muonVetoLoose',[8,0,8],savedir+'numLeptonsLoose',yaxis='Events',xaxis='Number of Leptons (p_{T}>10 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
+    plotMethod('finalstate.jetVeto30',[8,0,8],savedir+'numJets30',yaxis='Events',xaxis='Number of Jets (p_{T}>30 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
+    plotMethod('finalstate.bjetVeto30Medium',[8,0,8],savedir+'numBJets30Medium',yaxis='Events',xaxis='Number of b Jets (p_{T}>30 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
     if not doMinimal:
-        plotMethod('finalstate.jetVeto30',[8,0,8],savedir+'numJets30',yaxis='Events',xaxis='Number of Jets (p_{T}>30 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
-        plotMethod('finalstate.elecVetoLoose',[8,0,8],savedir+'numElectronsLoose',yaxis='Events',xaxis='Number of Electrons (p_{T}>10 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
-        plotMethod('finalstate.muonVetoLoose',[8,0,8],savedir+'numMuonsLoose',yaxis='Events',xaxis='Number of Muons (p_{T}>10 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
         plotMethod('finalstate.elecVetoTight',[8,0,8],savedir+'numElectronsTight',yaxis='Events',xaxis='Number of Electrons (p_{T}>10 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
         plotMethod('finalstate.muonVetoTight',[8,0,8],savedir+'numMuonsTight',yaxis='Events',xaxis='Number of Muons (p_{T}>10 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
         #plotMethod('finalstate.bjetVeto30Loose',[8,0,8],savedir+'numBJets30Loose',yaxis='Events',xaxis='Number of b Jets (p_{T}>30 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
-        plotMethod('finalstate.bjetVeto30Medium',[8,0,8],savedir+'numBJets30Medium',yaxis='Events',xaxis='Number of b Jets (p_{T}>30 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
         #plotMethod('finalstate.bjetVeto30Tight',[8,0,8],savedir+'numBJets30Tight',yaxis='Events',xaxis='Number of b Jets (p_{T}>30 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
         #plotMethod('finalstate.jetVeto40',[8,0,8],savedir+'numJets40',yaxis='Events',xaxis='Number of Jets (p_{T}>40 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
         #plotMethod('finalstate.muonVeto5',[8,0,8],savedir+'muonVeto5',yaxis='Events',xaxis='Muon Veto (p_{T}>5 GeV)',lumitext=33,logy=0,cut=myCut,**kwargs)
@@ -851,7 +873,7 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
     plotMethod('event.nvtx',[50,0,50],savedir+'puVertices',yaxis='Events',xaxis='Number PU Vertices',legendpos=43,logy=0,cut=myCut,**kwargs)
     plotMethod('event.nvtx',[50,0,50],savedir+'puVertices_noreweight',yaxis='Events',xaxis='Number PU Vertices',legendpos=43,logy=0,cut=myCut, scalefactor='event.gen_weight*event.lep_scale*event.trig_scale',**kwargs)
     if analysis in ['WZ','WZ_Dijet']:
-        plotMethod('finalstate.leadJetPt',[60,0,300],savedir+'JetPt',yaxis='Events/5.0 GeV',xaxis='p_{T}^{jet} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('finalstate.leadJetPt',[30,0,300],savedir+'JetPt',yaxis='Events/10.0 GeV',xaxis='p_{T}^{jet} (GeV)',legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('finalstate.leadJetEta',[50,-5.0,5.0],savedir+'JetEta',yaxis='Events',xaxis='\\eta^{jet}',legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod('finalstate.leadJetPhi',[30,-3.14159,3.14159],savedir+'JetPhi',yaxis='Events',xaxis='\\phi^{jet}',legendpos=43,logy=0,cut=myCut,**kwargs)
     # plot lepton kinematics
@@ -884,14 +906,14 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
 
     # plot doubly charged higgs stuff
     if analysis in ['Hpp4l']:
-        plotMethod('h1.mass', [24,0,600],savedir+'hpp/Mass',              yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{+}\\ell^{+}} (GeV/c^{2})',        lumitext=33,logy=1,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h1.mass', [32,0,800],savedir+'hpp/Mass_alpha',        yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{+}\\ell^{+}} (GeV/c^{2})', lumitext=33,logy=1,cut=myCut,boxes=[[12,0.9*mass,1],[1.1*mass,800,1],[0.9*mass,1.1*mass,2]],**kwargs)
+        plotMethod('h1.mass', [24,0,600],savedir+'hpp/Mass',              yaxis='Events/25.0 GeV',xaxis='M_{\\ell^{+}\\ell^{+}} (GeV)',        legendpos=43,yscale=3.5,logy=1,cut=myCut,overflow=True,**kwargs)
+        plotMethod('h1.mass', [32,0,800],savedir+'hpp/Mass_alpha',        yaxis='Events/25.0 GeV',xaxis='M_{\\ell^{+}\\ell^{+}} (GeV)', lumitext=33,logy=1,cut=myCut,boxes=[[12,0.9*mass,1],[1.1*mass,800,1],[0.9*mass,1.1*mass,2]],**kwargs)
         plotMethod('h1.dPhi', [32,0,3.2],savedir+'hpp/Dphi',              yaxis='Events/0.1 rad',       xaxis='\\Delta\\phi_{\\ell^{+}\\ell^{+}} (rad)',   legendpos=41,lumitext=33,logy=0,cut=myCut,**kwargs)
         plotMethod('h1.Pt',   [40,0,400],savedir+'hpp/Pt',                yaxis='Events/10.0 GeV',      xaxis='p_{T}^{\\Phi^{++}} (GeV)',                  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('h1.dR',   [60,0,6], savedir+'hpp/dR',                 yaxis='Events',               xaxis='\\Delta R(\\ell^{+}\\ell^{+})',             legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('abs(h1.mass-h2.mass)', [30,0,300],savedir+'massdiff',yaxis='Events/10.0 GeV/c^{2}',xaxis='|M_{\\ell^{+}\\ell^{+}}-M_{\\ell^{-}\\ell^{-}}| (GeV/c^{2})',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h2.mass', [24,0,600],savedir+'hmm/Mass',              yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{-}\\ell^{-}} (GeV/c^{2})',        lumitext=33,logy=1,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h2.mass', [32,0,800],savedir+'hmm/Mass_alpha',        yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{-}\\ell^{-}} (GeV/c^{2})', lumitext=33,logy=1,cut=myCut,boxes=[[12,0.9*mass,1],[1.1*mass,800,1],[0.9*mass,1.1*mass,2]],**kwargs)
+        plotMethod('abs(h1.mass-h2.mass)', [30,0,300],savedir+'massdiff', yaxis='Events/10.0 GeV',xaxis='|M_{\\ell^{+}\\ell^{+}}-M_{\\ell^{-}\\ell^{-}}| (GeV)',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('h2.mass', [24,0,600],savedir+'hmm/Mass',              yaxis='Events/25.0 GeV',xaxis='M_{\\ell^{-}\\ell^{-}} (GeV)',        lumitext=33,logy=1,cut=myCut,overflow=True,**kwargs)
+        plotMethod('h2.mass', [32,0,800],savedir+'hmm/Mass_alpha',        yaxis='Events/25.0 GeV',xaxis='M_{\\ell^{-}\\ell^{-}} (GeV)', lumitext=33,logy=1,cut=myCut,boxes=[[12,0.9*mass,1],[1.1*mass,800,1],[0.9*mass,1.1*mass,2]],**kwargs)
         plotMethod('h2.dPhi', [32,0,3.2],savedir+'hmm/Dphi',              yaxis='Events/0.1 rad',       xaxis='\\Delta\\phi_{\\ell^{-}\\ell^{-}} (rad)',   legendpos=41,lumitext=33,logy=0,cut=myCut,**kwargs)
         plotMethod('h2.Pt',   [40,0,400],savedir+'hmm/Pt',                yaxis='Events/10.0 GeV',      xaxis='p_{T}^{\\Phi^{--}} (GeV)',                  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('h2.dR',   [60,0,6], savedir+'hmm/dR',                 yaxis='Events',               xaxis='\\Delta R(\\ell^{-}\\ell^{-})',             legendpos=43,logy=0,cut=myCut,**kwargs)
@@ -900,13 +922,13 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
         plotLepton(plotMethod,myCut,'h2',post='1',name='hmm/Leading',pretty='\\Phi^{--} \\text{Leading Lepton}',savedir=savedir,doDetailed=doDetailed,doMinimal=doMinimal,**kwargs)
         plotLepton(plotMethod,myCut,'h2',post='2',name='hmm/SubLeading',pretty='\\Phi^{--} \\text{SubLeading Lepton}',savedir=savedir,doDetailed=doDetailed,doMinimal=doMinimal,**kwargs)
     if analysis in ['Hpp3l']:
-        plotMethod('h1.mass', [24,0,600],savedir+'hpp/Mass',              yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})',        lumitext=33,logy=1,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h1.mass', [32,0,800],savedir+'hpp/Mass_alpha',        yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV/c^{2})', lumitext=33,logy=1,cut=myCut,boxes=[[12,0.9*mass,1],[1.1*mass,800,1],[0.9*mass,1.1*mass,2]],**kwargs)
+        plotMethod('h1.mass', [24,0,600],savedir+'hpp/Mass',              yaxis='Events/25.0 GeV',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV)',        legendpos=43,yscale=3.5,logy=1,cut=myCut,overflow=True,**kwargs)
+        plotMethod('h1.mass', [32,0,800],savedir+'hpp/Mass_alpha',        yaxis='Events/25.0 GeV',xaxis='M_{\\ell^{\\pm}\\ell^{\\pm}} (GeV)', lumitext=33,logy=1,cut=myCut,boxes=[[12,0.9*mass,1],[1.1*mass,800,1],[0.9*mass,1.1*mass,2]],**kwargs)
         plotMethod('h1.dPhi', [32,0,3.2],savedir+'hpp/Dphi',              yaxis='Events/0.1 rad',       xaxis='\\Delta\\phi_{\\ell^{\\pm}\\ell^{\\pm}} (rad)',   legendpos=41,lumitext=33,logy=0,cut=myCut,**kwargs)
         plotMethod('h1.Pt',   [40,0,400],savedir+'hpp/Pt',                yaxis='Events/10.0 GeV',      xaxis='p_{T}^{\\Phi^{\\pm\\pm}} (GeV)',                  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('h1.dR',   [60,0,6], savedir+'hpp/dR',                 yaxis='Events',               xaxis='\\Delta R(\\ell^{\\pm}\\ell^{\\pm})',             legendpos=43,logy=0,cut=myCut,**kwargs)
-        plotMethod('abs(h1.mass-h2.mass)', [30,0,300],savedir+'massdiff',yaxis='Events/10.0 GeV/c^{2}',xaxis='|M_{\\ell^{\\pm}\\ell^{\\pm}}-M_{\\ell^{\\mp}}| (GeV/c^{2})',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
-        plotMethod('h2.mass', [24,0,600],savedir+'hm/Mass',              yaxis='Events/25.0 GeV/c^{2}',xaxis='M_{\\ell^{\\mp},E_{T}^{miss}} (GeV/c^{2})',        lumitext=33,logy=1,cut=myCut,overflow=True,**kwargs)
+        plotMethod('abs(h1.mass-h2.mass)', [30,0,300],savedir+'massdiff',yaxis='Events/10.0 GeV',xaxis='|M_{\\ell^{\\pm}\\ell^{\\pm}}-M_{\\ell^{\\mp}}| (GeV)',lumitext=33,logy=0,cut=myCut,overflow=True,**kwargs)
+        plotMethod('h2.mass', [24,0,600],savedir+'hm/Mass',              yaxis='Events/25.0 GeV',xaxis='M_{\\ell^{\\mp},E_{T}^{miss}} (GeV)',        lumitext=33,logy=1,cut=myCut,overflow=True,**kwargs)
         plotMethod('h2.dPhi', [32,0,3.2],savedir+'hm/Dphi',              yaxis='Events/0.1 rad',       xaxis='\\Delta\\phi_{\\ell^{\\mp},E_{T}^{miss}} (rad)',   legendpos=41,lumitext=33,logy=0,cut=myCut,**kwargs)
         plotMethod('h2.Pt',   [40,0,400],savedir+'hm/Pt',                yaxis='Events/10.0 GeV',      xaxis='p_{T}^{\\Phi^{\\mp}} (GeV)',                  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         plotMethod('h2.dR',   [60,0,6], savedir+'hm/dR',                 yaxis='Events',               xaxis='\\Delta R(\\ell^{\\mp},E_{T}^{miss})',             legendpos=43,logy=0,cut=myCut,**kwargs)
@@ -916,6 +938,7 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
     # plot Z stuff
     if analysis in ['Z', 'Hpp3l', 'Hpp4l', 'WZ', 'WZ_W'] or region in ['Z', 'TT']:
         plotMethod('z1.mass', [60,60,120],   savedir+'z1/Mass_newWidth',      yaxis='Events/1.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (GeV)',     legendpos=43,logy=0,cut=myCut,**kwargs)
+        plotMethod('abs(z1.mass-{0})'.format(ZMASS), [60,0,60],   savedir+'z1/mllMinusMZ',      yaxis='Events/1.0 GeV', xaxis='|M_{\\ell^{+}\\ell^{-}}-M_Z| (GeV)',     legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod('z1.mass', [13,58.5,123.5],   savedir+'z1/Mass_newWidth_wide', yaxis='Events/5.0 GeV', xaxis='M_{\\ell^{+}\\ell^{-}} (GeV)',     legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod('z1.Pt',   [40,0,400],    savedir+'z1/Pt',                 yaxis='Events/10.0 GeV',xaxis='p_{T}^{Z} (GeV)',                  legendpos=43,logy=0,cut=myCut,overflow=True,**kwargs)
         if not doMinimal:
@@ -979,7 +1002,7 @@ def getFakeParams(analysis):
                     basecut = 'z1.Pass{0}1 && z1.Pass{0}2 && w1.dR1_z1_1>0.02 && w1.dR1_z1_2>0.02 && finalstate.met<25. && w1.mass<30. && w1Flv=="{1}"'.format(z,f)
                     numer = '{0} && w1.Pass{1}1==1'.format(basecut,p)
                     denom = '{0} && w1.Pass{1}1==0'.format(basecut,p)
-                    fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
+                    fakeRegions[analysis][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
                     #if p=='Tight' and channel not in ['HZZFakeRate']:
                     #   fakeRegion += '_LooseProbe'
                     #   denom += ' && w1.PassLoose1'
@@ -994,7 +1017,7 @@ def getFakeParams(analysis):
                     basecut = 'w1.Pt1>20. && w1.mass>30. && finalstate.met>30. && (z1.mass<60. || z1.mass>120.) && l1.Chg==l2.Chg && z1.dR>0.1 && w1.Pass{0}1 && w2Flv=="{1}"'.format(w,f)
                     numer = '{0} && w2.Pass{1}1==1'.format(basecut,p)
                     denom = '{0} && w2.Pass{1}1==0'.format(basecut,p)
-                    fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w2.Pt1', 'etaVar': 'w2.Eta1'}
+                    fakeRegions[analysis][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w2.Pt1', 'etaVar': 'w2.Eta1'}
                     #if p=='Tight' and channel not in ['HZZFakeRate']:
                     #   fakeRegion += '_LooseProbe'
                     #   denom += ' && w2.PassLoose1'
@@ -1006,7 +1029,7 @@ def getFakeParams(analysis):
                basecut = 'l1Flv=="{0}"'.format(f)
                numer = '{0} && w1.Pass{1}1==1'.format(basecut,p)
                denom = '{0} && w1.Pass{1}1==0'.format(basecut,p)
-               fakeRegions['WZ'][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
+               fakeRegions[analysis][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
                #if p=='Tight' and channel not in ['HZZFakeRate']:
                #   fakeRegion += '_LooseProbe'
                #   denom += ' && w1.PassLoose1'
@@ -1016,14 +1039,15 @@ def getFakeParams(analysis):
 
 
     # setup selections
-    ptBins = [1,10,20,30,200]
-    #if analysis in ['WZ_Dijet']: ptBins = [0,5,10,20,30,40,60,80,200]
+    #ptBins = [1,10,20,30,200]
+    ptBins = [10,1000]
+    #if analysis in ['WZ_Dijet']: ptBins = [1,10,20,30,40,60,80,200]
 
     etaBins = {
-        'e': [0,1.479,2.5],
-        'm': [0,1.2,2.4],
-        #'e': [0,2.5],
-        #'m': [0,2.4],
+        #'e': [0,1.479,2.5],
+        #'m': [0,1.2,2.4],
+        'e': [0,2.5],
+        'm': [0,2.4],
     }
 
     return fakeRegions, ptBins, etaBins
@@ -1062,40 +1086,21 @@ def getAcceptanceEfficiency(analysis):
     }
     return accEff
 
-def getCrossSections(plotter,cut,**kwargs):
-    doDataDriven = kwargs.pop('doDataDriven',True)
-    sigMap = getSigMap(3)
-    analysis = plotter.getAnalysis()
-    channel = analysis
-    period = plotter.getPeriod()
-    channelBackground = getChannelBackgrounds(period)
-    if doDataDriven:
-        backgroundMC = [x for x in channelBackground[channel] if x not in ['Z','ZG','TT','T','WZ']] + ['datadriven']
+def getNtupleDirectory(analysis,region,period):
+    ntupleMap = {
+        #('WZ','WZ',13) : '2015-11-14_WZ_WZ_13_isa_updatedNtuples_v1',
+    }
+    if (analysis,region,period) in ntupleMap:
+        return '/hdfs/store/user/dntaylor/{0}'.format(ntupleMap[(analysis,region,period)])
     else:
-        backgroundMC = [x for x in channelBackground[channel] if x not in ['WZ']]
+        return 'ntuples/{0}_{1}TeV_{2}'.format(analysis,period,region)
 
-    yields = {}
-    for chan in ['eee','eem','mme','mmm']:
-        thisCut = '{0} && channel=="{1}"'.format(cut,chan)
-        yields[chan] = {}
-        # get signal yield
-        wz, wzErr = plotter.getNumEntries(thisCut,sigMap[period]['WZ'],doError=True)
-        wzErr2 = wzErr**2
-        # get data yield
-        data, dataErr = plotter.getDataEntries(thisCut,doError=True)
-        dataErr2 = dataErr**2
-        # get background
-        bg = 0
-        bgErr2 = 0
-        for b in backgroundMC:
-            bgyield = plotter.getNumEntries(thisCut,sigMap[period][b],doError=True)
-            bg += bgyield[0]
-            bgErr2 += bgyield[1]**2
-        # subtract background from data
-        extractedYield = data - bg
-        extractedErr2 = dataErr2 + bgErr2
-        # fill the dict
-        yields[chan]['mc'] = [wz, wzErr]
-        yields[chan]['data'] = [extractedYield, extractedErr2**0.5]
-
-    return yields
+def getPassTightDefinition(analysis,region,period):
+    cutMap = {
+        ('WZ','WZ',13) : 'finalstate.mass>100. && (z1.Pt1>20.&&z1.Pt2>10.) && z1.mass>60. && z1.mass<120. && w1.mll_z1_1>4 && w1.mll_z1_2>4 && w1.Pt1>20. && finalstate.met>30.',
+    }
+    key = (analysis,region,period)
+    if key in cutMap:
+        return cutMap[key]
+    else:
+        return 'select.passTight'

@@ -29,7 +29,7 @@ from InitialStateAnalysis.Analyzers.AnalyzerHpp4l import AnalyzerHpp4l, Analyzer
 
 def run_analyzer(args):
     '''Run the analysis'''
-    analysis, channel, sample_name, filelist, outfile, period, loglevel = args
+    analysis, channel, sample_name, filelist, outfile, period, metShift, loglevel = args
     analyzerMap = {
         'Z'       : {
                     'Z'       : AnalyzerZ,
@@ -64,7 +64,7 @@ def run_analyzer(args):
                     },
     }
     theAnalyzer = analyzerMap[analysis][channel]
-    with theAnalyzer(sample_name,filelist,outfile,period,loglevel=loglevel) as analyzer:
+    with theAnalyzer(sample_name,filelist,outfile,period,metShift=metShift,loglevel=loglevel) as analyzer:
         analyzer.analyze()
 
 def get_sample_names(analysis,period,samples,**kwargs):
@@ -101,8 +101,12 @@ def get_sample_names(analysis,period,samples,**kwargs):
             #'WZ'         : '2015-10-24-13TeV-WZ', # miniaodv2, metfilters, new met uncertainty
             #'WZ'         : '2015-10-25-13TeV-WZ', # all samples and bug fix
             #'WZ'         : '2015-11-06-13TeV-WZ', # latest jec, metfilters, metuncertainty, new samples
-            'WZ'         : '2015-11-07-13TeV-WZ', # update to met uncertainty, also met shifts
-            'WZ_W'       : '2015-08-03-13TeV-2l',
+            #'WZ'         : '2015-11-07-13TeV-WZ', # update to met uncertainty, also met shifts
+            #'WZ'         : '2015-11-12-13TeV-WZ', # add new muon medium ID counts
+            #'WZ'         : '2015-11-18-13TeV-WZ', # jet clean based on tight IDs and loose jet id pt>20
+            'WZ'         : '2015-11-27-13TeV-WZ', # fix to event number (no more negatives) and add some met uncertainty stuff
+            #'WZ_W'       : '2015-08-03-13TeV-2l',
+            'WZ_W'       : '2015-11-19-13TeV-2l', # all the udpates above
             #'WZ_Dijet'   : '2015-08-17-13TeV-1l',
             #'WZ_Dijet'   : '2015-09-14-13TeV-1l', # updated with WZ changes
             #'WZ_Dijet'   : '2015-09-24-13TeV-1l', # add ht
@@ -110,7 +114,8 @@ def get_sample_names(analysis,period,samples,**kwargs):
             #'WZ_Dijet'   : '2015-10-06-13TeV-1l', # add hzz veto
             #'WZ_Dijet'   : '2015-10-12-13TeV-1l', # lower trigger
             #'WZ_Dijet'   : '2015-10-15-13TeV-1l', # fixed trigger and WZ no iso ID
-            'WZ_Dijet'   : '2015-11-06-13TeV-1l', # latest jec, metfilters, metuncertainty, new samples
+            #'WZ_Dijet'   : '2015-11-06-13TeV-1l', # latest jec, metfilters, metuncertainty, new samples
+            'WZ_Dijet'   : '2015-11-19-13TeV-1l', # The jet cleaning fixes
             'Hpp3l'      : '2015-03-30-13TeV-3l',
             'Hpp4l'      : '2015-03-30-13TeV-4l',
         },
@@ -135,6 +140,8 @@ def get_sample_names(analysis,period,samples,**kwargs):
 def run_ntuples(analysis, channel, period, samples, loglevel, **kwargs):
     '''Run a given analyzer for the analysis'''
     logger = logging.getLogger(__name__)
+    test = kwargs.pop('test',False)
+    metShift = kwargs.pop('metShift','')
     ntup_dir = './ntuples/%s_%iTeV_%s' % (analysis, period, channel)
     python_mkdir(ntup_dir)
     root_dir, sample_names = get_sample_names(analysis,period,samples,**kwargs)
@@ -145,14 +152,16 @@ def run_ntuples(analysis, channel, period, samples, loglevel, **kwargs):
         sampledir = '%s/%s' % (root_dir, sample)
         filelists[sample] = ['%s/%s' % (sampledir, x) for x in os.listdir(sampledir)]
 
-    if len(sample_names)==1: # only one, its a test, dont use map
+    if len(sample_names)==1 or test: # only one, its a test, dont use map
         name = sample_names[0]
-        run_analyzer((analysis, channel, name, filelists[name], "%s/%s.root" % (ntup_dir, name), period, loglevel))
+        outname =  "%s/%s.root" % (ntup_dir, name)
+        if test: outname = 'test.root'
+        run_analyzer((analysis, channel, name, filelists[name], outname, period, metShift, loglevel))
         return 0
 
     p = Pool(8)
     try:
-        p.map_async(run_analyzer, [(analysis, channel, name, filelists[name], "%s/%s.root" % (ntup_dir, name), period, loglevel) for name in sample_names]).get(999999)
+        p.map_async(run_analyzer, [(analysis, channel, name, filelists[name], "%s/%s.root" % (ntup_dir, name), period, metShift, loglevel) for name in sample_names]).get(999999)
     except KeyboardInterrupt:
         p.terminate()
         logger.info('Analyzer cancelled')
@@ -169,6 +178,8 @@ def submitFwkliteJob(sampledir,args):
     analysis = args.analysis
     channel = args.channel
     period = args.period
+    dryrun = args.dryrun
+    metShift = args.metShift
     sample_name = os.path.basename(sampledir)
 
     if 'uwlogin' in socket.gethostname():
@@ -204,7 +215,9 @@ def submitFwkliteJob(sampledir,args):
 
     # create bash script
     bash_name = '%s/%s_%s_%i_%s.sh' % (dag_dir+'inputs', analysis, channel, period, sample_name)
-    bashScript = '#!/bin/bash\npython $CMSSW_BASE/src/InitialStateAnalysis/Analyzers/python/Analyzer%s.py %s %s $INPUT $OUTPUT %i\n' % (analysis, channel, sample_name, period)
+    bashScript = '#!/bin/bash\npython $CMSSW_BASE/src/InitialStateAnalysis/Analyzers/python/Analyzer%s.py %s %s $INPUT $OUTPUT %i' % (analysis, channel, sample_name, period)
+    if metShift: bashScript += ' --metShift {0}'.format(metShift)
+    bashScript += '\n'
     with open(bash_name,'w') as file:
         file.write(bashScript)
     os.system('chmod +x %s' % bash_name)
@@ -218,8 +231,11 @@ def submitFwkliteJob(sampledir,args):
     #    farmoutString += ' --input-files-per-job=10 %s %s' % (jobName, bash_name)
     farmoutString += ' --input-files-per-job=%i %s %s' % (filesperjob, jobName, bash_name)
 
-    logger.info('Submitting %s' % sample_name)
-    os.system(farmoutString)
+    if not args.dryrun:
+        logger.info('Submitting %s' % sample_name)
+        os.system(farmoutString)
+    else:
+        print farmoutString
 
     return
 
@@ -228,8 +244,11 @@ def parse_command_line(argv):
 
     parser.add_argument('sample_names', nargs='+',help='Sample names w/ UNIX wildcards')
     parser.add_argument('-s','--submit',action='store_true',help='Submit jobs to condor')
+    parser.add_argument('-dr','--dryrun',action='store_true',help='Create jobs but dont submit')
+    parser.add_argument('-t','--test',action='store_true',help='Do a test (output test.root)')
     parser.add_argument('-jn','--jobName',nargs='?',type=str,const='',help='Job Name for condor submission')
     parser.add_argument('-d','--customDir',nargs='?',type=str,const='',help='Custom input directory')
+    parser.add_argument('-ms','--metShift',nargs='?',type=str,const='',help='Shift the met')
     args = parser.parse_args(argv)
 
     return args
@@ -254,7 +273,7 @@ def main(argv=None):
                 sampledir = '%s/%s' % (root_dir, sample)
                 submitFwkliteJob(sampledir,args)
         else:
-            run_ntuples(args.analysis, args.channel, args.period, args.sample_names, args.log, customDir=args.customDir)
+            run_ntuples(args.analysis, args.channel, args.period, args.sample_names, args.log, customDir=args.customDir, test=args.test, metShift=args.metShift)
 
     return 0
 

@@ -21,6 +21,7 @@ from xsec import xsecs
 from dataStyles import dataStyles
 import CMS_lumi, tdrstyle
 from plotUtils import *
+from InitialStateAnalysis.Utilities.utilities import *
 #from InitialStateAnalysis.Limits.limitUtils import 
 
 ROOT.gROOT.SetBatch(ROOT.kTRUE)
@@ -35,6 +36,7 @@ class PlotterBase(object):
         loglevel = kwargs.pop('loglevel','INFO')
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(getattr(logging,loglevel))
+        region = kwargs.pop('region',analysis)
         saveDir = kwargs.pop('saveDir','')
         ntupleDir = kwargs.pop('ntupleDir','ntuples')
         period = kwargs.pop('period',13)
@@ -66,8 +68,8 @@ class PlotterBase(object):
         self.canvas.SetRightMargin( self.R )
         self.canvas.SetTopMargin( self.T )
         self.canvas.SetBottomMargin( self.B )
-        self.canvas.SetTickx(0)
-        self.canvas.SetTicky(0)
+        self.canvas.SetTickx(1)
+        self.canvas.SetTicky(1)
 
         # now, setup plotter conditions (some to be initalized later)
         self.j = 0 # global variable to prevent resusing histograms
@@ -78,6 +80,7 @@ class PlotterBase(object):
         self.signalInitialized = False
         self.signal = []
         self.analysis = analysis
+        self.region = region
         self.blind = blind
         self.sqrts=period
         # worry about this later
@@ -98,26 +101,35 @@ class PlotterBase(object):
         self.scaleFactor = scaleFactor
         self.dataScaleFactor = dataScaleFactor
         self.datadriven = datadriven
-        self.baseSelection = baseSelection
-        if self.baseSelection:
-            self.tempNtupleFileName = self.plotDir+"/"+rootName+"_temp.root"
-            self.tempNtupleFile = ROOT.TFile(self.tempNtupleFileName,"recreate")
+        #self.baseSelection = baseSelection
+        #if self.baseSelection:
+        #    self.tempNtupleFileName = self.plotDir+"/"+rootName+"_temp.root"
+        #    self.tempNtupleFile = ROOT.TFile(self.tempNtupleFileName,"recreate")
         self.period=period
+        #self.proof = ROOT.TProof.Open("workers=8")
+        # adapt this to turn off proof output
+        #void PrintEmptyProgress(Long64_t, Long64_t, Float_t, Long64_t)
+        #{
+        #   return;
+        #}
+        #gProof->SetPrintProgress(&PrintEmptyProgress);
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        if self.baseSelection:
-            self.logger.debug('Cleaning up plotter')
-            self.tempNtupleFile.Delete("all")
-            os.remove(self.tempNtupleFileName)
+        #if self.baseSelection:
+        #    self.logger.debug('Cleaning up plotter')
+        #    self.tempNtupleFile.Delete("all")
+        #    os.remove(self.tempNtupleFileName)
+        pass
 
     def __del__(self):
-        if self.baseSelection:
-            self.logger.debug('Cleaning up plotter')
-            self.tempNtupleFile.Delete("all")
-            os.remove(self.tempNtupleFileName)
+        #if self.baseSelection:
+        #    self.logger.debug('Cleaning up plotter')
+        #    self.tempNtupleFile.Delete("all")
+        #    os.remove(self.tempNtupleFileName)
+        pass
 
     def reset(self):
         '''Reset the plotter class'''
@@ -141,8 +153,8 @@ class PlotterBase(object):
         self.canvas.SetRightMargin( self.R )
         self.canvas.SetTopMargin( self.T )
         self.canvas.SetBottomMargin( self.B )
-        self.canvas.SetTickx(0)
-        self.canvas.SetTicky(0)
+        self.canvas.SetTickx(1)
+        self.canvas.SetTicky(1)
         
 
     def initializeBackgroundSamples(self,sampleList):
@@ -150,7 +162,7 @@ class PlotterBase(object):
         self.backgrounds = sampleList
         if self.datadriven:
             self.backgrounds = ['datadriven']
-            self.backgrounds.extend([x for x in sampleList if x not in ['SingleTop', 'TTJets', 'ZJets']])
+            self.backgrounds.extend([x for x in sampleList if x not in ['SingleTop', 'TTJets', 'ZJets', 'ZJetsFiltered']])
             sampleList = self.backgrounds
         self.initializeSamples(sampleList)
         self.backgroundInitialized = True
@@ -172,19 +184,37 @@ class PlotterBase(object):
         '''initialize single sample'''
         self.samples[sample] = {} 
         if self.datadriven and sample == 'datadriven': return
-        file = self.ntupleDir+'/%s.root' % sample
-        self.samples[sample]['file'] = ROOT.TFile(file)
-        tree = self.samples[sample]['file'].Get(self.analysis)
-        if self.baseSelection:
-            self.tempNtupleFile.cd()
-            self.samples[sample]['tree'] = tree.CopyTree(self.baseSelection)
+        filename = self.ntupleDir+'/%s.root' % sample
+        filedir = self.ntupleDir+'/%s' % sample
+        if os.path.isfile(filename):
+            filenames = [filename]
+            self.logger.debug('Adding {0}'.format(filename))
+        elif os.path.exists(filedir):
+            filenames = glob.glob('{0}/*.root'.format(filedir))
+            self.logger.debug('Adding {0} files from {1}'.format(len(filenames),filedir))
         else:
-            self.samples[sample]['tree'] = tree
+            filenames = []
+            self.logger.warning('File {0} does not exist and directory {1} does not exists.'.format(filename,filedir))
+        tchain = ROOT.TChain(self.analysis)
+        for fname in filenames:
+            tchain.Add(fname)
+        #tchain.SetProof()
+        self.samples[sample]['files'] = filenames
+        #self.samples[sample]['file'] = ROOT.TFile(filename)
+        #tree = self.samples[sample]['file'].GetTree(self.analysis)
+        #if self.baseSelection:
+        #    self.tempNtupleFile.cd()
+        #    self.samples[sample]['tree'] = tree.CopyTree(self.baseSelection)
+        #else:
+        self.samples[sample]['tree'] = tchain
         if 'data' in sample:
             lumifile = self.ntupleDir+'/%s.lumicalc.sum' % sample
         else:
-            cutflowHist = self.samples[sample]['file'].Get('cutflow')
-            n_evts = cutflowHist.GetBinContent(1)
+            n_evts = 0
+            for fn in self.samples[sample]['files']:
+                tfile = ROOT.TFile(fn)
+                cutflowHist = tfile.Get('cutflow')
+                n_evts += cutflowHist.GetBinContent(1)
             sample_xsec = self.xsecs[sample]
             self.samples[sample]['lumi'] = float(n_evts)/sample_xsec
             self.logger.debug('Initializing MC sample %s with %i events and xsec %f to lumi %f.'\
@@ -317,7 +347,7 @@ class PlotterBase(object):
 
     def getScaledIndividualSampleEntries(self,sample,selection,scalefactor,**kwargs):
         if 'datadriven' == sample:
-            hist = self.getDataDrivenHist('1', [1,0,2], selection, **kwargs)
+            hist = self.getDataDrivenHist('1', [1,-10,10], selection, **kwargs)
             if hist:
                 hist.Sumw2()
                 val = hist.Integral()
@@ -325,14 +355,15 @@ class PlotterBase(object):
             else:
                 val = 0
         else:
-            #tree = self.samples[sample]['file'].Get(self.analysis)
             tree = self.samples[sample]['tree']
-            tree.Draw('1>>h%s%i(1,0,2)'%(sample,self.j),'%s*(%s)' %(scalefactor,selection),'goff')
-            if not ROOT.gDirectory.Get("h%s%i" %(sample,self.j)):
+            histname = 'h%s%i' %(sample,self.j)
+            tree.Draw('1>>%s(1,-10,10)'%(histname),'%s*(%s)' %(scalefactor,selection),'goff')
+            #hist = self.proof.GetOutputList().FindObject(histname)
+            if not ROOT.gDirectory.Get(histname):
                 self.logger.debug('%s: No entries'%sample)
                 val = 0
             else:
-                hist = ROOT.gDirectory.Get("h%s%i" %(sample,self.j)).Clone("hnew%s%i" %(sample,self.j))
+                hist = ROOT.gDirectory.Get(histname).Clone("hnew%s%i" %(sample,self.j))
                 hist.Sumw2()
                 val = hist.Integral()
                 self.logger.debug('%s: Entries: %f'%(sample,val))
@@ -353,7 +384,7 @@ class PlotterBase(object):
         totalVal = 0
         totalErr2 = 0
         scalefactor = "event.gen_weight*event.lep_scale_up*event.trig_scale*event.pu_weight" if scaleup else self.scaleFactor
-        if 'data' in sample:
+        if 'data' in sample and sample!='datadriven':
             scalefactor = self.dataScaleFactor
         if customScale: scalefactor = customScale
         self.j += 1
@@ -401,15 +432,17 @@ class PlotterBase(object):
         #tree = self.samples[sample]['file'].Get(self.analysis)
         tree = self.samples[sample]['tree']
         zbin = kwargs.pop('zbin',[10,0,10])
-        drawString = "%s:%s>>h%s%s%s(%s)" % (var2,var1,sample,var1,var2,', '.join(str(x) for x in bin1+bin2))
+        histname = 'h%s%s%s' % (sample,var1,var2)
+        drawString = "%s:%s>>%s(%s)" % (var2,var1,histname,', '.join(str(x) for x in bin1+bin2))
         if not cut: cut = '1'
         if 'data' not in sample:
             tree.Draw(drawString,'%s*(%s)' % (self.scaleFactor,cut),'goff')
         else:
             tree.Draw(drawString,'%s*(%s)' % (self.dataScaleFactor,cut),'goff')
-        if not ROOT.gDirectory.Get("h%s%s%s" %(sample, var1,var2)):
+        #hist = self.proof.GetOutputList().FindObject(histname)
+        if not ROOT.gDirectory.Get(histname):
             return 0
-        hist = ROOT.gDirectory.Get("h%s%s%s" %(sample, var1,var2)).Clone("hmod%s%s%s"%(sample,var1,var2))
+        hist = ROOT.gDirectory.Get(histname).Clone("hmod%s%s%s"%(sample,var1,var2))
         hist.Sumw2()
         if 'data' not in sample: # if it is mc, scale to intLumi
             lumi = self.samples[sample]['lumi']
@@ -471,6 +504,7 @@ class PlotterBase(object):
                 tree.Draw(drawString,'%s*(%s)' % (self.scaleFactor,cut),'goff')
             else:
                 tree.Draw(drawString,'%s*(%s)' % (self.dataScaleFactor,cut),'goff')
+        #hist = self.proof.GetOutputList().FindObject(histname)
         if not ROOT.gDirectory.Get(histname):
             return 0
         hist = ROOT.gDirectory.Get(histname).Clone(histname+'_mod')
@@ -598,7 +632,7 @@ class PlotterBase(object):
             }
 
         # remove any passTight cuts, assumes these are there, since it only returns the all tight stuff
-        allCuts = 'finalstate.mass>100. && (z1.Pt1>20.&&z1.Pt2>10.) && z1.mass>60. && z1.mass<120. && w1.dR1_z1_1>0.1 && w1.dR1_z1_2>0.1 && w1.Pt1>20. && finalstate.met>30.'
+        allCuts = getPassTightDefinition(self.analysis,self.region,self.period)
         if self.analysis in ['Hpp3l']:
             allCuts = '1' # no special cuts at select.passTight
         if type(cut) is list:
@@ -613,50 +647,70 @@ class PlotterBase(object):
                 cut = cut.replace('l{0}.PassTight'.format(l),'1')
             cut = cut.replace('select.passTight',allCuts)
         hists = ROOT.TList()
-        for comb in itertools.product('PF', repeat=3): # hard code 3l for now
-            if comb.count('P')==3: continue # signal region
-            if type(cut) is list:
-                custCut = ['{0} && fakeChannel=="{1}"'.format(x,''.join(comb)) for x in cut]
-            else:
-                custCut = '{0} && fakeChannel=="{1}"'.format(cut,''.join(comb))
-            scalefactor = 'fakerate'
-            #for l in range(3):
-            #    if type(cut) is list:
-            #        for c in range(len(cut)):
-            #            if doSimple:
-            #                custCut[c] += ' && {0}==1'.format(nameMap[l]) if comb[l] == 'P' else ' && {0}==0'.format(nameMap[l])
-            #            else:
-            #                custCut[c] += ' && {0}==1'.format(nameMap[l]) if comb[l] == 'P' else ' && {0}==0'.format(nameMap[l])
-            #    else:
-            #        if doSimple:
-            #            custCut += ' && {0}==1'.format(nameMap[l]) if comb[l] == 'P' else ' && {0}==0'.format(nameMap[l])
-            #        else:
-            #            custCut += ' && {0}==1'.format(nameMap[l]) if comb[l] == 'P' else ' && {0}==0'.format(nameMap[l])
-            #denom = '1./(({0}-{1})*({2}-{3})*({4}-{5}))'.format(effMap[0],fakeMap[0],effMap[1],fakeMap[1],effMap[2],fakeMap[2])
-            #num = '1' if comb.count('P') in [1,3] else '-1'
-            #for l in range(3):
-            #    if comb[l] == 'P':
-            #        num += '*(1-{0})'.format(fakeMap[l])
-            #    else:
-            #        num += '*({0})'.format(fakeMap[l])
-            #scalefactor = num + '*' + denom
-            #if doSimple: # sascha's way
-            #    num = '1' if comb.count('F') in [1,3] else '-1'
-            #    for l in range(3):
-            #        if comb[l] == 'F': num += '*{0}'.format(fakeMap[l])
-            #    scalefactor = num
-            #    if comb.count('P')==3: continue
-            # get contribution from data
-            for sample in self.data:
-                hist = self.getHist(sample,variables,binning,custCut,customScale=scalefactor,**kwargs)
-                hists.Add(hist)
-            # subtract contribution from signal MC
-            mcScalefactor = self.scaleFactor + '*(-1*' + scalefactor + ')'
-            for sample in self.backgrounds:
-                if sample=='datadriven': continue
-                if 'HPlusPlus' in sample: continue # dont include signal in subtraction
-                hist = self.getHist(sample,variables,binning,custCut,customScale=mcScalefactor,**kwargs)
-                hists.Add(hist)
+
+        # the new way, dont do it a million times
+        if type(cut) is list:
+            custCut = ['{0} && fakeChannel!="PPP"'.format(x) for x in cut]
+        else:
+            custCut = '{0} && fakeChannel!="PPP"'.format(cut)
+        scalefactor = 'event.fakerate'
+        # get contribution from data
+        for sample in self.data:
+            hist = self.getHist(sample,variables,binning,custCut,customScale=scalefactor,**kwargs)
+            hists.Add(hist)
+        # subtract contribution from signal MC
+        mcScalefactor = self.scaleFactor + '*(-1*' + scalefactor + ')'
+        for sample in self.backgrounds:
+            if sample=='datadriven': continue
+            if 'HPlusPlus' in sample: continue # dont include signal in subtraction
+            hist = self.getHist(sample,variables,binning,custCut,customScale=mcScalefactor,**kwargs)
+            hists.Add(hist)
+
+
+        #for comb in itertools.product('PF', repeat=3): # hard code 3l for now
+        #    if comb.count('P')==3: continue # signal region
+        #    if type(cut) is list:
+        #        custCut = ['{0} && fakeChannel=="{1}"'.format(x,''.join(comb)) for x in cut]
+        #    else:
+        #        custCut = '{0} && fakeChannel=="{1}"'.format(cut,''.join(comb))
+        #    scalefactor = 'event.fakerate'
+        #    #for l in range(3):
+        #    #    if type(cut) is list:
+        #    #        for c in range(len(cut)):
+        #    #            if doSimple:
+        #    #                custCut[c] += ' && {0}==1'.format(nameMap[l]) if comb[l] == 'P' else ' && {0}==0'.format(nameMap[l])
+        #    #            else:
+        #    #                custCut[c] += ' && {0}==1'.format(nameMap[l]) if comb[l] == 'P' else ' && {0}==0'.format(nameMap[l])
+        #    #    else:
+        #    #        if doSimple:
+        #    #            custCut += ' && {0}==1'.format(nameMap[l]) if comb[l] == 'P' else ' && {0}==0'.format(nameMap[l])
+        #    #        else:
+        #    #            custCut += ' && {0}==1'.format(nameMap[l]) if comb[l] == 'P' else ' && {0}==0'.format(nameMap[l])
+        #    #denom = '1./(({0}-{1})*({2}-{3})*({4}-{5}))'.format(effMap[0],fakeMap[0],effMap[1],fakeMap[1],effMap[2],fakeMap[2])
+        #    #num = '1' if comb.count('P') in [1,3] else '-1'
+        #    #for l in range(3):
+        #    #    if comb[l] == 'P':
+        #    #        num += '*(1-{0})'.format(fakeMap[l])
+        #    #    else:
+        #    #        num += '*({0})'.format(fakeMap[l])
+        #    #scalefactor = num + '*' + denom
+        #    #if doSimple: # sascha's way
+        #    #    num = '1' if comb.count('F') in [1,3] else '-1'
+        #    #    for l in range(3):
+        #    #        if comb[l] == 'F': num += '*{0}'.format(fakeMap[l])
+        #    #    scalefactor = num
+        #    #    if comb.count('P')==3: continue
+        #    # get contribution from data
+        #    for sample in self.data:
+        #        hist = self.getHist(sample,variables,binning,custCut,customScale=scalefactor,**kwargs)
+        #        hists.Add(hist)
+        #    # subtract contribution from signal MC
+        #    mcScalefactor = self.scaleFactor + '*(-1*' + scalefactor + ')'
+        #    for sample in self.backgrounds:
+        #        if sample=='datadriven': continue
+        #        if 'HPlusPlus' in sample: continue # dont include signal in subtraction
+        #        hist = self.getHist(sample,variables,binning,custCut,customScale=mcScalefactor,**kwargs)
+        #        hists.Add(hist)
 
         histname = 'h%s_datadriven' % variables[0].replace('(','_').replace(')','_')
         if hists.IsEmpty(): return 0
@@ -789,7 +843,7 @@ class PlotterBase(object):
         elif legendpos % 10 == 2: # in the middle
             xend = 0.70
         else: # default (on right)
-            xend = 0.95
+            xend = 0.92
         if legendpos//10 == 1:    # bottom
             yend = 0.35
         elif legendpos//10 == 2:  # middle

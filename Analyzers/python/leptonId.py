@@ -38,6 +38,8 @@ def elec_id(rtrow, l, period, idType):
         if not getattr(rtrow, '%sCBIDTight' % l): return False
     if idType=='WZLooseTrigIso':
         if not getattr(rtrow, '%sPassWZLooseTrigIso' % l): return False
+    if idType=='WZTightTrigIso':
+        if not getattr(rtrow, '%sPassWZTightTrigIso' % l): return False
     if idType=='VetoNoIso':
         if not getattr(rtrow, '%sCBIDVetoNoIso' % l): return False
     if idType=='LooseNoIso':
@@ -61,8 +63,10 @@ def elec_id(rtrow, l, period, idType):
 def muon_id(rtrow, l, period, idType):
     if idType=='Tight':
         if not getattr(rtrow,'%sPFIDTight'%l): return False
-    if idType=='WZLooseTrig':
+    if idType=='WZLooseTrigIso':
         if not getattr(rtrow,'%sPassWZLooseTrigIso'%l): return False
+    if idType=='WZTightTrigIso':
+        if not getattr(rtrow,'%sPassWZTightTrigIso'%l): return False
     if idType=='Loose':
         if not getattr(rtrow,'%sPFIDLoose'%l): return False
     if idType=='ZZLoose':

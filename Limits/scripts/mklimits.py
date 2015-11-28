@@ -5,7 +5,7 @@ import argparse
 import numpy as np
 import itertools
 
-from InitialStateAnalysis.Plotters.plotUtils import _3L_MASSES, _4L_MASSES, getSigMap, getIntLumiMap, getChannels, getMergeDict, ZMASS, getChannelBackgrounds
+from InitialStateAnalysis.Plotters.plotUtils import _3L_MASSES, _4L_MASSES, getSigMap, getIntLumiMap, getChannels, getMergeDict, ZMASS, getChannelBackgrounds, getNtupleDirectory
 from InitialStateAnalysis.Plotters.Plotter import Plotter
 from InitialStateAnalysis.Plotters.plotUtils import *
 from InitialStateAnalysis.Limits.Limits import Limits
@@ -92,7 +92,7 @@ def limit(analysis,region,period,mass,**kwargs):
     # base_selections is the cut applied on top of individual channel cuts
     # sbcut is the sideband selection for alpha calculation
     # srcut is the signal ragion selection for alpha calculation
-    limits = Limits(analysis,region, period, base_selections, './ntuples/%s_%iTeV_%s' % (analysis, period, region),
+    limits = Limits(analysis,region, period, base_selections, getNtupleDirectory(analysis,region,period),
                     '%s/%s_%itev_%s/%s/%s' % (datacardDir, analysis, period, region, directory, mass),
                     channels=['dblh%s' % analysis], lumi=intLumiMap[period],
                     blinded=not unblind, bgMode=mode, scalefactor=scalefactor,
@@ -386,7 +386,7 @@ def calculateLeptonSystematic(mass,chanCuts,chanScales,**kwargs):
     region = 'Hpp3l'
     runPeriod = 8
     nl = 3
-    ntuples = 'ntuples/%s_%iTeV_%s' % (analysis,runPeriod,region)
+    ntuples = getNtupleDirectory(analysis,region,runPeriod)
     saves = '%s_%s_%sTeV' % (analysis,region,runPeriod)
     sigMap = getSigMap(4,mass) if do4l else getSigMap(nl,mass)
     intLumiMap = getIntLumiMap()

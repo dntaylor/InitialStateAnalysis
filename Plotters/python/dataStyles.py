@@ -90,10 +90,11 @@ dataStyles['ZG'] = {
     'fillstyle': 1001,
 }
 
+dataStyles['ZGFiltered'] = copy.deepcopy(dataStyles['ZG'])
 dataStyles['ZGToLLG_8TeV-madgraph'] = copy.deepcopy(dataStyles['ZG'])
 
 dataStyles['WG'] = copy.deepcopy(dataStyles['ZG'])
-dataStyles['WG']['name'] = 'W#gamma*'
+dataStyles['WG']['name'] = 'W#gamma'
 dataStyles['WG']['fillcolor'] = DarkYellow
 dataStyles['WG']['linecolor'] = DarkYellowA
 
@@ -155,6 +156,7 @@ dataStyles['ZJets'] = {
     'fillstyle': 1001,
 }
 
+dataStyles['ZJetsFiltered'] = copy.deepcopy(dataStyles['ZJets'])
 dataStyles['DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball'] = copy.deepcopy(dataStyles['ZJets'])
 dataStyles['DYJetsToLL_M-10To50filter_8TeV-madgraph'] = copy.deepcopy(dataStyles['ZJets'])
 dataStyles['DYJetsToLL_M-10To50filter_8TeV-madgraph']['name'] = "Z Low Mass"

@@ -190,7 +190,7 @@ class AnalyzerDijet(AnalyzerBase):
         return True
 
     def wveto(self,rtrow):
-        mtVar = 'PFMET' if self.period==13 else 'PfMet_Ty1'
+        mtVar = 'PfMet_type1' if self.period==13 else 'PfMet_Ty1'
         for obj in self.objects:
             if obj[0] == 'm':
                 if getattr(rtrow, "%sMtTo%s" % (obj, mtVar)) > 20.: return False

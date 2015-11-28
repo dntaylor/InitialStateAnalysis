@@ -67,7 +67,7 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
         '''
         #singleTrigMatch_leg1 = getattr(rtrow,'%sMatchesSingleE_leg1' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg1' %self.objCand[0])
         singleTrigMatch_leg2 = getattr(rtrow,'%sMatchesSingleE_leg2' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg2' %self.objCand[0])
-        veto = (rtrow.eVetoNoIso + rtrow.muVetoNoIso == 0)
+        veto = (rtrow.eVetoTrigIso + rtrow.muVetoTightTrigIso == 0)
         return singleTrigMatch_leg2 and veto
 
     def getTriggerPrescale(self,rtrow):
@@ -120,8 +120,10 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
                 kwargs['isoCut']['e'] = 9999.
         if type=='Loose':
             kwargs['idDef'] = {
-                'e':'LooseNoIso',
-                'm':'Loose',
+		#'e':'LooseNoIso',
+                'e':'WZLooseTrigIso',
+                #'m':'Loose',
+                'm':'WZTightTrigIso',
                 't':'Loose'
             }
             kwargs['isoCut'] = {
@@ -153,6 +155,29 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
 
     def trigger(self, rtrow):
         triggers = ['singleE_leg2Pass', 'singleMu_leg2Pass']
+
+        nottriggers = []
+        # for data, to merge datasets
+        if self.isData:
+            if 'DoubleMuon' in self.file_name:
+                nottriggers = [] # allow all triggers
+            elif 'DoubleEG' in self.file_name:
+                nottriggers = ['singleMu_leg2Pass'] # dont allow doublemuon or muoneg datasets
+            elif 'MuonEG' in self.file_name:
+                nottriggers = ['singleMu_leg2Pass', 'singleE_leg2Pass'] # don't allow doublemuon triggers
+            else:
+                nottriggers = []
+
+        good = False
+        for t in triggers:
+            if getattr(rtrow,t)>0:
+                good = True
+                break
+        for t in nottriggers:
+            if getattr(rtrow,t)>0:
+                good = False
+                break
+        return good
 
         for t in triggers:
             if getattr(rtrow,t)>0:
@@ -194,7 +219,7 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
     def wVeto(self,rtrow):
         leps = self.objCand
         if rtrow.type1_pfMetEt > 20.: return False
-        if getattr(rtrow, "%sMtToPFMET_type1" % (leps[0])) > 25.: return False
+        if getattr(rtrow, "%sMtToPfMet_type1" % (leps[0])) > 25.: return False
         return True
 
     def jetSelection(self,rtrow):

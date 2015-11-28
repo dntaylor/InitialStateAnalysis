@@ -10,9 +10,11 @@ from array import array
 
 def buildCutTree(cutlabels,**kwargs):
     eventLeafs = ['evt','run','lumi']
-    eventBranchLineToProcess = "struct eventBranch_t {" + " ".join(["Int_t {0};".format(x) for x in eventLeafs]) + "}"
+    #eventBranchLineToProcess = "struct eventBranch_t {" + " ".join(["Int_t {0};".format(x) for x in eventLeafs]) + "}"
+    eventBranchLineToProcess = "struct eventBranch_t {ULong64_t evt; Int_t run; Int_t lumi;}"
     cutBranchLineToProcess = "struct cutBranch_t {" + " ".join(["Int_t {0};".format(x) for x in cutlabels]) + "}"
-    eventBranchStrForBranch = '{0}/I:'.format(eventLeafs[0]) + ':'.join(eventLeafs[1:])
+    #eventBranchStrForBranch = '{0}/I:'.format(eventLeafs[0]) + ':'.join(eventLeafs[1:])
+    eventBranchStrForBranch = 'evt/l:run/I:lumi'
     cutBranchStrForBranch = '{0}/I:'.format(cutlabels[0]) + ':'.join(cutlabels[1:])
     if not hasattr(rt,"eventBranch_t"): rt.gROOT.ProcessLine(eventBranchLineToProcess)
     if not hasattr(rt,"cutBranch_t"): rt.gROOT.ProcessLine(cutBranchLineToProcess)
@@ -26,8 +28,8 @@ def buildCutTree(cutlabels,**kwargs):
 def getStruct(name,varDict):
     strToProcess = 'struct {0}'.format(name) + ' {'
     strForBranch = ''
-    typeMap = {'I': 'Int_t', 'F': 'Float_t', 'C': 'Char_t'}
-    for t in ['F','I']:
+    typeMap = {'I': 'Int_t', 'F': 'Float_t', 'l': 'ULong64_t', 'C': 'Char_t'}
+    for t in ['F','I','l']:
         if t not in varDict: continue
         for v,var in enumerate(varDict[t]):
             strToProcess += '{0} {1};'.format(typeMap[t],var)
@@ -85,11 +87,11 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
                     lepMetVars += ['{0}{1}{2}'.format(m,s,d)]
 
     lepFloats = ['Pt', 'Eta', 'Phi', 'Iso', 'Dxy', 'Dz', 'SigmaIEtaIEta', 'DEtaIn', 'DPhiIn', 'HOverE', 'OoEmOoP', 'TriggeringMVA', 'NonTriggeringMVA', 'NormalizedChi2', 'JetPt', 'JetBTag']
-    for l in ['Loose','Tight']:
-        for t in ['','_up','_down']:
+    for t in ['','_up','_down']:
+        for l in ['Loose','Tight']:
             lepFloats += ['LepScale{0}{1}'.format(l,t)]
-        lepFloats += ['LepEff{0}'.format(l,t)]
-    lepFloats += ['LepFake']
+        lepFloats += ['LepEff{0}'.format(t)]
+        lepFloats += ['LepFake{0}'.format(t)]
     lepInts = ['Chg', 'PassLoose', 'PassTight', 'GenPdgId', 'MotherGenPdgId', 'ChargeConsistent', 'ExpectedMissingInnerHits', 'PassConversionVeto', 'IsGlobalMuon', 'IsPFMuon', 'IsTrackerMuon', 'ValidMuonHits', 'MatchedStations', 'ValidPixelHits', 'TrackerLayers']
 
 
@@ -118,9 +120,10 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
 
     # define common root classes
     eventVars = {}
-    eventVars['I'] = ['evt','run','lumi','nvtx','GenNUP','trig_prescale']
-    eventVars['F'] = ['trig_scale','gen_weight','charge_uncertainty']
-    for v in ['lep_scale','pu_weight','fakerate']:
+    eventVars['I'] = ['run','lumi','nvtx','GenNUP','trig_prescale']
+    eventVars['l'] = ['evt'] # ULong64
+    eventVars['F'] = ['gen_weight','charge_uncertainty']
+    for v in ['lep_scale','pu_weight','fakerate','trig_scale','lepeff']:
         for t in ['','_up','_down']:
             eventVars['F'] += ['{0}{1}'.format(v,t)]
     eventName = 'structEvent_t'
@@ -150,6 +153,7 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
     fsVars['F'] += metVars
     fsVars['F'] += ['leadJetPt','leadJetEta','leadJetPhi','leadJetPUMVA']
     fsVars['I'] = ['jetVeto20','jetVeto30','jetVeto40']
+    fsVars['I'] += ['elecVetoLoose','elecVetoTight','muonVetoLoose','muonVetoTight']
     for pt in ['20','30']:
         for l in ['Loose','Medium','Tight']:
             fsVars['I'] += ['bjetVeto{0}{1}'.format(pt,l)]

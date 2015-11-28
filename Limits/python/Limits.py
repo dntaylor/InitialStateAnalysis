@@ -8,7 +8,7 @@ import ROOT
 from .datacard import Datacard
 import InitialStateAnalysis.Plotters.xsec as xsec
 from InitialStateAnalysis.Plotters.Plotter import Plotter
-from InitialStateAnalysis.Plotters.plotUtils import _3L_MASSES, _4L_MASSES, ZMASS, getChannels, getSigMap, getIntLumiMap, getMergeDict, getChannelBackgrounds
+from InitialStateAnalysis.Plotters.plotUtils import _3L_MASSES, _4L_MASSES, ZMASS, getChannels, getSigMap, getIntLumiMap, getMergeDict, getChannelBackgrounds, getNtupleDirectory
 
 ROOT.gROOT.SetBatch(ROOT.kTRUE)
 
@@ -41,7 +41,7 @@ class Limits(object):
 
     def getPlotter(self,analysis,region,runPeriod,mass,runTau,plotName,doFakes):
         nl = 3 if analysis=='Hpp3l' or analysis=='WZ' else 4
-        ntuples = 'ntuples/%s_%iTeV_%s' % (analysis,runPeriod,region)
+        ntuples = getNtupleDirectory(analysis,region,runPeriod)
         saves = '%s_%s_%iTeV' % (analysis,region,runPeriod)
         sigMap = getSigMap(nl,mass)
         intLumiMap = getIntLumiMap()

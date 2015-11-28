@@ -10,7 +10,7 @@ import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 ROOT.gROOT.SetBatch(True)
 
-from InitialStateAnalysis.Analyzers.ntuples import buildNtuple
+from InitialStateAnalysis.Analyzers.ntuples import buildNtuple, buildCutTree
 
 def printEvent(row,treeTuple,**kwargs):
     analysis = kwargs.pop('analysis','Hpp3l')
@@ -19,6 +19,9 @@ def printEvent(row,treeTuple,**kwargs):
     channel = kwargs.pop('channel','')
     isMC = kwargs.pop('isMC',False)
     branches = kwargs.pop('branches',{})
+    filename = kwargs.pop('filename','')
+    doCutTree = kwargs.pop('doCutTree',False)
+    selections = kwargs.pop('selections',[])
 
     printThisEvent = True
     if eventList: # check to see if event is in eventlist
@@ -35,8 +38,11 @@ def printEvent(row,treeTuple,**kwargs):
 
     # add in a way to check if it passed or failed a given cut
 
-    if mode=='fsa': printFSAEvent(row,channel)
-    if mode=='isa': printISAEvent(row,treeTuple,branches,analysis)
+    if doCutTree:
+        printCutTree(row,treeTuple,branches['event'],branches['selections'],selections)
+    else:
+        if mode=='fsa': printFSAEvent(row,channel,filename)
+        if mode=='isa': printISAEvent(row,treeTuple,branches,analysis)
     return 1
     
 def enumerate_leps(final_state):
@@ -68,6 +74,24 @@ def printDetailed(row,tree,branches,analysis):
                             w1pt=w.Pt1, w1eta=w.Eta1, w1phi=w.Phi1, w1iso=w.Iso1,
                             zdr=z.dR, z1w1dr=w.dR1_z1_1, z2w1dr=w.dR1_z1_2,
                             zmass=z.mass, met=fs.met, metphi=fs.metPhi, m3l=fs.mass)
+
+def printDetailedFakes(row,tree,branches,analysis):
+    evt = branches['event']
+    z = branches['z1']
+    w = branches['w1']
+    fs = branches['finalstate']
+    fc = branches['fakeChannel']
+    c = branches['channel']
+    strToPrint = 'run: {run:6d} lumi: {lumi:4d} event: {evt:12d} '
+    strToPrint += 'fakeChannel: {fakechan:4} channel: {chan:4} fakerate: {fakerate:8.6f} '
+    print strToPrint.format(run=evt.run, lumi=evt.lumi, evt=evt.evt, 
+                            fakechan=fc.channel, chan=c.channel, fakerate=evt.fakerate)
+
+def printCutTree(row,tree,eventBranch,selectionBranch,selections):
+    print 'Run: {0} Lumi: {1} Event: {2}'.format(eventBranch.run, eventBranch.lumi, eventBranch.evt)
+    for sel in selections:
+        print sel, getattr(selectionBranch,sel)
+    print ''
 
 def printISAEvent(row,tree,branches,analysis):
     leps = ['l1','l2','l3']
@@ -111,14 +135,16 @@ def printISAEvent(row,tree,branches,analysis):
     print ''
 
 
-def printFSAEvent(row,channel):
+def printFSAEvent(row,channel,filename):
     leps = enumerate_leps(channel)
 
+    print filename
     print '-'*80
     print '| Event listing FSA {0:58} |'.format('')
     print '| Run: {0:7} Lumi: {1:5} Event: {2:11} {3:32} |'.format(row.run, row.lumi, row.evt, '')
     print '|{0}|'.format('-'*78)
-    print '| Channel: {0:5} Num Vertices: {1:3} {2:42} |'.format(channel, row.nvtx, '')
+    print '| Channel: {0:5} Num Vertices: {1:3} numETight: {2:3} numMTight: {3:3} {4:22} |'.format(channel, row.nvtx, row.eVetoTight, row.muVetoTight, '')
+    print '| MET: {0:10.4f} Mass: {1:10.4f} {2:50} |'.format(row.type1_pfMetEt,row.Mass,'')
 
     # print lepton info
     lep_string = '| {0:2}: pT: {1:11.4f} eta: {2:9.4f} phi: {3:8.4f} iso: {4:7.4f} charge: {5:4} {6:1} |'
@@ -132,6 +158,13 @@ def printFSAEvent(row,channel):
             print elec_string.format(getattr(row,'%sCBIDMedium'%lep), getattr(row,'%sPVDXY'%lep), getattr(row,'%sPVDZ'%lep),'')
         elif lep[0]=='m':
             print muon_string.format(getattr(row,'%sPFIDTight'%lep), getattr(row,'%sPVDXY'%lep), getattr(row,'%sPVDZ'%lep),'')
+    print '-'*80
+    for i in range(len(leps)):
+        for j in range(len(leps)):
+            if i>=j: continue
+            massvar = '{0}_{1}_Mass'.format(leps[i],leps[j])
+            drvar = '{0}_{1}_DR'.format(leps[i],leps[j])
+            print '| {0:2}, {1:2}: Mass: {2:10.4f} DR: {3:10.4f} {4:30} |'.format(leps[i],leps[j],getattr(row,massvar),getattr(row,drvar),'')
     print '-'*80
     print ''
 
@@ -165,7 +198,9 @@ def parse_command_line(argv):
     parser.add_argument('-n',nargs='?',default=1,help='Number of events to print (default 1, -1 for all)')
     parser.add_argument('-l','--list', action="store_true", help="List events passing selection")
     parser.add_argument('-d','--detailed', action="store_true", help="List events passing selection with values")
+    parser.add_argument('-f','--fakes', action="store_true", help="List fake values")
     parser.add_argument('-mc', action="store_true", help="This is MC (not data)")
+    parser.add_argument('-ct', '--cutTree', action="store_true", help="Print the cut tree entry")
     parser.add_argument('--log',nargs='?',type=str,const='INFO',default='INFO',choices=['INFO','DEBUG','WARNING','ERROR','CRITICAL'],help='Log level for logger')
     args = parser.parse_args(argv)
 
@@ -207,6 +242,7 @@ def main(argv=None):
             states = [initial_states]
             alternateIds = []
             doVBF = False
+            cutTreeSelections = ['topology','trigger','fiducial','looseID','tightID','mass3l','zWindow','zLeadPt','wPt','wMll','met']
         if args.analysis == 'Hpp3l':
             channel = 'Hpp3l'
             final_states = ['eee','eem','emm','mmm'] # no tau
@@ -221,6 +257,7 @@ def main(argv=None):
             }
             alternateIds = []
             doVBF = False
+            cutTreeSelections = []
         if args.analysis == 'Hpp4l':
             channel = 'Hpp4l'
             final_states = ['eeee','eeem','eemm','emmm','mmmm'] # no tau
@@ -235,18 +272,19 @@ def main(argv=None):
             }
             alternateIds = []
             doVBF = False
-
+            cutTreeSelections = []
 
         logging.debug('Loading dummy file.')
         dummyfile = ROOT.TFile('dummy.root','recreate')
         logging.debug('Retrieving ntuple.')
         ntuple, branches = buildNtuple(object_definitions,states,channel,final_states,altIds=alternateIds,doVBF=doVBF)
+        cutTree, eventBranch, cutsBranch = buildCutTree(cutTreeSelections)
 
     numPrinted = 0
     for file in files:
-        if numPrinted >= args.n and args.n != -1:
-            logging.debug('Reached max events (file)')
-            break
+        #if numPrinted >= args.n and args.n != -1:
+        #    logging.debug('Reached max events (file)')
+        #    break
         logging.debug('Processing file {0}.'.format(file))
         tfile = ROOT.TFile(file)
         if args.mode=='fsa':
@@ -257,12 +295,15 @@ def main(argv=None):
             logging.debug('Copying tree with cut {0}.'.format(args.cut))
             tree = fulltree.CopyTree(args.cut) if args.cut else fulltree
         elif args.mode=='isa':
+            fullCutTree = tfile.Get('cutTree')
+            fullCutTree.SetBranchAddress('event',ROOT.AddressOf(eventBranch,'evt'))
+            fullCutTree.SetBranchAddress('selections',ROOT.AddressOf(cutsBranch,'topology'))
             fulltree = tfile.Get(args.analysis)
             dummyfile.cd()
             logging.debug('Copying tree with cut {0}.'.format(args.cut))
             tree = fulltree.CopyTree(args.cut) if args.cut else fulltree
             tree.SetBranchAddress("select",ROOT.AddressOf(branches['select'],"passTight"))
-            tree.SetBranchAddress("event",ROOT.AddressOf(branches['event'],"trig_scale"))
+            tree.SetBranchAddress("event",ROOT.AddressOf(branches['event'],"gen_weight"))
             tree.SetBranchAddress("channel",ROOT.AddressOf(branches['channel'],"channel"))
             tree.SetBranchAddress("genChannel",ROOT.AddressOf(branches['genChannel'],"channel"))
             tree.SetBranchAddress("fakeChannel",ROOT.AddressOf(branches['fakeChannel'],"channel"))
@@ -289,26 +330,35 @@ def main(argv=None):
             logging.error('Unrecognized ntuple type. Valid values are isa or fsa.')
             return 0
         logging.debug('Iterate through tree')
-        for row in tree:
-            if args.list:
-                if args.mode=='fsa':
-                    print '%i:%i:%i' % (row.run, row.lumi, row.evt)
-                else:
-                    if args.detailed:
-                        printDetailed(row,tree,branches,args.analysis)
-                    else:
-                        event = branches['event']
-                        print '%i:%i:%i' % (event.run, event.lumi, event.evt)
-            else:
+        if args.cutTree:
+            logging.debug('Will do cut tree')
+            for row in fullCutTree:
                 if args.mode=='isa':
-                    logging.debug('Print event')
-                    numPrinted += printEvent(row,tree,analysis=args.analysis,eventList=events,branches=branches,isMC=args.mc,mode=args.mode)
-                    logging.debug('Event printed')
-                if args.mode=='fsa':
-                    numPrinted += printEvent(row,tree,channel=args.channel,eventList=events,isMC=args.mc,mode=args.mode)
-            if numPrinted >= args.n and args.n != -1:
-                logging.debug('Reached max events (tree)')
-                break
+                    branches = {'event':eventBranch,'selections':cutsBranch}
+                    numPrinted += printEvent(row,fullCutTree,analysis=args.analysis,eventList=events,branches=branches,isMC=args.mc,mode=args.mode,filename=file,doCutTree=True,selections=cutTreeSelections)
+        else:
+            for row in tree:
+                if args.list:
+                    if args.mode=='fsa':
+                        print '%i:%i:%i' % (row.run, row.lumi, row.evt)
+                    else:
+                        if args.detailed:
+                            printDetailed(row,tree,branches,args.analysis)
+                        elif args.fakes:
+                            printDetailedFakes(row,tree,branches,args.analysis)
+                        else:
+                            event = branches['event']
+                            print '%i:%i:%i' % (event.run, event.lumi, event.evt)
+                else:
+                    if args.mode=='isa':
+                        logging.debug('Print event')
+                        numPrinted += printEvent(row,tree,analysis=args.analysis,eventList=events,branches=branches,isMC=args.mc,mode=args.mode,filename=file,)
+                        logging.debug('Event printed')
+                    if args.mode=='fsa':
+                        numPrinted += printEvent(row,tree,channel=args.channel,eventList=events,isMC=args.mc,mode=args.mode,filename=file)
+                #if numPrinted >= args.n and args.n != -1:
+                #    logging.debug('Reached max events (tree)')
+                #    break
         logging.debug('Closing file {0}.'.format(file))
         tfile.Close("R")
 

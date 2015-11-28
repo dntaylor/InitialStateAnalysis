@@ -27,13 +27,16 @@ class CutFlowPlotter(PlotterBase):
         printString = kwargs.pop('printString',True)
         hist = ROOT.TH1F('h%sCutFlow' % sample, 'CutFlow', len(selections),0,len(selections))
         valList = []
+        errList = []
         for bin in range(len(selections)):
             cutString = cut + ' && ' + selections[bin] if not sumEntries else\
                         cut + ' && ' + ' && '.join(selections[:bin+1])
-            val = self.getNumEntries(cutString,sample)
+            val,err = self.getNumEntries(cutString,sample,doError=True)
             #val = self.getNumEntries(selections[:bin+1],sample)
             valList += [val]
+            errList += [err]
             hist.SetBinContent(bin+1,val)
+            hist.SetBinError(bin+1,err)
         if printString: self.writeCutString(sample,valList)
         hist.SetTitle(self.dataStyles[sample]['name'])
         if sample in self.data: return hist
@@ -225,13 +228,16 @@ class CutFlowPlotter(PlotterBase):
         if plotdata:
             dataHist = self.getDataCutFlow_Preselection(printString=False) if isprecf else self.getDataCutFlow(selections,cut,sumEntries=not nosum,printString=False)
             datamax = dataHist.GetMaximum()
+            datamin = dataHist.GetMinimum()
         if plotsig:
             sigHists = {}
             sigmax = 0.
+            sigmin = 999999.
             for signal in self.signal:
                 sigHists[signal] = self.getSampleCutFlow_Preselection(signal) if isprecf else self.getSampleCutFlow(selections,cut,signal,sumEntries=not nosum)
                 sigHists[signal].Scale(signalscale)
                 sigmax = max(sigmax,sigHists[signal].GetMaximum())
+                sigmin = min(sigmin,sigHists[signal].GetMinimum())
 
         numSelections = len(selections)
         mc = self.getMCStackCutFlow_Preselection() if isprecf else self.getMCStackCutFlow(selections,cut,sumEntries=not nosum)
@@ -240,12 +246,21 @@ class CutFlowPlotter(PlotterBase):
         mc.GetYaxis().SetTitleOffset(1)
         newymax = max(datamax,mc.GetMaximum()) if plotdata else mc.GetMaximum()
         newymax = max(sigmax,newymax) if plotsig else newymax
+        newymin = mc.GetMinimum()
+        if plotdata:
+            newymin = min(datamin,newymin) if datamin>0 else newymin
+        if plotsig:
+            newymin = min(sigmin,newymin) if sigmin>0 else newymin
         mc.SetMaximum(yscale*newymax)
         if isprecf: mc.SetMinimum(1)
-        mc.SetMinimum(1) if logy else mc.SetMinimum(0)
+        mc.SetMinimum(0.1) if logy else mc.SetMinimum(0)
+        if newymin>0 and logy: mc.SetMinimum(newymin)
         if labels:
             for bin in range(numSelections):
                 mc.GetHistogram().GetXaxis().SetBinLabel(bin+1,labels[bin])
+
+        staterr = self.get_stat_err(mc.GetStack().Last())
+        staterr.Draw("e2 same")
 
         if plotsig:
             #sigHists = {}

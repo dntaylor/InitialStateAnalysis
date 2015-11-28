@@ -19,6 +19,20 @@ ROOT.gROOT.SetBatch(ROOT.kTRUE)
 ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
 tdrstyle.setTDRStyle()
 
+# bp labels
+bpLabels = {
+    'ee100' : '100% #Phi^{#pm#pm} #rightarrow ee',
+    'em100' : '100% #Phi^{#pm#pm} #rightarrow e#mu',
+    'et100' : '100% #Phi^{#pm#pm} #rightarrow e#tau',
+    'mm100' : '100% #Phi^{#pm#pm} #rightarrow #mu#mu',
+    'mt100' : '100% #Phi^{#pm#pm} #rightarrow #mu#tau',
+    'tt100' : '100% #Phi^{#pm#pm} #rightarrow #tau#tau',
+    'BP1' : 'Benchmark 1',
+    'BP2' : 'Benchmark 2',
+    'BP3' : 'Benchmark 3',
+    'BP4' : 'Benchmark 4',
+}
+
 def save(savename,saveDir,canvas):
     '''Save the limits into root file and images.'''
     #for type in ['png', 'pdf', 'eps']:
@@ -144,7 +158,7 @@ def plot_limits(analysis, region, period, savename, **kwargs):
     canvas.SetLogy(1)
 
     # create CLs plot
-    expected.GetXaxis().SetLimits(masses[0],masses[-1])
+    expected.GetXaxis().SetLimits(170,masses[-1])
     expected.GetXaxis().SetTitle('#Phi^{++} Mass (GeV)')
     expected.GetYaxis().SetTitle('95% CLs Upper Limit on #sigma/#sigma_{model}')
     expected.GetYaxis().SetTitleOffset(1.)
@@ -160,12 +174,13 @@ def plot_limits(analysis, region, period, savename, **kwargs):
     ratiounity = ROOT.TLine(expected.GetXaxis().GetXmin(),1,expected.GetXaxis().GetXmax(),1)
     ratiounity.Draw()
 
-    legend = ROOT.TLegend(0.65,0.2,0.90,0.4)
+    legend = ROOT.TLegend(0.60,0.15,0.90,0.45)
     legend.SetFillColor(0)
     if not blind: legend.AddEntry(observed, 'Observed','l')
     legend.AddEntry(expected, 'Expected','l')
     legend.AddEntry(twoSigma, 'Expected 2#sigma', 'F')
     legend.AddEntry(oneSigma, 'Expected 1#sigma', 'F')
+    legend.AddEntry(None,bpLabels[bp],'')
 
     legend.Draw('same')
 
@@ -177,10 +192,26 @@ def plot_limits(analysis, region, period, savename, **kwargs):
     CMS_lumi.lumi_13TeV = "%0.1f fb^{-1}" % (25.0)
     CMS_lumi.CMS_lumi(canvas,lumiperiod,11)
 
+    # plot label
+    #label = ROOT.TLatex(0.15,0.7,bpLabels[bp])
+    #label.SetNDC(True)
+    #label.SetTextFont(52)
+    #label.Draw()
+
     if do4l: savename += '_4l'
     save(savename,saveDir,canvas)
 
     canvas.Clear()
+
+    canvas.SetFillColor(0)
+    canvas.SetBorderMode(0)
+    canvas.SetFrameFillStyle(0)
+    canvas.SetFrameBorderMode(0)
+    canvas.SetLeftMargin(0.12)
+    canvas.SetRightMargin(0.04)
+    canvas.SetTopMargin(0.08)
+    canvas.SetBottomMargin(0.12)
+    canvas.SetLogy(1)
 
     # create the limit on cross section plot
     xsecGraph.GetXaxis().SetLimits(masses[0],masses[-1])
@@ -208,6 +239,7 @@ def plot_limits(analysis, region, period, savename, **kwargs):
     name = 'Pair Production Cross Section' if analysis in ['Hpp4l','HppPP'] or do4l else 'Associated Production Cross Section'
     if analysis in ['HppComb']: name = 'Cross Section'
     legend.AddEntry(xsecGraph, name, 'l')
+    legend.AddEntry(None,bpLabels[bp],'')
 
     legend.Draw('same')
 
@@ -218,6 +250,12 @@ def plot_limits(analysis, region, period, savename, **kwargs):
     CMS_lumi.lumi_8TeV = "%0.1f fb^{-1}" % (19.7)
     CMS_lumi.lumi_13TeV = "%0.1f fb^{-1}" % (25.0)
     CMS_lumi.CMS_lumi(canvas,lumiperiod,11)
+
+    # plot label
+    #label = ROOT.TLatex(0.15,0.7,bpLabels[bp])
+    #label.SetNDC(True)
+    #label.SetTextFont(52)
+    #label.Draw()
 
     savename += '_crossSection'
     save(savename,saveDir,canvas)
@@ -376,19 +414,19 @@ def plot_combined_limits(period, savename, **kwargs):
     canvas.SetBorderMode(0)
     canvas.SetFrameFillStyle(0)
     canvas.SetFrameBorderMode(0)
-    canvas.SetLeftMargin(0.12)
-    canvas.SetRightMargin(0.04)
-    canvas.SetTopMargin(0.08)
-    canvas.SetBottomMargin(0.12)
-    canvas.SetLogy(1)
+    #canvas.SetLeftMargin(0.12)
+    #canvas.SetRightMargin(0.04)
+    #canvas.SetTopMargin(0.08)
+    #canvas.SetBottomMargin(0.12)
+    #canvas.SetLogy(1)
 
     appad = ROOT.TPad("appad", "top pad", 0.0, 0.5, 1.0, 1.0)
     appad.SetLeftMargin(0.12)
     appad.SetRightMargin(0.04)
     appad.SetTopMargin(0.08)
     appad.SetBottomMargin(0.12)
-    appad.SetTickx(0)
-    appad.SetTicky(0)
+    appad.SetTickx(1)
+    appad.SetTicky(1)
     appad.SetLogy(1)
     appad.Draw()
     pppad = ROOT.TPad("pppad", "bottom pad", 0.0, 0.0, 1.0, 0.5)
@@ -397,8 +435,8 @@ def plot_combined_limits(period, savename, **kwargs):
     pppad.SetTopMargin(0.08)
     pppad.SetBottomMargin(0.12)
     pppad.SetFillColor(0)
-    pppad.SetTickx(0)
-    pppad.SetTicky(0)
+    pppad.SetTickx(1)
+    pppad.SetTicky(1)
     pppad.SetLogy(1)
     pppad.Draw()
 
@@ -412,7 +450,7 @@ def plot_combined_limits(period, savename, **kwargs):
         if analysis in ['AP']: xsecGraph[analysis].GetYaxis().SetTitle('#sigma*BR (pb)')
         if analysis in ['PP']: xsecGraph[analysis].GetYaxis().SetTitle('#sigma*BR^{2} (pb)')
         xsecGraph[analysis].GetYaxis().SetTitleOffset(1.)
-        xsecGraph[analysis].GetYaxis().SetTitleSize(0.05)
+        xsecGraph[analysis].GetYaxis().SetTitleSize(0.06)
 
         xsecGraph[analysis].Draw('')
         xsecGraph[analysis].SetMaximum(1)
@@ -423,7 +461,7 @@ def plot_combined_limits(period, savename, **kwargs):
         ROOT.gPad.RedrawAxis()
         if not blind: xobserved[analysis].Draw('same')
 
-        legend[analysis] = ROOT.TLegend(0.5,0.6,0.90,0.85)
+        legend[analysis] = ROOT.TLegend(0.5,0.52,0.90,0.88)
         legend[analysis].SetFillColor(0)
         if not blind: legend[analysis].AddEntry(xobserved[analysis], 'Observed', 'l')
         legend[analysis].AddEntry(xexpected[analysis], 'Expected', 'l')
@@ -431,6 +469,8 @@ def plot_combined_limits(period, savename, **kwargs):
         legend[analysis].AddEntry(xoneSigma[analysis], 'Expected 1#sigma', 'F')
         name = 'Pair Production Cross Section' if analysis in ['PP'] else 'Associated Production Cross Section'
         legend[analysis].AddEntry(xsecGraph[analysis], name, 'l')
+        legend[analysis].AddEntry(None,bpLabels[bp],'')
+        legend[analysis].SetTextSize(0.05)
 
         legend[analysis].Draw('same')
 
@@ -444,6 +484,12 @@ def plot_combined_limits(period, savename, **kwargs):
         if analysis in ['PP']: CMS_lumi.CMS_lumi(pppad,lumiperiod,11)
 
     canvas.cd()
+
+    # plot label
+    #label = ROOT.TLatex(0.15,0.7,bpLabels[bp])
+    #label.SetNDC(True)
+    #label.SetTextFont(52)
+    #label.Draw()
 
     save(savename,saveDir,canvas)
 

@@ -112,6 +112,7 @@ class Plotter(PlotterBase):
         signalscale = kwargs.pop('signalscale',1)
         isprelim = kwargs.pop('isprelim', 1)
         scalefactor = kwargs.pop('scalefactor','')
+        yscale = kwargs.pop('yscale',1.25)
         if not xmin and len(xrange)==2: xmin = xrange[0]
         if not xmax and len(xrange)==2: xmax = xrange[1]
         if xmin or xmax: xrange = [xmin, xmax]
@@ -133,8 +134,8 @@ class Plotter(PlotterBase):
             plotpad.SetRightMargin(self.R)
             plotpad.SetTopMargin(0.0875)
             plotpad.SetBottomMargin(28./666.)
-            plotpad.SetTickx(0)
-            plotpad.SetTicky(0)
+            plotpad.SetTickx(1)
+            plotpad.SetTicky(1)
             plotpad.Draw()
             self.plotpad = plotpad
             ratiopad = ROOT.TPad("ratiopad", "bottom pad", 0.0, 0.0, 1.0, 0.21)
@@ -143,8 +144,8 @@ class Plotter(PlotterBase):
             ratiopad.SetLeftMargin(self.L)
             ratiopad.SetRightMargin(self.R)
             ratiopad.SetFillColor(0)
-            ratiopad.SetTickx(0)
-            ratiopad.SetTicky(0)
+            ratiopad.SetTickx(1)
+            ratiopad.SetTicky(1)
             ratiopad.Draw()
             plotpad.cd()
             plotpad.SetLogy(logy)
@@ -178,8 +179,8 @@ class Plotter(PlotterBase):
                 stack.SetMaximum(ymax)
             else:
                 newymax = max(datamax,stack.GetMaximum()) if plotdata else stack.GetMaximum()
-                y2 = 1.25*newymax
-                if not nostack: stack.SetMaximum(1.25*newymax)
+                y2 = yscale*newymax
+                if not nostack: stack.SetMaximum(yscale*newymax)
             if plotratio:
                 stack.GetHistogram().GetXaxis().SetLabelOffset(999)
 
@@ -340,6 +341,9 @@ class Plotter(PlotterBase):
         if plotratio:
             self.resetCanvas()
 
+        if scalefactor:
+            self.setScaleFactor(oldscalefactor)
+
     def plotMCDataSignalRatio2D(self, var1, var2, bin1, bin2, savename, **kwargs):
         cut = kwargs.pop('cut', '')
         zbin = kwargs.pop('zbin',[10,0,10])
@@ -409,5 +413,3 @@ class Plotter(PlotterBase):
         self.canvas.cd()
         self.save(savename)
 
-        if scalefactor:
-            self.setScaleFactor(oldscalefactor)
