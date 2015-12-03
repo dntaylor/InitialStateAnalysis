@@ -75,40 +75,21 @@ class AnalyzerWZ(AnalyzerBase):
                 continue
 
             OS1 = getattr(rtrow, "%s_%s_SS" % (l[0], l[1])) < 0.5 # select opposite sign
-            #mass_old = getattr(rtrow, "%s_%s_Mass" % (l[0], l[1]))
             mass = self.getObject(rtrow, 'mass', l[0], l[1])
             massdiff = abs(ZMASS-mass)
-            #pt2_old = getattr(rtrow,'%sPt' % l[2])
             pt2 = self.getObject(rtrow,'pt', l[2])
 
-            #ordList = [l[1], l[0], l[2]] if getattr(rtrow,'%sPt' % l[0]) < getattr(rtrow,'%sPt' % l[1]) else [l[0], l[1], l[2]]
             ordList = [l[1], l[0], l[2]] if self.getObject(rtrow,'pt',l[0]) < self.getObject(rtrow,'pt', l[1]) else [l[0], l[1], l[2]]
 
             ## make sure they are all separated (no split tracks)
             #o01 = ordered(l[0],l[1])
             #o02 = ordered(l[0],l[2])
             #o12 = ordered(l[1],l[2])
-            ##dr01_old = getattr(rtrow,'%s_%s_DR' %(o01[0],o01[1])) > 0.02
-            ##dr02_old = getattr(rtrow,'%s_%s_DR' %(o02[0],o02[1])) > 0.02
-            ##dr12_old = getattr(rtrow,'%s_%s_DR' %(o12[0],o12[1])) > 0.02
             #dr01 = self.getObject(rtrow,'dr',o01[0],o01[1]) > 0.02
             #dr02 = self.getObject(rtrow,'dr',o02[0],o02[1]) > 0.02
             #dr12 = self.getObject(rtrow,'dr',o12[0],o12[1]) > 0.02
             #dr = dr01 and dr02 and dr12 
             dr = True
-
-            #dr01_old = getattr(rtrow,'%s_%s_DR' %(o01[0],o01[1]))
-            #dr02_old = getattr(rtrow,'%s_%s_DR' %(o02[0],o02[1]))
-            #dr12_old = getattr(rtrow,'%s_%s_DR' %(o12[0],o12[1]))
-            #dr01 = self.getObject(rtrow,'dr',o01[0],o01[1])
-            #dr02 = self.getObject(rtrow,'dr',o02[0],o02[1])
-            #dr12 = self.getObject(rtrow,'dr',o12[0],o12[1])
-
-            #if abs(mass-mass_old)/mass>0.01: print 'pre_zmass', mass, mass_old
-            #if abs(pt2-pt2_old)/pt2>0.01: print 'pre_wpt', pt2, pt2_old
-            #if abs(dr01-dr01_old)/dr01>0.01: print 'pre_dr01', dr01, dr01_old
-            #if abs(dr02-dr02_old)/dr02>0.01: print 'pre_dr02', dr02, dr02_old
-            #if abs(dr12-dr12_old)/dr12>0.01: print 'pre_dr12', dr12, dr12_old
 
             if OS1 and l[0][0]==l[1][0] and dr and veto:
                 cands.append((massdiff, -pt2, mass, ordList))
@@ -215,7 +196,7 @@ class AnalyzerWZ(AnalyzerBase):
 
     def getGenChannel(self,rtrow):
         '''Dummy return gen channel string'''
-        if 'WZJets' not in self.file_name or 'WZTo3LNu' not in self.file_name: return 'a'
+        if 'WZJets' not in self.file_name and 'WZTo3LNu' not in self.file_name: return 'a'
         flav = {'e':'E','m':'Mu','t':'Tau'}
         for z in ['e','m','t']:
             for w in ['e','m','t']:
@@ -382,13 +363,8 @@ class AnalyzerWZ(AnalyzerBase):
             if l[0]=='t':
                 ptcut = 20.0
                 etacut = 2.3
-            #pt_old = getattr(rtrow, '%sPt' % l)
             pt = self.getObject(rtrow, 'pt', l)
-            #eta_old = getattr(rtrow, '%sAbsEta' % l)
             eta = abs(self.getObject(rtrow, 'eta', l))
-            #if abs(pt-pt_old)/pt>0.001: print l, 'pt', pt, pt_old
-            #if abs(eta-eta_old)/eta>0.001: print l, 'abseta', eta, eta_old
-            #if getattr(rtrow, '%sPt' % l) < ptcut:
             if self.getObject(rtrow, 'pt', l) < ptcut:
                 return False
             #if getattr(rtrow, '%sAbsEta' % l) > etacut:
@@ -411,28 +387,14 @@ class AnalyzerWZ(AnalyzerBase):
         return self.ID(rtrow,*self.objects,**self.getIdArgs('Tight'))
 
     def mass3l(self,rtrow):
-        #return rtrow.Mass > 100.
-        #mass_old = rtrow.Mass
-        #mass = self.getObject(rtrow,'mass',*self.objCand)
-        #if abs(mass-mass_old)/mass>0.001: print 'm3l', mass, mass_old
         return self.getObject(rtrow,'mass',*self.objCand) > 100
 
     def zSelection(self,rtrow):
-        #leps = self.objCand
-        #o = ordered(leps[0], leps[1])
-        ##m1_old = getattr(rtrow,'%s_%s_Mass' % (o[0],o[1]))
-        #m1 = self.getObject(rtrow,'mass',o[0],o[1])
-        ##l0Pt_old = getattr(rtrow,'%sPt' %leps[0])
-        #l0Pt = self.getObject(rtrow,'pt',leps[0])
-        ##if abs(m1-m1_old)/m1>0.001: print 'zmass', m1, m1_old
-        ##if abs(l0Pt-l0Pt_old)/l0Pt>0.001: print 'zleptpt', l0Pt, l0Pt_old
-        #return (m1>=60. and m1<=120. and l0Pt>20.)
         return self.zWindow(rtrow) and self.zLeadPt(rtrow)
 
     def zWindow(self,rtrow):
         leps = self.objCand
         o = ordered(leps[0], leps[1])
-        #m1_old = getattr(rtrow,'%s_%s_Mass' % (o[0],o[1]))
         m1 = self.getObject(rtrow,'mass',o[0],o[1])
         return (m1>=60. and m1<=120.)
 
@@ -442,26 +404,6 @@ class AnalyzerWZ(AnalyzerBase):
         return l0Pt>20.
 
     def wSelection(self,rtrow):
-        #leps = self.objCand
-        ##lpt_old = getattr(rtrow, '%sPt' %leps[2])
-        ##lpt = self.getObject(rtrow, 'pt', leps[2])
-        ##if abs(lpt-lpt_old)/lpt>0.001: print 'wpt', lpt, lpt_old
-        ##if getattr(rtrow, '%sPt' %leps[2])<20.: return False
-        #if self.getObject(rtrow, 'pt', leps[2])<20.: return False
-        ##if rtrow.type1_pfMetEt < 30.: return False
-        ##met_old = rtrow.type1_pfMetEt
-        ##met = self.getObject(rtrow,'pt','met')
-        ##if abs(met-met_old)/met>0.001: print 'met', met, met_old
-        #if self.getObject(rtrow,'pt','met') < 30.: return False
-        #for l in leps[:2]:
-        #    o = ordered(l,leps[2])
-        #    #dr = getattr(rtrow, '%s_%s_DR' % (o[0],o[1]))
-        #    #if dr < 0.1: return False
-        #    #mll_old = getattr(rtrow, '%s_%s_Mass' % (o[0],o[1]))
-        #    mll = self.getObject(rtrow, 'mass', o[0],o[1])
-        #    #if abs(mll-mll_old)/mll>0.001: print 'mll', mll, mll_old
-        #    if mll < 4.: return False
-        #return True
         return self.wPt(rtrow) and self.wMll(rtrow) and self.met(rtrow)
 
     def wPt(self,rtrow):

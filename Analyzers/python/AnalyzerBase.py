@@ -481,54 +481,17 @@ class AnalyzerBase(object):
         ntupleRow["genChannel.channel"] = self.getGenChannel(rtrow)
         ntupleRow["fakeChannel.channel"] = self.getFakeChannel(rtrow)
 
-        #def getMT(rtrow,period,*objects):
-        #    masses = {'e':0.511e-3, 'm':0.1056, 't':1.776, 'j':0}
-        #    metVar = 'type1_pfMet'
-        #    mtVar = 'PfMet_type1' if period==13 else 'PfMet_Ty1'
-        #    visP4 = rt.TLorentzVector()
-        #    for l in objects:
-        #        p4 = rt.TLorentzVector()
-        #        pt = getattr(rtrow, "%sPt" % l)
-        #        eta = getattr(rtrow, "%sEta" % l)
-        #        phi = getattr(rtrow, "%sPhi" % l)
-        #        mass = masses[l[0]]
-        #        p4.SetPtEtaPhiM(pt,eta,phi,mass)
-        #        visP4 += p4
-        #    ptMet = getattr(rtrow, "%sEt" % metVar)
-        #    phiMet = getattr(rtrow, "%sPhi" % metVar)
-        #    pxMet = ptMet*rt.TMath.Cos(phiMet)
-        #    pyMet = ptMet*rt.TMath.Sin(phiMet)
-        #    mt = rt.TMath.Sqrt(visP4.M2() + 2*(ptMet*visP4.Et() - (pxMet*visP4.Px() + pyMet*visP4.Py())))
-        #    return mt
-
-        #ntupleRow["finalstate.mass"] = float(rtrow.Mass)
         ntupleRow["finalstate.mass"] = self.getObject(rtrow,'mass',*objects)
-        #ntupleRow["finalstate.eta"] = float(rtrow.Eta) if self.period==13 else float(-9)
         ntupleRow["finalstate.eta"] = self.getObject(rtrow,'eta',*objects)
-        #ntupleRow["finalstate.phi"] = float(rtrow.Phi) if self.period==13 else float(-9)
         ntupleRow["finalstate.phi"] = self.getObject(rtrow,'phi',*objects)
-        #ntupleRow["finalstate.mT"] = float(getMT(rtrow,self.period,*objects))
         objMet = ['met']
         for i in objects:
             objMet += [i]
         ntupleRow["finalstate.mT"] = self.getObject(rtrow,'mt',*objMet)
-        #ntupleRow["finalstate.sT"] = float(sum([getattr(rtrow, "%sPt" % x) for x in objects]))
         ntupleRow["finalstate.sT"] = self.getObject(rtrow,'st',*objects)
         ntupleRow["finalstate.hT"] = float(rtrow.Ht) if hasattr(rtrow,'Ht') else float(-1)
-        #metVar = 'type1_pfMet'
-        #ntupleRow["finalstate.met"] = float(getattr(rtrow, '%sEt' %metVar))
         ntupleRow["finalstate.met"] = self.getObject(rtrow, 'pt', 'met')
-        # temp for unclustered
-        #ntupleRow["finalstate.met"] = rtrow.type1_pfMet_shiftedPt_UnclusteredEnUp
-        #ntupleRow["finalstate.met"] = rtrow.type1_pfMet_shiftedPt_UnclusteredEnDown
-        #ntupleRow["finalstate.metPhi"] = float(getattr(rtrow,'%sPhi' %metVar))
         ntupleRow["finalstate.metPhi"] = self.getObject(rtrow, 'phi', 'met')
-        #if self.doMetUnc:
-        #    varMap = {'mT':'mt','met':'pt','metPhi':'phi'}
-        #    for mv in ['met','metPhi']:
-        #        for cor in ['JetRes','JetEn','MuonEn','ElectronEn','TauEn','UnclusteredEn','PhotonEn']:
-        #            for d in ['Up','Down']:
-        #                ntupleRow['finalstate.{0}{1}{2}'.format(mv,cor,d)] = self.getObject(rtrow,'met',varMap[mv],shift='{0}{1}'.format(cor,d))
         ntupleRow["finalstate.leadJetPt"] = float(rtrow.jet1Pt) if self.period==13 else float(-1)
         ntupleRow["finalstate.leadJetEta"] = float(rtrow.jet1Eta) if self.period==13 else float(-10)
         ntupleRow["finalstate.leadJetPhi"] = float(rtrow.jet1Phi) if self.period==13 else float(-10)
@@ -543,13 +506,9 @@ class AnalyzerBase(object):
         ntupleRow["finalstate.bjetVeto20Tight"] = int(rtrow.bjetCISVVeto20Tight) if self.period==13 else -1
         ntupleRow["finalstate.bjetVeto30Tight"] = int(rtrow.bjetCISVVeto30Tight) if self.period==13 else -1
 
-        #ntupleRow["finalstate.muonVetoTight"] = int(rtrow.muVetoTight) if self.period==13 else int(rtrow.muonVetoWZTight)
         ntupleRow["finalstate.muonVetoTight"] = self.getObjectVetos(rtrow,'m','Tight') if self.period==13 else int(rtrow.muonVetoWZTight)
-        #ntupleRow["finalstate.elecVetoTight"] = int(rtrow.eVetoTight) if self.period==13 else int(rtrow.elecVetoWZTight)
         ntupleRow["finalstate.elecVetoTight"] = self.getObjectVetos(rtrow,'e','Tight') if self.period==13 else int(rtrow.elecVetoWZTight)
-        #ntupleRow["finalstate.muonVetoLoose"] = int(rtrow.muVetoTightTrigIso) if self.period==13 else int(rtrow.muVetoPt5IsoIdVtx)
         ntupleRow["finalstate.muonVetoLoose"] = self.getObjectVetos(rtrow,'m','Loose') if self.period==13 else int(rtrow.muVetoPt5IsoIdVtx)
-        #ntupleRow["finalstate.elecVetoLoose"] = int(rtrow.eVetoTrigIso) if self.period==13 else int(rtrow.eVetoMVAIsoVtx)
         ntupleRow["finalstate.elecVetoLoose"] = self.getObjectVetos(rtrow,'e','Loose') if self.period==13 else int(rtrow.eVetoMVAIsoVtx)
         if self.doVBF:
             ntupleRow["finalstate.vbfMass"] = float(rtrow.vbfMass)
@@ -562,10 +521,7 @@ class AnalyzerBase(object):
             ntupleRow["finalstate.centralJetVeto30"] = float(rtrow.vbfJetVeto30)
 
         def store_state(rtrow,ntupleRow,state,theObjects,period):
-            #masses = {'e':0.511e-3, 'm':0.1056, 't':1.776, 'j':0}
             objStart = 0
-            #metVar = 'type1_pfMet'
-            #mtVar = 'PfMet_type1' if period==13 else 'PfMet_Ty1'
             for i in state:
                 numObjects = len([ x for x in self.object_definitions[i] if x != 'n']) if theObjects else 0
                 finalObjects = theObjects[objStart:objStart+numObjects]
@@ -575,87 +531,35 @@ class AnalyzerBase(object):
                     ntupleRow["%s.Pt" %i] = float(-9)
                     ntupleRow["%s.Eta" %i] = float(-9)
                     ntupleRow["%s.Phi" %i] = float(-9)
-                    #ntupleRow["%s.sT" %i] = float(getattr(rtrow, "%sPt" % finalObjects[0])) if theObjects else float(-9)
                     ntupleRow["%s.sT" %i] = self.getObject(rtrow, "pt", finalObjects[0]) if theObjects else float(-9)
                     ntupleRow["%s.dPhi" %i] = float(-9)
                     ntupleRow["%s.dR" %i] = float(-9)
                     ntupleRow["%sFlv.Flv" %i] = finalObjects[0][0] if theObjects else 'a'
                 elif 'n' == self.object_definitions[i][1]:
-                    #if theObjects: # get lorentz vectors
-                    #    pt1 = getattr(rtrow, "%sPt" % finalObjects[0])
-                    #    eta1 = getattr(rtrow, "%sEta" % finalObjects[0])
-                    #    phi1 = getattr(rtrow, "%sPhi" % finalObjects[0])
-                    #    mass1 = masses[finalObjects[0][0]]
-                    #    px1 = pt1*rt.TMath.Cos(phi1)
-                    #    py1 = pt1*rt.TMath.Sin(phi1)
-                    #    ptMet = getattr(rtrow, "%sEt" % metVar)
-                    #    phiMet = getattr(rtrow, "%sPhi" % metVar)
-                    #    pxMet = ptMet*rt.TMath.Cos(phiMet)
-                    #    pyMet = ptMet*rt.TMath.Sin(phiMet)
-                    #    wpt = rt.TMath.Sqrt((px1+pxMet)**2 + (py1+pyMet)**2)
-                    #else:
-                    #    wpt = -9
-                    #ntupleRow["%s.mass" %i] = float(getattr(rtrow, "%sMtTo%s" % (finalObjects[0], mtVar))) if theObjects else float(-999)
                     ntupleRow["%s.mass" %i] = self.getObject(rtrow, "mt", finalObjects[0], 'met') if theObjects else float(-999)
-                    #ntupleRow["%s.Pt" %i] = float(wpt)
                     ntupleRow["%s.Pt" %i] = self.getObject(rtrow, "pt", finalObjects[0], 'met') if theObjects else float(-9)
-                    #ntupleRow["%s.sT" %i] = float(getattr(rtrow, "%sPt" % finalObjects[0]) + getattr(rtrow, '%sEt' %metVar)) if theObjects else float(-9)
                     ntupleRow["%s.sT" %i] = self.getObject(rtrow, "st", finalObjects[0], 'met') if theObjects else float(-9)
-                    #ntupleRow["%s.dPhi" %i] = float(getattr(rtrow, "%sDPhiToPfMet_type1" % finalObjects[0])) if theObjects else float(-9)
                     ntupleRow["%s.dPhi" %i] = self.getObject(rtrow, "dphi", finalObjects[0], 'met') if theObjects else float(-9)
-                    #if self.doMetUnc:
-                    #    varMap = {'mass':'mass','Pt':'pt','sT':'st','dPhi':'dphi'}
-                    #    for mv in ['mass','Pt','sT','dPhi']:
-                    #        for cor in ['JetRes','JetEn','MuonEn','ElectronEn','TauEn','UnclusteredEn','PhotonEn']:
-                    #            for d in ['Up','Down']:
-                    #                ntupleRow['{0}.{1}{2}{3}'.format(i,mv,cor,d)] = self.getObject(rtrow,i,varMap[mv],objects=finalObjects,shift='{0}{1}'.format(cor,d))
-
                     ntupleRow["%sFlv.Flv" %i] = finalObjects[0][0] if theObjects else 'a'
                 else:
                     finalObjOrdered = ordered(finalObjects[0], finalObjects[1]) if theObjects else []
-                    #if theObjects: # get lorentz vectors
-                    #    vec1 = rt.TLorentzVector()
-                    #    pt1 = getattr(rtrow, "%sPt" % finalObjOrdered[0])
-                    #    eta1 = getattr(rtrow, "%sEta" % finalObjOrdered[0])
-                    #    phi1 = getattr(rtrow, "%sPhi" % finalObjOrdered[0])
-                    #    mass1 = masses[finalObjOrdered[0][0]]
-                    #    vec1.SetPtEtaPhiM(pt1,eta1,phi1,mass1)
-                    #    vec2 = rt.TLorentzVector()
-                    #    pt2 = getattr(rtrow, "%sPt" % finalObjOrdered[1])
-                    #    eta2 = getattr(rtrow, "%sEta" % finalObjOrdered[1])
-                    #    phi2 = getattr(rtrow, "%sPhi" % finalObjOrdered[1])
-                    #    mass2 = masses[finalObjOrdered[1][0]]
-                    #    vec2.SetPtEtaPhiM(pt2,eta2,phi2,mass2)
-                    #    vec3 = vec1+vec2
-                    #else:
-                    #    vec3 = 0
-                    #ntupleRow["%s.mass" %i] = float(getattr(rtrow, "%s_%s_Mass" % (finalObjOrdered[0], finalObjOrdered[1]))) if theObjects else float(-999)
                     ntupleRow["%s.mass" %i] = self.getObject(rtrow, "mass", finalObjOrdered[0], finalObjOrdered[1]) if theObjects else float(-999)
-                    #ntupleRow["%s.Pt" %i] = float(getattr(rtrow, "%s_%s_Pt" % (finalObjOrdered[0], finalObjOrdered[1]))) if theObjects else float(-9)
                     ntupleRow["%s.Pt" %i] = self.getObject(rtrow, "pt", finalObjOrdered[0], finalObjOrdered[1]) if theObjects else float(-9)
-                    #ntupleRow["%s.sT" %i]   = float(sum([getattr(rtrow, "%sPt" % x) for x in finalObjects])) if theObjects else float(-9)
                     ntupleRow["%s.sT" %i] = self.getObject(rtrow, "st", finalObjOrdered[0], finalObjOrdered[1]) if theObjects else float(-9)
-                    #ntupleRow["%s.dPhi" %i] = float(getattr(rtrow, "%s_%s_DPhi" % (finalObjOrdered[0], finalObjOrdered[1]))) if theObjects else float(-9)
                     ntupleRow["%s.dPhi" %i] = self.getObject(rtrow, "dphi", finalObjOrdered[0], finalObjOrdered[1]) if theObjects else float(-9)
-                    #ntupleRow["%s.dR" %i] = float(getattr(rtrow, "%s_%s_DR" % (finalObjOrdered[0], finalObjOrdered[1]))) if theObjects else float(-9)
                     ntupleRow["%s.dR" %i] = self.getObject(rtrow, "dr", finalObjOrdered[0], finalObjOrdered[1]) if theObjects else float(-9)
                     ntupleRow["%sFlv.Flv" %i] = finalObjects[0][0] + finalObjects[1][0] if theObjects else 'aa'
                 objCount = 0
                 for obj in self.object_definitions[i]:
                     if obj=='n':
-                        #ntupleRow["%s.met" %i] = float(getattr(rtrow,'%sEt' %metVar)) if theObjects else float(-9)
                         ntupleRow["%s.met" %i] = self.getObject(rtrow,'pt','met') if theObjects else float(-9)
-                        #ntupleRow["%s.metPhi" %i] = float(getattr(rtrow, '%sPhi' %metVar)) if theObjects else float(-9)
                         ntupleRow["%s.metPhi" %i] = self.getObject(rtrow, 'phi', 'met') if theObjects else float(-9)
 
                     else:
                         objCount += 1
                         l = orderedFinalObjects[objCount-1] if theObjects else 'a'
-                        #ntupleRow["%s.Pt%i" % (i,objCount)] = float(getattr(rtrow, "%sPt" % l)) if theObjects else float(-9)
                         ntupleRow["%s.Pt%i" % (i,objCount)] = self.getObject(rtrow, "pt", l) if theObjects else float(-9)
-                        #ntupleRow["%s.Eta%i" % (i,objCount)] = float(getattr(rtrow, "%sEta" % l)) if theObjects else float(-9)
                         ntupleRow["%s.Eta%i" % (i,objCount)] = self.getObject(rtrow, "eta", l) if theObjects else float(-9)
-                        #ntupleRow["%s.Phi%i" % (i,objCount)] = float(getattr(rtrow, "%sPhi" % l)) if theObjects else float(-9)
                         ntupleRow["%s.Phi%i" % (i,objCount)] = self.getObject(rtrow, "phi", l) if theObjects else float(-9)
                         # TODO recalculate iso with shift
                         if theObjects:
@@ -727,18 +631,12 @@ class AnalyzerBase(object):
                         if i=='w1' and len(theObjects)==3:
                             oZ1 = ordered(theObjects[0],theObjects[2]) if theObjects else []
                             oZ2 = ordered(theObjects[1],theObjects[2]) if theObjects else []
-                            #ntupleRow["w1.dR1_z1_1"] = float(getattr(rtrow,"%s_%s_DR" % (oZ1[0],oZ1[1]))) if theObjects else float(-9)
                             ntupleRow["w1.dR1_z1_1"] = self.getObject(rtrow,"dr",oZ1[0],oZ1[1]) if theObjects else float(-9)
-                            #ntupleRow["w1.dR1_z1_2"] = float(getattr(rtrow,"%s_%s_DR" % (oZ2[0],oZ2[1]))) if theObjects else float(-9)
                             ntupleRow["w1.dR1_z1_2"] = self.getObject(rtrow,"dr",oZ2[0],oZ2[1]) if theObjects else float(-9)
-                            #ntupleRow["w1.mll_z1_1"] = float(getattr(rtrow,"%s_%s_Mass" % (oZ1[0],oZ1[1]))) if theObjects else float(-9)
                             ntupleRow["w1.mll_z1_1"] = self.getObject(rtrow,"mass",oZ1[0],oZ1[1]) if theObjects else float(-9)
-                            #ntupleRow["w1.mll_z1_2"] = float(getattr(rtrow,"%s_%s_Mass" % (oZ2[0],oZ2[1]))) if theObjects else float(-9)
                             ntupleRow["w1.mll_z1_2"] = self.getObject(rtrow,"mass",oZ2[0],oZ2[1]) if theObjects else float(-9)
                         if i=='w1' and theObjects and self.period==13:
-                            #lEta = getattr(rtrow,'%sEta' %theObjects[-1])
                             lEta = self.getObject(rtrow,'eta',theObjects[-1])
-                            #lPhi = getattr(rtrow,'%sPhi' %theObjects[-1])
                             lPhi = self.getObject(rtrow,'phi',theObjects[-1])
                             # TODO implement jets
                             jEta = rtrow.jet1Eta
@@ -778,11 +676,8 @@ class AnalyzerBase(object):
                 charName = 'g'
                 phoCount += 1
                 objCount = phoCount
-            #ntupleRow["%s%i.Pt" % (charName,objCount)] = float(getattr(rtrow, "%sPt" % obj))
             ntupleRow["%s%i.Pt" % (charName,objCount)] = self.getObject(rtrow, "pt", obj)
-            #ntupleRow["%s%i.Eta" % (charName,objCount)] = float(getattr(rtrow, "%sEta" % obj))
             ntupleRow["%s%i.Eta" % (charName,objCount)] = self.getObject(rtrow, "eta", obj)
-            #ntupleRow["%s%i.Phi" % (charName,objCount)] = float(getattr(rtrow, "%sPhi" % obj))
             ntupleRow["%s%i.Phi" % (charName,objCount)] = self.getObject(rtrow, "phi", obj)
             # TODO isolation implementation with shifts
             if obj[0]=='e': isoVar = 'RelPFIsoRho'
@@ -1050,45 +945,15 @@ class AnalyzerBase(object):
                 o = kwargs.get('objects',[])
                 if not o: val = -9
                 shift = self.metShift
-                ## precalculated ones
-                #if var=='mass':
-                #    varString = '{0}MtToPfMet_{1}'.format(o[0],shift)
-                #    return getattr(rtrow,varString) if hasattr(rtrow,varString) else -9.
-                #if var=='dphi':
-                #    varString = '{0}DPhiToPfMet_{1}'.format(o[0],shift)
-                #    return getattr(rtrow,varString) if hasattr(rtrow,varString) else -9.
-                #if var=='st':
-                #    varString = 'type1_pfMetEt' if shift=='' else 'type1_pfMet_shiftedPt_{0}'.format(shift)
-                #    return getattr(rtrow,varString)+getattr(rtrow,'{0}Pt'.format(o[0])) if hasattr(rtrow,varString) else -9.
-                # if we need to calculate here
                 val = self.getObject(rtrow,var,o[0],'met',**kwargs)
             else: # assumes two lepton constituents
                 o = kwargs.get('objects',[])
                 if len(o) != 2: val = -9
                 o = ordered(o[0],o[1])
-                ## precalculated ones
-                #if var=='pt':
-                #    return getattr(rtrow,'{0}_{1}_Pt'.format(*o))
-                #if var=='mass' or var=='m':
-                #    return getattr(rtrow,'{0}_{1}_Mass'.format(*o))
-                #if var=='mt':
-                #    return getattr(rtrow,'{0}_{1}_Mt'.format(*o))
-                #if var=='eta':
-                #    return getattr(rtrow,'{0}_{1}_Eta'.format(*o))
-                #if var=='phi':
-                #    return getattr(rtrow,'{0}_{1}_Phi'.format(*o))
-                #if var=='dr':
-                #    return getattr(rtrow,'{0}_{1}_DR'.format(*o))
-                #if var=='dphi':
-                #    return getattr(rtrow,'{0}_{1}_DPhi'.format(*o))
-                #if var=='st':
-                #    return getattr(rtrow,'{0}Pt'.format(o[0])) + getattr(rtrow,'{0}Pt'.format(o[1]))
-                # if we need to calculate here
                 val = self.getObject(rtrow,var,*o,**kwargs)
 
         elif len(objs)==1 and objs[0][0] in ['e','m','t']: # lepton
             obj = objs[0]
-            #shift = kwargs.pop('shift','')
             shift = self.metShift
             shiftString = ''
             if shift: # shift MC only
