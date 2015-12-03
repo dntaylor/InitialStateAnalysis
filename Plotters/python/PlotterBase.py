@@ -818,7 +818,7 @@ class PlotterBase(object):
         CMS_lumi.extraText = "Preliminary" if plotdata else "Simulation Preliminary"
         CMS_lumi.lumi_7TeV = "%0.1f fb^{-1}" % (float(self.intLumi)/1000.)
         CMS_lumi.lumi_8TeV = "%0.1f fb^{-1}" % (float(self.intLumi)/1000.)
-        CMS_lumi.lumi_13TeV = "%0.1f fb^{-1}" % (float(self.intLumi)/1000.)
+        CMS_lumi.lumi_13TeV = "%0.2f fb^{-1}" % (float(self.intLumi)/1000.)
         if self.intLumi < 1000:
             CMS_lumi.lumi_7TeV = "%0.1f pb^{-1}" % (float(self.intLumi))
             CMS_lumi.lumi_8TeV = "%0.1f pb^{-1}" % (float(self.intLumi))

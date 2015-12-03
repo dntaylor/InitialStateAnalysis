@@ -13,21 +13,23 @@ sys.argv.pop()
 
 def lep_id(rtrow, period, *lep, **kwargs):
     idType = kwargs.get('idType','')
+    shift = kwargs.get('metShift','')
 
     if idType:
         for l in lep:
             if l[0]=='e': lep_method = 'elec_id'
             if l[0]=='m': lep_method = 'muon_id'
             if l[0]=='t': lep_method = 'tau_id'
-            if not eval('%s(rtrow,l,period,idType)'%lep_method): return False
+            if not eval('%s(rtrow,l,period,idType,shift)'%lep_method): return False
         
     return True
 
-def elec_id(rtrow, l, period, idType):
+def elec_id(rtrow, l, period, idType, shift):
     if idType=='NonTrig':
         if not _elec_mva_nontriggering(rtrow, l, period): return False
     if idType=='Trig':
         if not _elec_mva_triggering(rtrow, l, period): return False
+    # cbid doesnt support met shift right now
     if idType=='Veto':
         if not getattr(rtrow, '%sCBIDVeto' % l): return False
     if idType=='Loose':
@@ -36,10 +38,42 @@ def elec_id(rtrow, l, period, idType):
         if not getattr(rtrow, '%sCBIDMedium' % l): return False
     if idType=='Tight':
         if not getattr(rtrow, '%sCBIDTight' % l): return False
+    # check for ees+ or ees-
+    allowedShifts = {
+        'ees+' : 'eesUp',
+        'ees-' : 'eesDown',
+    }
     if idType=='WZLooseTrigIso':
-        if not getattr(rtrow, '%sPassWZLooseTrigIso' % l): return False
+        if shift in allowedShifts:
+            if not getattr(rtrow, '%sPassWZLooseTrigIso_%s' % (l,allowedShifts[shift])): return False
+        else:
+            if not getattr(rtrow, '%sPassWZLooseTrigIso' % l): return False
     if idType=='WZTightTrigIso':
-        if not getattr(rtrow, '%sPassWZTightTrigIso' % l): return False
+        if shift in allowedShifts:
+            if not getattr(rtrow, '%sPassWZTightTrigIso_%s' % (l,allowedShifts[shift])): return False
+        else:
+            if not getattr(rtrow, '%sPassWZTightTrigIso' % l): return False
+    if idType=='WZLooseNoIso':
+        if shift in allowedShifts:
+            if not getattr(rtrow, '%sPassWZLooseNoIso_%s' % (l,allowedShifts[shift])): return False
+        else:
+            if not getattr(rtrow, '%sPassWZLooseNoIso' % l): return False
+    if idType=='WZTightNoIso':
+        if shift in allowedShifts:
+            if not getattr(rtrow, '%sPassWZTightNoIso_%s' % (l,allowedShifts[shift])): return False
+        else:
+            if not getattr(rtrow, '%sPassWZTightNoIso' % l): return False
+    if idType=='WZLoose' and period==13:
+        if shift in allowedShifts:
+            if not getattr(rtrow, '%sPassWZLoose_%s' % (l,allowedShifts[shift])): return False
+        else:
+            if not getattr(rtrow, '%sPassWZLoose' % l): return False
+    if idType=='WZTight' and period==13:
+        if shift in allowedShifts:
+            if not getattr(rtrow, '%sPassWZTight_%s' % (l,allowedShifts[shift])): return False
+        else:
+            if not getattr(rtrow, '%sPassWZTight' % l): return False
+    # cbid doesnt support met shift right now
     if idType=='VetoNoIso':
         if not getattr(rtrow, '%sCBIDVetoNoIso' % l): return False
     if idType=='LooseNoIso':
@@ -48,27 +82,45 @@ def elec_id(rtrow, l, period, idType):
         if not getattr(rtrow, '%sCBIDMediumNoIso' % l): return False
     if idType=='TightNoIso':
         if not getattr(rtrow, '%sCBIDTightNoIso' % l): return False
+    # old 8 tev stuff
     if idType=='ZZLoose':
         if not _elec_zz_loose(rtrow,l,period): return False
     if idType=='ZZTight':
         if not _elec_zz_tight(rtrow,l,period): return False
-    if idType=='WZLoose':
+    if idType=='WZLoose' and period==8:
         if not elec_WZ_loose(rtrow,l,period): return False
-    if idType=='WZTight':
+    if idType=='WZTight' and period==8:
         if not elec_WZ_tight(rtrow,l,period): return False
     if idType=='4l':
         if not elec_4l_id(rtrow,l,period): return False
     return True
 
-def muon_id(rtrow, l, period, idType):
-    if idType=='Tight':
-        if not getattr(rtrow,'%sPFIDTight'%l): return False
+def muon_id(rtrow, l, period, idType, shift):
+    # check for metshift
+    allowedShifts = {
+        'mes+' : 'mesUp',
+        'mes-' : 'mesDown',
+    }
+    if idType=='WZTight' and period==13:
+        if shift in allowedShifts:
+            if not getattr(rtrow, '%sPassWZTight_%s' % (l,allowedShifts[shift])): return False
+        else:
+            if not getattr(rtrow,'%sPassWZTight'%l): return False
     if idType=='WZLooseTrigIso':
-        if not getattr(rtrow,'%sPassWZLooseTrigIso'%l): return False
+        if shift in allowedShifts:
+            if not getattr(rtrow, '%sPassWZLooseTrigIso_%s' % (l,allowedShifts[shift])): return False
+        else:
+            if not getattr(rtrow,'%sPassWZLooseTrigIso'%l): return False
     if idType=='WZTightTrigIso':
-        if not getattr(rtrow,'%sPassWZTightTrigIso'%l): return False
+        if shift in allowedShifts:
+            if not getattr(rtrow, '%sPassWZTightTrigIso_%s' % (l,allowedShifts[shift])): return False
+        else:
+            if not getattr(rtrow,'%sPassWZTightTrigIso'%l): return False
     if idType=='Loose':
         if not getattr(rtrow,'%sPFIDLoose'%l): return False
+    # old 8 tev stuff
+    if idType=='Tight':
+        if not getattr(rtrow,'%sPFIDTight'%l): return False
     if idType=='ZZLoose':
         if not _muon_zz_loose(rtrow,l,period): return False
     if idType=='ZZTight':
@@ -81,7 +133,7 @@ def muon_id(rtrow, l, period, idType):
         if not muon_4l_id(rtrow,l,period): return False
     return True
 
-def tau_id(rtrow, l, period, idType):
+def tau_id(rtrow, l, period, idType, shift):
     if not getattr(rtrow, "%sDecayModeFinding" %l): return False  # really should be old DM, but not available in PHYS14 right now, all miniAOD pass
     if not getattr(rtrow, "%sAgainstElectronMediumMVA5" % l): return False
     if not getattr(rtrow, "%sAgainstMuonTight3" % l): return False

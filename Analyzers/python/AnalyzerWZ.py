@@ -59,7 +59,7 @@ class AnalyzerWZ(AnalyzerBase):
                (rtrow.elecVetoWZTight + rtrow.muonVetoWZTight == 0)
         #veto = (rtrow.eVetoTrigIso + rtrow.muVetoTightTrigIso == 0) if self.period==13 else\
         #       (rtrow.elecVetoWZTight + rtrow.muonVetoWZTight == 0)
-        if self.metShift:
+        if self.metShift and not self.isData: # only shift MC
             vetoMap = {
                 'ees+' : (rtrow.eVetoTight_eesUp + rtrow.muVetoTight == 0),
                 'ees-' : (rtrow.eVetoTight_eesDown + rtrow.muVetoTight == 0),
@@ -255,7 +255,7 @@ class AnalyzerWZ(AnalyzerBase):
                (rtrow.elecVetoWZTight + rtrow.muonVetoWZTight == 0)
         #veto = (rtrow.eVetoTrigIso + rtrow.muVetoTightTrigIso == 0) if self.period==13 else\
         #       (rtrow.elecVetoWZTight + rtrow.muonVetoWZTight == 0)
-        if self.metShift:
+        if self.metShift and not self.isData:
             vetoMap = {
                 'ees+' : (rtrow.eVetoTight_eesUp + rtrow.muVetoTight == 0),
                 'ees-' : (rtrow.eVetoTight_eesDown + rtrow.muVetoTight == 0),
@@ -295,9 +295,11 @@ class AnalyzerWZ(AnalyzerBase):
         kwargs = {}
         if type=='Tight':
             kwargs['idDef'] = {
-                'e':'Medium',
+                #'e':'Medium',
+                'e':'WZTight',
                 #'e':'Tight',
-                'm':'Tight',
+                #'m':'Tight',
+                'm':'WZTight',
                 't':'Medium'
             }
             kwargs['isoCut'] = {
@@ -308,7 +310,8 @@ class AnalyzerWZ(AnalyzerBase):
                 kwargs['idDef']['e'] = 'WZTight'
                 kwargs['idDef']['m'] = 'WZTight'
             if self.period==13:
-                kwargs['isoCut']['e'] = 9999.
+                kwargs['isoCut']['e'] = 9999. # baked into ID
+                kwargs['isoCut']['m'] = 9999.
         if type=='Loose':
             kwargs['idDef'] = {
                 'e':'WZLooseTrigIso',
@@ -328,7 +331,7 @@ class AnalyzerWZ(AnalyzerBase):
                 #kwargs['isoCut']['e'] = 9999.
                 #kwargs['isoCut']['m'] = 9999.
             if self.period==13:
-                kwargs['isoCut']['e'] = 9999.
+                kwargs['isoCut']['e'] = 9999. # baked into ID
                 kwargs['isoCut']['m'] = 9999.
         #if hasattr(self,'alternateIds'):
         #    if type in self.alternateIds:

@@ -162,6 +162,7 @@ class AnalyzerBase(object):
         if self.metShift:
             if self.metShift not in ['ees+','ees-','mes+','mes-','tes+','tes-','ues+','ues-','jes+','jes-','jres+','jres-']:
                 logging.error('{0} is not an allowed met shift'.format(self.metShift))
+        if self.isData: self.metShift = '' # force no shift for data
 
     def __enter__(self):
         self.begin()
@@ -910,7 +911,7 @@ class AnalyzerBase(object):
             if 'ID_%s_%s' %(type,obj) in self.cache:
                 if not self.cache['ID_%s_%s'%(type,obj)]: return False
             else:
-                result = lepId.lep_id(rtrow,self.period,obj,idType=idDef[obj[0]])
+                result = lepId.lep_id(rtrow,self.period,obj,idType=idDef[obj[0]],metShift=self.metShift)
                 self.cache['ID_%s_%s'%(type,obj)] = result
                 if not result: return False
         # TODO support iso cut with shift
@@ -948,12 +949,12 @@ class AnalyzerBase(object):
         if self.period==8: # TODO: move when we have numbers for 13 tev
             chargeid  = self.chargeid.systematic(rtrow, *objects, period=self.period)
             scales['chargeid'] = chargeid
-        trigeff_data = self.trigscaler.scale_factor(rtrow, *objects, period=self.period, useData=True)
-        trigeffup_data = self.trigscaler.scale_factor(rtrow, *objects, period=self.period, shiftUp=True, useData=True)
-        trigeffdown_data = self.trigscaler.scale_factor(rtrow, *objects, period=self.period, shiftDown=True, useData=True)
-        trigeff_mc = self.trigscaler.scale_factor(rtrow, *objects, period=self.period, useData=False)
-        trigeffup_mc = self.trigscaler.scale_factor(rtrow, *objects, period=self.period, shiftUp=True, useData=False)
-        trigeffdown_mc = self.trigscaler.scale_factor(rtrow, *objects, period=self.period, shiftDown=True, useData=False)
+        trigeff_data = self.trigscaler.scale_factor(rtrow, *objects, period=self.period, useData=True, metShift=self.metShift)
+        trigeffup_data = self.trigscaler.scale_factor(rtrow, *objects, period=self.period, shiftUp=True, useData=True, metShift=self.metShift)
+        trigeffdown_data = self.trigscaler.scale_factor(rtrow, *objects, period=self.period, shiftDown=True, useData=True, metShift=self.metShift)
+        trigeff_mc = self.trigscaler.scale_factor(rtrow, *objects, period=self.period, useData=False, metShift=self.metShift)
+        trigeffup_mc = self.trigscaler.scale_factor(rtrow, *objects, period=self.period, shiftUp=True, useData=False, metShift=self.metShift)
+        trigeffdown_mc = self.trigscaler.scale_factor(rtrow, *objects, period=self.period, shiftDown=True, useData=False, metShift=self.metShift)
         trigscale = trigeff_data/trigeff_mc if trigeff_mc else 1.
         trigscaleup = trigeffup_data/trigeffup_mc if trigeffup_mc else 1.
         trigscaledown = trigeffdown_data/trigeffdown_mc if trigeffdown_mc else 1.
@@ -965,7 +966,7 @@ class AnalyzerBase(object):
         # do different based on category
         lepscales = [1.,1.,1.]
         for obj in objects:
-            ls = self.lepscaler.scale_factor(rtrow, obj, period=self.period, loose=not self.ID(rtrow,obj,**self.getIdArgs('Tight')), **lepargs)
+            ls = self.lepscaler.scale_factor(rtrow, obj, period=self.period, metShift=self.metShift, loose=not self.ID(rtrow,obj,**self.getIdArgs('Tight')), **lepargs)
             lepscales[0] *= ls[0]
             lepscales[1] *= ls[1]
             lepscales[2] *= ls[2]
@@ -974,7 +975,7 @@ class AnalyzerBase(object):
         scales['lepup']    = lepscales[1]
         scales['lepdown']  = lepscales[2]
         if self.period==13:
-            lepeff = self.lepeff.scale_factor(rtrow, *objects, period=self.period, **lepargs)
+            lepeff = self.lepeff.scale_factor(rtrow, *objects, period=self.period, metShift=self.metShift, **lepargs)
             scales['lepeff'] = lepeff[0]
             scales['lepeffup'] = lepeff[1]
             scales['lepeffdown'] = lepeff[2]
@@ -984,7 +985,7 @@ class AnalyzerBase(object):
         totalfake = [1.,1.,1.]
         sign = 1. if sum(passtight) in [3,2,0] else -1.
         for o in range(len(objects)):
-            lepfake = self.lepfake.scale_factor(rtrow, objects[o], period=self.period, **lepargs)
+            lepfake = self.lepfake.scale_factor(rtrow, objects[o], period=self.period, metShift=self.metShift, **lepargs)
             if not passtight[o]:
                 totalfake[0] *= lepfake[0]
                 totalfake[1] *= lepfake[1]
@@ -1035,7 +1036,7 @@ class AnalyzerBase(object):
                 'jres+': 'JetResUp',
                 'jres-': 'JetResDown',
             }
-            shift = shiftStrings[self.metShift]
+            shift = shiftStrings[self.metShift] if self.metShift else '' # shift MC only
             varName = {'pt': 'Pt', 'phi': 'Phi'}
             varName2 = {'pt': 'Et', 'phi': 'Phi'}
             shiftString = '{0}_shifted{1}_{2}'.format(metVar,varName[var],shift) if shift else '{0}{1}'.format(metVar,varName2[var])
@@ -1090,7 +1091,7 @@ class AnalyzerBase(object):
             #shift = kwargs.pop('shift','')
             shift = self.metShift
             shiftString = ''
-            if shift:
+            if shift: # shift MC only
                 shiftMap = {
                     'ees+' : '_ElectronEnUp',
                     'ees-' : '_ElectronEnDown',
@@ -1170,7 +1171,7 @@ class AnalyzerBase(object):
             },
         }
         vetoString = vetoMap[flv][vetoType]
-        if self.metShift:
+        if self.metShift: 
             if self.metShift=='mes+' and flv=='m': vetoString += '_mesUp'
             if self.metShift=='mes-' and flv=='m': vetoString += '_mesDown'
             if self.metShift=='ees+' and flv=='e': vetoString += '_eesUp'

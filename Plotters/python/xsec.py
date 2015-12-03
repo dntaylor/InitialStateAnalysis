@@ -155,31 +155,44 @@ xsecs[13] = {
 }
 
 xsecs[8] = {
-    'HPlusPlusHMinusMinusHTo4L_M-110_8TeV-pythia6': 352.49 * FB,
-    'HPlusPlusHMinusMinusHTo4L_M-130_8TeV-pythia6': 186.21 * FB,
-    'HPlusPlusHMinusMinusHTo4L_M-150_8TeV-pythia6': 106.55 * FB,
-    'HPlusPlusHMinusMinusHTo4L_M-170_8TeV-pythia6': 64.641 * FB,
-    'HPlusPlusHMinusMinusHTo4L_M-200_8TeV-pythia6': 33.209 * FB,
-    'HPlusPlusHMinusMinusHTo4L_M-250_8TeV-pythia6': 12.724 * FB,
-    'HPlusPlusHMinusMinusHTo4L_M-300_8TeV-pythia6': 5.5458 * FB,
-    'HPlusPlusHMinusMinusHTo4L_M-350_8TeV-pythia6': 2.6413 * FB,
-    'HPlusPlusHMinusMinusHTo4L_M-400_8TeV-pythia6': 1.3414 * FB,
-    'HPlusPlusHMinusMinusHTo4L_M-450_8TeV-pythia6': 0.71531 * FB,
-    'HPlusPlusHMinusMinusHTo4L_M-500_8TeV-pythia6': 0.39604 * FB,
-    'HPlusPlusHMinusMinusHTo4L_M-600_8TeV-pythia6': 0.13271 * FB,
-    'HPlusPlusHMinusMinusHTo4L_M-700_8TeV-pythia6': 0.48382e-1 * FB,
+    'HPlusPlusHMinusMinusHTo4L_M-110_8TeV-pythia6': 352.49     * FB,
+    'HPlusPlusHMinusMinusHTo4L_M-130_8TeV-pythia6': 186.21     * FB,
+    'HPlusPlusHMinusMinusHTo4L_M-150_8TeV-pythia6': 106.55     * FB,
+    'HPlusPlusHMinusMinusHTo4L_M-170_8TeV-pythia6':  64.641    * FB,
+    'HPlusPlusHMinusMinusHTo4L_M-200_8TeV-pythia6':  33.209    * FB,
+    'HPlusPlusHMinusMinusHTo4L_M-250_8TeV-pythia6':  12.724    * FB,
+    'HPlusPlusHMinusMinusHTo4L_M-300_8TeV-pythia6':   5.5458   * FB,
+    'HPlusPlusHMinusMinusHTo4L_M-350_8TeV-pythia6':   2.6413   * FB,
+    'HPlusPlusHMinusMinusHTo4L_M-400_8TeV-pythia6':   1.3414   * FB,
+    'HPlusPlusHMinusMinusHTo4L_M-450_8TeV-pythia6':   0.71531  * FB,
+    'HPlusPlusHMinusMinusHTo4L_M-500_8TeV-pythia6':   0.39604  * FB,
+    'HPlusPlusHMinusMinusHTo4L_M-600_8TeV-pythia6':   0.13271  * FB,
+    'HPlusPlusHMinusMinusHTo4L_M-700_8TeV-pythia6':   0.048382 * FB,
 
     # from mario, but the 4l dont match the reference... http://cms.hep.kbfi.ee/~mario/dblh/xsinfo.py
-    'HPlusPlusHMinusHTo3L_M-170_8TeV-calchep-pythia6': 114.838 * FB,
-    'HPlusPlusHMinusHTo3L_M-200_8TeV-calchep-pythia6': 51.59 * FB,
-    'HPlusPlusHMinusHTo3L_M-250_8TeV-calchep-pythia6': 21.172 * FB,
-    'HPlusPlusHMinusHTo3L_M-300_8TeV-calchep-pythia6': 8.308 * FB,
-    'HPlusPlusHMinusHTo3L_M-350_8TeV-calchep-pythia6': 4.154 * FB,
-    'HPlusPlusHMinusHTo3L_M-400_8TeV-calchep-pythia6': 1.9832 * FB,
-    'HPlusPlusHMinusHTo3L_M-450_8TeV-calchep-pythia6': 1.02912 * FB,
-    'HPlusPlusHMinusHTo3L_M-500_8TeV-calchep-pythia6': 0.55476 * FB,
-    'HPlusPlusHMinusHTo3L_M-600_8TeV-calchep-pythia6': 0.17286 * FB,
-    'HPlusPlusHMinusHTo3L_M-700_8TeV-calchep-pythia6': 0.05762 * FB,
+    # these were 7 tev NNLO
+    #'HPlusPlusHMinusHTo3L_M-170_8TeV-calchep-pythia6': 114.838 * FB,
+    #'HPlusPlusHMinusHTo3L_M-200_8TeV-calchep-pythia6': 51.59 * FB,
+    #'HPlusPlusHMinusHTo3L_M-250_8TeV-calchep-pythia6': 21.172 * FB,
+    #'HPlusPlusHMinusHTo3L_M-300_8TeV-calchep-pythia6': 8.308 * FB,
+    #'HPlusPlusHMinusHTo3L_M-350_8TeV-calchep-pythia6': 4.154 * FB,
+    #'HPlusPlusHMinusHTo3L_M-400_8TeV-calchep-pythia6': 1.9832 * FB,
+    #'HPlusPlusHMinusHTo3L_M-450_8TeV-calchep-pythia6': 1.02912 * FB,
+    #'HPlusPlusHMinusHTo3L_M-500_8TeV-calchep-pythia6': 0.55476 * FB,
+    #'HPlusPlusHMinusHTo3L_M-600_8TeV-calchep-pythia6': 0.17286 * FB,
+    #'HPlusPlusHMinusHTo3L_M-700_8TeV-calchep-pythia6': 0.05762 * FB,
+
+    # calculated from 8 tev lo using pp k factor
+    'HPlusPlusHMinusHTo3L_M-170_8TeV-calchep-pythia6': 97.73    * 1.2651 * FB,
+    'HPlusPlusHMinusHTo3L_M-200_8TeV-calchep-pythia6': 50.63    * 1.2632 * FB,
+    'HPlusPlusHMinusHTo3L_M-250_8TeV-calchep-pythia6': 19.79    * 1.256 * FB, # interpolated
+    'HPlusPlusHMinusHTo3L_M-300_8TeV-calchep-pythia6':  8.836   * 1.2504 * FB,
+    'HPlusPlusHMinusHTo3L_M-350_8TeV-calchep-pythia6':  4.292   * 1.247 * FB, # interpolated
+    'HPlusPlusHMinusHTo3L_M-400_8TeV-calchep-pythia6':  2.224   * 1.2401 * FB,
+    'HPlusPlusHMinusHTo3L_M-450_8TeV-calchep-pythia6':  1.206   * 1.237 * FB, # interpolated
+    'HPlusPlusHMinusHTo3L_M-500_8TeV-calchep-pythia6':  0.6773  * 1.2337 * FB,
+    'HPlusPlusHMinusHTo3L_M-600_8TeV-calchep-pythia6':  0.2302  * 1.223 * FB, # interpolated
+    'HPlusPlusHMinusHTo3L_M-700_8TeV-calchep-pythia6':  0.08403 * 1.212 * FB, # interpolated
 
     'WJetsToLNu_TuneZ2Star_8TeV-madgraph-tarball-v1' : 36257.2 * PB,
     'WJetsToLNu_TuneZ2Star_8TeV-madgraph-tarball-v2' : 36257.2 * PB,
