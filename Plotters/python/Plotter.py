@@ -88,7 +88,7 @@ class Plotter(PlotterBase):
                isprelim    bool             The plot is CMS preliminary'''
         cut = kwargs.pop('cut', '')
         xaxis = kwargs.pop('xaxis', '')
-        yaxis = kwargs.pop('yaxis', '')
+        yaxis = kwargs.pop('yaxis', 'Events')
         xrange = kwargs.pop('xrange', [])
         xmin = kwargs.pop('xmin', None)
         xmax = kwargs.pop('xmax', None)
@@ -100,7 +100,7 @@ class Plotter(PlotterBase):
         normalize = kwargs.pop('normalize',False)
         blinder = kwargs.pop('blinder', [])
         boxes = kwargs.pop('boxes',[])
-        logy = kwargs.pop('logy', 1)
+        logy = kwargs.pop('logy', 0)
         logx = kwargs.pop('logx', 0)
         nobg = kwargs.pop('nobg',0)
         plotsig = kwargs.pop('plotsig', 1)
@@ -240,9 +240,13 @@ class Plotter(PlotterBase):
         # plot data
         if plotdata:
             data = self.getData(variables, binning, cut, overflow=overflow, underflow=underflow, normalize=normalize)
+            datapois = self.getPoissonErrors(data)
             data.SetMarkerStyle(20)
             data.SetMarkerSize(1.0)
             data.SetLineColor(ROOT.kBlack)
+            datapois.SetMarkerStyle(20)
+            datapois.SetMarkerSize(1.0)
+            datapois.SetLineColor(ROOT.kBlack)
             if len(blinder)==2:
                 datablind = data.Clone("datablind")
                 start = datablind.FindBin(blinder[0])
@@ -252,7 +256,10 @@ class Plotter(PlotterBase):
                     datablind.SetBinError(i,0)
                 datablind.Draw("esamex0")
             else:
-                data.Draw("esamex0")
+                #non poisson
+                #data.Draw("esamex0")
+                # poisson
+                datapois.Draw("0P")
             self.dataHist = data
 
         if boxes:
@@ -274,6 +281,7 @@ class Plotter(PlotterBase):
             mchist = stack.GetStack().Last().Clone("mchist%s" % savename)
             if plotdata:
                 ratio = self.get_ratio(data,mchist,"ratio%s" % savename)
+                ratiopois = self.getPoissonRatio(data,mchist,"ratiopois%s" % savename)
                 if len(blinder)==2:
                     ratioblind = ratio.Clone("ratioblind")
                     start = ratioblind.FindBin(blinder[0])
@@ -308,7 +316,8 @@ class Plotter(PlotterBase):
                 if len(blinder)==2:
                     ratioblind.Draw("e0 same")
                 else:
-                    ratio.Draw("e0 same")
+                    #ratio.Draw("e0 same")
+                    ratiopois.Draw("0P same")
             if plotsig: ratiosig.Draw("hist same")
 
             if boxes:

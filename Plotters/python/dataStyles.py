@@ -124,7 +124,7 @@ dataStyles['ZZZNoGstarJets'] = {
 }
 
 dataStyles['VVVJets'] = copy.deepcopy(dataStyles['ZZZNoGstarJets'])
-dataStyles['VVVJets']['name'] = "VVV+Jets"
+dataStyles['VVVJets']['name'] = "VVV"
 
 dataStyles['WWZNoGstarJets'] = {
     'legendstyle' : 'f',
@@ -200,7 +200,7 @@ dataStyles['TTWWJets']['name'] = "t#bar{t}WW+Jets"
 dataStyles['TTGJets'] = copy.deepcopy(dataStyles['TTZJets'])
 dataStyles['TTGJets']['name'] = "t#bar{t}#gamma+Jets"
 dataStyles['TTVJets'] = copy.deepcopy(dataStyles['TTZJets'])
-dataStyles['TTVJets']['name'] = "t#bar{t}V+Jets"
+dataStyles['TTVJets']['name'] = "t#bar{t}V"
 
 dataStyles['TToLeptons_s-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola'] = {
     'legendstyle' : 'f',

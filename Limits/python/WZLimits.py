@@ -17,6 +17,7 @@ class WZLimits(object):
 
     def __init__(self, analysis, region, period, selection, ntuple_dir, out_dir, **kwargs):
         scalefactor = kwargs.pop('scalefactor','event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale')
+        doStat = kwargs.pop('doStat',True)
         self.analysis = analysis
         self.region = region
         self.period = period
@@ -27,8 +28,8 @@ class WZLimits(object):
         self.scalefactor = scalefactor
         self.datacard = Datacard(self.analysis)
         self.sample_groups = {}
+        self.doStat = doStat
         self.log = logging.getLogger(__name__)
-
 
     def add_systematics(self, syst_name, syst_type, **kwargs):
         self.log.debug('Adding systematic %s type %s' % (syst_name, syst_type))
@@ -38,7 +39,7 @@ class WZLimits(object):
         doDataDriven = kwargs.pop('doDataDriven',True)
 
         # get the plotter
-        nl = 3 
+        nl = 3
         sigMap = getSigMap(nl)
         intLumiMap = getIntLumiMap()
         mergeDict = getMergeDict(self.period)
@@ -51,11 +52,15 @@ class WZLimits(object):
         plotter.initializeDataSamples([sigMap[self.period]['data']])
         plotter.setIntLumi(intLumiMap[self.period])
 
+
         # set expected and observed yields
-        sources = [x for x in channelBackground[self.region+'datadriven'] if x not in ['TT','T','DY','Z','Zfiltered']] + ['datadriven'] if doDataDriven else channelBackground[self.region]
+        sources = [x for x in channelBackground[self.region+'datadriven'] if x not in ['TT','T','DY','Z','Zfiltered','WW']] + ['datadriven'] if doDataDriven else channelBackground[self.region]
         for bg in sources:
             self.log.info('Processing {0}'.format(bg))
-            val = plotter.getNumEntries(self.selection,sigMap[self.period][bg])
+            val,err = plotter.getNumEntries(self.selection,sigMap[self.period][bg],doError=True)
+            statname = 'stat_{0}_{1}'.format(bg,file_name.split('.')[0])
+            staterrs = {bg: err/val+1. if val else 1.}
+            if self.doStat: self.add_systematics(statname,'lnN',**staterrs)
             if bg in ['WZ']:
                 self.datacard.add_sig(bg,val)
             else:

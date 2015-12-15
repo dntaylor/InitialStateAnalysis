@@ -23,6 +23,7 @@ import CMS_lumi, tdrstyle
 from plotUtils import *
 from InitialStateAnalysis.Utilities.utilities import *
 #from InitialStateAnalysis.Limits.limitUtils import 
+from systematicUncertainties import *
 
 ROOT.gROOT.SetBatch(ROOT.kTRUE)
 ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 2001;")
@@ -351,9 +352,11 @@ class PlotterBase(object):
             if hist:
                 hist.Sumw2()
                 val = hist.Integral()
+                err = hist.GetBinError(1)
                 self.logger.debug('%s: Entries: %f'%(sample,val))
             else:
                 val = 0
+                err = 0
         else:
             tree = self.samples[sample]['tree']
             histname = 'h%s%i' %(sample,self.j)
@@ -362,12 +365,14 @@ class PlotterBase(object):
             if not ROOT.gDirectory.Get(histname):
                 self.logger.debug('%s: No entries'%sample)
                 val = 0
+                err = 0
             else:
                 hist = ROOT.gDirectory.Get(histname).Clone("hnew%s%i" %(sample,self.j))
                 hist.Sumw2()
                 val = hist.Integral()
+                err = hist.GetBinError(1)
                 self.logger.debug('%s: Entries: %f'%(sample,val))
-        err = abs(val) ** 0.5
+        #err = abs(val) ** 0.5
         if 'data' in sample: return val, err
         lumi = self.samples[sample]['lumi']
         val = val * self.intLumi/lumi
@@ -408,6 +413,7 @@ class PlotterBase(object):
         '''Get the plot with overflow and underflow bins'''
         under = kwargs.pop('underflow',False)
         over = kwargs.pop('overflow',False)
+        return hist # TODO fix
         if not under and not over: return hist
         nx = hist.GetNbinsX()
         if under: nx += 1
@@ -591,9 +597,35 @@ class PlotterBase(object):
         hist = hists[0].Clone(histname)
         hist.Reset()
         hist.Merge(hists)
-        # asymmetric errors
-        hist.SetBinErrorOption(ROOT.TH1.kPoisson)
+        #hist = self.getPoissonErrors(hist)
         return hist
+
+    def getPoissonErrors(self,hist):
+        #return hist
+        # adapted from rootpy to get asymmetric poisson errors
+        graph = ROOT.TGraphAsymmErrors(hist.GetNbinsX())
+        #graph.SetLineWidth(self.GetLineWidth())
+        #graph.SetMarkerSize(self.GetMarkerSize())
+        chisqr = ROOT.TMath.ChisquareQuantile
+        npoints = 0
+        for bin in range(hist.GetNbinsX()):
+            entries = hist.GetBinContent(bin+1)
+            if entries <= 0:
+                continue
+            ey_low = entries - 0.5 * chisqr(0.1586555, 2. * entries)
+            ey_high = 0.5 * chisqr(
+                1. - 0.1586555, 2. * (entries + 1)) - entries
+            ex = hist.GetBinWidth(bin+1) / 2.
+            graph.SetPoint(npoints, hist.GetBinCenter(bin+1), hist.GetBinContent(bin+1))
+            #graph.SetPointEXlow(npoints, ex)
+            graph.SetPointEXlow(npoints, 0)
+            #graph.SetPointEXhigh(npoints, ex)
+            graph.SetPointEXhigh(npoints, 0)
+            graph.SetPointEYlow(npoints, ey_low)
+            graph.SetPointEYhigh(npoints, ey_high)
+            npoints += 1
+        graph.Set(npoints)
+        return graph
 
     def getDataDrivenHist(self, variables, binning, cut, noFormat=False, **kwargs):
         '''Return a histogram corresponding to the data driven estimation of a background'''
@@ -741,6 +773,19 @@ class PlotterBase(object):
         hist.Merge(hists)
         return hist
 
+    def addSystematicUncertainty(self,hist,sample):
+        unc = getSystUncertaintyMap(self.analysis,self.region,self.period,sample)
+        totsyst2 = 0.
+        for u in unc:
+            totsyst2 += unc[u]**2
+        totsyst = totsyst2**0.5
+        nbins = hist.GetNbinsX()
+        for n in range(nbins):
+            val = hist.GetBinContent(n+1)
+            err = hist.GetBinError(n+1)
+            toterr = ((val*totsyst)**2 + err**2)**0.5
+            hist.SetBinError(n+1,toterr)
+        return hist
 
     def getMCStack(self, variables, binning, cut, **kwargs):
         '''Return a stack of MC histograms'''
@@ -752,6 +797,7 @@ class PlotterBase(object):
             if nostack:
                 hist.SetFillStyle(0)
                 hist.SetLineWidth(2)
+            histsyst = self.addSystematicUncertainty(hist,sample)
             mcstack.Add(hist)
         self.logger.debug('And the full stack integral is %f.' % mcstack.GetStack().Last().Integral())
         return mcstack
@@ -773,7 +819,32 @@ class PlotterBase(object):
         ratio.Sumw2()
         ratio.SetMarkerSize(0.8)
         ratio.Divide(num, denom, 1., 1., "")
+        #ratio.Divide(num.GetHistogram(), denom, "pois")
         return ratio
+
+    def getPoissonRatio(self,num,denom,label):
+        # get ratio between two hists with poisson errors
+        graph = ROOT.TGraphAsymmErrors(num.GetNbinsX())
+        chisqr = ROOT.TMath.ChisquareQuantile
+        npoints = 0
+        for bin in range(num.GetNbinsX()):
+            entries = num.GetBinContent(bin+1)
+            denomentries = denom.GetBinContent(bin+1)
+            if entries <= 0 or denomentries <= 0:
+                continue
+            ey_low = entries - 0.5 * chisqr(0.1586555, 2. * entries)
+            ey_high = 0.5 * chisqr(
+                1. - 0.1586555, 2. * (entries + 1)) - entries
+            ex = num.GetBinWidth(bin+1) / 2.
+            graph.SetPoint(npoints, num.GetBinCenter(bin+1), num.GetBinContent(bin+1)/denomentries)
+            graph.SetPointEXlow(npoints, 0)
+            graph.SetPointEXhigh(npoints, 0)
+            graph.SetPointEYlow(npoints, ey_low/denomentries)
+            graph.SetPointEYhigh(npoints, ey_high/denomentries)
+            npoints += 1
+        graph.Set(npoints)
+        return graph
+
 
     def get_ratio_stat_err(self, hist):
         '''Return a statistical error bars for a ratio plot'''
@@ -818,7 +889,7 @@ class PlotterBase(object):
         CMS_lumi.extraText = "Preliminary" if plotdata else "Simulation Preliminary"
         CMS_lumi.lumi_7TeV = "%0.1f fb^{-1}" % (float(self.intLumi)/1000.)
         CMS_lumi.lumi_8TeV = "%0.1f fb^{-1}" % (float(self.intLumi)/1000.)
-        CMS_lumi.lumi_13TeV = "%0.2f fb^{-1}" % (float(self.intLumi)/1000.)
+        CMS_lumi.lumi_13TeV = "%0.1f fb^{-1}" % (float(self.intLumi)/1000.)
         if self.intLumi < 1000:
             CMS_lumi.lumi_7TeV = "%0.1f pb^{-1}" % (float(self.intLumi))
             CMS_lumi.lumi_8TeV = "%0.1f pb^{-1}" % (float(self.intLumi))
@@ -853,7 +924,7 @@ class PlotterBase(object):
         else:                     # default, top, just below CMS label
             yend = 0.77
         xstart = xend-0.15*numcol-0.15
-        ystart = yend-math.ceil(float(numEntries)/numcol)*0.045
+        ystart = yend-math.ceil(float(numEntries)/numcol)*0.06
         if plotratio: yend *= 0.95
         # create and draw legend
         leg = ROOT.TLegend(xstart,ystart,xend,yend,'','NDC')
@@ -864,7 +935,7 @@ class PlotterBase(object):
         leg.SetFillColor(0)
         if plotdata: leg.AddEntry(datahist,'Data','ep')
         if mchist:
-            for hist in mchist.GetHists():
+            for hist in reversed(mchist.GetHists()):
                 leg.AddEntry(hist,hist.GetTitle(),'f')
         if plotsig:
             for s in self.signal:
@@ -873,11 +944,11 @@ class PlotterBase(object):
 
     def save(self, savename):
         '''Save the canvas in multiple formats.'''
-        for type in ['png','root']:
+        self.canvas.SetName(savename)
+        for type in ['png','root','pdf']:
             name = "%s/%s/%s.%s" % (self.plotDir, type, savename, type)
             python_mkdir(os.path.dirname(name))
             self.canvas.Print(name)
-        self.canvas.SetName(savename)
         self.savefile.WriteTObject(self.canvas)
         self.canvas.Clear()
 

@@ -458,8 +458,14 @@ class AnalyzerBase(object):
         ntupleRow["event.GenNUP"] = -1 if self.isData else int(rtrow.NUP)
         ntupleRow["event.trig_prescale"] = int(scales['trigger_prescale'])
         ntupleRow["event.lep_scale"] = float(scales['lep'])
+        ntupleRow["event.lep_scale_e"] = float(scales['lepe'])
+        ntupleRow["event.lep_scale_m"] = float(scales['lepm'])
         ntupleRow["event.lep_scale_up"] = float(scales['lepup'])
+        ntupleRow["event.lep_scale_e_up"] = float(scales['lepeup'])
+        ntupleRow["event.lep_scale_m_up"] = float(scales['lepmup'])
         ntupleRow["event.lep_scale_down"] = float(scales['lepdown'])
+        ntupleRow["event.lep_scale_e_down"] = float(scales['lepedown'])
+        ntupleRow["event.lep_scale_m_down"] = float(scales['lepmdown'])
         ntupleRow["event.lepeff"] = float(scales['lepeff'])
         ntupleRow["event.lepeff_up"] = float(scales['lepeffup'])
         ntupleRow["event.lepeff_down"] = float(scales['lepeffdown'])
@@ -825,8 +831,14 @@ class AnalyzerBase(object):
         '''Return the scale factors in a dictionary'''
         scales = {
             'lep'             : 1,
+            'lepe'            : 1,
+            'lepm'            : 1,
             'lepup'           : 1,
+            'lepeup'          : 1,
+            'lepmup'          : 1,
             'lepdown'         : 1,
+            'lepedown'        : 1,
+            'lepmdown'        : 1,
             'lepeff'          : 1,
             'lepeffup'        : 1,
             'lepeffdown'      : 1,
@@ -860,15 +872,40 @@ class AnalyzerBase(object):
         scales['puweight'] = puweight
         # do different based on category
         lepscales = [1.,1.,1.]
+        lepescales = [1.,1.,1.]
+        lepmscales = [1.,1.,1.]
         for obj in objects:
             ls = self.lepscaler.scale_factor(rtrow, obj, period=self.period, metShift=self.metShift, loose=not self.ID(rtrow,obj,**self.getIdArgs('Tight')), **lepargs)
             lepscales[0] *= ls[0]
             lepscales[1] *= ls[1]
             lepscales[2] *= ls[2]
+            if obj[0]=='e':
+                lepescales[0] *= ls[0]
+                lepescales[1] *= ls[1]
+                lepescales[2] *= ls[2]
+            else:
+                lepescales[0] *= ls[0]
+                lepescales[1] *= ls[0] # dont shift
+                lepescales[2] *= ls[0]
+            if obj[0]=='m':
+                lepmscales[0] *= ls[0]
+                lepmscales[1] *= ls[1]
+                lepmscales[2] *= ls[2]
+            else:
+                lepmscales[0] *= ls[0] # dont shift
+                lepmscales[1] *= ls[0]
+                lepmscales[2] *= ls[0]
+
         #lepscales = self.lepscaler.scale_factor(rtrow, *objects, period=self.period, **lepargs)
         scales['lep']      = lepscales[0]
+        scales['lepe']     = lepescales[0]
+        scales['lepm']     = lepmscales[0]
         scales['lepup']    = lepscales[1]
+        scales['lepeup']   = lepescales[1]
+        scales['lepmup']   = lepmscales[1]
         scales['lepdown']  = lepscales[2]
+        scales['lepedown'] = lepescales[2]
+        scales['lepmdown'] = lepmscales[2]
         if self.period==13:
             lepeff = self.lepeff.scale_factor(rtrow, *objects, period=self.period, metShift=self.metShift, **lepargs)
             scales['lepeff'] = lepeff[0]

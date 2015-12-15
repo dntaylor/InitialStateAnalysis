@@ -123,7 +123,7 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
     eventVars['I'] = ['run','lumi','nvtx','GenNUP','trig_prescale']
     eventVars['l'] = ['evt'] # ULong64
     eventVars['F'] = ['gen_weight','charge_uncertainty']
-    for v in ['lep_scale','pu_weight','fakerate','trig_scale','lepeff']:
+    for v in ['lep_scale','lep_scale_e','lep_scale_m','pu_weight','fakerate','trig_scale','lepeff']:
         for t in ['','_up','_down']:
             eventVars['F'] += ['{0}{1}'.format(v,t)]
     eventName = 'structEvent_t'

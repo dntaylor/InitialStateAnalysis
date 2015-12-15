@@ -166,28 +166,54 @@ def wzlimit(analysis,region,period,chan,**kwargs):
     name = kwargs.pop('name','card')
     scalefactor = kwargs.pop('scalefactor','event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale')
     datacardDir = kwargs.pop('datacardDir','./datacards')
+    mode = kwargs.pop('mode','all') # all, none, theory, stat, lumi, experimental
     logging.info("Processing card name {0}".format(name))
 
     chanCut = '{0} && channel=="{1}"'.format(cut,chan)
 
+    #doStat = mode in ['all','experimental','stat']
+    doStat = mode not in ['nostat']
     limits = WZLimits(analysis,region, period, chanCut,  getNtupleDirectory(analysis,region,period),
-                    '%s/%s_%itev_%s' % (datacardDir, analysis, period, region), scalefactor=scalefactor)
+                    '%s/%s_%itev_%s' % (datacardDir, analysis, period, region), scalefactor=scalefactor,
+                     doStat=doStat)
 
     # add systematic
-    bgnames = ['datadriven','ZZ','WW','TTV','VVV','ZG']
+    #bgnames = ['datadriven','ZZ','WW','TTV','VVV','ZG']
+    bgnames = ['datadriven','ZZ','TTV','VVV','ZG']
     signames = ['WZ']
-    mcnames = ['WZ','ZZ','WW','TTV','VVV','ZG']
+    #mcnames = ['WZ','ZZ','WW','TTV','VVV','ZG']
+    mcnames = ['WZ','ZZ','TTV','VVV','ZG']
 
     # lumi
-    # current recommendation: 12%
-    #lumi = {}
-    #for b in mcnames: lumi[b] = 1.12
-    #limits.add_systematics("lumi", "lnN", **lumi)
+    # current recommendation: 4.6%
+    lumi = {}
+    for b in mcnames: lumi[b] = 1.046
+    if mode in ['all','lumi','nostat']: limits.add_systematics("lumi", "lnN", **lumi)
 
     # datadriven
     # assume 40%
     fake = {'datadriven' : 1.4}
-    limits.add_systematics('fake_rate_unc','lnN',**fake)
+    if mode in ['all','experimental','nostat']: limits.add_systematics('fake_rate_unc','lnN',**fake)
+
+    # ZZ cross section
+    zzxsec = {'ZZ':1.16}
+    if mode in ['all','experimental','nostat']: limits.add_systematics('zz_xsec','lnN',**zzxsec)
+
+    # ZG cross section theory
+    zgxsec = {'ZG':1.06}
+    if mode in ['all','experimental','nostat']: limits.add_systematics('zg_xsec_theory','lnN',**zgxsec)
+
+    # TTZ cross section theory
+    ttzxsec = {'TTV':1.15}
+    if mode in ['all','experimental','nostat']: limits.add_systematics('ttz_xsec_theory','lnN',**ttzxsec)
+
+    # diboson cross section theory
+    wwxsec = {'WW':1.06}
+    if mode in ['all','experimental','nostat']: limits.add_systematics('ww_xsec_theory','lnN',**wwxsec)
+
+    # VVV cross section theory
+    vvvxsec = {'VVV':1.06}
+    if mode in ['all','experimental','nostat']: limits.add_systematics('vvv_xsec_theory','lnN',**vvvxsec)
 
     # eff uncertainty
     # take scale factors for leptons, propagate up and down based on statistical uncertainty
@@ -199,7 +225,27 @@ def wzlimit(analysis,region,period,chan,**kwargs):
     }
     lep = {}
     for m in mcnames: lep[m] = lepvals[chan]
-    limits.add_systematics('lep_eff_unc','lnN',**lep)
+    #limits.add_systematics('lep_eff_unc','lnN',**lep)
+    elepvals = {
+        'eee' : 1.018,
+        'eem' : 1.012,
+        'mme' : 1.005,
+        'mmm' : 1.000,
+    }
+    if 'e' in chan:
+        elep = {}
+        for m in mcnames: elep[m] = elepvals[chan]
+        if mode in ['all','experimental','nostat']: limits.add_systematics('lep_eff_unc_e','lnN',**elep)
+    mlepvals = {
+        'eee' : 1.000,
+        'eem' : 1.004,
+        'mme' : 1.011,
+        'mmm' : 1.016,
+    }
+    if 'm' in chan:
+        mlep = {}
+        for m in mcnames: mlep[m] = mlepvals[chan]
+        if mode in ['all','experimental','nostat']: limits.add_systematics('lep_eff_unc_m','lnN',**mlep)
 
     # pu
     # assume 10% uncertainty on min bias cross section, scale up and down, take largest difference in wz yield
@@ -211,43 +257,47 @@ def wzlimit(analysis,region,period,chan,**kwargs):
     }
     pu = {}
     for m in mcnames: pu[m] = puvals[chan]
-    limits.add_systematics('PU_unc','lnN',**pu)
+    if mode in ['all','experimental','nostat']: limits.add_systematics('PU_unc','lnN',**pu)
 
     # met
     # scale all components up and down independently, add in quadrature the largest
     metvals = {
-        'eee' : 1.0146, # placeholder from 8 tev
-        'eem' : 1.0150,
-        'mme' : 1.0159,
-        'mmm' : 1.0117,
+        #'eee' : 1.0146, # placeholder from 8 tev
+        #'eem' : 1.0150,
+        #'mme' : 1.0159,
+        #'mmm' : 1.0117,
+        'eee' : 1.019, # 13 tev mes, ees, jes
+        'eem' : 1.013,
+        'mme' : 1.033,
+        'mmm' : 1.017,
     }
     met = {}
     for m in mcnames: met[m] = metvals[chan]
-    limits.add_systematics('met_unc','lnN',**met)
+    if mode in ['all','experimental','nostat']: limits.add_systematics('met_unc','lnN',**met)
 
     # pdf
     # propagate pdf ucnertainties through the selection, scale up and down, take largest
-    #pdfvals = {
-    #    'eee' : 1.01407, # for now just taking gen, figure it out later after new fsa
-    #    'eem' : 1.01394,
-    #    'mme' : 1.01399,
-    #    'mmm' : 1.01395,
-    #}
-    #pdf = {}
-    #for s in signames: pdf[s] = pdfvals[chan]
-    #limits.add_systematics('pdf_unc','lnN',**pdf)
+    pdfvals = {
+        'eee' : 1.01407, # for now just taking gen, figure it out later after new fsa
+        'eem' : 1.01394,
+        'mme' : 1.01399,
+        'mmm' : 1.01395,
+    }
+    pdf = {}
+    for s in signames: pdf[s] = pdfvals[chan]
+    if mode in ['all','theory','nostat']: limits.add_systematics('pdf_unc','lnN',**pdf)
 
     # scale
     # propagate scale uncertainties through the selection, scale up and down, take largest
-    #scalevals = {
-    #    'eee' : 1.04296, # again, now just taking gen, fix fsa later
-    #    'eem' : 1.04298,
-    #    'mme' : 1.04285,
-    #    'mmm' : 1.04298,
-    #}
-    #scale = {}
-    #for s in signames: scale[s] = scalevals[chan]
-    #limits.add_systematics('scale_unc','lnN',**scale)
+    scalevals = {
+        'eee' : 1.04296, # again, now just taking gen, fix fsa later
+        'eem' : 1.04298,
+        'mme' : 1.04285,
+        'mmm' : 1.04298,
+    }
+    scale = {}
+    for s in signames: scale[s] = scalevals[chan]
+    if mode in ['all','theory','nostat']: limits.add_systematics('scale_unc','lnN',**scale)
 
     # gen card
     limits.gen_card("{0}.txt".format(name))
@@ -261,17 +311,19 @@ def wzLimitWrapper(args):
     cut = args[5]
     scalefactor = args[6]
     datacardDir = args[7]
-    wzlimit(analysis,region,period,chan,name=name,cut=cut,scalefactor=scalefactor,datacardDir=datacardDir)
+    mode = args[8]
+    wzlimit(analysis,region,period,chan,name=name,cut=cut,scalefactor=scalefactor,datacardDir=datacardDir,mode=mode)
     
 
 def wzlimits(analysis,region,period,**kwargs):
     cut = kwargs.pop('cut','1')
     scalefactor = kwargs.pop('scalefactor','event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale')
     datacardDir = kwargs.pop('datacardDir','./datacards')
+    mode = kwargs.pop('mode','all')
 
     poolArgs = []
     for chan in ['eee','eem','mme','mmm']:
-        poolArgs += [(analysis,region,period,chan,chan,cut,scalefactor,datacardDir)]
+        poolArgs += [(analysis,region,period,chan,chan,cut,scalefactor,datacardDir,mode)]
 
     if len(poolArgs)==1:
         job = poolArgs[0]
@@ -292,12 +344,13 @@ def getSignalStrength(cut,**kwargs):
     '''Get WZ signal strength'''
     scalefactor = kwargs.pop('scalefactor','event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale')
     datacardDir = kwargs.pop('datacardDir','datacards_temp')
+    mode = kwargs.pop('mode','all')
     statonly = kwargs.pop('statonly',False)
     # produce limits
-    wzlimits('WZ','WZ',13,cut=cut,scalefactor=scalefactor,datacardDir=datacardDir)
+    wzlimits('WZ','WZ',13,cut=cut,scalefactor=scalefactor,datacardDir=datacardDir,mode=mode)
     # merge cards
     combineDir = '/cms/dntaylor/HIGGSCOMBINE_71X/CMSSW_7_1_5/src'
-    command = 'pushd {0}; eval `scramv1 runtime -sh`; pushd {1}/WZ_13tev_WZ/; combineCards.py [em][em][em].txt > wz.txt;'.format(combineDir,datacardDir)
+    command = 'pushd {0}; eval `scramv1 runtime -sh`; popd; pushd {1}/WZ_13tev_WZ/; combineCards.py [em][em][em].txt > wz.txt;'.format(combineDir,datacardDir)
     outString = subprocess.Popen(command, shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT).communicate()[0]
     # run combine
     sigStrengths = {}
