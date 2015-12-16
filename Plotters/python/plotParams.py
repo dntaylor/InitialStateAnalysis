@@ -32,19 +32,19 @@ def multiplePlotsParallel(plotters,methods,plotMaps):
 
 
 leptonParams = {
-    'Pt'               : { 'args': ['{obj}.{pre}Pt{post}',               [20,0,200],            '{savedir}/{name}/Pt'],              'kwargs': {'xaxis': 'p_{{T}}^{{{pretty}}} (GeV)', 'yaxis': 'Events/10 GeV', 'overflow': True}},
-    'Iso'              : { 'args': ['{obj}.{pre}Iso{post}',              [50,0,.5],             '{savedir}/{name}/Iso'],             'kwargs': {'xaxis': '\\rm{{Rel. Iso.}} ({pretty})', 'overflow': True}},
-    'Eta'              : { 'args': ['{obj}.{pre}Eta{post}',              [30,-3.0,3.0],         '{savedir}/{name}/Eta'],             'kwargs': {'xaxis': '\\eta^{{{pretty}}}', 'legendpos': 43, 'numcol': 3}},
-    'Phi'              : { 'args': ['{obj}.{pre}Phi{post}',              [30,-3.14159,3.14159], '{savedir}/{name}/Eta'],             'kwargs': {'xaxis': '\\phi^{{{pretty}}}', 'legendpos': 43, 'numcol': 3}},
-    'Dxy'              : { 'args': ['{obj}.{pre}Dxy{post}',              [50,-0.1,0.1],         '{savedir}/{name}/Dxy'],             'kwargs': {'xaxis': 'd_{{0}}^{{{pretty}}}', 'legendpos': 43}},
-    'Dz'               : { 'args': ['{obj}.{pre}Dz{post}',               [50,-0.1,0.1],         '{savedir}/{name}/Dz'],              'kwargs': {'xaxis': 'd_{{Z}}^{{{pretty}}}', 'legendpos': 43}},
-    #'SigmaIEtaIEta'    : { 'args': ['{obj}.{pre}SigmaIEtaIEta{post}',    [40,0.,0.08],          '{savedir}/{name}/SigmaIEtaIEta'],   'kwargs': {'xaxis': '\\sigma_{{i\\eta i\\eta}}^{{{pretty}}}', 'legendpos': 43}},
-    #'DEtaIn'           : { 'args': ['{obj}.{pre}DEtaIn{post}',           [50,-0.1,0.1],         '{savedir}/{name}/DEtaIn'],          'kwargs': {'xaxis': '\\Delta\\eta_{{In}}^{{{pretty}}}', 'legendpos': 43}},
-    #'DPhiIn'           : { 'args': ['{obj}.{pre}DPhiIn{post}',           [50,-0.1,0.1],         '{savedir}/{name}/DPhiIn'],          'kwargs': {'xaxis': '\\Delta\\phi_{{In}}^{{{pretty}}}', 'legendpos': 43}},
-    #'HOverE'           : { 'args': ['{obj}.{pre}HOverE{post}',           [50,0.,0.1],           '{savedir}/{name}/HOverE'],          'kwargs': {'xaxis': '\\frac{{H}}{{E}}^{{{pretty}}}', 'legendpos': 43}},
-    #'OoEmOoP'          : { 'args': ['{obj}.{pre}OoEmOoP{post}',          [50,0.,0.1],           '{savedir}/{name}/OoEmOoP'],         'kwargs': {'xaxis': '|\\frac{{1}}{{E}}-\\frac{{1}}{{P}}| ({pretty})', 'legendpos': 43}},
-    'TriggeringMVA'    : { 'args': ['{obj}.{pre}TriggeringMVA{post}',    [50,-1.,1.],           '{savedir}/{name}/TriggeringMVA'],    'kwargs': {'xaxis': 'MVA Score ({pretty})', 'legendpos': 43}},
-    'NonTriggeringMVA' : { 'args': ['{obj}.{pre}NonTriggeringMVA{post}', [50,-1.,1.],           '{savedir}/{name}/NonTriggeringMVA'], 'kwargs': {'xaxis': 'MVA Score ({pretty})', 'legendpos': 43}},
+    'Pt'               : { 'args': ['{obj}.{pre}Pt{post}',               [20,0,200],            '{savedir}{name}/Pt'],              'kwargs': {'xaxis': 'p_{{T}}^{{{pretty}}} (GeV)', 'yaxis': 'Events/10 GeV', 'overflow': True}},
+    'Iso'              : { 'args': ['{obj}.{pre}Iso{post}',              [50,0,.5],             '{savedir}{name}/Iso'],             'kwargs': {'xaxis': '\\rm{{Rel. Iso.}} ({pretty})', 'overflow': True}},
+    'Eta'              : { 'args': ['{obj}.{pre}Eta{post}',              [30,-3.0,3.0],         '{savedir}{name}/Eta'],             'kwargs': {'xaxis': '\\eta^{{{pretty}}}', 'legendpos': 43, 'numcol': 3}},
+    'Phi'              : { 'args': ['{obj}.{pre}Phi{post}',              [30,-3.14159,3.14159], '{savedir}{name}/Eta'],             'kwargs': {'xaxis': '\\phi^{{{pretty}}}', 'legendpos': 43, 'numcol': 3}},
+    'Dxy'              : { 'args': ['{obj}.{pre}Dxy{post}',              [50,-0.1,0.1],         '{savedir}{name}/Dxy'],             'kwargs': {'xaxis': 'd_{{0}}^{{{pretty}}}', 'legendpos': 43}},
+    'Dz'               : { 'args': ['{obj}.{pre}Dz{post}',               [50,-0.1,0.1],         '{savedir}{name}/Dz'],              'kwargs': {'xaxis': 'd_{{Z}}^{{{pretty}}}', 'legendpos': 43}},
+    #'SigmaIEtaIEta'    : { 'args': ['{obj}.{pre}SigmaIEtaIEta{post}',    [40,0.,0.08],          '{savedir}{name}/SigmaIEtaIEta'],   'kwargs': {'xaxis': '\\sigma_{{i\\eta i\\eta}}^{{{pretty}}}', 'legendpos': 43}},
+    #'DEtaIn'           : { 'args': ['{obj}.{pre}DEtaIn{post}',           [50,-0.1,0.1],         '{savedir}{name}/DEtaIn'],          'kwargs': {'xaxis': '\\Delta\\eta_{{In}}^{{{pretty}}}', 'legendpos': 43}},
+    #'DPhiIn'           : { 'args': ['{obj}.{pre}DPhiIn{post}',           [50,-0.1,0.1],         '{savedir}{name}/DPhiIn'],          'kwargs': {'xaxis': '\\Delta\\phi_{{In}}^{{{pretty}}}', 'legendpos': 43}},
+    #'HOverE'           : { 'args': ['{obj}.{pre}HOverE{post}',           [50,0.,0.1],           '{savedir}{name}/HOverE'],          'kwargs': {'xaxis': '\\frac{{H}}{{E}}^{{{pretty}}}', 'legendpos': 43}},
+    #'OoEmOoP'          : { 'args': ['{obj}.{pre}OoEmOoP{post}',          [50,0.,0.1],           '{savedir}{name}/OoEmOoP'],         'kwargs': {'xaxis': '|\\frac{{1}}{{E}}-\\frac{{1}}{{P}}| ({pretty})', 'legendpos': 43}},
+    'TriggeringMVA'    : { 'args': ['{obj}.{pre}TriggeringMVA{post}',    [50,-1.,1.],           '{savedir}{name}/TriggeringMVA'],    'kwargs': {'xaxis': 'MVA Score ({pretty})', 'legendpos': 43}},
+    'NonTriggeringMVA' : { 'args': ['{obj}.{pre}NonTriggeringMVA{post}', [50,-1.,1.],           '{savedir}{name}/NonTriggeringMVA'], 'kwargs': {'xaxis': 'MVA Score ({pretty})', 'legendpos': 43}},
 }
 
 
@@ -54,7 +54,7 @@ def addLeptonPlotParams(savedir,obj,pre,post,name,pretty,doDetailed):
     basicVars = ['Pt','Iso','Eta','Phi']
     for v in leptonParams:
         if not doDetailed and v not in basicVars: continue
-        vname = '{0}{1}'.format(name,v)
+        vname = '{0}{1}'.format(name.replace('/',''),v)
         plotParams[vname] = {
             'args'  : [leptonParams[v]['args'][0].format(obj=obj,pre=pre,post=post), leptonParams[v]['args'][1], leptonParams[v]['args'][2].format(savedir=savedir,name=name)],
             'kwargs': deepcopy(leptonParams[v]['kwargs']),
@@ -63,10 +63,10 @@ def addLeptonPlotParams(savedir,obj,pre,post,name,pretty,doDetailed):
     return plotParams
 
 dileptonParams = {
-    'Mass': { 'args': ['{obj}.mass', [24,0,600],'{savedir}/{name}/Mass'], 'kwargs': {'yaxis': 'Events/25 GeV', 'xaxis': 'm_{{{pretty}}} (GeV)', 'overflow': True} },
-    'DPhi': { 'args': ['{obj}.dPhi', [32,0,3.2],'{savedir}/{name}/dPhi'], 'kwargs': {'yaxis': 'Events/0.1 rad', 'xaxis': '\\Delta\\phi_{{{pretty}}} (rad)'} },
-    'Pt'  : { 'args': ['{obj}.Pt',   [40,0,400],'{savedir}/{name}/Pt'],   'kwargs': {'yaxis': 'Events/10 GeV', 'xaxis': 'p_{{T}}^{{{pretty}}} (GeV)', 'overflow': True} },
-    'DR'  : { 'args': ['{obj}.dR',   [60,0,6],  '{savedir}/{name}/dR'],   'kwargs': {'xaxis': '\\Delta R({pretty})'} },
+    'Mass': { 'args': ['{obj}.mass', [24,0,600],'{savedir}{name}/Mass'], 'kwargs': {'yaxis': 'Events/25 GeV', 'xaxis': 'm_{{{pretty}}} (GeV)', 'overflow': True} },
+    'DPhi': { 'args': ['{obj}.dPhi', [32,0,3.2],'{savedir}{name}/dPhi'], 'kwargs': {'yaxis': 'Events/0.1 rad', 'xaxis': '\\Delta\\phi_{{{pretty}}} (rad)'} },
+    'Pt'  : { 'args': ['{obj}.Pt',   [40,0,400],'{savedir}{name}/Pt'],   'kwargs': {'yaxis': 'Events/10 GeV', 'xaxis': 'p_{{T}}^{{{pretty}}} (GeV)', 'overflow': True} },
+    'DR'  : { 'args': ['{obj}.dR',   [60,0,6],  '{savedir}{name}/dR'],   'kwargs': {'xaxis': '\\Delta R({pretty})'} },
 }
 
 def addDileptonPlotParams(savedir,obj,name,pretty,doDetailed):
@@ -76,15 +76,15 @@ def addDileptonPlotParams(savedir,obj,name,pretty,doDetailed):
         vname = '{0}{1}'.format(name,v)
         plotParams[vname] = {
             'args'  : [dileptonParams[v]['args'][0].format(obj=obj), dileptonParams[v]['args'][1], dileptonParams[v]['args'][2].format(savedir=savedir,name=name)],
-            'kwargs': deepcopy(dileptonParams[v]['kwargs'],
+            'kwargs': deepcopy(dileptonParams[v]['kwargs']),
         }
         plotParams[vname]['kwargs']['xaxis'] = dileptonParams[v]['kwargs']['xaxis'].format(pretty=pretty)
     return plotParams
 
 leptonMetParams = {
-    'Pt'  : { 'args': ['{obj}.Pt',  [40,0,400],'{savedir}/{name}/Pt'],   'kwargs' : { 'yaxis': 'Events/10 GeV', 'xaxis': 'p_{{T}}^{{{pretty}}} (GeV)', 'overflow': True} },
-    'Mass': { 'args': ['{obj}.mass',[40,0,400],'{savedir}/{name}/Mass'], 'kwargs' : { 'yaxis': 'Events/10 GeV', 'xaxis': 'm_{{T}}^{{{pretty}}} (GeV)', 'overflow': True} },
-    'DPhi': { 'args': ['{obj}.dPhi',[32,0,3.2],'{savedir}/{name}/dPhi'], 'kwargs' : { 'yaxis': 'Events/0.1 rad', 'xaxis': '\\Delta\\phi({pretty} lepton, E_{{T}}^{{miss}}) (rad)'} },
+    'Pt'  : { 'args': ['{obj}.Pt',  [40,0,400],'{savedir}{name}/Pt'],   'kwargs' : { 'yaxis': 'Events/10 GeV', 'xaxis': 'p_{{T}}^{{{pretty}}} (GeV)', 'overflow': True} },
+    'Mass': { 'args': ['{obj}.mass',[40,0,400],'{savedir}{name}/Mass'], 'kwargs' : { 'yaxis': 'Events/10 GeV', 'xaxis': 'm_{{T}}^{{{pretty}}} (GeV)', 'overflow': True} },
+    'DPhi': { 'args': ['{obj}.dPhi',[32,0,3.2],'{savedir}{name}/dPhi'], 'kwargs' : { 'yaxis': 'Events/0.1 rad', 'xaxis': '\\Delta\\phi({pretty} lepton, E_{{T}}^{{miss}}) (rad)'} },
 }
 
 def addLeptonMetPlotParams(savedir,obj,name,pretty,doDetailed):
@@ -94,7 +94,7 @@ def addLeptonMetPlotParams(savedir,obj,name,pretty,doDetailed):
         vname = '{0}{1}'.format(name,v)
         plotParams[vname] = {
             'args'  : [leptonMetParams[v]['args'][0].format(obj=obj), leptonMetParams[v]['args'][1], leptonMetParams[v]['args'][2].format(savedir=savedir,name=name)],
-            'kwargs': deepcopy(leptonMetParams[v]['kwargs'],
+            'kwargs': deepcopy(leptonMetParams[v]['kwargs']),
         }
         plotParams[vname]['kwargs']['xaxis'] = leptonMetParams[v]['kwargs']['xaxis'].format(pretty=pretty)
     return plotParams
@@ -124,13 +124,13 @@ def addEventParams(savedir,doDetailed):
 
 def buildPlotParams(analysis,region,period,savedir,nl,doDetailed):
     if savedir: savedir = savedir + '/'
-    plotParams = {}
+    params = {}
 
     # each lepton
     leptonArgs = []
     if doDetailed:
         for i in range(nl):
-            leptonArgs += [(savedir,'l{0}'.format(i+1),'','','l{0}'.format(i+),'\\ell{0}'.format(l+1),doDetailed)]
+            leptonArgs += [(savedir,'l{0}'.format(i+1),'','','l{0}'.format(i+1),'\\ell{0}'.format(l+1),doDetailed)]
     if analysis in ['Hpp4l']:
         leptonArgs += [(savedir,'h1','','1','hpp/Leading','\\Phi^{++} \\text{Leading Lepton}',doDetailed)]
         leptonArgs += [(savedir,'h1','','2','hpp/SubLeading','\\Phi^{++} \\text{Subleading Lepton}',doDetailed)]
@@ -152,48 +152,48 @@ def buildPlotParams(analysis,region,period,savedir,nl,doDetailed):
         leptonArgs += [(savedir,'w1','','1','w1/Lepton','W Lepton',doDetailed)]
 
     for la in leptonArgs:
-        plotParams.update(addLeptonPlotParams(*la))
+        params.update(addLeptonPlotParams(*la))
 
     # dilepton objects
     dileptonArgs = []
     if analysis in ['Hpp4l']:
-        dileptonArgs += [(savedir,'h1','hpp','\\ell^{+}\\ell^{+}',doDetailed]
-        dileptonArgs += [(savedir,'h2','hmm','\\ell^{-}\\ell^{-}',doDetailed]
+        dileptonArgs += [(savedir,'h1','hpp','\\ell^{+}\\ell^{+}',doDetailed)]
+        dileptonArgs += [(savedir,'h2','hmm','\\ell^{-}\\ell^{-}',doDetailed)]
     if analysis in ['Hpp3l']:
-        dileptonArgs += [(savedir,'h1','hpp','\\ell^{\\pm}\\ell^{\\pm}',doDetailed]
+        dileptonArgs += [(savedir,'h1','hpp','\\ell^{\\pm}\\ell^{\\pm}',doDetailed)]
     if analysis in ['Hpp4l','ZZ','WZ','Hpp3l']:
-        dileptonArgs += [(savedir,'z1','z1','\\ell^{+}\\ell^{-}',doDetailed]
+        dileptonArgs += [(savedir,'z1','z1','\\ell^{+}\\ell^{-}',doDetailed)]
     if analysis in ['Hpp4l','ZZ']:
-        dileptonArgs += [(savedir,'z2','z2','\\ell^{+}\\ell^{-}',doDetailed]
+        dileptonArgs += [(savedir,'z2','z2','\\ell^{+}\\ell^{-}',doDetailed)]
 
     for da in dileptonArgs:
-        plotParams.update(addDileptonPlotParams(*da))
+        params.update(addDileptonPlotParams(*da))
 
     # add leptonMet objects
     leptonMetArgs = []
     if analysis in ['Hpp3l']:
-        leptonMetArgs += [(savedir,'h2','hm','\\ell^{\\mp}',doDetailed]
+        leptonMetArgs += [(savedir,'h2','hm','\\ell^{\\mp}',doDetailed)]
     if analysis in ['Hpp3l','WZ']:
-        leptonMetArgs += [(savedir,'w1','w1','W',doDetailed]
+        leptonMetArgs += [(savedir,'w1','w1','W',doDetailed)]
 
     for lma in leptonMetArgs:
-        plotParams.update(addLeptonMetPlotParams(*lma))
+        params.update(addLeptonMetPlotParams(*lma))
 
     # add event params
-    plotParams.update(addEventParams)
+    params.update(addEventParams(savedir,doDetailed))
 
     # customization
 
     # customize stuff
-    if 'z1Mass' in plotParams:
-        plotParams['z1Mass']['args'][1] = [13,58.5,123.5]
-        plotParams['z1Mass']['kwargs']['yaxis'] = 'Events/5 GeV'
-    if 'z2Mass' in plotParams:
-        plotParams['z2Mass']['args'][1] = [13,58.5,123.5]
-        plotParams['z2Mass']['kwargs']['yaxis'] = 'Events/5 GeV'
+    if 'z1Mass' in params:
+        params['z1Mass']['args'][1] = [13,58.5,123.5]
+        params['z1Mass']['kwargs']['yaxis'] = 'Events/5 GeV'
+    if 'z2Mass' in params:
+        params['z2Mass']['args'][1] = [13,58.5,123.5]
+        params['z2Mass']['kwargs']['yaxis'] = 'Events/5 GeV'
 
 
-    return plotParams
+    return params
 
 def getDefaultPlotterArgs():
     return {
