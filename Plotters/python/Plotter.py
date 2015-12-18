@@ -86,6 +86,7 @@ class Plotter(PlotterBase):
                legendpos   int              location of legendtext AB (A=012=LCR, B=012=TMB)
                signalscale int              factor to scale signal by
                isprelim    bool             The plot is CMS preliminary'''
+        canvas = kwargs.pop('canvas','')
         cut = kwargs.pop('cut', '')
         xaxis = kwargs.pop('xaxis', '')
         yaxis = kwargs.pop('yaxis', 'Events')
@@ -118,6 +119,12 @@ class Plotter(PlotterBase):
         if xmin or xmax: xrange = [xmin, xmax]
         for key, value in kwargs.iteritems():
             self.logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
+
+        # passing custom canvas
+        if canvas:
+            defaultCanvas = self.canvas
+            self.canvas = canvas
+            self.setupCanvas()
 
         if type(variables) is not list: variables = [variables]
 
@@ -347,11 +354,18 @@ class Plotter(PlotterBase):
         self.canvas.cd()
         self.save(savename)
 
+        if canvas:
+            canvas = self.canvas
+
         if plotratio:
             self.resetCanvas()
 
         if scalefactor:
             self.setScaleFactor(oldscalefactor)
+
+        if canvas:
+            self.canvas = defaultCanvas
+            return canvas
 
     def plotMCDataSignalRatio2D(self, var1, var2, bin1, bin2, savename, **kwargs):
         cut = kwargs.pop('cut', '')

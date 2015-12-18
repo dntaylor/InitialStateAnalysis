@@ -61,16 +61,7 @@ class PlotterBase(object):
         self.L = 0.12
         self.R = 0.04
         self.canvas = ROOT.TCanvas("c1","c1",50,50,self.W,self.H)
-        self.canvas.SetFillColor(0)
-        self.canvas.SetBorderMode(0)
-        self.canvas.SetFrameFillStyle(0)
-        self.canvas.SetFrameBorderMode(0)
-        self.canvas.SetLeftMargin( self.L )
-        self.canvas.SetRightMargin( self.R )
-        self.canvas.SetTopMargin( self.T )
-        self.canvas.SetBottomMargin( self.B )
-        self.canvas.SetTickx(1)
-        self.canvas.SetTicky(1)
+        self.setupCanvas()
 
         # now, setup plotter conditions (some to be initalized later)
         self.j = 0 # global variable to prevent resusing histograms
@@ -146,6 +137,19 @@ class PlotterBase(object):
         self.intLumi = 25000.
         self.j = 0
         self.resetCanvas()
+
+    def setupCanvas(self):
+        '''Setup the intial canvas'''
+        self.canvas.SetFillColor(0)
+        self.canvas.SetBorderMode(0)
+        self.canvas.SetFrameFillStyle(0)
+        self.canvas.SetFrameBorderMode(0)
+        self.canvas.SetLeftMargin( self.L )
+        self.canvas.SetRightMargin( self.R )
+        self.canvas.SetTopMargin( self.T )
+        self.canvas.SetBottomMargin( self.B )
+        self.canvas.SetTickx(1)
+        self.canvas.SetTicky(1)
 
     def resetCanvas(self):
         '''Reset canvas after changes'''
