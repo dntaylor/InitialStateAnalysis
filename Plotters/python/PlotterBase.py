@@ -48,6 +48,7 @@ class PlotterBase(object):
         dataScaleFactor = kwargs.pop('dataScaleFactor','1')
         datadriven = kwargs.pop('datadriven',False)
         baseSelection = kwargs.pop('baseSelection','')
+        self.dontSave = kwargs.pop('dontSave',False)
         for key, value in kwargs.iteritems():
             self.logger.warning("Unrecognized parameter '%s' = %s" %(key,str(value)))
 
@@ -949,10 +950,11 @@ class PlotterBase(object):
     def save(self, savename):
         '''Save the canvas in multiple formats.'''
         self.canvas.SetName(savename)
+        if self.dontSave: return
         for type in ['png','root','pdf']:
             name = "%s/%s/%s.%s" % (self.plotDir, type, savename, type)
             python_mkdir(os.path.dirname(name))
             self.canvas.Print(name)
         self.savefile.WriteTObject(self.canvas)
-        self.canvas.Clear()
+        #self.canvas.Clear()
 

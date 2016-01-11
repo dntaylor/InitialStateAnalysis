@@ -192,6 +192,11 @@ def buildPlotParams(analysis,region,period,savedir,nl,doDetailed):
         params['z2Mass']['args'][1] = [13,58.5,123.5]
         params['z2Mass']['kwargs']['yaxis'] = 'Events/5 GeV'
 
+    defaultKwargs = getDefaultPlotterArgs()
+    for key in params:
+        for arg in defaultKwargs:
+            if arg not in params[key]['kwargs']:
+                params[key]['kwargs'][arg] = defaultKwargs[arg]
 
     return params
 
@@ -211,16 +216,18 @@ def getDefaultPlotterArgs():
         'normalize'   : False,
         'blinder'     : [],
         'boxes'       : [],
-        'logy'        : 0,
-        'logx'        : 0,
-        'nobg'        : 0,
+        'logy'        : False,
+        'logx'        : False,
+        'nobg'        : False,
         'lumitext'    : 11,
         'legendpos'   : 33,
         'numcol'      : 1,
         'signalscale' : 1,
-        'isprelim'    : 1,
+        'isprelim'    : True,
         'scalefactor' : '',
         'yscale'      : 1.25,
+        #'plotdata'    : False,
+        #'plotsig'     : False,
     }
 
 

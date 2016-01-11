@@ -356,6 +356,7 @@ class Plotter(PlotterBase):
 
         if canvas:
             canvas = self.canvas
+            self.canvas = defaultCanvas
 
         if plotratio:
             self.resetCanvas()
@@ -364,7 +365,6 @@ class Plotter(PlotterBase):
             self.setScaleFactor(oldscalefactor)
 
         if canvas:
-            self.canvas = defaultCanvas
             return canvas
 
     def plotMCDataSignalRatio2D(self, var1, var2, bin1, bin2, savename, **kwargs):
