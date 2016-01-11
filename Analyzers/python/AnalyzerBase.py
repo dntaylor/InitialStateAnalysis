@@ -151,9 +151,13 @@ class AnalyzerBase(object):
         self.isData = ('data' in self.sample_name)
         if isinstance(file_list, basestring): # the list is a file
             self.file_names = []
-            with open(file_list,'r') as files:
-                for f in files:
+            if file_list[-4:]=='root': # passed a string list of files comma seperated
+                for f in file_list.split(','):
                     self.file_names += [f]
+            else:
+                with open(file_list,'r') as files:
+                    for f in files:
+                        self.file_names += [f]
         else:                                 # the list is a python list
             self.file_names = file_list
         self.out_file = out_file
