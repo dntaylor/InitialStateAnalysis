@@ -49,6 +49,7 @@ class PlotterBase(object):
         datadriven = kwargs.pop('datadriven',False)
         baseSelection = kwargs.pop('baseSelection','')
         self.dontSave = kwargs.pop('dontSave',False)
+        self.tightW = kwargs.pop('tightW',True)
         for key, value in kwargs.iteritems():
             self.logger.warning("Unrecognized parameter '%s' = %s" %(key,str(value)))
 
@@ -63,6 +64,13 @@ class PlotterBase(object):
         self.R = 0.04
         self.canvas = ROOT.TCanvas("c1","c1",50,50,self.W,self.H)
         self.setupCanvas()
+
+        # setup the scale factors for alternate scaling
+        # hard coded for now
+        self.scales = {
+            # name : [filename, varNames],
+            'generatorWeight' : ['',['event.gen_weight']], # no filename, use tree directly
+        }
 
         # now, setup plotter conditions (some to be initalized later)
         self.j = 0 # global variable to prevent resusing histograms
@@ -536,6 +544,30 @@ class PlotterBase(object):
             
         return hist
 
+    def getSingleVarHist_alt(self,sample,variable,binning,cut,**kwargs):
+        '''Single variable, single sample hist'''
+        customScale = kwargs.pop('customScale','')
+        #tree = self.samples[sample]['file'].Get(self.analysis)
+        tree = self.samples[sample]['tree']
+        self.j += 1
+        # create hist
+        histname = 'h%s%s' % (sample, variable.replace('(','_').replace(')','_'))
+        hist = ROOT.TH1F() # fix
+        # iterate through tree
+        selectedTree = tree.CopyTree(cut)
+        for row in selectedTree:
+            # get weight
+            w = 1.
+            for s in self.scales:
+                filename, varNames = self.scales[s]
+                if not filename:
+                    pass # here read the value from the tree
+                elif os.path.isfile(filename):
+                    pass # here we read from the file
+                else:
+                    pass # we have a problem, no weight applied
+            # fill the hist
+
     def getHist(self, sample, variables, binning, cut, noFormat=False, **kwargs):
         '''Return a histogram of a given variable from the given dataset with a cut'''
         normalize = kwargs.pop('normalize',False)
@@ -568,7 +600,8 @@ class PlotterBase(object):
         self.logger.debug('The total integral for %s after merging is %f.' % (sample, hist.Integral()))
         hist = self.getOverflowUnderflow(hist,**kwargs)
         self.logger.debug('After overflow it is %f.' % (hist.Integral()))
-        hist.Sumw2()
+        #print 'getHist'
+        #hist.Sumw2()
         if normalize:
             integral = hist.Integral()
             if integral: hist.Scale(1.0/integral)
@@ -616,7 +649,8 @@ class PlotterBase(object):
         for bin in range(hist.GetNbinsX()):
             entries = hist.GetBinContent(bin+1)
             if entries <= 0:
-                continue
+                #continue
+                entries = 0
             ey_low = entries - 0.5 * chisqr(0.1586555, 2. * entries)
             ey_high = 0.5 * chisqr(
                 1. - 0.1586555, 2. * (entries + 1)) - entries
@@ -677,20 +711,25 @@ class PlotterBase(object):
                 for l in range(3):
                     cut[c] = cut[c].replace(nameMap[l],'1')
                     cut[c] = cut[c].replace('l{0}.PassTight'.format(l),'1')
+                if self.tightW: cut[c] = cut[c].replace('w1.PassVeryTight1','1')
                 cut[c] = cut[c].replace('select.passTight',allCuts)
         else:
             for l in range(3):
                 cut = cut.replace(nameMap[l],'1')
                 cut = cut.replace('l{0}.PassTight'.format(l),'1')
+            if self.tightW: cut = cut.replace('w1.PassVeryTight1','1')
             cut = cut.replace('select.passTight',allCuts)
         hists = ROOT.TList()
 
         # the new way, dont do it a million times
+        fakechan = 'fakeChannel'
+        if self.tightW: fakechan += '_tightW'
         if type(cut) is list:
-            custCut = ['{0} && fakeChannel!="PPP"'.format(x) for x in cut]
+            custCut = ['{0} && {1}!="PPP"'.format(x,fakechan) for x in cut]
         else:
-            custCut = '{0} && fakeChannel!="PPP"'.format(cut)
+            custCut = '{0} && {1}!="PPP"'.format(cut,fakechan)
         scalefactor = 'event.fakerate'
+        if self.tightW: scalefactor += '_tightW'
         # get contribution from data
         for sample in self.data:
             hist = self.getHist(sample,variables,binning,custCut,customScale=scalefactor,**kwargs)
@@ -795,8 +834,12 @@ class PlotterBase(object):
     def getMCStack(self, variables, binning, cut, **kwargs):
         '''Return a stack of MC histograms'''
         nostack = kwargs.pop('nostack',False)
-        mcstack = ROOT.THStack('hs%s' % variables[0],'mc stack')
-        for sample in self.backgrounds:
+        histname = kwargs.pop('histname','mcstack')
+        mcstack = ROOT.THStack('hs%s' % variables[0],histname)
+        plotsig = kwargs.pop('plotsig',False)
+        samples = self.backgrounds
+        if plotsig: samples = self.backgrounds + self.signal
+        for sample in samples:
             hist = self.getHist(sample, variables, binning, cut, **kwargs)
             if not hist: continue
             if nostack:
@@ -835,7 +878,9 @@ class PlotterBase(object):
         for bin in range(num.GetNbinsX()):
             entries = num.GetBinContent(bin+1)
             denomentries = denom.GetBinContent(bin+1)
-            if entries <= 0 or denomentries <= 0:
+            if entries <= 0:
+                entries = 0
+            if denomentries <= 0:
                 continue
             ey_low = entries - 0.5 * chisqr(0.1586555, 2. * entries)
             ey_high = 0.5 * chisqr(
@@ -851,15 +896,17 @@ class PlotterBase(object):
         return graph
 
 
-    def get_ratio_stat_err(self, hist):
+    def get_ratio_stat_err(self, hist, **kwargs):
         '''Return a statistical error bars for a ratio plot'''
+        ratiomin = kwargs.pop('ratiomin',0.5)
+        ratiomax = kwargs.pop('ratiomax',1.5)
         ratiostaterr = hist.Clone("ratiostaterr")
         ratiostaterr.Sumw2()
         ratiostaterr.SetStats(0)
         ratiostaterr.SetTitle("")
         ratiostaterr.GetYaxis().SetTitle("Data/MC")
-        ratiostaterr.SetMaximum(1.5)
-        ratiostaterr.SetMinimum(0.5)
+        ratiostaterr.SetMaximum(ratiomax)
+        ratiostaterr.SetMinimum(ratiomin)
         ratiostaterr.SetMarkerSize(0)
         ratiostaterr.SetFillColor(ROOT.kGray+3)
         ratiostaterr.SetFillStyle(3013)
@@ -910,7 +957,7 @@ class PlotterBase(object):
         numcol = kwargs.pop('numcol',1)
 
         numEntries = 0
-        if mchist: numEntries += len(self.backgrounds)
+        if mchist: numEntries += len(self.backgrounds) + len(self.signal)
         if plotsig: numEntries += len(sighists)
         if plotdata: numEntries += 1
         # setup legend position
@@ -925,7 +972,7 @@ class PlotterBase(object):
         elif legendpos//10 == 2:  # middle
             yend = 0.59
         elif legendpos//10 == 4:  # very top (in line with CMS label)
-            yend = 0.91
+            yend = 0.85
         else:                     # default, top, just below CMS label
             yend = 0.77
         xstart = xend-0.15*numcol-0.15
@@ -951,10 +998,12 @@ class PlotterBase(object):
         '''Save the canvas in multiple formats.'''
         self.canvas.SetName(savename)
         if self.dontSave: return
-        for type in ['png','root','pdf']:
+        #for type in ['png','root','pdf']:
+        for type in ['pdf','root','png']:
             name = "%s/%s/%s.%s" % (self.plotDir, type, savename, type)
             python_mkdir(os.path.dirname(name))
             self.canvas.Print(name)
+            #self.canvas.SaveAs(name)
         self.savefile.WriteTObject(self.canvas)
         #self.canvas.Clear()
 

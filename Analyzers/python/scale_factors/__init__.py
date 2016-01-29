@@ -3,6 +3,7 @@ import os
 import glob
 import pickle
 import json
+import csv
 from operator import itemgetter, attrgetter
 
 sys.argv.append('-b')
@@ -439,8 +440,9 @@ class LeptonFakeRate(object):
     def __init__(self):
         # WZ 13TeV
         #with open(os.path.join(os.path.dirname(__file__),'fakes.json'),'r') as f:
-        with open(os.path.join(os.path.dirname(__file__),'fakes_trigIso_dijet_13TeV.json'),'r') as f:
+        #with open(os.path.join(os.path.dirname(__file__),'fakes_trigIso_dijet_13TeV.json'),'r') as f:
         #with open(os.path.join(os.path.dirname(__file__),'fakes_trigIso_13TeV.json'),'r') as f:
+        with open(os.path.join(os.path.dirname(__file__),'fakes_veryTight_dijet_13TeV.json'),'r') as f:
             self.fake_dict_13tev = json.load(f)
         # WZ 8TeV
         with open(os.path.join(os.path.dirname(__file__),'fakes_8TeV.json'),'r') as f:
@@ -451,6 +453,7 @@ class LeptonFakeRate(object):
 
     def scale_factor(self, row, *lep_list, **kwargs):
         tight = kwargs.pop('tight',False)
+        veryTight = kwargs.pop('veryTight',False)
         loose = kwargs.pop('loose',False)
         veto = kwargs.pop('veto',False)
         period = kwargs.pop('period',13)
@@ -460,9 +463,9 @@ class LeptonFakeRate(object):
             lep_type = l[0]
 
             if lep_type == 'm':
-                out += [self.m_wz_fake_veto(row,l,period,shift)]
+                out += [self.m_wz_fake_veto(row,l,period,shift,veryTight)]
             elif lep_type == 'e':
-                out += [self.e_wz_fake_veto(row,l,period,shift)]
+                out += [self.e_wz_fake_veto(row,l,period,shift,veryTight)]
             elif lep_type == 't':
                 out += [[0,0,0]] # TODO
             else:
@@ -494,17 +497,23 @@ class LeptonFakeRate(object):
                 return fake, err
         return 0.0, 0.0
 
-    def e_wz_fake_veto(self, row, l, period,shift):
+    def e_wz_fake_veto(self, row, l, period,shift,veryTight):
         #fake, err = self.get_fake_err(row,l,'ZTightProbeElecTight',period,shift)
-        fake, err = self.get_fake_err(row,l,"FakeRateProbeElecTight",period,shift)
+        if veryTight:
+            fake, err = self.get_fake_err(row,l,"FakeRateProbeElecVeryTight",period,shift) # TODO: calculate veryTight fake rate
+        else:
+            fake, err = self.get_fake_err(row,l,"FakeRateProbeElecTight",period,shift)
         default = fake
         up = min([fake+err,1.])
         down = max([fake-err,0.])
         return [default, up, down]
 
-    def m_wz_fake_veto(self, row, l, period,shift):
+    def m_wz_fake_veto(self, row, l, period,shift,veryTight):
         #fake, err = self.get_fake_err(row,l,'ZTightProbeMuonTight',period,shift)
-        fake, err = self.get_fake_err(row,l,"FakeRateProbeMuonTight",period,shift)
+        if veryTight:
+            fake, err = self.get_fake_err(row,l,"FakeRateProbeMuonVeryTight",period,shift)
+        else:
+            fake, err = self.get_fake_err(row,l,"FakeRateProbeMuonTight",period,shift)
         default = fake
         up = min([fake+err,1.])
         down = max([fake-err,0.])
@@ -542,6 +551,7 @@ class LeptonScaleFactors(object):
 
     def scale_factor(self, row, *lep_list, **kwargs):
         tight = kwargs.pop('tight',False)
+        veryTight = kwargs.pop('veryTight',False)
         loose = kwargs.pop('loose',False)
         period = kwargs.pop('period',8)
         shift = kwargs.pop('metShift','')
@@ -554,12 +564,18 @@ class LeptonScaleFactors(object):
                 if period==8:
                     out += [self.m_4l_scale(row,l)] if loose else [self.m_tight_scale(row, l)]
                 if period==13:
-                    out += [self.m_wz_scale_loose(row,l,shift)] if loose else [self.m_wz_scale_tight(row,l,shift)]
+                    thisScale = self.m_wz_scale_tight(row,l,shift)
+                    if loose: thisScale = self.m_wz_scale_loose(row,l,shift)
+                    if veryTight: thisScale = self.m_wz_scale_veryTight(row,l,shift)
+                    out += [thisScale]
             elif lep_type == 'e':
                 if period==8:
                     out += [self.e_4l_scale(row,l)] if loose else [self.e_ww_scale(row, l)]
                 if period==13:
-                    out += [self.e_wz_scale_loose(row,l,shift)] if loose else [self.e_wz_scale_tight(row,l,shift)]
+                    thisScale = self.e_wz_scale_tight(row,l,shift)
+                    if loose: thisScale = self.e_wz_scale_loose(row,l,shift)
+                    if veryTight: thisScale = self.e_wz_scale_veryTight(row,l,shift)
+                    out += [thisScale]
             elif lep_type == 't':
                 out += [[1,1,1]] # TODO
             else:
@@ -608,6 +624,9 @@ class LeptonScaleFactors(object):
         isoscale, isoerr = self.get_scale_err(row,l,'passingIsoWZTight_passingIDWZTight',shift)
         return [idscale*isoscale, (idscale+iderr)*(isoscale+isoerr), (idscale-iderr)*(isoscale-isoerr)]
 
+    def m_wz_scale_veryTight(self, row, l, shift):
+        return self.m_wz_scale_tight(row,l,shift)
+
     def e_wz_scale_loose(self, row, l,shift):
         # id
         idscale, iderr = self.get_scale_err(row,l,'passingLoose',shift) # has iso... 
@@ -616,6 +635,11 @@ class LeptonScaleFactors(object):
     def e_wz_scale_tight(self, row, l,shift):
         # id
         idscale, iderr = self.get_scale_err(row,l,'passingMedium',shift)
+        return [idscale, idscale+iderr, idscale-iderr]
+
+    def e_wz_scale_veryTight(self, row, l,shift):
+        # id
+        idscale, iderr = self.get_scale_err(row,l,'passingTight',shift)
         return [idscale, idscale+iderr, idscale-iderr]
 
 
@@ -727,3 +751,58 @@ class LeptonScaleFactors(object):
             err = 0.005
 
         return [scl, scl + err, scl - err]
+
+class BjetScaleFactors(object):
+
+    def __init__(self):
+        # WZ 13TeV
+        with open(os.path.join(os.path.dirname(__file__),'CSVv2_13TeV_74X.csv'),'rb') as csv:
+            self.btag_scales = csv.reader(csv,delimiter=',')
+
+    def close(self):
+        return
+
+    def scale_factor(self, row, numjets, numbjets, **kwargs):
+        workingPoint = kwargs.pop('workingPoint','tight')
+        period = kwargs.pop('period',13)
+        shift = kwargs.pop('metShift','')
+
+        opPoints = {
+            'loose': 0,
+            'medium': 1,
+            'tight': 2,
+        }
+        shiftMap = {
+            'jes+': 'JetEnUp',
+            'jes-': 'JetEnDown',
+        }
+
+        scale = [1.0, 1.0, 1.0]
+        for i in range(numjets):
+            jetPtName = 'jet{0}Pt'.format(i+1)
+            jetEtaName = 'jet{0}Eta'.format(i+1)
+            if shift in shiftMap:
+                jetPtName += '_{0}'.format(shiftMap[shift])
+                jetEtaName += '_{0}'.format(shiftMap[shift])
+            if not hasattr(row,jetPtName) or not hasattr(row,jetEtaName):
+                continue
+            pt = getattr(row,jetPtName)
+            eta = getattr(row,jetEtaName)
+            if pt < 30: continue
+            thisScale = self.bjet_scale(opPoints[workingPoint],pt,eta)
+            scale[0] *= thisScale[0]
+            scale[1] *= thisScale[1]
+            scale[2] *= thisScale[2]
+
+    def bjet_scale(self,opPoint,pt,eta):
+        thisScale = [1.,1.,1.]
+        for s in self.btag_scales[1:]:
+            OperatingPoint, measurementType, sysType, jetFlavor, etaMin, etaMax, ptMin, ptMax, discrMin, discrMax, formula = s
+            if int(OperatingPoint)==opPoint and measurementType=='mujets' and int(jetFlavor)==0:
+                if eta>float(etaMin) and eta<float(etaMax) and pt>float(ptMin) and pt<float(ptMax):
+                    thisFormula = formula.replace(x,str(pt))
+                    val = eval(thisFormula)
+                    if sysType=='central': thisScale[0] = val if False else 1-val
+                    if sysType=='up': thisScale[1] = val if False else 1-val
+                    if sysType=='down': thisScale[2] = val if False else 1-val
+        return thisScale

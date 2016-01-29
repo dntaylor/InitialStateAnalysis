@@ -35,12 +35,10 @@ class AnalyzerWZ(AnalyzerBase):
             'w1': ['em','n'],
             'z1': ['em','em'],
         }
-        self.lepargs = {'tight':True}
-        self.cutflow_labels = ['Trigger','Fiducial','ID','Z Selection','W Selection']
+        self.tightW = False
         #self.alternateIds, self.alternateIdMap = self.defineAlternateIds(period)
         #self.doVBF = (period==13)
         #self.doMetUnc = (period==13)
-        self.cutTreeLabels = ['topology','trigger','fiducial','looseID','tightID','mass3l','zWindow','zLeadPt','wPt','wMll','met','veto4thLepton']
 
         super(AnalyzerWZ, self).__init__(sample_name, file_list, out_file, period, **kwargs)
 
@@ -54,20 +52,6 @@ class AnalyzerWZ(AnalyzerBase):
         Z are then ordered in pt.
         We select combinatorics by closest to zmass.
         '''
-        # first veto on 4th tight lepton
-        veto = (rtrow.eVetoTight + rtrow.muVetoTight == 0) if self.period==13 else\
-               (rtrow.elecVetoWZTight + rtrow.muonVetoWZTight == 0)
-        #veto = (rtrow.eVetoTrigIso + rtrow.muVetoTightTrigIso == 0) if self.period==13 else\
-        #       (rtrow.elecVetoWZTight + rtrow.muonVetoWZTight == 0)
-        if self.metShift and not self.isData: # only shift MC
-            vetoMap = {
-                'ees+' : (rtrow.eVetoTight_eesUp + rtrow.muVetoTight == 0),
-                'ees-' : (rtrow.eVetoTight_eesDown + rtrow.muVetoTight == 0),
-                'mes+' : (rtrow.eVetoTight + rtrow.muVetoTight_mesUp == 0),
-                'mes-' : (rtrow.eVetoTight + rtrow.muVetoTight_mesDown == 0),
-            }
-            if self.metShift in vetoMap:
-                veto = vetoMap[self.metShift]
 
         cands = []
         for l in permutations(self.objects):
@@ -90,6 +74,8 @@ class AnalyzerWZ(AnalyzerBase):
             #dr12 = self.getObject(rtrow,'dr',o12[0],o12[1]) > 0.02
             #dr = dr01 and dr02 and dr12 
             dr = True
+      
+            veto = self.veto(rtrow)
 
             if OS1 and l[0][0]==l[1][0] and dr and veto:
                 cands.append((massdiff, -pt2, mass, ordList))
@@ -99,14 +85,6 @@ class AnalyzerWZ(AnalyzerBase):
         # Sort by mass difference
         cands.sort(key=lambda x: x[0])
         massdiff, negpt2, mass, leps = cands[0]
-        # this is dumb
-        # if mass outside of mass window, switch to one inside the mass window if available
-        #if mass < 60. or mass > 120. and len(cands)>1:
-        #    for c in cands[1:]:
-        #        if c[1]>=60. and c[1]<=120.: # its a better Z
-        #            massdiff = c[0]
-        #            leps = c[2]
-        #            break
 
         return ([massdiff,negpt2], leps)
 
@@ -134,39 +112,19 @@ class AnalyzerWZ(AnalyzerBase):
 
         return good
 
-        ## then veto on 4th tight lepton
-        #veto = (rtrow.eVetoTight + rtrow.muVetoTight == 0) if self.period==13 else\
-        #       (rtrow.elecVetoWZTight + rtrow.muonVetoWZTight == 0)
-        ##veto = (rtrow.eVetoTrigIso + rtrow.muVetoTightTrigIso == 0) if self.period==13 else\
-        ##       (rtrow.elecVetoWZTight + rtrow.muonVetoWZTight == 0)
-        #if self.metShift:
-        #    vetoMap = {
-        #        'ees+' : (rtrow.eVetoTight_eesUp + rtrow.muVetoTight == 0),
-        #        'ees-' : (rtrow.eVetoTight_eesDown + rtrow.muVetoTight == 0),
-        #        'mes+' : (rtrow.eVetoTight + rtrow.muVetoTight_mesUp == 0),
-        #        'mes-' : (rtrow.eVetoTight + rtrow.muVetoTight_mesDown == 0),
-        #    }
-        #    if self.metShift in vetoMap:
-        #        veto = vetoMap[self.metShift]
-
-        #return good and veto
 
     #def defineAlternateIds(self,period):
     #    if period==8:
     #        return [], {}
-    #    #elecIds = ['Loose', 'Medium', 'Tight']
-    #    elecIds = ['Medium', 'Tight']
-    #    #muonIds = ['Loose', 'Tight']
-    #    muonIds = ['Tight']
-    #    #elecIsos = [0.5, 0.2, 0.15]
-    #    elecIsos = [9999.]
-    #    #muonIsos = [0.4, 0.2, 0.12]
-    #    muonIsos = [0.2, 0.12]
+    #    elecIds = ['WZLooseTrigIso','Medium','Tight']
+    #    muonIds = ['WZMediumTrigIso']
+    #    elecIsos = [0.]
+    #    muonIsos = [0.,0.4, 0.12]
     #    idList = []
     #    idMap = {}
     #    for id in elecIds:
     #        for iso in elecIsos:
-    #            idName = 'elec%s%0.2f' % (id, iso) if iso else 'elec%sNoIso' % id
+    #            idName = 'elec%s%0.2f' % (id, iso)
     #            idName = idName.replace('.','p')
     #            idList += [idName]
     #            idMap[idName] = {
@@ -180,7 +138,7 @@ class AnalyzerWZ(AnalyzerBase):
     #                }
     #    for id in muonIds:
     #        for iso in muonIsos:
-    #            idName = 'muon%s%0.2f' % (id, iso) if iso else 'muon%sNoIso' % id
+    #            idName = 'muon%s%0.2f' % (id, iso)
     #            idName = idName.replace('.','p')
     #            idList += [idName]
     #            idMap[idName] = {
@@ -205,51 +163,63 @@ class AnalyzerWZ(AnalyzerBase):
                 if zll and wln: return '{0}{0}{1}'.format(z,w)
         return 'a'
 
-    def getFakeChannel(self,rtrow):
+    def getFakeChannel(self,rtrow,**kwargs):
         chan = ''
-        for obj in self.objCand:
-            chan += 'P' if self.ID(rtrow,obj,**self.getIdArgs('Tight')) else 'F'
+        for i,obj in enumerate(self.objCand):
+            if self.tightW and i==2 and obj[0]=='e':
+                chan += 'P' if self.ID(rtrow,obj,**self.getIdArgs('VeryTight')) and self.ID(rtrow,obj,**self.getIdArgs('Tight')) else 'F'
+            else:
+                chan += 'P' if self.ID(rtrow,obj,**self.getIdArgs('Tight')) else 'F'
         return chan
         
 
     ###########################
     ### Define preselection ###
     ###########################
-    def cutTreeSelections(self,rtrow):
+    def cutTreeSelections(self):
         cutTree = CutTree()
         cutTree.add(self.returnTrue,'topology')
         cutTree.add(self.trigger,'trigger')
         cutTree.add(self.fiducial,'fiducial')
         cutTree.add(self.ID_loose,'looseID')
         cutTree.add(self.ID_tight,'tightID')
+        if self.tightW: cutTree.add(self.ID_tightW,'tightWID')
         cutTree.add(self.mass3l,'mass3l')
         cutTree.add(self.zWindow,'zWindow')
         cutTree.add(self.zLeadPt,'zLeadPt')
         cutTree.add(self.wPt,'wPt')
         cutTree.add(self.wMll,'wMll')
         cutTree.add(self.met,'met')
+        cutTree.add(self.bjetVeto,'bjetVeto')
         cutTree.add(self.veto,'veto4thLepton')
         return cutTree
 
     def veto(self,rtrow):
-        veto = (rtrow.eVetoTight + rtrow.muVetoTight == 0) if self.period==13 else\
+        # first veto on 4th tight lepton
+        veto = (rtrow.eVetoTight + rtrow.muVetoMedium == 0) if self.period==13 else\
                (rtrow.elecVetoWZTight + rtrow.muonVetoWZTight == 0)
-        #veto = (rtrow.eVetoTrigIso + rtrow.muVetoTightTrigIso == 0) if self.period==13 else\
-        #       (rtrow.elecVetoWZTight + rtrow.muonVetoWZTight == 0)
-        if self.metShift and not self.isData:
+        if self.tightW:
+            veto = (rtrow.eVetoMedium + rtrow.muVetoMedium == 0) if self.period==13 else\
+                   (rtrow.elecVetoWZTight + rtrow.muonVetoWZTight == 0)
+        if self.metShift and not self.isData: # only shift MC
             vetoMap = {
-                'ees+' : (rtrow.eVetoTight_eesUp + rtrow.muVetoTight == 0),
-                'ees-' : (rtrow.eVetoTight_eesDown + rtrow.muVetoTight == 0),
-                'mes+' : (rtrow.eVetoTight + rtrow.muVetoTight_mesUp == 0),
-                'mes-' : (rtrow.eVetoTight + rtrow.muVetoTight_mesDown == 0),
+                'ees+' : (rtrow.eVetoTight_eesUp + rtrow.muVetoMedium == 0),
+                'ees-' : (rtrow.eVetoTight_eesDown + rtrow.muVetoMedium == 0),
+                'mes+' : (rtrow.eVetoTight + rtrow.muVetoMedium_mesUp == 0),
+                'mes-' : (rtrow.eVetoTight + rtrow.muVetoMedium_mesDown == 0),
             }
+            if self.tightW:
+                vetoMap = {
+                    'ees+' : (rtrow.eVetoMedium_eesUp + rtrow.muVetoMedium == 0),
+                    'ees-' : (rtrow.eVetoMedium_eesDown + rtrow.muVetoMedium == 0),
+                    'mes+' : (rtrow.eVetoMedium + rtrow.muVetoMedium_mesUp == 0),
+                    'mes-' : (rtrow.eVetoMedium + rtrow.muVetoMedium_mesDown == 0),
+                }
             if self.metShift in vetoMap:
                 veto = vetoMap[self.metShift]
+
         return veto
 
-
-    def returnTrue(self,rtrow):
-        return True
 
     def preselection(self,rtrow):
         cuts = CutSequence()
@@ -265,42 +235,55 @@ class AnalyzerWZ(AnalyzerBase):
         cuts = CutSequence()
         cuts.add(self.trigger)
         cuts.add(self.fiducial)
-        cuts.add(self.ID_tight)
+        if self.tightW:
+            cuts.add(self.ID_tightW)
+        else:
+            cuts.add(self.ID_tight)
         cuts.add(self.mass3l)
         cuts.add(self.zSelection)
         cuts.add(self.wSelection)
+        cuts.add(self.bjetVeto)
         cuts.add(self.veto)
         return cuts
 
     def getIdArgs(self,type):
         kwargs = {}
-        if type=='Tight':
+        if type=='VeryTight':
             kwargs['idDef'] = {
-                #'e':'Medium',
-                'e':'WZTight',
-                #'e':'Tight',
-                #'m':'Tight',
-                'm':'WZTight',
-                't':'Medium'
+                'e':'WWTight',
+                'm':'WWMedium',
             }
             kwargs['isoCut'] = {
                 'e':0.15,
-                'm':0.12
+                'm':0.12,
             }
             if self.period==8:
                 kwargs['idDef']['e'] = 'WZTight'
                 kwargs['idDef']['m'] = 'WZTight'
             if self.period==13:
-                kwargs['isoCut']['e'] = 9999. # baked into ID
-                kwargs['isoCut']['m'] = 9999.
+                kwargs['isoCut']['e'] = 0. # baked into ID
+                kwargs['isoCut']['m'] = 0. # baked into ID
+        if type=='Tight':
+            kwargs['idDef'] = {
+                'e':'WWTight',
+                'm':'WWMedium',
+            }
+            kwargs['isoCut'] = {
+                'e':0.15,
+                'm':0.12,
+            }
+            if self.period==8:
+                kwargs['idDef']['e'] = 'WZTight'
+                kwargs['idDef']['m'] = 'WZTight'
+            if self.period==13:
+                if self.tightW:
+                    kwargs['idDef']['e'] = 'WWMedium'
+                kwargs['isoCut']['e'] = 0. # baked into ID
+                kwargs['isoCut']['m'] = 0. # baked into ID
         if type=='Loose':
             kwargs['idDef'] = {
-                'e':'WZLooseTrigIso',
-                #'e':'LooseNoIso',
-                #'m':'WZLooseTrigIso',
-                'm':'WZTightTrigIso',
-                #'m':'Loose',
-                't':'Loose'
+                'e':'WWLoose',
+                'm':'WWLoose',
             }
             kwargs['isoCut'] = {
                 'e':0.4,
@@ -309,14 +292,12 @@ class AnalyzerWZ(AnalyzerBase):
             if self.period==8:
                 kwargs['idDef']['e'] = 'WZLoose'
                 kwargs['idDef']['m'] = 'WZLoose'
-                #kwargs['isoCut']['e'] = 9999.
-                #kwargs['isoCut']['m'] = 9999.
             if self.period==13:
-                kwargs['isoCut']['e'] = 9999. # baked into ID
-                kwargs['isoCut']['m'] = 9999.
-        #if hasattr(self,'alternateIds'):
-        #    if type in self.alternateIds:
-        #        kwargs = self.alternateIdMap[type]
+                kwargs['isoCut']['e'] = 0. # baked into ID
+                kwargs['isoCut']['m'] = 0. # baked into ID
+        if hasattr(self,'alternateIds'):
+            if type in self.alternateIds:
+                kwargs = self.alternateIdMap[type]
         kwargs['metShift'] = self.metShift
         return kwargs
 
@@ -326,29 +307,13 @@ class AnalyzerWZ(AnalyzerBase):
                         "doubleETightPass", "doubleMuPass", "doubleMuTrkPass"]
 
         if self.period == 13:
-            triggers = ['singleMuSingleEPass', 'doubleMuPass', 'doubleEPass', 'singleESingleMuPass']
-
-        nottriggers = []
-        # for data, to merge datasets
-        #if self.isData:
-        if False:
-            if 'DoubleMuon' in self.file_name:
-                nottriggers = [] # allow all triggers
-            elif 'MuonEG' in self.file_name:
-                nottriggers = ['doubleMuPass'] # don't allow doublemuon triggers
-            elif 'DoubleEG' in self.file_name:
-                nottriggers = ['doubleMuPass','singleESingleMuPass','singleMuSingleEPass'] # dont allow doublemuon or muoneg datasets
-            else:
-                nottriggers = []
+            triggers = ['singleMuSingleEPass', 'doubleMuPass', 'doubleEPass', 'singleESingleMuPass',
+                        'singleIsoMu20', 'singleIsoTkMu20', 'singleIsoMu27', 'singleE23WPLoose']
 
         good = False
         for t in triggers:
             if getattr(rtrow,t)>0:
                 good = True
-                break
-        for t in nottriggers:
-            if getattr(rtrow,t)>0:
-                good = False
                 break
         return good
 
@@ -360,31 +325,33 @@ class AnalyzerWZ(AnalyzerBase):
             if l[0]=='m':
                 ptcut = 10.0
                 etacut = 2.4
-            if l[0]=='t':
-                ptcut = 20.0
-                etacut = 2.3
             pt = self.getObject(rtrow, 'pt', l)
             eta = abs(self.getObject(rtrow, 'eta', l))
             if self.getObject(rtrow, 'pt', l) < ptcut:
                 return False
-            #if getattr(rtrow, '%sAbsEta' % l) > etacut:
             if abs(self.getObject(rtrow, 'eta', l)) > etacut:
                 return False
         return True
 
-    #def passAnyId(self,rtrow):
-    #    '''Check to make sure the leptons pass at least 1 ID'''
-    #    passCheck = {'e': False, 'm': False}
-    #    for altId in self.alternateIds:
-    #       if passCheck[altId[0]]: continue
-    #       if self.ID(rtrow,*self.objects,**self.getIdArgs(altId)): passCheck[altId[0]] = True
-    #    return passCheck['e'] and passCheck['m']
+    def passAnyId(self,rtrow):
+        '''Check to make sure the leptons pass at least 1 ID'''
+        passCheck = {'e': False, 'm': False}
+        for altId in self.alternateIds:
+           if passCheck[altId[0]]: continue
+           if self.ID(rtrow,*self.objects,**self.getIdArgs(altId)): passCheck[altId[0]] = True
+        return passCheck['e'] and passCheck['m']
 
     def ID_loose(self, rtrow):
         return self.ID(rtrow,*self.objects,**self.getIdArgs('Loose'))
 
     def ID_tight(self, rtrow):
         return self.ID(rtrow,*self.objects,**self.getIdArgs('Tight'))
+
+    def ID_tightW(self, rtrow):
+        return self.ID(rtrow,*self.objects[:-1],**self.getIdArgs('Tight')) and self.ID(rtrow,self.objects[-1],**self.getIdArgs('veryTight'))
+
+    def ID_veryTight(self, rtrow):
+        return self.ID(rtrow,*self.objects,**self.getIdArgs('veryTight'))
 
     def mass3l(self,rtrow):
         return self.getObject(rtrow,'mass',*self.objCand) > 100
@@ -396,7 +363,7 @@ class AnalyzerWZ(AnalyzerBase):
         leps = self.objCand
         o = ordered(leps[0], leps[1])
         m1 = self.getObject(rtrow,'mass',o[0],o[1])
-        return (m1>=60. and m1<=120.)
+        return abs(m1-ZMASS) < 15.
 
     def zLeadPt(self,rtrow):
         leps = self.objCand
@@ -420,6 +387,9 @@ class AnalyzerWZ(AnalyzerBase):
 
     def met(self,rtrow):
         return self.getObject(rtrow,'pt','met') > 30.
+
+    def bjetVeto(self, rtrow):
+        return rtrow.bjetCISVVeto30Tight==0
 
 class AnalyzerWZ_NoVeto(AnalyzerWZ):
     def __init__(self, sample_name, file_list, out_file, period, **kwargs):
@@ -450,6 +420,18 @@ class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
         super(AnalyzerWZ_ZFakeRate, self).__init__(sample_name, file_list, out_file, period, **kwargs)
         self.channel = 'FakeRate'
 
+    def cutTreeSelections(self):
+        cutTree = CutTree()
+        cutTree.add(self.returnTrue,'topology')
+        cutTree.add(self.trigger,'trigger')
+        cutTree.add(self.fiducial,'fiducial')
+        cutTree.add(self.ID_tight_Z,'looseProbe')
+        cutTree.add(self.ID_tight,'tightProbe')
+        cutTree.add(self.ID_veryTight,'veryTightProbe')
+        cutTree.add(self.zSelection,'zSelection')
+        cutTree.add(self.veto,'veto4thLepton')
+        return cutTree
+
     def preselection(self,rtrow):
         cuts = CutSequence()
         cuts.add(self.trigger)
@@ -473,7 +455,7 @@ class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
         return self.ID(rtrow,*self.objCand[:2],**self.getIdArgs('Tight'))
 
     def metveto(self,rtrow):
-        if rtrow.type1_pfMetEt > 25.: return False
+        if self.getObject(rtrow,'pt','met') > 25.: return False
         return True
 
     def trigger(self, rtrow):
@@ -485,7 +467,7 @@ class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
 
         nottriggers = []
         # for data, to merge datasets
-        if self.isData:
+        if False:
             if 'DoubleMuon' in self.file_name:
                 nottriggers = [] # allow all triggers
             elif 'DoubleEG' in self.file_name:
@@ -509,13 +491,13 @@ class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
     def zSelection(self,rtrow):
         leps = self.objCand
         o = ordered(leps[0], leps[1])
-        m1 = getattr(rtrow,'%s_%s_Mass' % (o[0],o[1]))
-        l0Pt = getattr(rtrow,'%sPt' %leps[0])
+        m1 = self.getObject(rtrow,'mass',o[0],o[1])
+        l0Pt = self.getObject(rtrow,'pt',leps[0])
         wl = leps[2]
         o0 = ordered(leps[0],wl)
         o1 = ordered(leps[1],wl)
-        dr0 = getattr(rtrow,'%s_%s_DR' % (o0[0],o0[1]))
-        dr1 = getattr(rtrow,'%s_%s_DR' % (o1[0],o1[1]))
+        dr0 = self.getObject(rtrow,'dr',o0[0],o0[1])
+        dr1 = self.getObject(rtrow,'dr',o1[0],o1[1])
         return abs(m1-ZMASS)<10. and l0Pt>20. and dr0>0.02 and dr1>0.02
 
     def good_to_store(self, rtrow, cand1, cand2):
@@ -546,10 +528,204 @@ class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
             match_1 = 0
         passTrig = match_0 > 0.5 and match_1 > 0.5
 
-        veto = (rtrow.eVetoTrigIso + rtrow.muVetoTightTrigIso == 0) if self.period==13 else (rtrow.elecVetoWZLoose + rtrow.muonVetoWZLoose == 0)
+        #veto = (rtrow.eVetoTrigIso + rtrow.muVetoTightTrigIso == 0) if self.period==13 else (rtrow.elecVetoWZLoose + rtrow.muonVetoWZLoose == 0)
+        veto = (rtrow.eVetoTrigIso + rtrow.muVetoMediumTrigIso == 0) if self.period==13 else (rtrow.elecVetoWZLoose + rtrow.muonVetoWZLoose == 0)
 
         return good and passTrig and veto
 
+
+class AnalyzerWZ_TTFakeRate(AnalyzerWZ):
+    def __init__(self, sample_name, file_list, out_file, period, **kwargs):
+        super(AnalyzerWZ_TTFakeRate, self).__init__(sample_name, file_list, out_file, period, **kwargs)
+        self.channel = 'TTFakeRate'
+
+    def cutTreeSelections(self):
+        cutTree = CutTree()
+        cutTree.add(self.returnTrue,'topology')
+        cutTree.add(self.trigger,'trigger')
+        cutTree.add(self.fiducial,'fiducial')
+        cutTree.add(self.ID_tight_TT,'looseProbe')
+        cutTree.add(self.ID_tight,'tightProbe')
+        cutTree.add(self.ID_veryTight,'veryTightProbe')
+        cutTree.add(self.zVeto,'zVeto')
+        cutTree.add(self.jetCut,'jetCut')
+        cutTree.add(self.bjetCut,'bjetCut')
+        cutTree.add(self.metCut,'metCut')
+        cutTree.add(self.veto,'veto4thLepton')
+        return cutTree
+
+    def preselection(self,rtrow):
+        cuts = CutSequence()
+        cuts.add(self.trigger)
+        cuts.add(self.fiducial)
+        cuts.add(self.ID_loose)
+        cuts.add(self.ID_tight_TT)
+        cuts.add(self.zVeto)
+        cuts.add(self.jetCut)
+        #cuts.add(self.bjetCut)
+        #cuts.add(self.metCut)
+        return cuts
+
+    def selection(self,rtrow):
+        cuts = CutSequence()
+        cuts.add(self.trigger)
+        cuts.add(self.fiducial)
+        cuts.add(self.ID_tight)
+        cuts.add(self.zVeto)
+        cuts.add(self.jetCut)
+        #cuts.add(self.bjetCut)
+        #cuts.add(self.metCut)
+        return cuts
+
+    def choose_objects(self, rtrow):
+        '''
+        Select leptons that best fit the WZ selection.
+        The first two leptons are the Z and the third is the W.
+        Z are then ordered in pt.
+        We select combinatorics by closest to zmass.
+        '''
+        # first veto on 4th tight lepton
+        #veto = (rtrow.eVetoTight + rtrow.muVetoTight == 0) if self.period==13 else\
+        veto = (rtrow.eVetoTight + rtrow.muVetoMedium == 0) if self.period==13 else\
+               (rtrow.elecVetoWZTight + rtrow.muonVetoWZTight == 0)
+        if self.metShift and not self.isData: # only shift MC
+            vetoMap = {
+                #'ees+' : (rtrow.eVetoTight_eesUp + rtrow.muVetoTight == 0),
+                #'ees-' : (rtrow.eVetoTight_eesDown + rtrow.muVetoTight == 0),
+                #'mes+' : (rtrow.eVetoTight + rtrow.muVetoTight_mesUp == 0),
+                #'mes-' : (rtrow.eVetoTight + rtrow.muVetoTight_mesDown == 0),
+                'ees+' : (rtrow.eVetoTight_eesUp + rtrow.muVetoMedium == 0),
+                'ees-' : (rtrow.eVetoTight_eesDown + rtrow.muVetoMedium == 0),
+                'mes+' : (rtrow.eVetoTight + rtrow.muVetoMedium_mesUp == 0),
+                'mes-' : (rtrow.eVetoTight + rtrow.muVetoMedium_mesDown == 0),
+            }
+            if self.metShift in vetoMap:
+                veto = vetoMap[self.metShift]
+
+        cands = []
+        for l in permutations(self.objects):
+            if lep_order(l[0], l[1]):
+                continue
+
+            OS01 = getattr(rtrow, "%s_%s_SS" % (l[0], l[1])) < 0.5 # select opposite sign
+            o02 = ordered(l[0],l[2])
+            OS02 = getattr(rtrow, "%s_%s_SS" % (o02[0], o02[1])) < 0.5 # select opposite sign
+            o12 = ordered(l[1],l[2])
+            OS12 = getattr(rtrow, "%s_%s_SS" % (o12[0], o12[1])) < 0.5 # select opposite sign
+            st = self.getObject(rtrow,'pt', l[0]) + self.getObject(rtrow,'pt', l[1]) + self.getObject(rtrow,'pt', l[2])
+
+            ordList = [l[1], l[0], l[2]] if self.getObject(rtrow,'pt',l[0]) < self.getObject(rtrow,'pt', l[1]) else [l[0], l[1], l[2]]
+
+            SF01 = l[0][0] == l[1][0]
+            SF02 = l[0][0] == l[2][0]
+            SF12 = l[1][0] == l[2][0]
+
+            if OS01 and SF01: continue
+            if OS02 and SF02: continue
+            if OS12 and SF12: continue
+
+            if OS01 and veto:
+                cands.append((-st, ordList))
+
+        if not len(cands): return ([],[])
+
+        # Sort by mass difference
+        cands.sort(key=lambda x: x[0])
+        negst, leps = cands[0]
+
+        return ([negst], leps)
+
+    def ID_tight_TT(self, rtrow):
+        return self.ID(rtrow,*self.objCand[:2],**self.getIdArgs('Tight'))
+
+    def zVeto(self,rtrow):
+        leps = self.objCand
+        zWindow = 10
+        minPt = 20
+        minDr = 0.02
+        # check tags against probes for Z
+        for l in leps[:2]:
+            o = ordered(l,leps[2])
+            m = self.getObject(rtrow,'mass',o[0],o[1])
+            pt = self.getObject(rtrow,'pt',l)
+            dr = self.getObject(rtrow,'dr',o[0],o[1])
+            ss = getattr(rtrow, "%s_%s_SS" % (o[0], o[1]))
+            if o[0][0]==o[1][0] and ss < 0.5:
+                if abs(ZMASS-m)<zWindow: return False
+            if pt < minPt: return False
+            if dr < minDr: return False
+        # check tags for Z
+        o = ordered(leps[0],leps[1])
+        m = self.getObject(rtrow,'mass',o[0],o[1])
+        ss = getattr(rtrow, "%s_%s_SS" % (o[0], o[1]))
+        if o[0][0]==o[1][0] and ss < 0.5:
+            if abs(ZMASS-m)<zWindow: return False
+
+        return True
+
+
+    def bjetCut(self,rtrow):
+        return rtrow.bjetCISVVeto30Medium > 0
+
+    def jetCut(self,rtrow):
+        return rtrow.jetVeto30 > 0
+
+    def metCut(self,rtrow):
+        if self.getObject(rtrow,'pt','met') < 20.: return False
+        return True
+
+    def trigger(self, rtrow):
+        if self.period == 8:
+            triggers = ["mu17ele8isoPass", "mu8ele17isoPass",
+                        "doubleETightPass", "doubleMuPass", "doubleMuTrkPass"]
+
+        if self.period == 13:
+            triggers = ['singleMuSingleEPass', 'doubleMuPass', 'doubleEPass', 'singleESingleMuPass']
+
+        nottriggers = []
+
+        good = False
+        for t in triggers:
+            if getattr(rtrow,t)>0:
+                good = True
+                break
+        for t in nottriggers:
+            if getattr(rtrow,t)>0:
+                good = False
+                break
+        return good
+
+    def good_to_store(self, rtrow, cand1, cand2):
+        '''
+        Iterate through minimizing variables.
+        '''
+        good = False
+        for min1, min2 in zip(cand1, cand2):
+            if min1 < min2:
+                good = True
+                break
+            if min1 > min2:
+                good = False
+                break
+        if self.objCand[0][0]=='e' and self.objCand[1][0]=='e':
+            lname = 'MatchesDoubleE'
+            match_0 = getattr(rtrow,'%s%s' %(self.objCand[0],lname))
+            match_1 = getattr(rtrow,'%s%s' %(self.objCand[1],lname))
+        elif self.objCand[0][0]=='m' and self.objCand[1][0]=='m':
+            lname = 'MatchesDoubleMu'
+            match_0 = getattr(rtrow,'%s%s' %(self.objCand[0],lname))
+            match_1 = getattr(rtrow,'%s%s' %(self.objCand[1],lname))
+        else:
+            emname = 'MatchesSingleESingleMu'
+            mename = 'MatchesSingleMuSingleE'
+            match_0 = getattr(rtrow,'%s%s' %(self.objCand[0],emname)) + getattr(rtrow,'%s%s' %(self.objCand[0],mename))
+            match_1 = getattr(rtrow,'%s%s' %(self.objCand[1],emname)) + getattr(rtrow,'%s%s' %(self.objCand[1],mename))
+        passTrig = (match_0 > 0.5 and match_1 > 0.5)
+
+        #veto = (rtrow.eVetoTrigIso + rtrow.muVetoTightTrigIso == 0) if self.period==13 else (rtrow.elecVetoWZLoose + rtrow.muonVetoWZLoose == 0)
+        veto = (rtrow.eVetoTrigIso + rtrow.muVetoMediumTrigIso == 0) if self.period==13 else (rtrow.elecVetoWZLoose + rtrow.muonVetoWZLoose == 0)
+
+        return good and passTrig and veto
 
 
 class AnalyzerWZ_HZZFakeRate(AnalyzerWZ):
@@ -693,6 +869,7 @@ def main(argv=None):
     if args.analyzer == 'WZ': analyzer = AnalyzerWZ(args.sample_name,args.file_list,args.out_file,args.period,metShift=args.metShift)
     if args.analyzer == 'NoVeto': analyzer = AnalyzerWZ_NoVeto(args.sample_name,args.file_list,args.out_file,args.period,metShift=args.metShift)
     if args.analyzer == 'FakeRate': analyzer = AnalyzerWZ_ZFakeRate(args.sample_name,args.file_list,args.out_file,args.period,metShift=args.metShift)
+    if args.analyzer == 'TTFakeRate': analyzer = AnalyzerWZ_TTFakeRate(args.sample_name,args.file_list,args.out_file,args.period,metShift=args.metShift)
     if args.analyzer == 'HZZFakeRate': analyzer = AnalyzerWZ_HZZFakeRate(args.sample_name,args.file_list,args.out_file,args.period,metShift=args.metShift)
     with analyzer as thisAnalyzer:
         thisAnalyzer.analyze()

@@ -42,6 +42,59 @@ def getSignalOverBackground(analysis,region,period,cut,**kwargs):
 
     return sig/bg if bg else -1.
 
+def getPerChannelYields(analysis,region,period,cut,**kwargs):
+    doDataDriven = kwargs.pop('doDataDriven',True)
+    scalefactor = kwargs.pop('scalefactor','event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale')
+    unblind = kwargs.pop('unblind',False)
+    tightW = kwargs.pop('tightW',False)
+
+    nl = 3
+    sigMap = getSigMap(nl)
+    intLumiMap = getIntLumiMap()
+    mergeDict = getMergeDict(period)
+    channelBackground = getChannelBackgrounds(period)
+    channels, leptons = getChannels(nl)
+    saves = '%s_%s_%iTeV' % (analysis,region,period)
+    ntuples = getNtupleDirectory(analysis,region,period)
+
+    bgs = channelBackground[region+'datadriven' if doDataDriven else region]
+
+    plotter = Plotter(region,ntupleDir=ntuples,saveDir=saves,period=period,rootName='plots_statUnc',mergeDict=mergeDict,scaleFactor=scalefactor,datadriven=doDataDriven,tightW=tightW)
+    plotter.initializeBackgroundSamples([sigMap[period][x] for x in bgs])
+    plotter.initializeDataSamples([sigMap[period]['data']])
+    plotter.setIntLumi(intLumiMap[period])
+
+    yields = {}
+    errs = {}
+    for chan in channels:
+        yields[chan] = {}
+        errs[chan] = {}
+        chanCut = '{0} && channel=="{1}"'.format(cut,chan)
+        for b in bgs + ['datadriven']:
+            val, err = plotter.getNumEntries(chanCut,sigMap[period][b],doError=True)
+            yields[chan][b] = val
+            errs[chan][b] = err
+
+        data, dataErr = plotter.getDataEntries(chanCut,doError=True)
+        yields[chan]['data'] = data
+        errs[chan]['data'] = dataErr
+
+    yields['wz'] = {}
+    errs['wz'] = {}
+    for i in bgs + ['datadriven'] + ['data']:
+        tot = sum([yields[chan][i] for chan in ['eee','eem','mme','mmm']])
+        totErr = sum([errs[chan][i]**2 for chan in ['eee','eem','mme','mmm']])**0.5
+        yields['wz'][i] = tot
+        errs['wz'][i] = totErr
+
+    if not unblind:
+        for c in channels + ['wz']:
+            yields[c]['data'] = 0.
+            errs[c]['data'] = 0.
+
+    return yields, errs
+
+
 def getYieldsErrors(analysis,region,period,cut,**kwargs):
     doDataDriven = kwargs.pop('doDataDriven',True)
     scalefactor = kwargs.pop('scalefactor','event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale')

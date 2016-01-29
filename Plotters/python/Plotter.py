@@ -86,7 +86,6 @@ class Plotter(PlotterBase):
                legendpos   int              location of legendtext AB (A=012=LCR, B=012=TMB)
                signalscale int              factor to scale signal by
                isprelim    bool             The plot is CMS preliminary'''
-        canvas = kwargs.pop('canvas','')
         cut = kwargs.pop('cut', '')
         xaxis = kwargs.pop('xaxis', '')
         yaxis = kwargs.pop('yaxis', 'Events')
@@ -107,6 +106,8 @@ class Plotter(PlotterBase):
         plotsig = kwargs.pop('plotsig', 1)
         plotdata = kwargs.pop('plotdata', 1)
         plotratio = kwargs.pop('plotratio', 1)
+        ratiomin = kwargs.pop('ratiomin',0.5)
+        ratiomax = kwargs.pop('ratiomax',1.5)
         lumitext = kwargs.pop('lumitext', 11)
         legendpos = kwargs.pop('legendpos', 33)
         numcol = kwargs.pop('numcol',1)
@@ -120,33 +121,30 @@ class Plotter(PlotterBase):
         for key, value in kwargs.iteritems():
             self.logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
 
-        # passing custom canvas
-        if canvas:
-            defaultCanvas = self.canvas
-            self.canvas = canvas
-            self.setupCanvas()
-
         if type(variables) is not list: variables = [variables]
 
         if scalefactor:
             oldscalefactor = self.getScaleFactor()
             self.setScaleFactor(scalefactor)
 
+        # print 1
         ROOT.gDirectory.Delete('h*') # clear histogram memory
+        self.canvas.Clear()
 
         if plotratio:
+            # print 2
             self.canvas.SetCanvasSize(796,666)
             plotpad = ROOT.TPad("plotpad", "top pad", 0.0, 0.21, 1.0, 1.0)
             plotpad.SetLeftMargin(self.L)
             plotpad.SetRightMargin(self.R)
             plotpad.SetTopMargin(0.0875)
-            plotpad.SetBottomMargin(28./666.)
+            plotpad.SetBottomMargin(0.04)
             plotpad.SetTickx(1)
             plotpad.SetTicky(1)
             plotpad.Draw()
             self.plotpad = plotpad
             ratiopad = ROOT.TPad("ratiopad", "bottom pad", 0.0, 0.0, 1.0, 0.21)
-            ratiopad.SetTopMargin(0.)
+            ratiopad.SetTopMargin(0.06)
             ratiopad.SetBottomMargin(0.5)
             ratiopad.SetLeftMargin(self.L)
             ratiopad.SetRightMargin(self.R)
@@ -160,19 +158,22 @@ class Plotter(PlotterBase):
             ratiopad.SetLogx(logx)
             curPad = plotpad
         else:
+            # print 3
             self.canvas.SetLogy(logy)
             self.canvas.SetLogx(logx)
             curPad = self.canvas
 
         # hack to show both mc and data on same plot
         if plotdata:
+            # print 4
             data = self.getData(variables, binning, cut, overflow=overflow, underflow=underflow, normalize=normalize)
             datamax = data.GetMaximum()
         
 
         # plot monte carlo
         if not nobg:
-            stack = self.getMCStack(variables,binning,cut,overflow=overflow,underflow=underflow,nostack=nostack,normalize=normalize)
+            # print 5
+            stack = self.getMCStack(variables,binning,cut,overflow=overflow,underflow=underflow,nostack=nostack,normalize=normalize,plotsig=not plotsig)
             stack.SetTitle("")
             stack.Draw("hist nostack") if nostack else stack.Draw("hist")
             stack.GetXaxis().SetTitle(xaxis)
@@ -246,6 +247,7 @@ class Plotter(PlotterBase):
 
         # plot data
         if plotdata:
+            # print 6
             data = self.getData(variables, binning, cut, overflow=overflow, underflow=underflow, normalize=normalize)
             datapois = self.getPoissonErrors(data)
             data.SetMarkerStyle(20)
@@ -281,14 +283,30 @@ class Plotter(PlotterBase):
                 else:
                     box.DrawBox(b[0],0,b[1],467)
 
+        # legend
+        # print 8
+        if not plotdata: data = 0
+        if not plotsig: sighists = 0
+        if nobg: stack = 0
+        leg = self.getLegend(stack,data,sighists,plotdata=plotdata,plotsig=plotsig,plotratio=plotratio,legendpos=legendpos,numcol=numcol)
+        leg.Draw()
+
+        # draw cms lumi
+        self.setStyle(lumitext,plotdata,plotratio,isprelim)
 
 
         if plotratio:
+            # print 7
             ratiopad.cd()
-            mchist = stack.GetStack().Last().Clone("mchist%s" % savename)
+            if plotsig:
+                mchist = stack.GetStack().Last().Clone("mchist%s" % savename)
+            else:
+                newstack = self.getMCStack(variables,binning,cut,overflow=overflow,underflow=underflow,nostack=nostack,normalize=normalize,plotsig=False,histname='newstack')
+                mchist = newstack.GetStack().Last().Clone("mchist%s" % savename)
             if plotdata:
                 ratio = self.get_ratio(data,mchist,"ratio%s" % savename)
                 ratiopois = self.getPoissonRatio(data,mchist,"ratiopois%s" % savename)
+                #ratiopois.GetXaxis().SetTitle(xaxis)
                 if len(blinder)==2:
                     ratioblind = ratio.Clone("ratioblind")
                     start = ratioblind.FindBin(blinder[0])
@@ -302,8 +320,9 @@ class Plotter(PlotterBase):
                 ratiosig = self.get_ratio(sig,mchist,"ratiosig%s" % savename)
                 ratiosig.SetLineWidth(1)
 
-            ratiostaterr = self.get_ratio_stat_err(mchist)
-            ratiostaterr.GetXaxis().SetTitle(xaxis)
+            ratiostaterr = self.get_ratio_stat_err(mchist,ratiomin=ratiomin,ratiomax=ratiomax)
+            #ratiostaterr.GetXaxis().SetTitle(xaxis)
+            ratiostaterr.SetXTitle(xaxis)
             if len(xrange)==2:
                 ratiostaterr.GetXaxis().SetRangeUser(xrange[0],xrange[1])
 
@@ -317,7 +336,7 @@ class Plotter(PlotterBase):
             ratiopad.cd()
             ratiopad.SetGridy(0)
             ratiostaterr.Draw("e2")
-            ratiostaterr.Draw("e2 same")
+            #ratiostaterr.Draw("e2 same")
             ratiounity.Draw("same")
             if plotdata:
                 if len(blinder)==2:
@@ -332,7 +351,7 @@ class Plotter(PlotterBase):
                     box.SetFillColor(b[2])
                     box.SetFillStyle(3002)
                     box.SetLineColor(b[2])
-                    box.DrawBox(b[0],0.5,b[1],1.5)
+                    box.DrawBox(b[0],ratiomin,b[1],ratiomax)
 
 
         if plotratio:
@@ -340,32 +359,22 @@ class Plotter(PlotterBase):
         else:
             self.canvas.cd()
 
-        # legend
-        if not plotdata: data = 0
-        if not plotsig: sighists = 0
-        if nobg: stack = 0
-        leg = self.getLegend(stack,data,sighists,plotdata=plotdata,plotsig=plotsig,plotratio=plotratio,legendpos=legendpos,numcol=numcol)
-        leg.Draw()
-
-        # draw cms lumi
-        self.setStyle(lumitext,plotdata,plotratio,isprelim)
 
         # save everything
+        # print 9
         self.canvas.cd()
         self.save(savename)
+        #self.canvas.SetName(savename)
 
-        if canvas:
-            canvas = self.canvas
-            self.canvas = defaultCanvas
 
         if plotratio:
+            # print 10
             self.resetCanvas()
 
         if scalefactor:
             self.setScaleFactor(oldscalefactor)
 
-        if canvas:
-            return canvas
+        # print 11
 
     def plotMCDataSignalRatio2D(self, var1, var2, bin1, bin2, savename, **kwargs):
         cut = kwargs.pop('cut', '')

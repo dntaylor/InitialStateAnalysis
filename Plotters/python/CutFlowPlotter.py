@@ -208,7 +208,7 @@ class CutFlowPlotter(PlotterBase):
         nosum = kwargs.pop('nosum',False)
         isprecf = kwargs.pop('isprecf',False)
         isprelim = kwargs.pop('isprelim', 1)
-        yscale = kwargs.pop('yscale',1.2)
+        yscale = kwargs.pop('yscale',6.5)
         for key, value in kwargs.iteritems():
             self.logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
 
@@ -275,10 +275,15 @@ class CutFlowPlotter(PlotterBase):
 
         if plotdata: 
             #dataHist = self.getDataCutFlow_Preselection() if isprecf else self.getDataCutFlow(selections,cut,sumEntries=not nosum)
+            datapois = self.getPoissonErrors(dataHist)
             dataHist.SetMarkerStyle(20)
             dataHist.SetMarkerSize(1.0)
             dataHist.SetLineColor(ROOT.kBlack)
-            dataHist.Draw('esamex0')
+            #dataHist.Draw('esamex0')
+            datapois.SetMarkerStyle(20)
+            datapois.SetMarkerSize(1.0)
+            datapois.SetLineColor(ROOT.kBlack)
+            datapois.Draw('0P')
 
         # draw cms lumi
         self.setStyle(lumitext,plotdata,plotratio,isprelim)

@@ -58,7 +58,7 @@ def sync(analysis,channel,period,**kwargs):
     for c,l in zip(cutflowMap['cuts'],cutflowMap['labels_simple']):
         cutflow[l] = c
     cutflows = cutflowMap['labels_simple']
-    allMC = [x for x in channelBackground[channel] if x not in ['Z','TT','T']] + ['datadriven'] if doDataDriven else channelBackground[channel]
+    allMC = [x for x in channelBackground[channel] if x not in ['Z','TT','T','Zfiltered','ZGfiltered','WW']] + ['datadriven'] if doDataDriven else channelBackground[channel]
     if analysis in ['Hpp3l', 'Hpp4l']: allMC += [s]
 
     if doCounts:

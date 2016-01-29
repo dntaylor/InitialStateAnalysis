@@ -25,6 +25,7 @@ def main(argv=None):
     args = parse_command_line(argv)
 
     branchingPoints = ['ee100','em100','mm100','et100','mt100','tt100','BP1','BP2','BP3','BP4']
+    branchingPoints = ['ee100','em100','mm100','et100','mt100','BP1','BP2','BP3','BP4']
 
     datacardString = '' if args.bgMode == "sideband" else "_{0}".format(args.bgMode)
 
@@ -35,14 +36,20 @@ def main(argv=None):
     elif args.allBranchingPoints:
         for bp in branchingPoints:
             print 'Plotting limit for %s' % bp
-            limvals = plot_limits(args.analysis,args.channel,args.period,'limits_%s_%itev_%s%s'%(args.channel,args.period,bp,datacardString),branchingPoint=bp,bgMode=args.bgMode,do4l=args.do4l,unblind=args.unblind)
-            outstring += '{3}: {0} [+{1},-{2}] {4}\n'.format(limvals[0],limvals[1],limvals[2],bp,limvals[3])
-            if args.analysis in ['HppComb']: plot_combined_limits(args.period,'limits_combinedCrossSection_%itev_%s%s'%(args.period,bp,datacardString),branchingPoint=bp,bgMode=args.bgMode,unblind=args.unblind)
+            limvals = plot_limits(args.analysis,args.channel,args.period,'limits_%s_%itev_%s%s'%(args.channel,args.period,bp,datacardString),branchingPoint=bp,bgMode=args.bgMode,do4l=args.do4l,unblind=args.unblind,limitMode='asymptotic')
+            outstring += '{3}-asymptotic: {0} [+{1},-{2}] {4}\n'.format(limvals[0],limvals[1],limvals[2],bp,limvals[3])
+            limvals = plot_limits(args.analysis,args.channel,args.period,'limits_%s_%itev_%s%s'%(args.channel,args.period,bp,datacardString),branchingPoint=bp,bgMode=args.bgMode,do4l=args.do4l,unblind=args.unblind,limitMode='fullCLs')
+            outstring += '{3}-fullCLs: {0} [+{1},-{2}] {4}\n'.format(limvals[0],limvals[1],limvals[2],bp,limvals[3])
+            if args.analysis in ['HppComb']: plot_combined_limits(args.period,'limits_combinedCrossSection_%itev_%s%s'%(args.period,bp,datacardString),branchingPoint=bp,bgMode=args.bgMode,unblind=args.unblind,limitMode='asymptotic')
+            if args.analysis in ['HppComb']: plot_combined_limits(args.period,'limits_combinedCrossSection_%itev_%s%s'%(args.period,bp,datacardString),branchingPoint=bp,bgMode=args.bgMode,unblind=args.unblind,limitMode='fullCLs')
     else:
         print 'Plotting limit for %s' % args.branchingPoint
-        limvals = plot_limits(args.analysis,args.channel,args.period,'limits_%s_%itev_%s%s'%(args.channel,args.period,args.branchingPoint,datacardString),branchingPoint=args.branchingPoint,bgMode=args.bgMode,do4l=args.do4l,unblind=args.unblind)
-        outstring += '{3}: {0} [+{1},-{2}] {4}\n'.format(limvals[0],limvals[1],limvals[2],args.branchingPoint,limvals[3])
-        if args.analysis in ['HppComb']: plot_combined_limits(args.period,'limits_combinedCrossSection_%itev_%s%s'%(args.period,args.branchingPoint,datacardString),branchingPoint=args.branchingPoint,bgMode=args.bgMode,unblind=args.unblind)
+        limvals = plot_limits(args.analysis,args.channel,args.period,'limits_%s_%itev_%s%s'%(args.channel,args.period,args.branchingPoint,datacardString),branchingPoint=args.branchingPoint,bgMode=args.bgMode,do4l=args.do4l,unblind=args.unblind,limitMode='asymptotic')
+        outstring += '{3}-asymptotic: {0} [+{1},-{2}] {4}\n'.format(limvals[0],limvals[1],limvals[2],args.branchingPoint,limvals[3])
+        limvals = plot_limits(args.analysis,args.channel,args.period,'limits_%s_%itev_%s%s'%(args.channel,args.period,args.branchingPoint,datacardString),branchingPoint=args.branchingPoint,bgMode=args.bgMode,do4l=args.do4l,unblind=args.unblind,limitMode='fullCLs')
+        outstring += '{3}-fullCLs: {0} [+{1},-{2}] {4}\n'.format(limvals[0],limvals[1],limvals[2],args.branchingPoint,limvals[3])
+        if args.analysis in ['HppComb']: plot_combined_limits(args.period,'limits_combinedCrossSection_%itev_%s%s'%(args.period,args.branchingPoint,datacardString),branchingPoint=args.branchingPoint,bgMode=args.bgMode,unblind=args.unblind,limitMode='asymptotic')
+        if args.analysis in ['HppComb']: plot_combined_limits(args.period,'limits_combinedCrossSection_%itev_%s%s'%(args.period,args.branchingPoint,datacardString),branchingPoint=args.branchingPoint,bgMode=args.bgMode,unblind=args.unblind,limitMode='fullCLs')
 
     savename = 'plots/limits/limits_%s_%itev'%(args.channel,args.period)
     if args.do4l: savename += '_4l'

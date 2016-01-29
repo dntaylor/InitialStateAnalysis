@@ -3,7 +3,29 @@
 def getSystUncertaintyMap(analysis,region,period,mode):
     if analysis=='WZ' and region=='WZ' and period==13:
         return getWZUncertainty(mode)
+    #if analysis=='Hpp3l' and period==8:
+    #    return getHpp3lUncertainty(mode)
+    #if analysis=='Hpp4l' and period==8:
+    #    return getHpp4lUncertainty(mode)
     return {}
+
+def getHpp3lUncertainty(mode):
+    unc = {}
+    if 'HPlusPlusH' in mode:
+        unc['sig_mc_err'] = 0.15
+    if mode in ['WZJets','ZZJets','ZG','TTVJets','VVVJets','TTJets','ZJets','ZG'] or 'HPlusPlusH' in mode:
+        unc['lumi'] = 0.026
+        unc['lep'] = 0.03
+    return unc
+
+def getHpp4lUncertainty(mode):
+    unc = {}
+    if 'HPlusPlusH' in mode:
+        unc['sig_mc_err'] = 0.15
+    if mode in ['WZJets','ZZJets','ZG','TTVJets','VVVJets','TTJets','ZJets','ZG'] or 'HPlusPlusH' in mode:
+        unc['lumi'] = 0.026
+        unc['lep'] = 0.04
+    return unc
 
 def getWZUncertainty(mode):
     unc = {}

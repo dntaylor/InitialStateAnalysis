@@ -23,6 +23,7 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
         self.lepargs = {'tight':True}
         self.cutflow_labels = []
         self.doVBF = (period==13)
+        #self.cutTreeLabels = ['topology','trigger','fiducial','looseID','tightID','veryTightID','zVeto','jPsiVeto','wVeto','jetSelection','veto2ndLepton']
         super(AnalyzerWZ_DijetFakeRate, self).__init__(sample_name, file_list, out_file, period, **kwargs)
 
     ###############################
@@ -67,7 +68,7 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
         '''
         #singleTrigMatch_leg1 = getattr(rtrow,'%sMatchesSingleE_leg1' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg1' %self.objCand[0])
         singleTrigMatch_leg2 = getattr(rtrow,'%sMatchesSingleE_leg2' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg2' %self.objCand[0])
-        veto = (rtrow.eVetoTrigIso + rtrow.muVetoTightTrigIso == 0)
+        veto = (rtrow.eVetoTrigIso + rtrow.muVetoMediumTrigIso == 0)
         return singleTrigMatch_leg2 and veto
 
     def getTriggerPrescale(self,rtrow):
@@ -78,6 +79,34 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
     ###########################
     ### Define preselection ###
     ###########################
+    def cutTreeSelections(self):
+        cutTree = CutTree()
+        cutTree.add(self.returnTrue,'topology')
+        cutTree.add(self.trigger,'trigger')
+        cutTree.add(self.fiducial,'fiducial')
+        cutTree.add(self.ID_loose,'looseID')
+        cutTree.add(self.ID_tight,'tightID')
+        cutTree.add(self.ID_veryTight,'veryTightID')
+        cutTree.add(self.zVeto,'zVeto')
+        cutTree.add(self.jPsiVeto,'jPsiVeto')
+        cutTree.add(self.wVeto,'wVeto')
+        cutTree.add(self.jetSelection,'jetSelection')
+        cutTree.add(self.veto,'veto2ndLepton')
+        return cutTree
+
+    def veto(self,rtrow):
+        veto = (rtrow.eVetoTrigIso + rtrow.muVetoMediumTrigIso == 0)
+        if self.metShift and not self.isData:
+            vetoMap = {
+                'ees+' : (rtrow.eVetoTrigIso_eesUp   + rtrow.muVetoMediumTrigIso == 0),
+                'ees-' : (rtrow.eVetoTrigIso_eesDown + rtrow.muVetoMediumTrigIso == 0),
+                'mes+' : (rtrow.eVetoTrigIso         + rtrow.muVetoMediumTrigIso_mesUp == 0),
+                'mes-' : (rtrow.eVetoTrigIso         + rtrow.muVetoMediumTrigIso_mesDown == 0),
+            }
+            if self.metShift in vetoMap:
+                veto = vetoMap[self.metShift]
+        return veto
+
     def preselection(self,rtrow):
         cuts = CutSequence()
         cuts.add(self.trigger)
@@ -103,10 +132,14 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
 
     def getIdArgs(self,type):
         kwargs = {}
-        if type=='Tight':
+        if type=='VeryTight':
             kwargs['idDef'] = {
-                'e':'Medium',
-                'm':'Tight',
+                #'e':'Medium',
+                'e':'WZTight',
+                #'e':'Tight',
+                #'m':'Tight',
+                #'m':'WZTight',
+                'm':'WZMedium',
                 't':'Medium'
             }
             kwargs['isoCut'] = {
@@ -117,67 +150,77 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
                 kwargs['idDef']['e'] = 'WZTight'
                 kwargs['idDef']['m'] = 'WZTight'
             if self.period==13:
-                kwargs['isoCut']['e'] = 9999.
+                kwargs['isoCut']['e'] = 0. # baked into ID
+        if type=='Tight':
+            kwargs['idDef'] = {
+                #'e':'Medium',
+                'e':'WZMedium',
+                #'e':'Tight',
+                #'m':'Tight',
+                #'m':'WZTight',
+                'm':'WZMedium',
+                't':'Medium'
+            }
+            kwargs['isoCut'] = {
+                'e':0.15,
+                'm':0.12
+            }
+            if self.period==8:
+                kwargs['idDef']['e'] = 'WZTight'
+                kwargs['idDef']['m'] = 'WZTight'
+            if self.period==13:
+                kwargs['isoCut']['e'] = 0. # baked into ID
         if type=='Loose':
             kwargs['idDef'] = {
-		#'e':'LooseNoIso',
                 'e':'WZLooseTrigIso',
+                #'e':'LooseNoIso',
+                #'m':'WZLooseTrigIso',
+                'm':'WZMediumTrigIso',
                 #'m':'Loose',
-                'm':'WZTightTrigIso',
                 't':'Loose'
             }
             kwargs['isoCut'] = {
-                'e':0.2,
-                'm':0.2
+                'e':0.4,
+                'm':1.0,
             }
             if self.period==8:
                 kwargs['idDef']['e'] = 'WZLoose'
                 kwargs['idDef']['m'] = 'WZLoose'
             if self.period==13:
-                kwargs['isoCut']['e'] = 9999.
-                kwargs['isoCut']['m'] = 9999.
-        if type=='Veto':
-            kwargs['idDef'] = {
-                'e':'Veto',
-                'm':'ZZLoose',
-                't':'Loose'
-            }
-            kwargs['isoCut'] = {
-                'e':0.4,
-                'm':0.4
-            }
-            if self.period==13:
-                kwargs['isoCut']['e'] = 9999.
+                kwargs['isoCut']['e'] = 0. # baked into ID
+                kwargs['isoCut']['m'] = 0.
         if hasattr(self,'alternateIds'):
             if type in self.alternateIds:
                 kwargs = self.alternateIdMap[type]
+        kwargs['metShift'] = self.metShift
         return kwargs
+
 
     def trigger(self, rtrow):
         triggers = ['singleE_leg2Pass', 'singleMu_leg2Pass']
 
-        nottriggers = []
+        #nottriggers = []
         # for data, to merge datasets
-        if self.isData:
-            if 'DoubleMuon' in self.file_name:
-                nottriggers = [] # allow all triggers
-            elif 'DoubleEG' in self.file_name:
-                nottriggers = ['singleMu_leg2Pass'] # dont allow doublemuon or muoneg datasets
-            elif 'MuonEG' in self.file_name:
-                nottriggers = ['singleMu_leg2Pass', 'singleE_leg2Pass'] # don't allow doublemuon triggers
-            else:
-                nottriggers = []
+        #if self.isData:
+        #    if 'DoubleMuon' in self.file_name:
+        #        nottriggers = [] # allow all triggers
+        #    elif 'DoubleEG' in self.file_name:
+        #        nottriggers = ['singleMu_leg2Pass'] # dont allow doublemuon or muoneg datasets
+        #    elif 'MuonEG' in self.file_name:
+        #        nottriggers = ['singleMu_leg2Pass', 'singleE_leg2Pass'] # don't allow doublemuon triggers
+        #    else:
+        #        nottriggers = []
 
-        good = False
-        for t in triggers:
-            if getattr(rtrow,t)>0:
-                good = True
-                break
-        for t in nottriggers:
-            if getattr(rtrow,t)>0:
-                good = False
-                break
-        return good
+        #good = False
+        #for t in triggers:
+        #    if getattr(rtrow,t)>0:
+        #        good = True
+        #        break
+        #for t in nottriggers:
+        #    if getattr(rtrow,t)>0:
+        #        good = False
+        #        break
+        #return good
 
         for t in triggers:
             if getattr(rtrow,t)>0:
@@ -210,6 +253,9 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
     def ID_tight(self, rtrow):
         return self.ID(rtrow,*self.objects,**self.getIdArgs('Tight'))
 
+    def ID_veryTight(self, rtrow):
+        return self.ID(rtrow,*self.objects,**self.getIdArgs('VeryTight'))
+
     def zVeto(self,rtrow):
         return getattr(rtrow,'%sNearestZMass' %self.objCand[0]) > 30.
 
@@ -218,8 +264,8 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
 
     def wVeto(self,rtrow):
         leps = self.objCand
-        if rtrow.type1_pfMetEt > 20.: return False
-        if getattr(rtrow, "%sMtToPfMet_type1" % (leps[0])) > 25.: return False
+        if self.getObject(rtrow,'pt','met') > 20.: return False
+        if self.getObject(rtrow, "mt", leps[0], 'met') > 25.: return False
         return True
 
     def jetSelection(self,rtrow):

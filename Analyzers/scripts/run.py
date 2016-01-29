@@ -20,7 +20,7 @@ from multiprocessing import Pool
 
 from InitialStateAnalysis.Utilities.utilities import *
 from InitialStateAnalysis.Analyzers.AnalyzerZ import AnalyzerZ
-from InitialStateAnalysis.Analyzers.AnalyzerWZ import AnalyzerWZ, AnalyzerWZ_ZFakeRate, AnalyzerWZ_HZZFakeRate, AnalyzerWZ_NoVeto
+from InitialStateAnalysis.Analyzers.AnalyzerWZ import AnalyzerWZ, AnalyzerWZ_ZFakeRate, AnalyzerWZ_TTFakeRate, AnalyzerWZ_HZZFakeRate, AnalyzerWZ_NoVeto
 from InitialStateAnalysis.Analyzers.AnalyzerWZ_W import AnalyzerWZ_WFakeRate
 from InitialStateAnalysis.Analyzers.AnalyzerWZ_Dijet import AnalyzerWZ_DijetFakeRate, AnalyzerWZ_HZZDijetFakeRate
 from InitialStateAnalysis.Analyzers.AnalyzerHpp2l import AnalyzerHpp2l, AnalyzerHpp2l_Z, AnalyzerHpp2l_Charge, AnalyzerHpp2l_TT
@@ -44,6 +44,7 @@ def run_analyzer(args):
                     'WZ'      : AnalyzerWZ,
                     'NoVeto'  : AnalyzerWZ_NoVeto,
                     'FakeRate': AnalyzerWZ_ZFakeRate,
+                    'TTFakeRate': AnalyzerWZ_TTFakeRate,
                     'HZZFakeRate': AnalyzerWZ_HZZFakeRate,
                      },
         'WZ_W'    : {
@@ -104,7 +105,8 @@ def get_sample_names(analysis,period,samples,**kwargs):
             #'WZ'         : '2015-11-07-13TeV-WZ', # update to met uncertainty, also met shifts
             #'WZ'         : '2015-11-12-13TeV-WZ', # add new muon medium ID counts
             #'WZ'         : '2015-11-18-13TeV-WZ', # jet clean based on tight IDs and loose jet id pt>20
-            'WZ'         : '2015-11-27-13TeV-WZ', # fix to event number (no more negatives) and add some met uncertainty stuff
+            #'WZ'         : '2015-11-27-13TeV-WZ', # fix to event number (no more negatives) and add some met uncertainty stuff
+            'WZ'         : '2016-01-18-13TeV-WZ', # move to medium muon and veryTight electron
             #'WZ_W'       : '2015-08-03-13TeV-2l',
             'WZ_W'       : '2015-11-19-13TeV-2l', # all the udpates above
             #'WZ_Dijet'   : '2015-08-17-13TeV-1l',
@@ -115,7 +117,8 @@ def get_sample_names(analysis,period,samples,**kwargs):
             #'WZ_Dijet'   : '2015-10-12-13TeV-1l', # lower trigger
             #'WZ_Dijet'   : '2015-10-15-13TeV-1l', # fixed trigger and WZ no iso ID
             #'WZ_Dijet'   : '2015-11-06-13TeV-1l', # latest jec, metfilters, metuncertainty, new samples
-            'WZ_Dijet'   : '2015-11-19-13TeV-1l', # The jet cleaning fixes
+            #'WZ_Dijet'   : '2015-11-19-13TeV-1l', # The jet cleaning fixes
+            'WZ_Dijet'   : '2016-01-18-13TeV-1l', # move to medium muon and veryTight electron
             'Hpp3l'      : '2015-03-30-13TeV-3l',
             'Hpp4l'      : '2015-03-30-13TeV-4l',
         },

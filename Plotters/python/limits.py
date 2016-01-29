@@ -36,7 +36,7 @@ bpLabels = {
 def save(savename,saveDir,canvas):
     '''Save the limits into root file and images.'''
     #for type in ['png', 'pdf', 'eps']:
-    for type in ['png']:
+    for type in ['png','pdf','root']:
         name = "%s/%s/%s.%s" % (saveDir, type, savename, type)
         python_mkdir(os.path.dirname(name))
         canvas.Print(name)
@@ -53,6 +53,9 @@ def plot_limits(analysis, region, period, savename, **kwargs):
     bp = kwargs.pop('branchingPoint','')
     bgMode = kwargs.pop('bgMode','sideband')
     do4l = kwargs.pop('do4l',False)
+    limitMode = kwargs.pop('limitMode','fullCLs')
+
+    saveDir += '/' + limitMode
 
     # directories    
     datacardDir = '%s/%s_%itev_%s' % (datacardBaseDir, analysis, period, region)
@@ -61,6 +64,13 @@ def plot_limits(analysis, region, period, savename, **kwargs):
     if bp: limitDataDir += '/%s' % bp
     datacardString = '' if bgMode == "sideband" else "_{0}".format(bgMode)
     if do4l: datacardString += '_4l'
+
+    if analysis == 'HppComb': analysisName = 'Combined'
+    if analysis == 'HppAP': analysisName = 'AP'
+    if analysis == 'HppPP': analysisName = 'PP'
+    if analysis == 'Hpp3l': analysisName = '3lAP'
+    if analysis == 'Hpp3l' and do4l: analysisName = '3lPP'
+    if analysis == 'Hpp4l': analysisName = '4lPP'
 
     # masses to include
     masses = _3L_MASSES if analysis in ['Hpp3l','HppAP'] else _4L_MASSES
@@ -84,12 +94,18 @@ def plot_limits(analysis, region, period, savename, **kwargs):
     # get limit values
     quartiles = np.empty((6, len(masses)), dtype=float)
     for j, mass in enumerate(masses):
-        fname = os.path.join(limitDataDir, "higgsCombineTest.Asymptotic.mH%i%s.root" % (mass,datacardString))
-        file = ROOT.TFile(fname,"READ")
-        tree = file.Get("limit")
-        if not tree: continue
-        for i, row in enumerate(tree):
-            quartiles[i,j] = row.limit
+        #fname = os.path.join(limitDataDir, "higgsCombineTest.Asymptotic.mH%i%s.root" % (mass,datacardString))
+        #file = ROOT.TFile(fname,"READ")
+        #tree = file.Get("limit")
+        #if not tree: continue
+        #for i, row in enumerate(tree):
+        #    quartiles[i,j] = row.limit
+        limitFilename = '{0}/{1}/{2}/{3}/limits.txt'.format(limitMode,analysisName,bp,mass)
+        with open(limitFilename,'r') as f:
+            limString = f.readline()
+            limList = limString.split(' ')
+            for i in range(6):
+                quartiles[i,j] = limList[i]
 
     twoSigma = ROOT.TGraph(2*n)
     oneSigma = ROOT.TGraph(2*n)
@@ -296,6 +312,9 @@ def plot_combined_limits(period, savename, **kwargs):
     blind = not kwargs.pop('unblind',False)
     bp = kwargs.pop('branchingPoint','')
     bgMode = kwargs.pop('bgMode','sideband')
+    limitMode = kwargs.pop('limitMode','fullCLs')
+
+    saveDir += '/' + limitMode
 
     # directories
     datacardDir = {}
@@ -328,15 +347,25 @@ def plot_combined_limits(period, savename, **kwargs):
     # get limit values
     quartiles = {}
     for analysis in ['AP','PP','Comb']:
+        if analysis == 'Comb': analysisName = 'Combined'
+        if analysis == 'AP': analysisName = 'AP'
+        if analysis == 'PP': analysisName = 'PP'
         quartiles[analysis] = np.empty((6, len(masses)), dtype=float)
         for j, mass in enumerate(masses):
             if mass not in _3L_MASSES and analysis == 'AP': continue
-            fname = os.path.join(limitDataDir[analysis], "higgsCombineTest.Asymptotic.mH%i%s.root" % (mass,datacardString))
-            file = ROOT.TFile(fname,"READ")
-            tree = file.Get("limit")
-            if not tree: continue
-            for i, row in enumerate(tree):
-                quartiles[analysis][i,j] = row.limit
+            #fname = os.path.join(limitDataDir[analysis], "higgsCombineTest.Asymptotic.mH%i%s.root" % (mass,datacardString))
+            #file = ROOT.TFile(fname,"READ")
+            #tree = file.Get("limit")
+            #if not tree: continue
+            #for i, row in enumerate(tree):
+            #    quartiles[analysis][i,j] = row.limit
+            limitFilename = '{0}/{1}/{2}/{3}/limits.txt'.format(limitMode,analysisName,bp,mass)
+            with open(limitFilename,'r') as f:
+                limString = f.readline()
+                limList = limString.split(' ')
+                for i in range(6):
+                    quartiles[analysis][i,j] = limList[i]
+
 
     twoSigma = {}
     oneSigma = {}

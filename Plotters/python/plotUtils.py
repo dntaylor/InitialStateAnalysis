@@ -217,8 +217,8 @@ def defineCutFlowMap(region,channels,mass):
     regionMap['WZ'][0] = {
         'mass' : 'finalstate.mass>100.',
         'zpt' : '(z1.Pt1>20. && z1.Pt2>10.)',
-        'zmass' : 'z1.mass>60. && z1.mass<120.',
-        'bveto' : 'finalstate.bjetVeto30Medium==0',
+        'zmass' : 'fabs(z1.mass-{0})<15.'.format(ZMASS),
+        'bveto' : 'finalstate.bjetVeto30Tight==0',
         'wdr' : 'w1.dR1_z1_1>0.1 && w1.dR1_z1_2>0.1',
         'wmll' : 'w1.mll_z1_1>4. && w1.mll_z1_2>4.',
         'wpt' : 'w1.Pt1>20.',
@@ -273,35 +273,35 @@ def defineCutFlowMap(region,channels,mass):
                  'mass' : '' }
     elif region == 'WZ':
         cutMap['preselection'] = ['All events','Three lepton','Trigger','Fiducial','4th lepton veto']
-        cutMap['labels'] = ['Preselection (ID)',\
-                            'Z lepton p_{T}',\
-                            'Z window',\
-                            #'b-jet Veto',\
-                            #'W #DeltaR to Z',\
-                            'M(W_\\ell,Z_\\ell)',\
-                            'W lepton p_{T}',\
-                            'E_{T}^{miss}',\
-                            'Mass 3l'\
+        cutMap['labels'] = ['Preselection (ID)',
+                            'Z lepton p_{T}',
+                            'Z window',
+                            'Mass 3l',
+                            'b-jet Veto',
+                            #'W #DeltaR to Z',
+                            'M(W_\\ell,Z_\\ell)',
+                            'W lepton p_{T}',
+                            'E_{T}^{miss}',
                            ]
-        cutMap['labels_simple'] = ['Preselection',\
-                                   'ZLepPt',\
-                                   'Zwindow',\
-                                   #'bjetVeto',\
-                                   #'WDR',\
-                                   'WMll',\
-                                   'WLepPt',\
-                                   'MET',\
-                                   'mass3l'\
+        cutMap['labels_simple'] = ['Preselection',
+                                   'ZLepPt',
+                                   'Zwindow',
+                                   'mass3l',
+                                   'bjetVeto',
+                                   #'WDR',
+                                   'WMll',
+                                   'WLepPt',
+                                   'MET',
                                   ]
-        cutMap['cuts'] = ['1',\
-                          regionMap['WZ'][0]['zpt'],\
-                          regionMap['WZ'][0]['zmass'],\
-                          #regionMap['WZ'][0]['bveto'],\
-                          #regionMap['WZ'][0]['wdr'],\
-                          regionMap['WZ'][0]['wmll'],\
-                          regionMap['WZ'][0]['wpt'],\
-                          regionMap['WZ'][0]['met'],\
-                          regionMap['WZ'][0]['mass']\
+        cutMap['cuts'] = ['1',
+                          regionMap['WZ'][0]['zpt'],
+                          regionMap['WZ'][0]['zmass'],
+                          regionMap['WZ'][0]['mass'],
+                          regionMap['WZ'][0]['bveto'],
+                          #regionMap['WZ'][0]['wdr'],
+                          regionMap['WZ'][0]['wmll'],
+                          regionMap['WZ'][0]['wpt'],
+                          regionMap['WZ'][0]['met'],
                          ]
         # this is 8 tev, add a period check later
         #cutMap['labels'] = ['Preselection (ID)', 'Z lepton p_{T}', 'Z window', 'Mass 3l', 'W #DeltaR to Z', 'W lepton p_{T}', 'E_{T}^{miss}']
@@ -722,9 +722,11 @@ def getIntLumiMap():
         7 : 4900,
         8 : 19700,
         #13: 42, # 50ns
-        #13: 1280 # 25ns, AN freeze
+        #13: 1280, # 25ns, AN freeze
         # brilcalc lumi --normtag  ~lumipro/public/normtag_file/OfflineNormtagV2.json -i /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/Cert_246908-258750_13TeV_PromptReco_Collisions15_25ns_JSON.txt
-        13: 1341 # 25ns, updated lumicalc 
+        13: 1341, # 25ns, updated lumicalc 
+        # brilcalc lumi --normtag  ~lumipro/public/normtag_file/OfflineNormtagV2.json -i /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/Cert_246908-260627_13TeV_PromptReco_Collisions15_25ns_JSON_v2.txt
+        13: 2263, # fule 25ns
     }
     return intLumiMap
 
@@ -775,12 +777,13 @@ def getChannelBackgrounds(runPeriod):
         'Charge'  : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
         'W'       : ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
         'FakeRate': ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
+        'TTFakeRate': ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
         'HZZFakeRate': ['T', 'TT', 'TTV', 'W', 'Z', 'VVV', 'ZZ', 'WW', 'WZ'],
         'Hpp3l'   : ['TT', 'TTV', 'Z', 'ZG', 'VVV', 'ZZ', 'WZ'],
         'WZ'      : ['TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WZ'],
         'NoVeto'  : ['TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WZ'],
         'LowMass' : ['TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WZ'],
-        'Hpp4l'   : ['TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WZ'],
+        'Hpp4l'   : ['WZ', 'TTV', 'VVV', 'ZZ'],
         'ZZ'      : ['TT', 'TTV', 'Z', 'VVV', 'ZZ', 'WZ'],
     }   
     if runPeriod==13:
@@ -790,6 +793,7 @@ def getChannelBackgrounds(runPeriod):
             'NoVeto'  : ['T', 'TT', 'TTV', 'Z', 'VVV', 'WW', 'ZZ', 'WZ'],
             'W'       : ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'ZZ', 'WZ'],
             'FakeRate': ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'VVV', 'ZZ', 'WZ'],
+            'TTFakeRate': ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'VVV', 'ZZ', 'WZ'],
             'HZZFakeRate': ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'ZZ', 'WZ'],
             'Z'       : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
             'Charge'  : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
@@ -860,6 +864,12 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
             #if analysis in ['WZ']: mtext = 'm_{\\ell\\ell\\\'\\ell\\\'} (GeV)'
             plotMethod('finalstate.mass',[25,0,500],savedir+'mass',yaxis='Events/20 GeV',xaxis=mtext,logy=0,cut=myCut,overflow=True,**kwargs)
             plotMethod('z1.mass', [13,58.5,123.5],   savedir+'z1/Mass_newWidth_wide', yaxis='Events/5 GeV', xaxis='m_{\\ell^{+}\\ell^{-}} (GeV)',logy=0,cut=myCut,**kwargs)
+        if analysis in ['Hpp3l']:
+            #plotMethod('h1.mass', [28,0,700],savedir+'hpp/Mass', yaxis='Events/25 GeV',xaxis='m_{\\ell^{\\pm}\\ell^{\\pm}} (GeV)', legendpos=43,yscale=3.5,logy=1,cut=myCut,overflow=True,numcol=2,ratiomin=0.,ratiomax=2.,**kwargs)
+            plotMethod('h1.mass', [28,0,700],savedir+'hpp/Mass', yaxis='Events/25 GeV',xaxis='m_{l^{#pm}l^{#pm}} (GeV)', legendpos=43,yscale=3.5,logy=1,cut=myCut,overflow=True,numcol=2,ratiomin=0.,ratiomax=2.,**kwargs)
+        if analysis in ['Hpp4l']:
+            #plotMethod('h1.mass', [14,0,700],savedir+'hpp/Mass', yaxis='Events/50 GeV',xaxis='m_{\\ell^{+}\\ell^{+}} (GeV)', legendpos=43,yscale=3.5,logy=1,cut=myCut,overflow=True,numcol=2,ratiomin=0.,ratiomax=2.,**kwargs)
+            plotMethod('h1.mass', [14,0,700],savedir+'hpp/Mass', yaxis='Events/50 GeV',xaxis='m_{l^{+}l^{+}} (GeV)', legendpos=43,yscale=3.5,logy=1,cut=myCut,overflow=True,numcol=2,ratiomin=0.,ratiomax=2.,**kwargs)
         return
 
 
@@ -1012,7 +1022,7 @@ def getFakeParams(analysis):
     fakeRegions[analysis] = {}
     for f in ['e', 'm']:
         #for p in ['Loose', 'Tight']:
-        for p in ['Tight']:
+        for p in ['Tight','VeryTight']:
             # select leading Z pt, Z window [60,120], tight (or loose) Z, low met, m3l>100, w1 mass < 30
             if analysis in ['WZ']:
                 #for z in ['Loose', 'Tight']:
@@ -1059,15 +1069,15 @@ def getFakeParams(analysis):
 
 
     # setup selections
-    #ptBins = [1,10,20,30,200]
-    ptBins = [10,1000]
-    #if analysis in ['WZ_Dijet']: ptBins = [1,10,20,30,40,60,80,200]
+    ptBins = [1,10,20,30,1000]
+    #ptBins = [10,1000]
+    #if analysis in ['WZ_Dijet']: ptBins = [1,10,20,30,40,60,80,200,1000]
 
     etaBins = {
-        #'e': [0,1.479,2.5],
-        #'m': [0,1.2,2.4],
-        'e': [0,2.5],
-        'm': [0,2.4],
+        'e': [0,1.479,2.5],
+        'm': [0,1.2,2.4],
+        #'e': [0,2.5],
+        #'m': [0,2.4],
     }
 
     return fakeRegions, ptBins, etaBins
