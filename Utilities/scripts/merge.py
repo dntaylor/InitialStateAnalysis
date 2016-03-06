@@ -60,29 +60,29 @@ def main(argv=None):
     }
     ntuple, branches = buildNtuple({'a':''},['a'],args.channel,[''])
     event = branches['event']
-    cutTree, cutEvents, cutsBranch = buildCutTree(['topology'])
+    #cutTree, cutEvents, cutsBranch = buildCutTree(['topology'])
     for dataset in datasets[args.period]:
         logger.info('Merging dataset %s' % dataset)
         # get the trees
         tchain = rt.TChain()
-        cutchain = rt.TChain()
+        #cutchain = rt.TChain()
         datafiles = glob.glob('%s/data_*_%s_*.root' % (ntupledir, dataset))
         for f in datafiles:
             logger.info(f)
             tchain.Add('%s/%s' % (f, args.channel))
-            cutchain.Add('%s/cutTree' % (f))
+            #cutchain.Add('%s/cutTree' % (f))
         # setup for iterating over tree
         events = set()
-        cutevents = set()
+        #cutevents = set()
         numToSubtract = 0
         numEntries = tchain.GetEntries()
-        cutEntries = cutchain.GetEntries()
+        #cutEntries = cutchain.GetEntries()
         tchain.SetBranchAddress('event',rt.AddressOf(event,'gen_weight'))
-        cutchain.SetBranchAddress('event',rt.AddressOf(cutEvents,'evt'))
+        #cutchain.SetBranchAddress('event',rt.AddressOf(cutEvents,'evt'))
         # clone tree
         tfile = rt.TFile('%s/data_%s.root' % (ntupledir,dataset), 'recreate')
         tree = tchain.CloneTree(0)
-        newCutTree = cutchain.CloneTree(0)
+        #newCutTree = cutchain.CloneTree(0)
         for i in range(numEntries):
             tchain.GetEntry(i)
             eventkey = (event.run, event.lumi, event.evt)
@@ -91,12 +91,12 @@ def main(argv=None):
                 continue
             events.add(eventkey)
             tree.Fill()
-        for i in range(cutEntries):
-            cutchain.GetEntry(i)
-            eventkey = (cutEvents.run, cutEvents.lumi, cutEvents.evt)
-            if eventkey in cutevents: continue
-            cutevents.add(eventkey)
-            newCutTree.Fill()
+        #for i in range(cutEntries):
+        #    cutchain.GetEntry(i)
+        #    eventkey = (cutEvents.run, cutEvents.lumi, cutEvents.evt)
+        #    if eventkey in cutevents: continue
+        #    cutevents.add(eventkey)
+        #    newCutTree.Fill()
         # and the cutflows
         # TODO: This is WRONG! only the last entry will be correct... solve later I guesss, perhaps a cutflow tree
         #cutflows = {}

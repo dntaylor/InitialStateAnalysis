@@ -24,6 +24,7 @@ def printEvent(row,treeTuple,**kwargs):
     selections = kwargs.pop('selections',[])
 
     printThisEvent = True
+    eventNums = [e[2] for e in eventList]
     if eventList: # check to see if event is in eventlist
         if mode=='fsa':
             thisEvent = [row.run, row.lumi, row.evt]
@@ -33,6 +34,8 @@ def printEvent(row,treeTuple,**kwargs):
         else:
             thisEvent = []
         printThisEvent = True if thisEvent in eventList else False
+        if not printThisEvent: # check just event number
+            printThisEvent = True if thisEvent[2] in eventNums else False
 
     if not printThisEvent: return 0
 
@@ -143,21 +146,21 @@ def printFSAEvent(row,channel,filename):
     print '| Event listing FSA {0:58} |'.format('')
     print '| Run: {0:7} Lumi: {1:5} Event: {2:11} {3:32} |'.format(row.run, row.lumi, row.evt, '')
     print '|{0}|'.format('-'*78)
-    print '| Channel: {0:5} Num Vertices: {1:3} numETight: {2:3} numMTight: {3:3} {4:22} |'.format(channel, row.nvtx, row.eVetoTight, row.muVetoTight, '')
+    print '| Channel: {0:5} Num Vertices: {1:3} numE: {2:3} numM: {3:3} {4:22} |'.format(channel, row.nvtx, row.eVetoMedium, row.muVetoMedium, '')
     print '| MET: {0:10.4f} Mass: {1:10.4f} {2:50} |'.format(row.type1_pfMetEt,row.Mass,'')
 
     # print lepton info
     lep_string = '| {0:2}: pT: {1:11.4f} eta: {2:9.4f} phi: {3:8.4f} iso: {4:7.4f} charge: {5:4} {6:1} |'
-    elec_string = '|     CBID-Med: {0:1f} d0: {1:10.4f} dz: {2:9.4f} {3:22} |'
-    muon_string = '|     ID: {0:2} d0: {1:10.4f} dz: {2:9.4f} {3:30} |'
+    elec_string = '|     ID: {0:2} WID: {1:2} d0: {2:10.4f} dz: {3:9.4f} {4:22} |'
+    muon_string = '|     ID: {0:2} d0: {1:10.4f} dz: {2:9.4f} trackiso/pt: {3:9.4f} {3:5} |'
     for lep in leps:
-        iso = getattr(row,'%sRelPFIsoDBDefault' %lep) if lep[0]=='m' else getattr(row,'%sRelPFIsoRho' %lep)
+        iso = getattr(row,'%sRelPFIsoDBDefaultR04' %lep) if lep[0]=='m' else getattr(row,'%sRelPFIsoRho' %lep)
         print '|{0}|'.format('-'*78)
         print lep_string.format(lep, getattr(row,'%sPt' %lep), getattr(row,'%sEta' %lep), getattr(row,'%sPhi' %lep), iso, getattr(row,'%sCharge' %lep), '')
         if lep[0]=='e':
-            print elec_string.format(getattr(row,'%sCBIDMedium'%lep), getattr(row,'%sPVDXY'%lep), getattr(row,'%sPVDZ'%lep),'')
+            print elec_string.format(getattr(row,'%sPassWZMedium'%lep), getattr(row,'%sPassWZTight'%lep), getattr(row,'%sPVDXY'%lep), getattr(row,'%sPVDZ'%lep),'')
         elif lep[0]=='m':
-            print muon_string.format(getattr(row,'%sPFIDTight'%lep), getattr(row,'%sPVDXY'%lep), getattr(row,'%sPVDZ'%lep),'')
+            print muon_string.format(getattr(row,'%sPassWZMedium'%lep), getattr(row,'%sPVDXY'%lep), getattr(row,'%sPVDZ'%lep), getattr(row,"%sTrkIsoDR03"%lep)/getattr(row,"%sPt"%lep),'')
     print '-'*80
     for i in range(len(leps)):
         for j in range(len(leps)):
@@ -295,9 +298,9 @@ def main(argv=None):
             logging.debug('Copying tree with cut {0}.'.format(args.cut))
             tree = fulltree.CopyTree(args.cut) if args.cut else fulltree
         elif args.mode=='isa':
-            fullCutTree = tfile.Get('cutTree')
-            fullCutTree.SetBranchAddress('event',ROOT.AddressOf(eventBranch,'evt'))
-            fullCutTree.SetBranchAddress('selections',ROOT.AddressOf(cutsBranch,'topology'))
+            #fullCutTree = tfile.Get('cutTree')
+            #fullCutTree.SetBranchAddress('event',ROOT.AddressOf(eventBranch,'evt'))
+            #fullCutTree.SetBranchAddress('selections',ROOT.AddressOf(cutsBranch,'topology'))
             fulltree = tfile.Get(args.analysis)
             dummyfile.cd()
             logging.debug('Copying tree with cut {0}.'.format(args.cut))
@@ -332,10 +335,10 @@ def main(argv=None):
         logging.debug('Iterate through tree')
         if args.cutTree:
             logging.debug('Will do cut tree')
-            for row in fullCutTree:
-                if args.mode=='isa':
-                    branches = {'event':eventBranch,'selections':cutsBranch}
-                    numPrinted += printEvent(row,fullCutTree,analysis=args.analysis,eventList=events,branches=branches,isMC=args.mc,mode=args.mode,filename=file,doCutTree=True,selections=cutTreeSelections)
+            #for row in fullCutTree:
+            #    if args.mode=='isa':
+            #        branches = {'event':eventBranch,'selections':cutsBranch}
+            #        numPrinted += printEvent(row,fullCutTree,analysis=args.analysis,eventList=events,branches=branches,isMC=args.mc,mode=args.mode,filename=file,doCutTree=True,selections=cutTreeSelections)
         else:
             for row in tree:
                 if args.list:

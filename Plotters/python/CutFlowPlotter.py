@@ -197,7 +197,7 @@ class CutFlowPlotter(PlotterBase):
         labels = kwargs.pop('labels',[])
         cut = kwargs.pop('cut', '1')
         blinder = kwargs.pop('blinder', [])
-        logy = kwargs.pop('logy', 1)
+        logy = kwargs.pop('logy', 0)
         plotsig = kwargs.pop('plotsig', 1)
         plotdata = kwargs.pop('plotdata', 1)
         plotratio = kwargs.pop('plotratio', 1)
@@ -208,7 +208,7 @@ class CutFlowPlotter(PlotterBase):
         nosum = kwargs.pop('nosum',False)
         isprecf = kwargs.pop('isprecf',False)
         isprelim = kwargs.pop('isprelim', 1)
-        yscale = kwargs.pop('yscale',6.5)
+        yscale = kwargs.pop('yscale',1.2)
         for key, value in kwargs.iteritems():
             self.logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
 
@@ -222,7 +222,11 @@ class CutFlowPlotter(PlotterBase):
         with open(self.cutFlowFile,'w') as txtfile:
             txtfile.write(cutString)
 
-        self.canvas.SetLogy(logy)
+        #print savename, 'Canvas'
+        canvas = ROOT.TCanvas(savename,savename,50,50,self.W,self.H)
+        canvas = self.setupCanvas(canvas)
+
+        canvas.SetLogy(logy)
 
         # hack to show both mc and data on same plot
         if plotdata:
@@ -286,11 +290,11 @@ class CutFlowPlotter(PlotterBase):
             datapois.Draw('0P')
 
         # draw cms lumi
-        self.setStyle(lumitext,plotdata,plotratio,isprelim)
-        self.canvas.cd()
-        self.canvas.Update()
-        self.canvas.RedrawAxis()
-        frame = self.canvas.GetFrame()
+        self.setStyle(canvas,lumitext,plotdata,isprelim)
+        #canvas.cd()
+        canvas.Update()
+        canvas.RedrawAxis()
+        frame = canvas.GetFrame()
         frame.Draw()
 
         # legend
@@ -300,8 +304,8 @@ class CutFlowPlotter(PlotterBase):
         leg.Draw()
 
         # save everything
-        self.canvas.cd()
-        self.save(savename)
+        #canvas.cd()
+        self.save(canvas,savename)
 
         # output s/sqrt(b)
         if not nosum:

@@ -61,7 +61,39 @@ class TriggerScaleFactors(object):
             self.trackerMuonDZ_13TeV = json.load(ef)
         with open(os.path.join(os.path.dirname(__file__),'globalMuonDZ_13TeV.json'),'r') as ef:
             self.globalMuonDZ_13TeV = json.load(ef)
+        # HWW 13 TeV
+        with open(os.path.join(os.path.dirname(__file__),'HLT_Ele23_WPLoose.txt'),'r') as ef:
+            self.hww_singleEle23 = self.init_hww_scales_e(ef)
+        with open(os.path.join(os.path.dirname(__file__),'SingleMu_IsoTkMu20_Run2015D_25ns_PTvsETA_HWW.txt'),'r') as ef:
+            self.hww_singleMu20 = self.init_hww_scales_m(ef)
 
+    def init_hww_scales_e(self,ef):
+        result = []
+        for line in ef:
+            etalow, etahigh, ptlow, pthigh, eff, err = line.split()
+            element = {}
+            element["data"]     = float(eff)
+            element["data_err"] = float(err)
+            element["pt_lo"]    = float(ptlow)
+            element["pt_hi"]    = float(pthigh)
+            element["eta_lo"]   = float(etalow)
+            element["eta_hi"]   = float(etahigh)
+            result += [element]
+        return result
+
+    def init_hww_scales_m(self,ef):
+        result = []
+        for line in ef:
+            etalow, etahigh, ptlow, pthigh, eff, errup, errdown = line.split()
+            element = {}
+            element["data"]     = float(eff)
+            element["data_err"] = (float(errup)+float(errdown))/2.
+            element["pt_lo"]    = float(ptlow)
+            element["pt_hi"]    = float(pthigh)
+            element["eta_lo"]   = float(etalow)
+            element["eta_hi"]   = float(etahigh)
+            result += [element]
+        return result
 
     def init_ww_scales(self):
         scales = {}
@@ -86,7 +118,7 @@ class TriggerScaleFactors(object):
         def getObjEta(l):
             if l[0]=='m': return getattr(rtrow,'{0}Eta'.format(l))
             if l[0]=='e': return getattr(rtrow,'{0}SCEta'.format(l))
-        lep_objs = [(x, getObjPt(x), abs(getObjEta(x))) for x in lep_list]
+        lep_objs = [(x, getObjPt(x), getObjEta(x)) for x in lep_list]
         lep_ord = sorted(lep_objs, key=itemgetter(1), reverse=True)
         period = kwargs.pop('period',8)
         if period==8:
@@ -135,9 +167,12 @@ class TriggerScaleFactors(object):
                 eff = 1
         else:
             if len(lep_ord)==3:
+                # single * double efficiency
                 eff = 1-(\
+                        # none pass single
+                        ((1-self.single_eff_13(*lep_ord[0],**kwargs)) * (1-self.single_eff_13(*lep_ord[1],**kwargs)) * (1-self.single_eff_13(*lep_ord[2],**kwargs)))\
                         # none pass lead
-                        (1-self.double_lead_eff_13(*lep_ord[0],**kwargs)) * (1-self.double_lead_eff_13(*lep_ord[1],**kwargs)) * (1-self.double_lead_eff_13(*lep_ord[2],**kwargs))\
+                        *((1-self.double_lead_eff_13(*lep_ord[0],**kwargs)) * (1-self.double_lead_eff_13(*lep_ord[1],**kwargs)) * (1-self.double_lead_eff_13(*lep_ord[2],**kwargs))\
                         # one pass lead but none pass trail
                         + self.double_lead_eff_13(*lep_ord[0],**kwargs) * (1-self.double_trail_eff_13(*lep_ord[1],**kwargs)) * (1-self.double_trail_eff_13(*lep_ord[2],**kwargs))\
                         + self.double_lead_eff_13(*lep_ord[1],**kwargs) * (1-self.double_trail_eff_13(*lep_ord[2],**kwargs)) * (1-self.double_trail_eff_13(*lep_ord[0],**kwargs))\
@@ -149,17 +184,36 @@ class TriggerScaleFactors(object):
                         + self.double_lead_eff_13(*lep_ord[1],**kwargs) * self.double_trail_eff_13(*lep_ord[0],**kwargs) * (1-self.double_trail_eff_13(*lep_ord[2])) * (1-self.double_dz_eff_13(lep_ord[1][0],*lep_ord[0],**kwargs))\
                         + self.double_lead_eff_13(*lep_ord[2],**kwargs) * self.double_trail_eff_13(*lep_ord[0],**kwargs) * (1-self.double_trail_eff_13(*lep_ord[1])) * (1-self.double_dz_eff_13(lep_ord[2][0],*lep_ord[0],**kwargs))\
                         + self.double_lead_eff_13(*lep_ord[2],**kwargs) * self.double_trail_eff_13(*lep_ord[1],**kwargs) * (1-self.double_trail_eff_13(*lep_ord[0])) * (1-self.double_dz_eff_13(lep_ord[2][0],*lep_ord[1],**kwargs))\
-                        # one pass lead, two pass trail, both fail
+                        # one pass lead, two pass trail, both fail dz
                         + self.double_lead_eff_13(*lep_ord[0],**kwargs) * self.double_trail_eff_13(*lep_ord[1],**kwargs) * self.double_trail_eff_13(*lep_ord[2])\
                           * (1-self.double_dz_eff_13(lep_ord[0][0],*lep_ord[1],**kwargs)) * (1-self.double_dz_eff_13(lep_ord[0][0],*lep_ord[2],**kwargs))\
                         + self.double_lead_eff_13(*lep_ord[1],**kwargs) * self.double_trail_eff_13(*lep_ord[2],**kwargs) * self.double_trail_eff_13(*lep_ord[0])\
                           * (1-self.double_dz_eff_13(lep_ord[1][0],*lep_ord[2],**kwargs)) * (1-self.double_dz_eff_13(lep_ord[1][0],*lep_ord[0],**kwargs))\
                         + self.double_lead_eff_13(*lep_ord[2],**kwargs) * self.double_trail_eff_13(*lep_ord[0],**kwargs) * self.double_trail_eff_13(*lep_ord[1])\
-                          * (1-self.double_dz_eff_13(lep_ord[2][0],*lep_ord[0],**kwargs)) * (1-self.double_dz_eff_13(lep_ord[2][0],*lep_ord[1],**kwargs))\
+                          * (1-self.double_dz_eff_13(lep_ord[2][0],*lep_ord[0],**kwargs)) * (1-self.double_dz_eff_13(lep_ord[2][0],*lep_ord[1],**kwargs)))\
                         )
+                #eff = 1. # override, i dont have single lepton efficiencies
+            elif len(lep_ord)==2: # for or of double lepton triggers
+                eff = 1-(\
+                        # none pass lead
+                        (1-self.double_lead_eff_13(*lep_ord[0],**kwargs)) * (1-self.double_lead_eff_13(*lep_ord[1],**kwargs))\
+                        # one pass lead but none pass trail
+                        + self.double_lead_eff_13(*lep_ord[0],**kwargs) * (1-self.double_trail_eff_13(*lep_ord[1],**kwargs))\
+                        + self.double_lead_eff_13(*lep_ord[1],**kwargs) * (1-self.double_trail_eff_13(*lep_ord[0],**kwargs))\
+                        # one pass lead, one pass trail, fail dz
+                        + self.double_lead_eff_13(*lep_ord[0],**kwargs) * self.double_trail_eff_13(*lep_ord[1],**kwargs) * (1-self.double_dz_eff_13(lep_ord[0][0],*lep_ord[1],**kwargs))\
+                        + self.double_lead_eff_13(*lep_ord[1],**kwargs) * self.double_trail_eff_13(*lep_ord[0],**kwargs) * (1-self.double_dz_eff_13(lep_ord[1][0],*lep_ord[0],**kwargs))\
+                        )
+            elif len(lep_ord)==1: # just get the trail leg one
+                eff = self.double_trail_eff_13(*lep_ord[0],**kwargs) if lep_ord[0][0]=='e' or lep_ord[0][1]<20 else self.double_lead_eff_13(*lep_ord[0],**kwargs)
             else:
                 eff = 1.
         return eff
+
+    def single_eff_13(self,l,pt,eta,**kwargs):
+        if l[0]=='e': return self.single_e_13(pt,eta,**kwargs)
+        if l[0]=='m': return self.single_m_13(pt,eta,**kwargs)
+        return 1.
 
     def double_lead_eff_13(self,l,pt,eta,**kwargs):
         if l[0]=='e': return self.double_lead_e_13(pt,eta,**kwargs)
@@ -177,6 +231,14 @@ class TriggerScaleFactors(object):
         return 1.
 
     # electron
+    def single_e_13(self,pt,eta,**kwargs):
+        shiftUp = kwargs.pop('shiftUp',False)
+        shiftDown = kwargs.pop('shiftDown',False)
+        val,err = self.get_eff_err_mod(pt,eta,self.hww_singleEle23,**kwargs)
+        if shiftUp: return val+err
+        if shiftDown: return val-err
+        return val
+
     def double_lead_e_13(self,pt,eta,**kwargs):
         shiftUp = kwargs.pop('shiftUp',False)
         shiftDown = kwargs.pop('shiftDown',False)
@@ -202,6 +264,14 @@ class TriggerScaleFactors(object):
         return val
 
     # muon
+    def single_m_13(self,pt,eta,**kwargs):
+        shiftUp = kwargs.pop('shiftUp',False)
+        shiftDown = kwargs.pop('shiftDown',False)
+        val,err = self.get_eff_err_mod(pt,eta,self.hww_singleMu20,**kwargs)
+        if shiftUp: return val+err
+        if shiftDown: return val-err
+        return val
+
     def double_lead_m_13(self,pt,eta,**kwargs):
         shiftUp = kwargs.pop('shiftUp',False)
         shiftDown = kwargs.pop('shiftDown',False)
@@ -242,9 +312,22 @@ class TriggerScaleFactors(object):
             pthi = eff['pt_hi']
             etalow = eff['abseta_lo']
             etahi = eff['abseta_hi']
-            if pt>=ptlow and pt<pthi and eta>=etalow and eta<etahi:
+            if pt>=ptlow and pt<pthi and abs(eta)>=etalow and abs(eta)<etahi:
                 val = eff['data'] if useData else eff['mc']
                 err = eff['data_err'] if useData else eff['mc_err']
+                return val, err
+        return 1.0, 0.0
+
+    def get_eff_err_mod(self,pt,eta,efflist,**kwargs):
+        useData = kwargs.pop('useData',True)
+        for eff in efflist:
+            ptlow = eff['pt_lo']
+            pthi = eff['pt_hi']
+            etalow = eff['eta_lo']
+            etahi = eff['eta_hi']
+            if pt>=ptlow and pt<pthi and eta>=etalow and eta<etahi:
+                val = eff['data']
+                err = eff['data_err']
                 return val, err
         return 1.0, 0.0
 
@@ -359,21 +442,36 @@ class LeptonEfficiency(object):
             self.m_id_dict_13tev = json.load(mf)
         with open(os.path.join(os.path.dirname(__file__),'electrons_13TeV.json'),'r') as ef:
             self.e_id_dict_13tev = json.load(ef)
+        # MIT efficiencies
+        efilename = os.path.join(os.path.dirname(__file__),'SingleElectron_efficiencies_electronTnP.root')
+        self.eEffTfile = rt.TFile.Open(efilename,'READ')
+        self.eEffHist_loose = self.eEffTfile.Get('eff_Loose_ele')
+        self.eEffHist_medium = self.eEffTfile.Get('eff_Medium_ele')
+        self.eEffHist_tight = self.eEffTfile.Get('eff_Tight_ele')
+        mfilename = os.path.join(os.path.dirname(__file__),'SingleMuon_efficiencies_muonTnP.root')
+        self.mEffTfile = rt.TFile.Open(mfilename,'READ')
+        self.mEffHist_loose = self.mEffTfile.Get('eff_Loose_mu')
+        self.mEffHist_medium = self.mEffTfile.Get('eff_Medium_mu')
+        self.mEffHist_tight = self.mEffTfile.Get('eff_Medium_mu')
+
 
     def close(self):
-        pass
+        self.eEffTfile.Close()
+        self.mEffTfile.Close()
 
     def scale_factor(self, row, *lep_list, **kwargs):
         period = kwargs.pop('period',13)
         shift = kwargs.pop('metShift','')
+        numer = kwargs.pop('numer','Tight')
+        denom = kwargs.pop('denom','Loose')
         out = []
         for l in lep_list:
             lep_type = l[0]
 
             if lep_type == 'm':
-                out += [self.getMuonEfficiency(l,row,shift)]
+                out += [self.getMuonEfficiency(l,row,shift,numer,denom)]
             elif lep_type == 'e':
-                out += [self.getElectronEfficiency(l,row,shift)]
+                out += [self.getElectronEfficiency(l,row,shift,numer,denom)]
             elif lep_type == 't':
                 out += [[1,1,1]] # TODO
             else:
@@ -387,38 +485,64 @@ class LeptonEfficiency(object):
 
         return final
 
-    def getMuonEfficiency(self,l,row,shift):
+    def getMuonEfficiency(self,l,row,shift,numer,denom):
         if shift in ['mes+','mes-']:
             shiftName = 'MuonEnUp' if shift=='mes+' else 'MuonEnDown'
             pt = getattr(row,'{0}Pt_{1}'.format(l,shiftName))
         else:
             pt = getattr(row,'{0}Pt'.format(l))
-        eta = getattr(row,'{0}Eta'.format(l))
+        eta = abs(getattr(row,'{0}Eta'.format(l)))
+        hists = {
+            'Loose' : self.mEffHist_loose,
+            'Medium' : self.mEffHist_medium,
+            'Tight' : self.mEffHist_tight,
+        }
+        nid = self.get_eff_err_new(pt,eta,hists[numer])
+        did = self.get_eff_err_new(pt,eta,hists[denom])
+        default = nid[0]/did[0]
+        up = (nid[0]+nid[1])/(did[0]+did[1])
+        down = (nid[0]-nid[1])/(did[0]-did[1])
         # loose to tight efficiency = tight/loose
-        tid  = self.get_eff_err(pt,eta,self.m_id_dict_13tev,'passingIDWZTight')
-        tiso = self.get_eff_err(pt,eta,self.m_id_dict_13tev,'passingIsoWZTight_passingIDWZTight')
-        lid  = self.get_eff_err(pt,eta,self.m_id_dict_13tev,'passingIDWZLoose')
-        liso = self.get_eff_err(pt,eta,self.m_id_dict_13tev,'passingIsoWZLoose_passingIDWZLoose')
-        default = (tid[0]*tiso[0])/(lid[0]*liso[0])
-        up = ((tid[0]+tid[1])*(tiso[0]+tiso[1]))/((lid[0]+lid[1])*(liso[0]+liso[1]))
-        down = ((tid[0]-tid[1])*(tiso[0]-tiso[1]))/((lid[0]-lid[1])*(liso[0]-liso[1]))
+        #tid  = self.get_eff_err(pt,eta,self.m_id_dict_13tev,'passingIDWZTight')
+        #tiso = self.get_eff_err(pt,eta,self.m_id_dict_13tev,'passingIsoWZTight_passingIDWZTight')
+        #lid  = self.get_eff_err(pt,eta,self.m_id_dict_13tev,'passingIDWZLoose')
+        #liso = self.get_eff_err(pt,eta,self.m_id_dict_13tev,'passingIsoWZLoose_passingIDWZLoose')
+        #default = (tid[0]*tiso[0])/(lid[0]*liso[0])
+        #up = ((tid[0]+tid[1])*(tiso[0]+tiso[1]))/((lid[0]+lid[1])*(liso[0]+liso[1]))
+        #down = ((tid[0]-tid[1])*(tiso[0]-tiso[1]))/((lid[0]-lid[1])*(liso[0]-liso[1]))
         return [default, up, down]
 
-    def getElectronEfficiency(self,l,row,shift):
+    def getElectronEfficiency(self,l,row,shift,numer,denom):
         if shift in ['ees+','ees-']:
             shiftName = 'ElectronEnUp' if shift=='ees+' else 'ElectronEnDown'
             pt = getattr(row,'{0}Pt_{1}'.format(l,shiftName))
         else:
             pt = getattr(row,'{0}Pt'.format(l))
-        eta = getattr(row,'{0}SCEta'.format(l))
+        eta = abs(getattr(row,'{0}SCEta'.format(l)))
+        hists = {
+            'Loose' : self.eEffHist_loose,
+            'Medium' : self.eEffHist_medium,
+            'Tight' : self.eEffHist_tight,
+        }
+        nid = self.get_eff_err_new(pt,eta,hists[numer])
+        did = self.get_eff_err_new(pt,eta,hists[denom])
+        default = nid[0]/did[0]
+        up = (nid[0]+nid[1])/(did[0]+did[1])
+        down = (nid[0]-nid[1])/(did[0]-did[1])
         # loose to tight efficiency = tight/loose
-        tid = self.get_eff_err(pt,eta,self.e_id_dict_13tev,'passingMedium')
-        lid = self.get_eff_err(pt,eta,self.e_id_dict_13tev,'passingLoose')
-        default = (tid[0])/(lid[0])
-        up = (tid[0]+tid[1])/(lid[0]+lid[1])
-        down = (tid[0]-tid[1])/(lid[0]-lid[1])
+        #tid = self.get_eff_err(pt,eta,self.e_id_dict_13tev,'passingMedium')
+        #lid = self.get_eff_err(pt,eta,self.e_id_dict_13tev,'passingLoose')
+        #default = (tid[0])/(lid[0])
+        #up = (tid[0]+tid[1])/(lid[0]+lid[1])
+        #down = (tid[0]-tid[1])/(lid[0]-lid[1])
         return [default, up, down]
 
+    def get_eff_err_new(self,pt,eta,hist,**kwargs):
+        if eta>2.4: eta = 2.39 # TODO: stupid hack for electrons!!!
+        if pt<10: pt = 10.1
+        val = hist.GetBinContent(hist.FindBin(eta,pt))
+        err = hist.GetBinError(hist.FindBin(eta,pt))
+        return val,err
 
     def get_eff_err(self,pt,eta,effDict,effKey,**kwargs):
         useData = kwargs.pop('useData',True)
@@ -447,25 +571,38 @@ class LeptonFakeRate(object):
         # WZ 8TeV
         with open(os.path.join(os.path.dirname(__file__),'fakes_8TeV.json'),'r') as f:
             self.fake_dict_8tev = json.load(f)
+        # spain fake rates
+        efilename = os.path.join(os.path.dirname(__file__),'EGFR_RunII_25ns_jet35_08Jan.root')
+        self.efrTfile = rt.TFile.Open(efilename,'READ')
+        self.eFakeHist = self.efrTfile.Get('FR_pT_eta_EWKcorr')
+        mfilename = os.path.join(os.path.dirname(__file__),'MuFR_RunII_25ns_jet20_08Jan.root')
+        self.mfrTfile = rt.TFile.Open(mfilename,'READ')
+        self.mFakeHist = self.mfrTfile.Get('FR_pT_eta_EWKcorr')
+        # my fakerates
+        filename = os.path.join(os.path.dirname(__file__),'fakes_dijet_13TeV.root')
+        self.fakeTfile = rt.TFile.Open(filename,'READ')
+        self.eTightFakeHist = self.fakeTfile.Get('FakeRateProbeElecTight')
+        self.eMediumFakeHist = self.fakeTfile.Get('FakeRateProbeElecMedium')
+        self.mMediumFakeHist = self.fakeTfile.Get('FakeRateProbeMuonMedium')
 
     def close(self):
-        pass
+        self.efrTfile.Close()
+        self.mfrTfile.Close()
+        self.fakeTfile.Close()
 
     def scale_factor(self, row, *lep_list, **kwargs):
-        tight = kwargs.pop('tight',False)
-        veryTight = kwargs.pop('veryTight',False)
-        loose = kwargs.pop('loose',False)
-        veto = kwargs.pop('veto',False)
         period = kwargs.pop('period',13)
         shift = kwargs.pop('metShift','')
+        numer = kwargs.pop('numer','Tight')
+        denom = kwargs.pop('denom','Loose')
         out = []
         for l in lep_list:
             lep_type = l[0]
 
             if lep_type == 'm':
-                out += [self.m_wz_fake_veto(row,l,period,shift,veryTight)]
+                out += [self.m_wz_fake_veto(row,l,period,shift,numer,denom)]
             elif lep_type == 'e':
-                out += [self.e_wz_fake_veto(row,l,period,shift,veryTight)]
+                out += [self.e_wz_fake_veto(row,l,period,shift,numer,denom)]
             elif lep_type == 't':
                 out += [[0,0,0]] # TODO
             else:
@@ -478,42 +615,54 @@ class LeptonFakeRate(object):
             final[2] *= o[2]
         return final
 
-    def get_fake_err(self,row,l,fakename,period,shift):
-        pt = getattr(row, "%sPt" % l)
-        if l[0]=='e' and shift=='ees+': pt = getattr(row, "%sPt_ElectronEnUp" % l)
-        if l[0]=='e' and shift=='ees-': pt = getattr(row, "%sPt_ElectronEnDown" % l)
-        if l[0]=='m' and shift=='mes+': pt = getattr(row, "%sPt_MuonEnUp" % l)
-        if l[0]=='m' and shift=='mes-': pt = getattr(row, "%sPt_MuonEnDown" % l)
-        eta = abs(getattr(row, "%sSCEta" % l)) if l[0]=='e' else abs(getattr(row, "%sEta" % l))
-        fakelist = self.fake_dict_13tev[fakename] if period == 13 else self.fake_dict_8tev[fakename]
-        for fakedict in fakelist:
-            ptlow   = fakedict['pt_low']
-            pthigh  = fakedict['pt_high']
-            etalow  = fakedict['eta_low']
-            etahigh = fakedict['eta_high']
-            if pt>=ptlow and pt<pthigh and eta>=etalow and eta<etahigh:
-                fake = fakedict['fakerate']
-                err = fakedict['error']
-                return fake, err
-        return 0.0, 0.0
+    def get_fake_err(self,row,l,pt,eta,numer,denom):
+        # TODO: different numerator and denominator
+        #if numer=='Medium' and denom=='Loose':
+        #    if l[0]=='e': return 0.152, 0.010
+        #hist = self.eFakeHist if l[0]=='e' else self.mFakeHist
+        if l[0]=='m':
+            hist = self.mMediumFakeHist
+        if l[0]=='e':
+            if numer=='Medium':
+                hist = self.eMediumFakeHist
+            if numer=='Tight':
+                hist = self.eTightFakeHist
+        fake = hist.GetBinContent(hist.FindBin(pt,eta))
+        err = hist.GetBinError(hist.FindBin(pt,eta))
+        return fake,err
+        #fakelist = self.fake_dict_13tev[fakename] if period == 13 else self.fake_dict_8tev[fakename]
+        #for fakedict in fakelist:
+        #    ptlow   = fakedict['pt_low']
+        #    pthigh  = fakedict['pt_high']
+        #    etalow  = fakedict['eta_low']
+        #    etahigh = fakedict['eta_high']
+        #    if pt>=ptlow and pt<pthigh and eta>=etalow and eta<etahigh:
+        #        fake = fakedict['fakerate']
+        #        err = fakedict['error']
+        #        return fake, err
+        #return 0.0, 0.0
 
-    def e_wz_fake_veto(self, row, l, period,shift,veryTight):
+    def e_wz_fake_veto(self, row, l, period,shift,numer,denom):
         #fake, err = self.get_fake_err(row,l,'ZTightProbeElecTight',period,shift)
-        if veryTight:
-            fake, err = self.get_fake_err(row,l,"FakeRateProbeElecVeryTight",period,shift) # TODO: calculate veryTight fake rate
-        else:
-            fake, err = self.get_fake_err(row,l,"FakeRateProbeElecTight",period,shift)
+        #fake, err = self.get_fake_err(row,l,"FakeRateProbeElecTight",period,shift)
+        pt = getattr(row, "%sPt" % l)
+        eta = abs(getattr(row, "%sSCEta" % l))
+        if shift=='ees+': pt = getattr(row, "%sPt_ElectronEnUp" % l)
+        if shift=='ees-': pt = getattr(row, "%sPt_ElectronEnDown" % l)
+        fake, err = self.get_fake_err(row,l,pt,eta,numer,denom)
         default = fake
         up = min([fake+err,1.])
         down = max([fake-err,0.])
         return [default, up, down]
 
-    def m_wz_fake_veto(self, row, l, period,shift,veryTight):
+    def m_wz_fake_veto(self, row, l, period,shift,numer,denom):
         #fake, err = self.get_fake_err(row,l,'ZTightProbeMuonTight',period,shift)
-        if veryTight:
-            fake, err = self.get_fake_err(row,l,"FakeRateProbeMuonVeryTight",period,shift)
-        else:
-            fake, err = self.get_fake_err(row,l,"FakeRateProbeMuonTight",period,shift)
+        #fake, err = self.get_fake_err(row,l,"FakeRateProbeMuonTight",period,shift)
+        pt = getattr(row, "%sPt" % l)
+        eta = abs(getattr(row, "%sEta" % l))
+        if shift=='mes+': pt = getattr(row, "%sPt_MuonEnUp" % l)
+        if shift=='mes-': pt = getattr(row, "%sPt_MuonEnDown" % l)
+        fake, err = self.get_fake_err(row,l,pt,eta,numer,denom)
         default = fake
         up = min([fake+err,1.])
         down = max([fake-err,0.])
@@ -545,16 +694,29 @@ class LeptonScaleFactors(object):
         self.e_rtfile = rt.TFile(path, 'READ')
         self.e_hist = self.e_rtfile.Get("h_electronScaleFactor_RecoIdIsoSip")
 
+        # MIT scale factors
+        efilename = os.path.join(os.path.dirname(__file__),'scalefactors_ele.root')
+        self.eScaleTfile = rt.TFile.Open(efilename,'READ')
+        self.eScaleHist_loose = self.eScaleTfile.Get('unfactorized_scalefactors_Loose_ele')
+        self.eScaleHist_medium = self.eScaleTfile.Get('unfactorized_scalefactors_Medium_ele')
+        self.eScaleHist_tight = self.eScaleTfile.Get('unfactorized_scalefactors_Tight_ele')
+        mfilename = os.path.join(os.path.dirname(__file__),'scalefactors_mu.root')
+        self.mScaleTfile = rt.TFile.Open(mfilename,'READ')
+        self.mScaleHist_loose = self.mScaleTfile.Get('unfactorized_scalefactors_Loose_mu')
+        self.mScaleHist_medium = self.mScaleTfile.Get('unfactorized_scalefactors_Medium_mu')
+        self.mScaleHist_tight = self.mScaleTfile.Get('unfactorized_scalefactors_Medium_mu')
+
+
     def close(self):
         self.e_rtfile.Close()
         self.m_rtfile.Close()
+        self.mScaleTfile.Close()
+        self.eScaleTfile.Close()
 
     def scale_factor(self, row, *lep_list, **kwargs):
-        tight = kwargs.pop('tight',False)
-        veryTight = kwargs.pop('veryTight',False)
-        loose = kwargs.pop('loose',False)
         period = kwargs.pop('period',8)
         shift = kwargs.pop('metShift','')
+        lepType = kwargs.pop('lepType','Tight')
         out = 1.0
         out = []
         for l in lep_list:
@@ -562,19 +724,15 @@ class LeptonScaleFactors(object):
 
             if lep_type == 'm':
                 if period==8:
-                    out += [self.m_4l_scale(row,l)] if loose else [self.m_tight_scale(row, l)]
+                    out += [self.m_4l_scale(row,l)] if lepType=='Loose' else [self.m_tight_scale(row, l)]
                 if period==13:
-                    thisScale = self.m_wz_scale_tight(row,l,shift)
-                    if loose: thisScale = self.m_wz_scale_loose(row,l,shift)
-                    if veryTight: thisScale = self.m_wz_scale_veryTight(row,l,shift)
+                    thisScale = self.m_wz_scale(row,l,shift,lepType)
                     out += [thisScale]
             elif lep_type == 'e':
                 if period==8:
-                    out += [self.e_4l_scale(row,l)] if loose else [self.e_ww_scale(row, l)]
+                    out += [self.e_4l_scale(row,l)] if lepType=='Loose' else [self.e_ww_scale(row, l)]
                 if period==13:
-                    thisScale = self.e_wz_scale_tight(row,l,shift)
-                    if loose: thisScale = self.e_wz_scale_loose(row,l,shift)
-                    if veryTight: thisScale = self.e_wz_scale_veryTight(row,l,shift)
+                    thisScale = self.e_wz_scale(row,l,shift,lepType)
                     out += [thisScale]
             elif lep_type == 't':
                 out += [[1,1,1]] # TODO
@@ -609,39 +767,66 @@ class LeptonScaleFactors(object):
                 return scale, err
         return 1.0, 0.0
 
-    def m_wz_scale_loose(self, row, l, shift):
-        # id
-        idscale, iderr = self.get_scale_err(row,l,'passingIDWZLoose',shift)
-        # iso
-        isoscale, isoerr = self.get_scale_err(row,l,'passingIsoWZLoose_passingIDWZLoose',shift)
+    def get_scale_err_new(self,row,l,hist,shift):
+        pt = getattr(row, "%sPt" % l)
+        if l[0]=='e' and shift=='ees+': pt = getattr(row, "%sPt_ElectronEnUp" % l)
+        if l[0]=='e' and shift=='ees-': pt = getattr(row, "%sPt_ElectronEnDown" % l)
+        if l[0]=='m' and shift=='mes+': pt = getattr(row, "%sPt_MuonEnUp" % l)
+        if l[0]=='m' and shift=='mes-': pt = getattr(row, "%sPt_MuonEnDown" % l)
+        eta = abs(getattr(row, "%sSCEta" % l)) if l[0]=='e' else abs(getattr(row, "%sEta" % l))
+        if eta>2.4: eta = 2.39 # TODO: stupid hack for MIT electrons
+        val = hist.GetBinContent(hist.FindBin(eta,pt))
+        err = hist.GetBinError(hist.FindBin(eta,pt))
+        return val,err
+
+    def m_wz_scale(self, row, l, shift, lepType):
+        hists = {
+            'Loose' : self.mScaleHist_loose,
+            'Medium' : self.mScaleHist_medium,
+            'Tight' : self.mScaleHist_tight,
+        }
+        scale,err = self.get_scale_err_new(row,l,hists[lepType],shift)
+        return [scale, scale+err, scale-err]
+
+        #idString = ''
+        #isoString = ''
+        #if lepType=='Loose':
+        #    idString = 'passingIDWZLoose'
+        #    isoString = 'passingIsoWZLoose_passingIDWZLoose'
+        #if lepType=='Medium':
+        #    idString = 'passingIDWZTight'
+        #    isoString = 'passingIsoWZTight_passingIDWZTight'
+        #if lepType=='Tight':
+        #    idString = 'passingIDWZTight'
+        #    isoString = 'passingIsoWZTight_passingIDWZTight'
+        ## id
+        #idscale, iderr = self.get_scale_err(row,l,idString,shift) if idString else [1.,0.]
+        ## iso
+        #isoscale, isoerr = self.get_scale_err(row,l,isoString,shift) if isoString else [1.,0.]
         #return [idscale*isoscale, (idscale+iderr)*(isoscale+isoerr), (idscale-iderr)*(isoscale-isoerr)]
-        return [idscale, idscale+iderr, idscale-iderr]
 
-    def m_wz_scale_tight(self, row, l, shift):
-        # id
-        idscale, iderr = self.get_scale_err(row,l,'passingIDWZTight',shift)
-        # iso
-        isoscale, isoerr = self.get_scale_err(row,l,'passingIsoWZTight_passingIDWZTight',shift)
-        return [idscale*isoscale, (idscale+iderr)*(isoscale+isoerr), (idscale-iderr)*(isoscale-isoerr)]
+    def e_wz_scale(self, row, l,shift, lepType):
+        hists = {
+            'Loose' : self.eScaleHist_loose,
+            'Medium' : self.eScaleHist_medium,
+            'Tight' : self.eScaleHist_tight,
+        }
+        scale,err = self.get_scale_err_new(row,l,hists[lepType],shift)
+        return [scale, scale+err, scale-err]
 
-    def m_wz_scale_veryTight(self, row, l, shift):
-        return self.m_wz_scale_tight(row,l,shift)
-
-    def e_wz_scale_loose(self, row, l,shift):
-        # id
-        idscale, iderr = self.get_scale_err(row,l,'passingLoose',shift) # has iso... 
-        return [idscale, idscale+iderr, idscale-iderr]
-
-    def e_wz_scale_tight(self, row, l,shift):
-        # id
-        idscale, iderr = self.get_scale_err(row,l,'passingMedium',shift)
-        return [idscale, idscale+iderr, idscale-iderr]
-
-    def e_wz_scale_veryTight(self, row, l,shift):
-        # id
-        idscale, iderr = self.get_scale_err(row,l,'passingTight',shift)
-        return [idscale, idscale+iderr, idscale-iderr]
-
+        #idString = ''
+        #isoString = ''
+        #if lepType=='Loose':
+        #    idString = 'passingLoose'
+        #if lepType=='Medium':
+        #    idString = 'passingMedium'
+        #if lepType=='Tight':
+        #    idString = 'passingTight'
+        ## id
+        #idscale, iderr = self.get_scale_err(row,l,idString,shift) if idString else [1.,0.]
+        ## iso
+        #isoscale, isoerr = self.get_scale_err(row,l,isoString,shift) if isoString else [1.,0.]
+        #return [idscale*isoscale, (idscale+iderr)*(isoscale+isoerr), (idscale-iderr)*(isoscale-isoerr)]
 
     def e_ww_scale(self, row, l):
         pt = getattr(row, "%sPt" % l)

@@ -164,10 +164,12 @@ class AnalyzerWZ(AnalyzerBase):
         return 'a'
 
     def getFakeChannel(self,rtrow,**kwargs):
+        tightW = kwargs.pop('tightW',False)
+        allMedium = kwargs.pop('allMedium',False)
         chan = ''
         for i,obj in enumerate(self.objCand):
-            if self.tightW and i==2 and obj[0]=='e':
-                chan += 'P' if self.ID(rtrow,obj,**self.getIdArgs('VeryTight')) and self.ID(rtrow,obj,**self.getIdArgs('Tight')) else 'F'
+            if (tightW and i!=2) or allMedium:
+                chan += 'P' if self.ID(rtrow,obj,**self.getIdArgs('Medium')) else 'F'
             else:
                 chan += 'P' if self.ID(rtrow,obj,**self.getIdArgs('Tight')) else 'F'
         return chan
@@ -182,6 +184,7 @@ class AnalyzerWZ(AnalyzerBase):
         cutTree.add(self.trigger,'trigger')
         cutTree.add(self.fiducial,'fiducial')
         cutTree.add(self.ID_loose,'looseID')
+        cutTree.add(self.ID_medium,'mediumID')
         cutTree.add(self.ID_tight,'tightID')
         if self.tightW: cutTree.add(self.ID_tightW,'tightWID')
         cutTree.add(self.mass3l,'mass3l')
@@ -248,7 +251,7 @@ class AnalyzerWZ(AnalyzerBase):
 
     def getIdArgs(self,type):
         kwargs = {}
-        if type=='VeryTight':
+        if type=='Tight':
             kwargs['idDef'] = {
                 'e':'WWTight',
                 'm':'WWMedium',
@@ -263,9 +266,9 @@ class AnalyzerWZ(AnalyzerBase):
             if self.period==13:
                 kwargs['isoCut']['e'] = 0. # baked into ID
                 kwargs['isoCut']['m'] = 0. # baked into ID
-        if type=='Tight':
+        if type=='Medium':
             kwargs['idDef'] = {
-                'e':'WWTight',
+                'e':'WWMedium',
                 'm':'WWMedium',
             }
             kwargs['isoCut'] = {
@@ -276,8 +279,6 @@ class AnalyzerWZ(AnalyzerBase):
                 kwargs['idDef']['e'] = 'WZTight'
                 kwargs['idDef']['m'] = 'WZTight'
             if self.period==13:
-                if self.tightW:
-                    kwargs['idDef']['e'] = 'WWMedium'
                 kwargs['isoCut']['e'] = 0. # baked into ID
                 kwargs['isoCut']['m'] = 0. # baked into ID
         if type=='Loose':
@@ -308,7 +309,7 @@ class AnalyzerWZ(AnalyzerBase):
 
         if self.period == 13:
             triggers = ['singleMuSingleEPass', 'doubleMuPass', 'doubleEPass', 'singleESingleMuPass',
-                        'singleIsoMu20', 'singleIsoTkMu20', 'singleIsoMu27', 'singleE23WPLoose']
+                        'singleIsoMu20Pass', 'singleIsoTkMu20Pass', 'singleIsoMu27Pass', 'singleE23WPLoosePass']
 
         good = False
         for t in triggers:
@@ -344,14 +345,14 @@ class AnalyzerWZ(AnalyzerBase):
     def ID_loose(self, rtrow):
         return self.ID(rtrow,*self.objects,**self.getIdArgs('Loose'))
 
+    def ID_medium(self, rtrow):
+        return self.ID(rtrow,*self.objects,**self.getIdArgs('Medium'))
+
     def ID_tight(self, rtrow):
         return self.ID(rtrow,*self.objects,**self.getIdArgs('Tight'))
 
     def ID_tightW(self, rtrow):
-        return self.ID(rtrow,*self.objects[:-1],**self.getIdArgs('Tight')) and self.ID(rtrow,self.objects[-1],**self.getIdArgs('veryTight'))
-
-    def ID_veryTight(self, rtrow):
-        return self.ID(rtrow,*self.objects,**self.getIdArgs('veryTight'))
+        return self.ID(rtrow,*self.objects[:-1],**self.getIdArgs('Medium')) and self.ID(rtrow,self.objects[-1],**self.getIdArgs('Tight'))
 
     def mass3l(self,rtrow):
         return self.getObject(rtrow,'mass',*self.objCand) > 100
@@ -391,29 +392,6 @@ class AnalyzerWZ(AnalyzerBase):
     def bjetVeto(self, rtrow):
         return rtrow.bjetCISVVeto30Tight==0
 
-class AnalyzerWZ_NoVeto(AnalyzerWZ):
-    def __init__(self, sample_name, file_list, out_file, period, **kwargs):
-        super(AnalyzerWZ_NoVeto, self).__init__(sample_name, file_list, out_file, period, **kwargs)
-        self.channel = 'NoVeto'
-
-    # reoveride good_to_store
-    #@staticmethod
-    def good_to_store(self,rtrow, cand1, cand2):
-        '''
-        Veto on 4th lepton
-        '''
-        # first select best, (closest to Z and highest pt W)
-        good = False
-        for min1, min2 in zip(cand1, cand2):
-            if min1 < min2:
-                good = True
-                break
-            if min1 > min2:
-                good = False
-                break
-
-        return good
-
 
 class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
     def __init__(self, sample_name, file_list, out_file, period, **kwargs):
@@ -426,8 +404,8 @@ class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
         cutTree.add(self.trigger,'trigger')
         cutTree.add(self.fiducial,'fiducial')
         cutTree.add(self.ID_tight_Z,'looseProbe')
+        cutTree.add(self.ID_medium,'mediumProbe')
         cutTree.add(self.ID_tight,'tightProbe')
-        cutTree.add(self.ID_veryTight,'veryTightProbe')
         cutTree.add(self.zSelection,'zSelection')
         cutTree.add(self.veto,'veto4thLepton')
         return cutTree
@@ -465,26 +443,10 @@ class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
         if self.period == 13:
             triggers = ['doubleMuPass', 'doubleEPass']
 
-        nottriggers = []
-        # for data, to merge datasets
-        if False:
-            if 'DoubleMuon' in self.file_name:
-                nottriggers = [] # allow all triggers
-            elif 'DoubleEG' in self.file_name:
-                nottriggers = ['doubleMuPass'] # dont allow doublemuon
-            elif 'MuonEG' in self.file_name:
-                nottriggers = ['doubleMuPass', 'doubleEPass'] # don't allow
-            else:
-                nottriggers = []
-
         good = False
         for t in triggers:
             if getattr(rtrow,t)>0:
                 good = True
-                break
-        for t in nottriggers:
-            if getattr(rtrow,t)>0:
-                good = False
                 break
         return good
 
@@ -528,8 +490,7 @@ class AnalyzerWZ_ZFakeRate(AnalyzerWZ):
             match_1 = 0
         passTrig = match_0 > 0.5 and match_1 > 0.5
 
-        #veto = (rtrow.eVetoTrigIso + rtrow.muVetoTightTrigIso == 0) if self.period==13 else (rtrow.elecVetoWZLoose + rtrow.muonVetoWZLoose == 0)
-        veto = (rtrow.eVetoTrigIso + rtrow.muVetoMediumTrigIso == 0) if self.period==13 else (rtrow.elecVetoWZLoose + rtrow.muonVetoWZLoose == 0)
+        veto = (rtrow.eVetoLoose + rtrow.muVetoLoose == 0) if self.period==13 else (rtrow.elecVetoWZLoose + rtrow.muonVetoWZLoose == 0)
 
         return good and passTrig and veto
 
@@ -728,121 +689,6 @@ class AnalyzerWZ_TTFakeRate(AnalyzerWZ):
         return good and passTrig and veto
 
 
-class AnalyzerWZ_HZZFakeRate(AnalyzerWZ):
-    def __init__(self, sample_name, file_list, out_file, period, **kwargs):
-        super(AnalyzerWZ_HZZFakeRate, self).__init__(sample_name, file_list, out_file, period, **kwargs)
-        self.channel = 'HZZFakeRate'
-
-    def preselection(self,rtrow):
-        cuts = CutSequence()
-        cuts.add(self.trigger)
-        cuts.add(self.fiducial)
-        cuts.add(self.ID_loose)
-        cuts.add(self.ID_tight_Z)
-        cuts.add(self.crossCleaning)
-        cuts.add(self.zSelection)
-        cuts.add(self.metveto)
-        return cuts
-
-    def selection(self,rtrow):
-        cuts = CutSequence()
-        cuts.add(self.trigger)
-        cuts.add(self.fiducial)
-        cuts.add(self.ID_tight)
-        cuts.add(self.crossCleaning)
-        cuts.add(self.zSelection)
-        cuts.add(self.metveto)
-        return cuts
-
-    def ID_tight_Z(self, rtrow):
-        return self.ID(rtrow,*self.objCand[:2],**self.getIdArgs('Tight'))
-
-    def metveto(self,rtrow):
-        if rtrow.type1_pfMetEt > 25.: return False
-        return True
-
-    def getIdArgs(self,type):
-        kwargs = {}
-        if type=='Tight':
-            kwargs['idDef'] = {
-                'e':'ZZTight',
-                'm':'ZZTight',
-            }
-            kwargs['isoCut'] = {
-                'e':0.5,
-                'm':0.4
-            }
-        if type=='Loose':
-            kwargs['idDef'] = {
-                'e':'ZZLoose',
-                'm':'ZZLoose',
-            }
-            kwargs['isoCut'] = {
-                'e': 999., # no iso
-                'm': 999., # no iso
-            }
-        if hasattr(self,'alternateIds'):
-            if type in self.alternateIds:
-                kwargs = self.alternateIdMap[type]
-        return kwargs
-
-    def trigger(self, rtrow):
-        if self.period == 8:
-            triggers = ["doubleETightPass", "doubleMuPass", "doubleMuTrkPass"]
-
-        if self.period == 13:
-            triggers = ['doubleMuPass', 'doubleEPass']
-
-        for t in triggers:
-            if getattr(rtrow,t)>0:
-                return True
-        return False
-
-    def crossCleaning(self,rtrow):
-        leps = self.objCand
-        for l0 in leps:
-           for l1 in leps:
-               if l0[0]=='e' and l1[0]=='m':
-                   if self.ID(rtrow,l1,**self.getIdArgs('Tight')):
-                       o = ordered(l0,l1)
-                       dr = getattr(rtrow,'%s_%s_DR' % (o[0],o[1]))
-                       if dr > 0.05: return False
-        return True
-
-    def zSelection(self,rtrow):
-        leps = self.objCand
-        o = ordered(leps[0], leps[1])
-        m = getattr(rtrow,'%s_%s_Mass' % (o[0],o[1]))
-        l0Pt = getattr(rtrow,'%sPt' %leps[0])
-        wl = leps[2]
-        o0 = ordered(leps[0],wl)
-        o1 = ordered(leps[1],wl)
-        dr0 = getattr(rtrow,'%s_%s_DR' % (o0[0],o0[1]))
-        dr1 = getattr(rtrow,'%s_%s_DR' % (o1[0],o1[1]))
-        m0 = getattr(rtrow,'%s_%s_Mass' % (o0[0],o0[1]))
-        m1 = getattr(rtrow,'%s_%s_Mass' % (o1[0],o1[1]))
-        return abs(m-ZMASS)<10. and l0Pt>20. and dr0>0.02 and dr1>0.02 and m0>4. and m1>4.
-
-    def good_to_store(self, rtrow, cand1, cand2):
-        '''
-        Iterate through minimizing variables.
-        '''
-        good = False
-        for min1, min2 in zip([cand1[0]], [cand2[0]]):
-            if min1 < min2:
-                good = True
-                break
-            if min1 > min2:
-                good = False
-                break
-        match_0 = getattr(rtrow,'%sMatchesDoubleE' %self.objCand[0])>0 if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesDoubleMu' %self.objCand[0])>0
-        match_1 = getattr(rtrow,'%sMatchesDoubleE' %self.objCand[1])>0 if self.objCand[1][0]=='e' else getattr(rtrow,'%sMatchesDoubleMu' %self.objCand[1])>0
-        passTrig = match_0 > 0.5 and match_1 > 0.5
-
-        veto = (rtrow.eVetoHZZ + rtrow.muVetoHZZ == 0)
-
-        return good and passTrig and veto
-
 
 ##########################
 ###### Command line ######
@@ -867,10 +713,8 @@ def main(argv=None):
     args = parse_command_line(argv)
 
     if args.analyzer == 'WZ': analyzer = AnalyzerWZ(args.sample_name,args.file_list,args.out_file,args.period,metShift=args.metShift)
-    if args.analyzer == 'NoVeto': analyzer = AnalyzerWZ_NoVeto(args.sample_name,args.file_list,args.out_file,args.period,metShift=args.metShift)
     if args.analyzer == 'FakeRate': analyzer = AnalyzerWZ_ZFakeRate(args.sample_name,args.file_list,args.out_file,args.period,metShift=args.metShift)
     if args.analyzer == 'TTFakeRate': analyzer = AnalyzerWZ_TTFakeRate(args.sample_name,args.file_list,args.out_file,args.period,metShift=args.metShift)
-    if args.analyzer == 'HZZFakeRate': analyzer = AnalyzerWZ_HZZFakeRate(args.sample_name,args.file_list,args.out_file,args.period,metShift=args.metShift)
     with analyzer as thisAnalyzer:
         thisAnalyzer.analyze()
 

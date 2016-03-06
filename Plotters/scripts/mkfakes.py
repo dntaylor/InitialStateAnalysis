@@ -13,6 +13,7 @@ import itertools
 import sys
 import pickle
 import json
+import ROOT
 
 def makeFakes(analysis,channel,runPeriod,**kwargs):
     '''Plot fake rate for an analysis.'''
@@ -46,9 +47,17 @@ def makeFakes(analysis,channel,runPeriod,**kwargs):
     dataplot = runPeriod in [7,8]
     mergeDict = getMergeDict(runPeriod)
 
+    subtractSamples = {
+        'WZ'       : ['WZJets','ZZJets','TTVJets','VVVJets'],
+        'WZ_W'     : ['WZJets','ZZJets','TTVJets','VVVJets', 'WWJets', 'TTJets','ZJets'],
+        'WZ_Dijet' : ['WZJets','ZZJets','TTVJets','VVVJets', 'WWJets', 'TTJets','ZJets', 'WJets'],
+    }
+
+    tfile = ROOT.TFile('fakes.root','recreate')
     # define fake regions
-    fakeRegions, ptBins, etaBins = getFakeParams(analysis)
+    fakeRegions, ptBins, etaBins = getFakeParams(analysis,myCut)
     fakes = {}
+    fakeHists = {}
     for fakeRegion in fakeRegions[analysis]:
         logger.info("%s:%s:%iTeV: Fake Region: %s" % (analysis,channel, runPeriod, fakeRegion))
         denom = fakeRegions[analysis][fakeRegion]['denom']
@@ -56,16 +65,21 @@ def makeFakes(analysis,channel,runPeriod,**kwargs):
         probe = fakeRegions[analysis][fakeRegion]['probe']
         ptvar = fakeRegions[analysis][fakeRegion]['ptVar']
         etavar= fakeRegions[analysis][fakeRegion]['etaVar']
+        numerScale = fakeRegions[analysis][fakeRegion]['numerScale']
+        denomScale = fakeRegions[analysis][fakeRegion]['denomScale']
         ptcut = '{0} >= {1} && {0} < {2}'
         etacut = 'abs({0}) >= {1} && abs({0}) < {2}'
 
         logger.info("%s:%s:%iTeV: Computing fake rates" % (analysis,channel, runPeriod))
-        plotter = FakeRatePlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='{0}_fakerates'.format(fakeRegion),mergeDict=mergeDict,scaleFactor='event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale*event.trig_prescale',dataScaleFactor='event.trig_prescale')
+        plotter = FakeRatePlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='{0}_fakerates'.format(fakeRegion),mergeDict=mergeDict)
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
         plotter.initializeDataSamples([sigMap[runPeriod]['data']])
         plotter.setIntLumi(intLumiMap[runPeriod])
-        hist = plotter.getFakeRate(numer, denom, ptBins, etaBins[probe], ptvar, etavar, fakeRegion, dataDriven=True, subtractSamples=['WZJets','ZZJets','TTVJets','VVVJets'])
+        hist = plotter.getFakeRate(numer, denom, ptBins, etaBins[probe], ptvar, etavar, fakeRegion, dataDriven=True, subtractSamples=subtractSamples[analysis], numerScale=numerScale, denomScale=denomScale)
         fakes[fakeRegion] = []
+        tfile.cd()
+        fakeHists[fakeRegion] = hist
+        hist.Write()
         for p,pt in enumerate(ptBins[:-1]):
             for e,eta in enumerate(etaBins[probe][:-1]):
                 ptBin = p+1
@@ -79,15 +93,15 @@ def makeFakes(analysis,channel,runPeriod,**kwargs):
                 fakeerror = hist.GetBinError(ptBin,etaBin)
                 fakes[fakeRegion] += [{'fakerate':fakerate,'error':fakeerror,'pt_low':ptLow,'pt_high':ptHigh,'eta_low':etaLow,'eta_high':etaHigh}]
 
-    print json.dumps(fakes,sort_keys=True,indent=4)
+    #print json.dumps(fakes,sort_keys=True,indent=4)
     # save pickle file
     with open('fakes.pkl','wb') as f:
         pickle.dump(fakes,f)
     # save json file
     with open('fakes.json','w') as f:
         json.dump(fakes,f,sort_keys=True,indent=4)
-                
-               
+    # save the root file
+    tfile.Write()
 
 def parse_command_line(argv):
     parser = get_parser("Plot a given channel and period")
@@ -105,7 +119,7 @@ def main(argv=None):
 
     args = parse_command_line(argv)
 
-    makeFakes(args.analysis,args.channel,args.period)
+    makeFakes(args.analysis,args.channel,args.period,myCut=args.cut)
 
     return 0
 

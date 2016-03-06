@@ -40,6 +40,7 @@ class AnalyzerWZ_WFakeRate(AnalyzerBase):
         self.lepargs = {'tight':True}
         self.cutflow_labels = []
         self.doVBF = (period==13)
+        self.tightW = False
         super(AnalyzerWZ_WFakeRate, self).__init__(sample_name, file_list, out_file, period, **kwargs)
 
     ###############################
@@ -58,7 +59,7 @@ class AnalyzerWZ_WFakeRate(AnalyzerBase):
             pt1 = getattr(rtrow,'%sPt' % l[1])
             ordList = [l[1], l[0]] if  pt0 < pt1 else [l[0], l[1]]
 
-            cands.append((1./(pt0+pt1), ordList))
+            cands.append((-1.*(pt0+pt1), ordList))
 
         if not len(cands): return 0
 
@@ -98,9 +99,8 @@ class AnalyzerWZ_WFakeRate(AnalyzerBase):
         cuts = CutSequence()
         if self.isData: cuts.add(self.trigger)
         cuts.add(self.fiducial)
-        cuts.add(self.ID_veto)
         #cuts.add(self.ID_tight)
-        #cuts.add(self.ID_loose)
+        cuts.add(self.ID_loose)
         cuts.add(self.zVeto)
         cuts.add(self.wSelection)
         return cuts
@@ -118,49 +118,53 @@ class AnalyzerWZ_WFakeRate(AnalyzerBase):
         kwargs = {}
         if type=='Tight':
             kwargs['idDef'] = {
-                'e':'Medium',
-                'm':'Tight',
-                't':'Medium'
+                'e':'WWTight',
+                'm':'WWMedium',
             }
             kwargs['isoCut'] = {
                 'e':0.15,
-                'm':0.12
+                'm':0.12,
             }
             if self.period==8:
                 kwargs['idDef']['e'] = 'WZTight'
                 kwargs['idDef']['m'] = 'WZTight'
             if self.period==13:
-                kwargs['isoCut']['e'] = 9999.
-        if type=='Loose':
+                kwargs['isoCut']['e'] = 0. # baked into ID
+                kwargs['isoCut']['m'] = 0. # baked into ID
+        if type=='Medium':
             kwargs['idDef'] = {
-                'e':'Loose',
-                'm':'Loose',
-                't':'Loose'
+                'e':'WWMedium',
+                'm':'WWMedium',
             }
             kwargs['isoCut'] = {
-                'e':0.2,
-                'm':0.2
+                'e':0.15,
+                'm':0.12,
+            }
+            if self.period==8:
+                kwargs['idDef']['e'] = 'WZTight'
+                kwargs['idDef']['m'] = 'WZTight'
+            if self.period==13:
+                kwargs['isoCut']['e'] = 0. # baked into ID
+                kwargs['isoCut']['m'] = 0. # baked into ID
+        if type=='Loose':
+            kwargs['idDef'] = {
+                'e':'WWLoose',
+                'm':'WWLoose',
+            }
+            kwargs['isoCut'] = {
+                'e':0.4,
+                'm':1.0,
             }
             if self.period==8:
                 kwargs['idDef']['e'] = 'WZLoose'
                 kwargs['idDef']['m'] = 'WZLoose'
             if self.period==13:
-                kwargs['isoCut']['e'] = 9999.
-        if type=='Veto':
-            kwargs['idDef'] = {
-                'e':'Veto',
-                'm':'ZZLoose',
-                't':'Loose'
-            }
-            kwargs['isoCut'] = {
-                'e':0.4,
-                'm':0.4
-            }
-            if self.period==13:
-                kwargs['isoCut']['e'] = 9999.
+                kwargs['isoCut']['e'] = 0. # baked into ID
+                kwargs['isoCut']['m'] = 0. # baked into ID
         if hasattr(self,'alternateIds'):
             if type in self.alternateIds:
                 kwargs = self.alternateIdMap[type]
+        kwargs['metShift'] = self.metShift
         return kwargs
 
     def trigger(self, rtrow):
@@ -169,7 +173,7 @@ class AnalyzerWZ_WFakeRate(AnalyzerBase):
                         "doubleETightPass", "doubleMuPass", "doubleMuTrkPass"]
 
         if self.period == 13:
-            triggers = ['muEPass', 'doubleMuPass', 'doubleEPass', 'eMuPass']
+            triggers = ['singleMuSingleEPass', 'doubleMuPass', 'doubleEPass', 'singleESingleMuPass']
 
         for t in triggers:
             if getattr(rtrow,t)>0:
@@ -199,6 +203,9 @@ class AnalyzerWZ_WFakeRate(AnalyzerBase):
     def ID_loose(self, rtrow):
         return self.ID(rtrow,*self.objects,**self.getIdArgs('Loose'))
 
+    def ID_medium(self, rtrow):
+        return self.ID(rtrow,*self.objects,**self.getIdArgs('Medium'))
+
     def ID_tight(self, rtrow):
         return self.ID(rtrow,*self.objects,**self.getIdArgs('Tight'))
 
@@ -208,24 +215,20 @@ class AnalyzerWZ_WFakeRate(AnalyzerBase):
     def zVeto(self,rtrow):
         leps = self.choose_alternative_objects(rtrow, ['z1'])
         o = ordered(leps[0], leps[1])
-        m1 = getattr(rtrow,'%s_%s_Mass' % (o[0],o[1]))
+        m1 = self.getObject(rtrow,'mass',o[0],o[1])
         os = getattr(rtrow,'%s_%s_SS' % (o[0], o[1])) < 0.5
         sf = o[0][0]==o[1][0]
-        #return abs(m1-ZMASS)<20. and l0Pt>20.
         if os and sf:
-            return (m1<60 or m1>120)
+            if abs(m1-ZMASS) < 30.: return False
         return True
 
     def wSelection(self,rtrow):
         leps = self.objCand
-        if getattr(rtrow, '%sPt' %leps[0])<20.: return False
-        if self.period==8:
-            if rtrow.type1_pfMetEt < 45.: return False
-        else:
-            if rtrow.pfMetEt < 45.: return False
-        o = ordered(leps[0],leps[1])
-        dr = getattr(rtrow, '%s_%s_DR' % (o[0],o[1]))
-        if dr < 0.1: return False
+        if self.getObject(rtrow, 'pt', leps[0])<20.: return False
+        if self.getObject(rtrow,'pt','met') < 40.: return False
+        if self.getObject(rtrow, "mt", leps[0], 'met') < 40.: return False
+        o = ordered(*leps)
+        if self.getObject(rtrow, 'mass', o[0],o[1]) < 4: return False
         return True
 
 ##########################

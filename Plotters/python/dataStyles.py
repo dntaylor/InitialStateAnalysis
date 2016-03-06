@@ -54,7 +54,8 @@ dataStyles['datadriven'] = {
     'drawstyle' : 'hist',
     'linecolor' : GrayA,
     'fillcolor' : Gray,
-    'name' : "Data driven",
+    #'name' : "Data driven",
+    'name' : "Non-Prompt",
     'fillstyle': 1001,
 }
 

@@ -766,7 +766,7 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
     dataplot = (isControl or not blind)
     mergeDict = getMergeDict(runPeriod)
 
-    fakeRegions, ptBins, etaBins = getFakeParams(analysis)
+    fakeRegions, ptBins, etaBins = getFakeParams(analysis,cut=myCut)
 
     ## TODO: load from pickle file
     ## define fake regions
@@ -822,6 +822,12 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
     #ptBins = [0,5,10,20,30,200]
     ##if analysis in ['WZ_Dijet']: ptBins = [0,5,10,20,30,40,60,80,200]
 
+    subtractSamples = {
+        'WZ'       : ['WZJets','ZZJets','TTVJets','VVVJets'],
+        'WZ_W'     : ['WZJets','ZZJets','TTVJets','VVVJets', 'WWJets', 'TTJets','ZJets'],
+        'WZ_Dijet' : ['WZJets','ZZJets','TTVJets','VVVJets', 'WWJets', 'TTJets','ZJets', 'WJets'],
+    }
+
     etaBinsA = {
         'e': [0,1.479,2.5],
         #'m': [0,1.2,2.4],
@@ -834,11 +840,14 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
         probe = fakeRegions[analysis][fakeRegion]['probe']
         ptvar = fakeRegions[analysis][fakeRegion]['ptVar']
         etavar = fakeRegions[analysis][fakeRegion]['etaVar']
+        numerScale = fakeRegions[analysis][fakeRegion]['numerScale']
+        denomScale = fakeRegions[analysis][fakeRegion]['denomScale']
+
         ptcut = '{0} >= {1} && {0} < {2}'
         etacut = 'abs({0}) >= {1} && abs({0}) < {2}'
 
         if doDetailed:
-            plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,rootName='{0}_fakeplots'.format(fakeRegion),scaleFactor='event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale*event.trig_prescale',dataScaleFactor='event.trig_prescale')
+            plotter = Plotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,mergeDict=mergeDict,rootName='{0}_fakeplots'.format(fakeRegion))
             plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
             plotter.initializeDataSamples([sigMap[runPeriod]['data']])
             plotter.setIntLumi(intLumiMap[runPeriod])
@@ -874,13 +883,13 @@ def plotFakeRate(analysis,channel,runPeriod,**kwargs):
 
         # now plot the fake rates
         logger.info("%s:%s:%iTeV: Computing fake rates" % (analysis,channel, runPeriod))
-        plotter = FakeRatePlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='{0}_fakerates'.format(fakeRegion),mergeDict=mergeDict,scaleFactor='event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale*event.trig_prescale',dataScaleFactor='event.trig_prescale')
+        plotter = FakeRatePlotter(channel,ntupleDir=ntuples,saveDir=saves,period=runPeriod,rootName='{0}_fakerates'.format(fakeRegion),mergeDict=mergeDict)
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
         plotter.initializeDataSamples([sigMap[runPeriod]['data']])
         plotter.setIntLumi(intLumiMap[runPeriod])
-        plotter.plotFakeRate(numer, denom, 'fakeRate/{0}_fakerate'.format(fakeRegion), ptBins=ptBins, etaBins=etaBins[probe], logx=1, ptVar=ptvar, etaVar=etavar, dataDriven=dataDriven, subtractSamples=['WZJets','ZZJets','TTVJets','VVVJets'])
-        plotter.plotFakeRateProjection(numer, denom, 'fakeRate/{0}_pt_fakerate'.format(fakeRegion), 'pt', ptBins=ptBins, etaBins=etaBins[probe], logx=0, ptVar=ptvar, etaVar=etavar, dataDriven=dataDriven, xaxis='p_{T} (GeV)',subtractSamples=['WZJets','ZZJets','TTVJets','VVVJets'])
-        plotter.plotFakeRateProjection(numer, denom, 'fakeRate/{0}_eta_fakerate'.format(fakeRegion), 'eta', ptBins=ptBins, etaBins=etaBins[probe], logx=0, ptVar=ptvar, etaVar=etavar, dataDriven=dataDriven, xaxis='\eta',subtractSamples=['WZJets','ZZJets','TTVJets','VVVJets'])
+        plotter.plotFakeRate(numer, denom, 'fakeRate/{0}_fakerate'.format(fakeRegion), ptBins=ptBins, etaBins=etaBins[probe], logx=1, ptVar=ptvar, etaVar=etavar, dataDriven=dataDriven, subtractSamples=subtractSamples[analysis], numerScale=numerScale, denomScale=denomScale)
+        plotter.plotFakeRateProjection(numer, denom, 'fakeRate/{0}_pt_fakerate'.format(fakeRegion), 'pt', ptBins=ptBins, etaBins=etaBins[probe], logx=0, ptVar=ptvar, etaVar=etavar, dataDriven=dataDriven, xaxis='p_{T} (GeV)',subtractSamples=subtractSamples[analysis], numerScale=numerScale, denomScale=denomScale)
+        plotter.plotFakeRateProjection(numer, denom, 'fakeRate/{0}_eta_fakerate'.format(fakeRegion), 'eta', ptBins=ptBins, etaBins=etaBins[probe], logx=0, ptVar=ptvar, etaVar=etavar, dataDriven=dataDriven, xaxis='\eta',subtractSamples=subtractSamples[analysis], numerScale=numerScale, denomScale=denomScale)
 
 def parse_command_line(argv):
     parser = get_parser("Plot a given channel and period")

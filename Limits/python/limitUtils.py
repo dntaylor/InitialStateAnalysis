@@ -164,9 +164,10 @@ def getChannelMap(bp,genLeps,recoLeps,**kwargs):
 def wzlimit(analysis,region,period,chan,**kwargs):
     cut = kwargs.pop('cut','1')
     name = kwargs.pop('name','card')
-    scalefactor = kwargs.pop('scalefactor','event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale')
+    scalefactor = kwargs.pop('scalefactor','event.gen_weight*event.pu_weight*z1.LepScaleMedium1*z1.LepScaleMedium2*w1.LepScaleTight1')
     datacardDir = kwargs.pop('datacardDir','./datacards')
     mode = kwargs.pop('mode','all') # all, none, theory, stat, lumi, experimental
+    unblind = kwargs.pop('unblind',True)
     logging.info("Processing card name {0}".format(name))
 
     chanCut = '{0} && channel=="{1}"'.format(cut,chan)
@@ -175,25 +176,28 @@ def wzlimit(analysis,region,period,chan,**kwargs):
     doStat = mode not in ['nostat']
     limits = WZLimits(analysis,region, period, chanCut,  getNtupleDirectory(analysis,region,period),
                     '%s/%s_%itev_%s' % (datacardDir, analysis, period, region), scalefactor=scalefactor,
-                     doStat=doStat)
+                     doStat=doStat, unblind=unblind)
 
     # add systematic
-    #bgnames = ['datadriven','ZZ','WW','TTV','VVV','ZG']
-    bgnames = ['datadriven','ZZ','TTV','VVV','ZG']
+    bgnames = ['datadriven_e','datadrive_m','ZZ','TTV','VVV','ZG']
     signames = ['WZ']
-    #mcnames = ['WZ','ZZ','WW','TTV','VVV','ZG']
     mcnames = ['WZ','ZZ','TTV','VVV','ZG']
 
     # lumi
     # current recommendation: 4.6%
     lumi = {}
-    for b in mcnames: lumi[b] = 1.046
+    for b in mcnames: lumi[b] = 1.027
     if mode in ['all','lumi','nostat']: limits.add_systematics("lumi", "lnN", **lumi)
 
     # datadriven
-    # assume 40%
-    fake = {'datadriven' : 1.4}
-    if mode in ['all','experimental','nostat']: limits.add_systematics('fake_rate_unc','lnN',**fake)
+    # assume 30%
+    #fake_e = {'datadriven_e' : 1. + 0.1*chan.count('e')}
+    #fake_m = {'datadriven_m' : 1. + 0.1*chan.count('m')}
+    fake_e = {'datadriven_e' : 1.3}
+    fake_m = {'datadriven_m' : 1.3}
+    if mode in ['all','experimental','nostat']:
+        limits.add_systematics('fake_rate_unc_e','lnN',**fake_e)
+        limits.add_systematics('fake_rate_unc_m','lnN',**fake_m)
 
     # ZZ cross section
     zzxsec = {'ZZ':1.16}
@@ -206,10 +210,6 @@ def wzlimit(analysis,region,period,chan,**kwargs):
     # TTZ cross section theory
     ttzxsec = {'TTV':1.15}
     if mode in ['all','experimental','nostat']: limits.add_systematics('ttz_xsec_theory','lnN',**ttzxsec)
-
-    # diboson cross section theory
-    wwxsec = {'WW':1.06}
-    if mode in ['all','experimental','nostat']: limits.add_systematics('ww_xsec_theory','lnN',**wwxsec)
 
     # VVV cross section theory
     vvvxsec = {'VVV':1.06}
@@ -227,20 +227,30 @@ def wzlimit(analysis,region,period,chan,**kwargs):
     for m in mcnames: lep[m] = lepvals[chan]
     #limits.add_systematics('lep_eff_unc','lnN',**lep)
     elepvals = {
-        'eee' : 1.018,
-        'eem' : 1.012,
-        'mme' : 1.005,
-        'mmm' : 1.000,
+        #'eee' : 1.018,
+        #'eem' : 1.012,
+        #'mme' : 1.005,
+        #'mmm' : 1.000,
+        # 2 per leg, guess
+        'eee' : 1.035,
+        'eem' : 1.028,
+        'mme' : 1.02,
+        'mmm' : 1.,
     }
     if 'e' in chan:
         elep = {}
         for m in mcnames: elep[m] = elepvals[chan]
         if mode in ['all','experimental','nostat']: limits.add_systematics('lep_eff_unc_e','lnN',**elep)
     mlepvals = {
-        'eee' : 1.000,
-        'eem' : 1.004,
-        'mme' : 1.011,
-        'mmm' : 1.016,
+        #'eee' : 1.000,
+        #'eem' : 1.004,
+        #'mme' : 1.011,
+        #'mmm' : 1.016,
+        # 1+.5 per leg, muon POG
+        'eee' : 1.,
+        'eem' : 1.015,
+        'mme' : 1.021,
+        'mmm' : 1.026,
     }
     if 'm' in chan:
         mlep = {}
@@ -262,10 +272,6 @@ def wzlimit(analysis,region,period,chan,**kwargs):
     # met
     # scale all components up and down independently, add in quadrature the largest
     metvals = {
-        #'eee' : 1.0146, # placeholder from 8 tev
-        #'eem' : 1.0150,
-        #'mme' : 1.0159,
-        #'mmm' : 1.0117,
         'eee' : 1.019, # 13 tev mes, ees, jes
         'eem' : 1.013,
         'mme' : 1.033,
@@ -274,6 +280,13 @@ def wzlimit(analysis,region,period,chan,**kwargs):
     met = {}
     for m in mcnames: met[m] = metvals[chan]
     if mode in ['all','experimental','nostat']: limits.add_systematics('met_unc','lnN',**met)
+
+    # btag
+    btag = {
+        'TTV' : 1.07,
+        'WZ'  : 1.02,
+    }
+    if mode in ['all','experimental','nostat']: limits.add_systematics('btag_unc','lnN',**btag)
 
     # pdf
     # propagate pdf ucnertainties through the selection, scale up and down, take largest
@@ -289,18 +302,24 @@ def wzlimit(analysis,region,period,chan,**kwargs):
 
     # scale
     # propagate scale uncertainties through the selection, scale up and down, take largest
+    #scalevals = {
+    #    'eee' : 1.04296, # again, now just taking gen, fix fsa later
+    #    'eem' : 1.04298,
+    #    'mme' : 1.04285,
+    #    'mmm' : 1.04298,
+    #}
     scalevals = {
-        'eee' : 1.04296, # again, now just taking gen, fix fsa later
-        'eem' : 1.04298,
-        'mme' : 1.04285,
-        'mmm' : 1.04298,
+        'eee' : 1.01,
+        'eem' : 1.01,
+        'mme' : 1.01,
+        'mmm' : 1.01,
     }
     scale = {}
     for s in signames: scale[s] = scalevals[chan]
     if mode in ['all','theory','nostat']: limits.add_systematics('scale_unc','lnN',**scale)
 
     # gen card
-    limits.gen_card("{0}.txt".format(name))
+    limits.gen_card("{0}.txt".format(name),chan=chan)
 
 def wzLimitWrapper(args):
     analysis = args[0]
@@ -312,7 +331,8 @@ def wzLimitWrapper(args):
     scalefactor = args[6]
     datacardDir = args[7]
     mode = args[8]
-    wzlimit(analysis,region,period,chan,name=name,cut=cut,scalefactor=scalefactor,datacardDir=datacardDir,mode=mode)
+    unblind = args[9]
+    wzlimit(analysis,region,period,chan,name=name,cut=cut,scalefactor=scalefactor,datacardDir=datacardDir,mode=mode,unblind=unblind)
     
 
 def wzlimits(analysis,region,period,**kwargs):
@@ -320,22 +340,26 @@ def wzlimits(analysis,region,period,**kwargs):
     scalefactor = kwargs.pop('scalefactor','event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale')
     datacardDir = kwargs.pop('datacardDir','./datacards')
     mode = kwargs.pop('mode','all')
+    unblind = kwargs.pop('unblind',True)
 
     poolArgs = []
     for chan in ['eee','eem','mme','mmm']:
-        poolArgs += [(analysis,region,period,chan,chan,cut,scalefactor,datacardDir,mode)]
+        poolArgs += [(analysis,region,period,chan,chan,cut,scalefactor,datacardDir,mode,unblind)]
 
-    if len(poolArgs)==1:
-        job = poolArgs[0]
-        wzLimitWrapper(job)
-    else:
-        p = Pool(8)
-        try:
-            p.map_async(wzLimitWrapper, poolArgs).get(999999)
-        except KeyboardInterrupt:
-            p.terminate()
-            print 'limits cancelled'
-            sys.exit(1)
+    for args in poolArgs:
+        wzLimitWrapper(args)
+
+    #if len(poolArgs)==1:
+    #    job = poolArgs[0]
+    #    wzLimitWrapper(job)
+    #else:
+    #    p = Pool(8)
+    #    try:
+    #        p.map_async(wzLimitWrapper, poolArgs).get(999999)
+    #    except KeyboardInterrupt:
+    #        p.terminate()
+    #        print 'limits cancelled'
+    #        sys.exit(1)
 
     return 0
 

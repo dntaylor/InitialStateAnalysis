@@ -43,12 +43,12 @@ class Datacard(object):
         out += "-" * 30 + "\n"
 
         out += "bin 1\n"
-        out += "observation %i\n" % self.observed
+        out += "observation %f\n" % self.observed
 
         out += "-" * 30 + "\n"
 
-        fmt = "{:<40}" + "{:^11}" * (smax + bmax) + "\n"
-        fmt_f = "{:<40}" + "{:^11.3e}" * (smax + bmax) + "\n"
+        fmt = "{:<40}" + "{:^15}" * (smax + bmax) + "\n"
+        fmt_f = "{:<40}" + "{:^15.3e}" * (smax + bmax) + "\n"
 
         row = ["1" for i in xrange(smax+bmax)]
         out += fmt.format("bin", *row)
@@ -64,8 +64,8 @@ class Datacard(object):
 
         out += "-" * 30 + "\n"
 
-        fmt = "{:<30}" + "{:<10}" + "{:^11}" * (smax + bmax) + "\n"
-        fmt_f = "{:<30}" + "{:<10}" + "{:^11.8e}" * (smax + bmax) + "\n"
+        fmt = "{:<30}" + "{:<10}" + "{:^15}" * (smax + bmax) + "\n"
+        fmt_f = "{:<30}" + "{:<10}" + "{:^15.8e}" * (smax + bmax) + "\n"
 
         for syst in self.syst:
             names = [x[0] for x in self.signal + self.bkg]

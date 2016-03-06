@@ -17,6 +17,8 @@ class FakeRatePlotter(PlotterBase):
 
     def getFakeRateProjection(self, numString, denomString, bins, var, savename, **kwargs):
         '''Get 1d histogram of fakerates'''
+        numerScale = kwargs.pop('numerScale',self.scaleFactor)
+        denomScale = kwargs.pop('denomScale',self.scaleFactor)
         dataDriven = kwargs.pop('dataDriven',True)
         subtractSamples = kwargs.pop('subtractSamples',[])
         fakeHist = ROOT.TH1F(savename,'',len(bins)-1,array('d',bins))
@@ -33,8 +35,8 @@ class FakeRatePlotter(PlotterBase):
             denomErr2 = 0
             samples = self.data if dataDriven else [x for x in self.backgrounds if x not in subtractSamples]
             for sample in samples:
-                n, nErr = self.getNumEntries(numCut, sample, doError=True)
-                d, dErr = self.getNumEntries(denomCut, sample, doError=True)
+                n, nErr = self.getNumEntries(numCut, sample, doError=True) if dataDriven else self.getNumEntries(numCut, sample, doError=True, customScale=numerScale)
+                d, dErr = self.getNumEntries(denomCut, sample, doError=True) if dataDriven else self.getNumEntries(denomCut, sample, doError=True, customScale=denomScale)
                 #print 'Sample {0}: num: {1}; denom: {2}'.format(sample,n,d)
                 num += n
                 numErr2 += nErr ** 2
@@ -42,8 +44,8 @@ class FakeRatePlotter(PlotterBase):
                 denomErr2 += dErr ** 2
             if dataDriven:
                 for sample in subtractSamples:
-                    n, nErr = self.getNumEntries(numCut, sample, doError=True)
-                    d, dErr = self.getNumEntries(denomCut, sample, doError=True)
+                    n, nErr = self.getNumEntries(numCut, sample, doError=True, customScale=numerScale)
+                    d, dErr = self.getNumEntries(denomCut, sample, doError=True, customScale=denomScale)
                     #print 'Subtract Sample {0}: num: {1}; denom: {2}'.format(sample,n,d)
                     num -= n
                     numErr2 += nErr ** 2
@@ -62,36 +64,39 @@ class FakeRatePlotter(PlotterBase):
 
     def getFakeRate(self,numString, denomString, ptBins, etaBins, ptVar, etaVar, savename, **kwargs):
         '''Get 2d histogram of fakerates'''
+        numerScale = kwargs.pop('numerScale',self.scaleFactor)
+        denomScale = kwargs.pop('denomScale',self.scaleFactor)
         dataDriven = kwargs.pop('dataDriven',True)
         subtractSamples = kwargs.pop('subtractSamples',[])
         fakeHist = ROOT.TH2F(savename,'',len(ptBins)-1,array('d',ptBins),len(etaBins)-1,array('d',etaBins))
+        print savename
         for p in range(len(ptBins)-1):
             for e in range(len(etaBins)-1):
-                #print '{0}: [{1},{2}]; {3}: [{4},{5}]'.format(ptVar,ptBins[p],ptBins[p+1],etaVar,etaBins[e],etaBins[e+1])
+                print '{0}: [{1},{2}]; {3}: [{4},{5}]'.format(ptVar,ptBins[p],ptBins[p+1],etaVar,etaBins[e],etaBins[e+1])
                 kinCut = '%s>=%f & %s<%f & abs(%s)>=%f & abs(%s)<%f' %\
                          (ptVar, ptBins[p], ptVar, ptBins[p+1], etaVar, etaBins[e], etaVar, etaBins[e+1])
                 numCut = '%s && %s' % (kinCut, numString)
                 denomCut = '%s && %s' % (kinCut, denomString)
-                #print numCut
-                #print denomCut
+                print numCut
+                print denomCut
                 num = 0
                 denom = 0
                 numErr2 = 0
                 denomErr2 = 0
                 samples = self.data if dataDriven else [x for x in self.backgrounds if x not in subtractSamples]
                 for sample in samples:
-                    n, nErr = self.getNumEntries(numCut, sample, doError=True)
-                    d, dErr = self.getNumEntries(denomCut, sample, doError=True)
-                    #print 'Sample {0}: num: {1}; denom: {2}'.format(sample,n,d)
+                    n, nErr = self.getNumEntries(numCut, sample, doError=True) if dataDriven else self.getNumEntries(numCut, sample, doError=True, customScale=numerScale)
+                    d, dErr = self.getNumEntries(denomCut, sample, doError=True) if dataDriven else self.getNumEntries(denomCut, sample, doError=True, customScale=denomScale)
+                    print 'Sample {0}: num: {1}; denom: {2}'.format(sample,n,d)
                     num += n
                     numErr2 += nErr ** 2
                     denom += d
                     denomErr2 += dErr ** 2
                 if dataDriven:
                     for sample in subtractSamples:
-                        n, nErr = self.getNumEntries(numCut, sample, doError=True)
-                        d, dErr = self.getNumEntries(denomCut, sample, doError=True)
-                        #print 'Subtract Sample {0}: num: {1}; denom: {2}'.format(sample,n,d)
+                        n, nErr = self.getNumEntries(numCut, sample, doError=True, customScale=numerScale)
+                        d, dErr = self.getNumEntries(denomCut, sample, doError=True, customScale=denomScale)
+                        print 'Subtract Sample {0}: num: {1}; denom: {2}'.format(sample,n,d)
                         num -= n
                         numErr2 += nErr ** 2
                         denom -= d
@@ -103,6 +108,7 @@ class FakeRatePlotter(PlotterBase):
                 else:
                     fakerate = 0
                     err = 0
+                print 'Fakerate: {0} +/- {1}'.format(fakerate,err)
                 fakeHist.SetBinContent(p+1,e+1,fakerate)
                 fakeHist.SetBinError(p+1,e+1,err)
         return fakeHist
@@ -132,17 +138,21 @@ class FakeRatePlotter(PlotterBase):
         yaxis = kwargs.pop('yaxis','#eta')
         dataDriven = kwargs.pop('dataDriven',True)
         subtractSamples = kwargs.pop('subtractSamples',[])
+        numerScale = kwargs.pop('numerScale',self.scaleFactor)
+        denomScale = kwargs.pop('denomScale',self.scaleFactor)
         for key, value in kwargs.iteritems():
             self.logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
 
         ROOT.gDirectory.Delete('h*') # clear histogram memory
 
-        self.canvas.SetLogy(logy)
-        self.canvas.SetLogx(logx)
-        self.canvas.SetRightMargin(0.14)
+        canvas = ROOT.TCanvas(savename,savename,50,50,self.W,self.H)
+        canvas = self.setupCanvas(canvas)
+        canvas.SetLogy(logy)
+        canvas.SetLogx(logx)
+        canvas.SetRightMargin(0.14)
 
         # calculate fake rate
-        fakeRateHist = self.getFakeRate(passSelection,failSelection,ptBins,etaBins,ptVar,etaVar,savename,dataDriven=dataDriven,subtractSamples=subtractSamples)
+        fakeRateHist = self.getFakeRate(passSelection,failSelection,ptBins,etaBins,ptVar,etaVar,savename,dataDriven=dataDriven,subtractSamples=subtractSamples,numerScale=numerScale,denomScale=denomScale)
         fakeRateHist.GetXaxis().SetTitle(xaxis)
         fakeRateHist.GetYaxis().SetTitle(yaxis)
         fakeRateHist.GetYaxis().SetTitleOffset(1.)
@@ -155,16 +165,15 @@ class FakeRatePlotter(PlotterBase):
 
         # draw cms lumi
         #self.setStyle(lumitext,plotdata,plotratio,isprelim)
-        #self.canvas.cd()
-        #self.canvas.Update()
-        #self.canvas.RedrawAxis()
-        #frame = self.canvas.GetFrame()
+        #canvas.cd()
+        #canvas.Update()
+        #canvas.RedrawAxis()
+        #frame = canvas.GetFrame()
         #frame.Draw()
 
         # save everything
-        self.canvas.cd()
-        self.save(savename)
-        self.resetCanvas()
+        canvas.cd()
+        self.save(canvas,savename)
 
     def plotFakeRateProjection(self, passSelection, failSelection, savename, projection, **kwargs):
         '''A function to calculate and plot the fake rate for a given selection.
@@ -191,6 +200,8 @@ class FakeRatePlotter(PlotterBase):
         yaxis = kwargs.pop('yaxis','Fake Rate')
         dataDriven = kwargs.pop('dataDriven',True)
         subtractSamples = kwargs.pop('subtractSamples',[])
+        numerScale = kwargs.pop('numerScale',self.scaleFactor)
+        denomScale = kwargs.pop('denomScale',self.scaleFactor)
         for key, value in kwargs.iteritems():
             self.logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
 
@@ -201,8 +212,10 @@ class FakeRatePlotter(PlotterBase):
 
         ROOT.gDirectory.Delete('h*') # clear histogram memory
 
-        self.canvas.SetLogy(logy)
-        self.canvas.SetLogx(logx)
+        canvas = ROOT.TCanvas(savename,savename,50,50,self.W,self.H)
+        canvas = self.setupCanvas(canvas)
+        canvas.SetLogy(logy)
+        canvas.SetLogx(logx)
 
         # calculate fake rate
         fakeBins, iterBins = (ptBins, etaBins) if projection=='pt' else (etaBins, ptBins)
@@ -217,7 +230,7 @@ class FakeRatePlotter(PlotterBase):
                 name = savename
                 thisNum = passSelection
                 thisDenom = failSelection
-            fakeRateHist = self.getFakeRateProjection(thisNum,thisDenom,fakeBins,fakeVar,name,dataDriven=dataDriven,subtractSamples=subtractSamples)
+            fakeRateHist = self.getFakeRateProjection(thisNum,thisDenom,fakeBins,fakeVar,name,dataDriven=dataDriven,subtractSamples=subtractSamples,numerScale=numerScale,denomScale=denomScale)
             fakeRateHist.GetXaxis().SetTitle(xaxis)
             fakeRateHist.GetYaxis().SetTitle(yaxis)
             fakeRateHist.GetYaxis().SetTitleOffset(1.)
@@ -226,7 +239,7 @@ class FakeRatePlotter(PlotterBase):
             #fakeRateHist.SetLineColor(ROOT.kBlue)
             self.savefile.WriteTObject(fakeRateHist)
             if dataDriven: # also plot mc
-                fakeRateHistMC = self.getFakeRateProjection(thisNum,thisDenom,fakeBins,fakeVar,name+'_mc',dataDriven=False,subtractSamples=subtractSamples)
+                fakeRateHistMC = self.getFakeRateProjection(thisNum,thisDenom,fakeBins,fakeVar,name+'_mc',dataDriven=False,subtractSamples=subtractSamples,numerScale=numerScale,denomScale=denomScale)
                 fakeRateHistMC.GetXaxis().SetTitle(xaxis)
                 fakeRateHistMC.GetYaxis().SetTitle(yaxis)
                 fakeRateHistMC.GetYaxis().SetTitleOffset(1.)
@@ -253,14 +266,14 @@ class FakeRatePlotter(PlotterBase):
             leg.Draw()
 
             # draw cms lumi
-            self.setStyle(lumitext,True,False,True)
-            self.canvas.cd()
-            self.canvas.Update()
-            self.canvas.RedrawAxis()
-            frame = self.canvas.GetFrame()
+            self.setStyle(canvas,lumitext,True,True)
+            canvas.cd()
+            canvas.Update()
+            canvas.RedrawAxis()
+            frame = canvas.GetFrame()
             frame.Draw()
 
             # save everything
-            self.canvas.cd()
-            self.save(name)
+            canvas.cd()
+            self.save(canvas,name)
 

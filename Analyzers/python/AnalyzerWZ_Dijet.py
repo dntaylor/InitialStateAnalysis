@@ -20,10 +20,8 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
         self.object_definitions = {
             'w1': ['em','n'],
         }
-        self.lepargs = {'tight':True}
-        self.cutflow_labels = []
-        self.doVBF = (period==13)
-        #self.cutTreeLabels = ['topology','trigger','fiducial','looseID','tightID','veryTightID','zVeto','jPsiVeto','wVeto','jetSelection','veto2ndLepton']
+        self.tightW = False
+        #self.doVBF = (period==13)
         super(AnalyzerWZ_DijetFakeRate, self).__init__(sample_name, file_list, out_file, period, **kwargs)
 
     ###############################
@@ -34,30 +32,8 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
         Select lepton
         '''
         leps = self.objects
-        return ([0.], leps)
-
-    # override choose_alternative_objects
-    def choose_alternative_objects(self, rtrow, state):
-        '''
-        Select alternative candidate.
-        '''
-        # Z
-        if state == ['z1']:
-            bestZDiff = float('inf')
-            bestLeptons = []
-
-            for l in permutations(self.objects):
-                if lep_order(l[0],l[1]):
-                    continue
-
-                m1 = getattr(rtrow,'%s_%s_Mass' % (l[0], l[1]))
-
-                if abs(m1-ZMASS) < bestZDiff:
-                    bestZDiff = abs(m1-ZMASS)
-                    ordList = [l[1], l[0]] if getattr(rtrow,'%sPt' % l[0]) < getattr(rtrow,'%sPt' % l[1]) else l
-                    bestLeptons = ordList
-
-            return bestLeptons
+        pt = self.getObject(rtrow,'pt',leps[0])
+        return ([-pt], leps)
 
     # overide good_to_store
     # will store via trigger selection
@@ -66,15 +42,52 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
         '''
         Select the trigger object
         '''
-        #singleTrigMatch_leg1 = getattr(rtrow,'%sMatchesSingleE_leg1' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg1' %self.objCand[0])
-        singleTrigMatch_leg2 = getattr(rtrow,'%sMatchesSingleE_leg2' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg2' %self.objCand[0])
-        veto = (rtrow.eVetoTrigIso + rtrow.muVetoMediumTrigIso == 0)
-        return singleTrigMatch_leg2 and veto
+        obj = self.objCand[0]
+        pt = self.getObject(rtrow,'pt',obj)
+        #if obj=='e':
+        #    if pt<20.: # use HLT_Ele12_CaloIdL_TrackIdL_IsoVL_v*
+        #        match = getattr(rtrow,'%sMatchesSingleE_leg2' %obj) > 0.5
+        #    elif pt<30.: # use HLT_Ele17_CaloIdL_TrackIdL_IsoVL_v*
+        #        match = getattr(rtrow,'%sMatchesSingleE_leg1' %obj) > 0.5
+        #    else:      # use HLT_Ele23_WPLoose_Gsf_v* TODO: this is actualy Ele27
+        #        match = getattr(rtrow,'%sMatchesSingleE' %obj) > 0.5
+        #elif obj=='m':
+        #    if pt<20.: # use HLT_Mu8_TrkIsoVVL_v*
+        #        match = getattr(rtrow,'%sMatchesSingleMu_leg2' %obj) > 0.5
+        #    elif pt<25: # use HLT_Mu17_TrkIsoVVL_v*
+        #        match = getattr(rtrow,'%sMatchesSingleMu_leg1' %obj) > 0.5
+        #    else: # use HLT_IsoMu20_v*
+        #        match = getattr(rtrow,'%sMatchesSingleMuIso20' %obj) > 0.5
+        #else:
+        #    match = 0.
+        veto = self.veto(rtrow)
+        #if obj=='m' and pt>20:
+        #    print obj, pt, 'Match:', match, 'Num e:', rtrow.eVetoLoose, 'Num m:', rtrow.muVetoLoose
+        #return match and veto
+        return veto
 
     def getTriggerPrescale(self,rtrow):
-        #singleTrigPrescale_leg1 = rtrow.singleE_leg1Prescale if self.objCand[0][0]=='e' else rtrow.singleMu_leg1Prescale
-        singleTrigPrescale_leg2 = rtrow.singleE_leg2Prescale if self.objCand[0][0]=='e' else rtrow.singleMu_leg2Prescale
-        return singleTrigPrescale_leg2
+        obj = self.objCand[0]
+        pt = self.getObject(rtrow,'pt',obj)
+        if obj=='e':
+            #if pt<20: # use HLT_Ele12_CaloIdL_TrackIdL_IsoVL_v*
+            prescale = 2263.552/4.174
+            #elif pt<30: # use HLT_Ele17_CaloIdL_TrackIdL_IsoVL_v*
+            #else: # use HLT_Ele17_CaloIdL_TrackIdL_IsoVL_v* not filled in MC
+            #    prescale = 2263.552/45.941
+            #else:      # use HLT_Ele23_WPLoose_Gsf_v* TODO this is actually Ele27
+            #    prescale = 1.
+        elif obj=='m':
+            if pt<20: # use HLT_Mu8_TrkIsoVVL_v*
+                prescale = 2263.552/1.330
+            #elif pt<25: # use HLT_Mu17_TrkIsoVVL_v*
+            else: # use HLT_Mu17_TrkIsoVVL_v*
+                prescale = 2263.552/197.362
+            #else: # use HLT_IsoMu20_v*
+            #    prescale = 1.
+        else:
+            prescale = 1.
+        return prescale
 
     ###########################
     ### Define preselection ###
@@ -85,8 +98,8 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
         cutTree.add(self.trigger,'trigger')
         cutTree.add(self.fiducial,'fiducial')
         cutTree.add(self.ID_loose,'looseID')
+        cutTree.add(self.ID_medium,'mediumID')
         cutTree.add(self.ID_tight,'tightID')
-        cutTree.add(self.ID_veryTight,'veryTightID')
         cutTree.add(self.zVeto,'zVeto')
         cutTree.add(self.jPsiVeto,'jPsiVeto')
         cutTree.add(self.wVeto,'wVeto')
@@ -95,13 +108,13 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
         return cutTree
 
     def veto(self,rtrow):
-        veto = (rtrow.eVetoTrigIso + rtrow.muVetoMediumTrigIso == 0)
+        veto = (rtrow.eVetoLoose + rtrow.muVetoLoose == 0)
         if self.metShift and not self.isData:
             vetoMap = {
-                'ees+' : (rtrow.eVetoTrigIso_eesUp   + rtrow.muVetoMediumTrigIso == 0),
-                'ees-' : (rtrow.eVetoTrigIso_eesDown + rtrow.muVetoMediumTrigIso == 0),
-                'mes+' : (rtrow.eVetoTrigIso         + rtrow.muVetoMediumTrigIso_mesUp == 0),
-                'mes-' : (rtrow.eVetoTrigIso         + rtrow.muVetoMediumTrigIso_mesDown == 0),
+                'ees+' : (rtrow.eVetoLoose_eesUp   + rtrow.muVetoLoose == 0),
+                'ees-' : (rtrow.eVetoLoose_eesDown + rtrow.muVetoLoose == 0),
+                'mes+' : (rtrow.eVetoLoose         + rtrow.muVetoLoose_mesUp == 0),
+                'mes-' : (rtrow.eVetoLoose         + rtrow.muVetoLoose_mesDown == 0),
             }
             if self.metShift in vetoMap:
                 veto = vetoMap[self.metShift]
@@ -132,52 +145,40 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
 
     def getIdArgs(self,type):
         kwargs = {}
-        if type=='VeryTight':
-            kwargs['idDef'] = {
-                #'e':'Medium',
-                'e':'WZTight',
-                #'e':'Tight',
-                #'m':'Tight',
-                #'m':'WZTight',
-                'm':'WZMedium',
-                't':'Medium'
-            }
-            kwargs['isoCut'] = {
-                'e':0.15,
-                'm':0.12
-            }
-            if self.period==8:
-                kwargs['idDef']['e'] = 'WZTight'
-                kwargs['idDef']['m'] = 'WZTight'
-            if self.period==13:
-                kwargs['isoCut']['e'] = 0. # baked into ID
         if type=='Tight':
             kwargs['idDef'] = {
-                #'e':'Medium',
-                'e':'WZMedium',
-                #'e':'Tight',
-                #'m':'Tight',
-                #'m':'WZTight',
-                'm':'WZMedium',
-                't':'Medium'
+                'e':'WWTight',
+                'm':'WWMedium',
             }
             kwargs['isoCut'] = {
                 'e':0.15,
-                'm':0.12
+                'm':0.12,
             }
             if self.period==8:
                 kwargs['idDef']['e'] = 'WZTight'
                 kwargs['idDef']['m'] = 'WZTight'
             if self.period==13:
                 kwargs['isoCut']['e'] = 0. # baked into ID
+                kwargs['isoCut']['m'] = 0. # baked into ID
+        if type=='Medium':
+            kwargs['idDef'] = {
+                'e':'WWMedium',
+                'm':'WWMedium',
+            }
+            kwargs['isoCut'] = {
+                'e':0.15,
+                'm':0.12,
+            }
+            if self.period==8:
+                kwargs['idDef']['e'] = 'WZTight'
+                kwargs['idDef']['m'] = 'WZTight'
+            if self.period==13:
+                kwargs['isoCut']['e'] = 0. # baked into ID
+                kwargs['isoCut']['m'] = 0. # baked into ID
         if type=='Loose':
             kwargs['idDef'] = {
-                'e':'WZLooseTrigIso',
-                #'e':'LooseNoIso',
-                #'m':'WZLooseTrigIso',
-                'm':'WZMediumTrigIso',
-                #'m':'Loose',
-                't':'Loose'
+                'e':'WWLoose',
+                'm':'WWLoose',
             }
             kwargs['isoCut'] = {
                 'e':0.4,
@@ -188,7 +189,7 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
                 kwargs['idDef']['m'] = 'WZLoose'
             if self.period==13:
                 kwargs['isoCut']['e'] = 0. # baked into ID
-                kwargs['isoCut']['m'] = 0.
+                kwargs['isoCut']['m'] = 0. # baked into ID
         if hasattr(self,'alternateIds'):
             if type in self.alternateIds:
                 kwargs = self.alternateIdMap[type]
@@ -197,34 +198,21 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
 
 
     def trigger(self, rtrow):
-        triggers = ['singleE_leg2Pass', 'singleMu_leg2Pass']
+        #etriggers = ['singleE_leg2Pass', 'singleE_leg1Pass', 'singleEPass'] # TODO this is actually Ele27
+        #etriggers = ['singleE_leg2Pass', 'singleE_leg1Pass'] # leg1 not filled in MC
+        etriggers = ['singleE_leg2Pass','singleE_leg2Pass']
+        #etriggers = ['singleE_leg2Pass']
+        #mtriggers = ['singleMu_leg2Pass', 'singleMu_leg1Pass', 'singleIsoMu20Pass']
+        mtriggers = ['singleMu_leg2Pass', 'singleMu_leg1Pass']
+        #mtriggers = ['singleMu_leg2Pass']
+        obj = self.objCand[0]
 
-        #nottriggers = []
-        # for data, to merge datasets
-        #if self.isData:
-        #    if 'DoubleMuon' in self.file_name:
-        #        nottriggers = [] # allow all triggers
-        #    elif 'DoubleEG' in self.file_name:
-        #        nottriggers = ['singleMu_leg2Pass'] # dont allow doublemuon or muoneg datasets
-        #    elif 'MuonEG' in self.file_name:
-        #        nottriggers = ['singleMu_leg2Pass', 'singleE_leg2Pass'] # don't allow doublemuon triggers
-        #    else:
-        #        nottriggers = []
+        triggers = etriggers if obj=='e' else mtriggers
 
-        #good = False
-        #for t in triggers:
-        #    if getattr(rtrow,t)>0:
-        #        good = True
-        #        break
-        #for t in nottriggers:
-        #    if getattr(rtrow,t)>0:
-        #        good = False
-        #        break
-        #return good
+        trigger = triggers[0]
+        if getattr(rtrow, '%sPt' %self.objects[0])>=20: trigger = triggers[1]
 
-        for t in triggers:
-            if getattr(rtrow,t)>0:
-                return True
+        if getattr(rtrow,trigger)>0: return True
         return False
 
     def fiducial(self, rtrow):
@@ -244,17 +232,14 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
                 return False
         return True
 
-    def ID_veto(self, rtrow):
-        return self.ID(rtrow,*self.objects,**self.getIdArgs('Veto'))
-
     def ID_loose(self, rtrow):
         return self.ID(rtrow,*self.objects,**self.getIdArgs('Loose'))
 
+    def ID_medium(self, rtrow):
+        return self.ID(rtrow,*self.objects,**self.getIdArgs('Medium'))
+
     def ID_tight(self, rtrow):
         return self.ID(rtrow,*self.objects,**self.getIdArgs('Tight'))
-
-    def ID_veryTight(self, rtrow):
-        return self.ID(rtrow,*self.objects,**self.getIdArgs('VeryTight'))
 
     def zVeto(self,rtrow):
         return getattr(rtrow,'%sNearestZMass' %self.objCand[0]) > 30.
@@ -264,8 +249,8 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
 
     def wVeto(self,rtrow):
         leps = self.objCand
-        if self.getObject(rtrow,'pt','met') > 20.: return False
-        if self.getObject(rtrow, "mt", leps[0], 'met') > 25.: return False
+        #if self.getObject(rtrow,'pt','met') > 20.: return False
+        #if self.getObject(rtrow, "mt", leps[0], 'met') > 20.: return False
         return True
 
     def jetSelection(self,rtrow):
@@ -277,67 +262,6 @@ class AnalyzerWZ_DijetFakeRate(AnalyzerBase):
         jPhi = rtrow.jet1Phi
         dr = deltaR(lEta,lPhi,jEta,jPhi)
         return dr>1. # jet far from lepton
-
-class AnalyzerWZ_HZZDijetFakeRate(AnalyzerWZ_DijetFakeRate):
-    def __init__(self, sample_name, file_list, out_file, period, **kwargs):
-        super(AnalyzerWZ_HZZDijetFakeRate, self).__init__(sample_name, file_list, out_file, period, **kwargs)
-        self.channel = 'HZZFakeRate'
-
-    def preselection(self,rtrow):
-        cuts = CutSequence()
-        cuts.add(self.trigger)
-        cuts.add(self.fiducial)
-        cuts.add(self.ID_loose)
-        cuts.add(self.zVeto)
-        cuts.add(self.jPsiVeto)
-        cuts.add(self.wVeto)
-        cuts.add(self.jetSelection)
-        return cuts
-
-    def selection(self,rtrow):
-        cuts = CutSequence()
-        cuts.add(self.trigger)
-        cuts.add(self.fiducial)
-        cuts.add(self.ID_tight)
-        cuts.add(self.zVeto)
-        cuts.add(self.jPsiVeto)
-        cuts.add(self.wVeto)
-        cuts.add(self.jetSelection)
-        return cuts
-
-    def getIdArgs(self,type):
-        kwargs = {}
-        if type=='Tight':
-            kwargs['idDef'] = {
-                'e':'ZZTight',
-                'm':'ZZTight',
-            }
-            kwargs['isoCut'] = {
-                'e':0.5,
-                'm':0.4
-            }
-        if type=='Loose':
-            kwargs['idDef'] = {
-                'e':'ZZLoose',
-                'm':'ZZLoose',
-            }
-            kwargs['isoCut'] = {
-                'e': 999., # no iso
-                'm': 999., # no iso
-            }
-        if hasattr(self,'alternateIds'):
-            if type in self.alternateIds:
-                kwargs = self.alternateIdMap[type]
-        return kwargs
-
-    def good_to_store(self,rtrow, cand1, cand2):
-        '''
-        Select the trigger object
-        '''
-        #singleTrigMatch_leg1 = getattr(rtrow,'%sMatchesSingleE_leg1' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg1' %self.objCand[0])
-        singleTrigMatch_leg2 = getattr(rtrow,'%sMatchesSingleE_leg2' %self.objCand[0]) if self.objCand[0][0]=='e' else getattr(rtrow,'%sMatchesSingleMu_leg2' %self.objCand[0])
-        veto = (rtrow.eVetoHZZ + rtrow.muVetoHZZ == 0)
-        return singleTrigMatch_leg2 and veto
 
 
 ##########################
@@ -362,7 +286,6 @@ def main(argv=None):
     args = parse_command_line(argv)
 
     if args.analyzer == 'FakeRate': analyzer = AnalyzerWZ_DijetFakeRate(args.sample_name,args.file_list,args.out_file,args.period)
-    if args.analyzer == 'HZZFakeRate': analyzer = AnalyzerWZ_HZZDijetFakeRate(args.sample_name,args.file_list,args.out_file,args.period)
     with analyzer as thisAnalyzer:
         thisAnalyzer.analyze()
 

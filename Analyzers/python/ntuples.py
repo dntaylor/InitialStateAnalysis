@@ -10,10 +10,8 @@ from array import array
 
 def buildCutTree(cutlabels,**kwargs):
     eventLeafs = ['evt','run','lumi']
-    #eventBranchLineToProcess = "struct eventBranch_t {" + " ".join(["Int_t {0};".format(x) for x in eventLeafs]) + "}"
     eventBranchLineToProcess = "struct eventBranch_t {ULong64_t evt; Int_t run; Int_t lumi;}"
     cutBranchLineToProcess = "struct cutBranch_t {" + " ".join(["Int_t {0};".format(x) for x in cutlabels]) + "}"
-    #eventBranchStrForBranch = '{0}/I:'.format(eventLeafs[0]) + ':'.join(eventLeafs[1:])
     eventBranchStrForBranch = 'evt/l:run/I:lumi'
     cutBranchStrForBranch = '{0}/I:'.format(cutlabels[0]) + ':'.join(cutlabels[1:])
     if not hasattr(rt,"eventBranch_t"): rt.gROOT.ProcessLine(eventBranchLineToProcess)
@@ -88,13 +86,12 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
 
     lepFloats = ['Pt', 'Eta', 'Phi', 'Iso', 'Dxy', 'Dz', 'SigmaIEtaIEta', 'DEtaIn', 'DPhiIn', 'HOverE', 'OoEmOoP', 'TriggeringMVA', 'NonTriggeringMVA', 'NormalizedChi2', 'JetPt', 'JetBTag']
     for t in ['','_up','_down']:
-        for l in ['Loose','Tight','VeryTight']:
+        for l in ['Loose','Medium','Tight']:
             lepFloats += ['LepScale{0}{1}'.format(l,t)]
-        lepFloats += ['LepEff{0}'.format(t)]
-        lepFloats += ['LepEffVeryTight{0}'.format(t)]
-        lepFloats += ['LepFake{0}'.format(t)]
-        lepFloats += ['LepFakeVeryTight{0}'.format(t)]
-    lepInts = ['Chg', 'PassLoose', 'PassTight', 'PassVeryTight', 'GenPdgId', 'MotherGenPdgId', 'ChargeConsistent', 'ExpectedMissingInnerHits', 'PassConversionVeto', 'IsGlobalMuon', 'IsPFMuon', 'IsTrackerMuon', 'ValidMuonHits', 'MatchedStations', 'ValidPixelHits', 'TrackerLayers']
+            if l=='Loose': continue
+            lepFloats += ['LepEff{0}{1}'.format(l,t)]
+            lepFloats += ['LepFake{0}{1}'.format(l,t)]
+    lepInts = ['Chg', 'PassLoose', 'PassMedium', 'PassTight', 'GenIsPrompt', 'GenPdgId', 'GenPatPdgId', 'MotherGenPdgId', 'ChargeConsistent', 'ExpectedMissingInnerHits', 'PassConversionVeto', 'IsGlobalMuon', 'IsPFMuon', 'IsTrackerMuon', 'ValidMuonHits', 'MatchedStations', 'ValidPixelHits', 'TrackerLayers']
 
 
 
@@ -110,7 +107,7 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
     
     selectVars = {}
     selectVars['I'] = ['passTight','passLoose']
-    for trig in ['DoubleMuon','DoubleEG','MuonEG','EGMuon']:
+    for trig in ['DoubleMuon','DoubleEG','MuonEG','EGMuon','SingleMuon','SingleEG']:
         selectVars['I'] += ['pass{0}'.format(trig)]
     for altId in alternateIds:
         selectVars['I'] += ['pass_{0}'.format(altId)]
@@ -122,11 +119,10 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
 
     # define common root classes
     eventVars = {}
-    eventVars['I'] = ['run','lumi','nvtx','GenNUP','trig_prescale']
+    eventVars['I'] = ['run','lumi','nvtx','GenNUP']
     eventVars['l'] = ['evt'] # ULong64
-    eventVars['F'] = ['gen_weight','charge_uncertainty']
-    scaleVars = ['lep_scale','lep_scale_e','lep_scale_m','pu_weight','fakerate','trig_scale','lepeff']
-    #if channelName=='WZ': scaleVars += ['lep_scale_tightW','lep_scale_tightW_e','lep_scale_tightW_m','lepeff_tightW','fakerate_tightW']
+    eventVars['F'] = ['gen_weight','charge_uncertainty','trig_prescale']
+    scaleVars = ['lep_scale','lep_scale_e','lep_scale_m','pu_weight','fakerate','trig_scale']
     for v in scaleVars:
         for t in ['','_up','_down']:
             eventVars['F'] += ['{0}{1}'.format(v,t)]
@@ -150,10 +146,13 @@ def buildNtuple(object_definitions,states,channelName,final_states,**kwargs):
     fakeChannelStruct = rt.structChannel_t()
     structureDict['fakeChannel'] = [fakeChannelStruct, rt.AddressOf(fakeChannelStruct,'channel'),'channel/C']
     structOrder += ['fakeChannel']
-    #if channelName=='WZ':
-    #    fakeChannelTightWStruct = rt.structChannel_t()
-    #    structureDict['fakeChannel_tightW'] = [fakeChannelTightWStruct, rt.AddressOf(fakeChannelTightWStruct,'channel'),'channel/C']
-    #    structOrder += ['fakeChannel_tightW']
+    if channelName=='WZ':
+        fakeChannelTightWStruct = rt.structChannel_t()
+        structureDict['fakeChannel_tightW'] = [fakeChannelTightWStruct, rt.AddressOf(fakeChannelTightWStruct,'channel'),'channel/C']
+        structOrder += ['fakeChannel_tightW']
+        fakeChannelAllMediumStruct = rt.structChannel_t()
+        structureDict['fakeChannel_allMedium'] = [fakeChannelAllMediumStruct, rt.AddressOf(fakeChannelAllMediumStruct,'channel'),'channel/C']
+        structOrder += ['fakeChannel_allMedium']
 
     # add final state structs
     fsVars = {}

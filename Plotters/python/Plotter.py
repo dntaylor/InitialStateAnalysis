@@ -127,13 +127,16 @@ class Plotter(PlotterBase):
             oldscalefactor = self.getScaleFactor()
             self.setScaleFactor(scalefactor)
 
-        # print 1
+        #print savename, 'Delete'
         ROOT.gDirectory.Delete('h*') # clear histogram memory
-        self.canvas.Clear()
+
+        #print savename, 'Canvas'
+        canvas = ROOT.TCanvas(savename,savename,50,50,self.W,self.H)
+        canvas = self.setupCanvas(canvas)
 
         if plotratio:
-            # print 2
-            self.canvas.SetCanvasSize(796,666)
+            #print savename, 'Plotpad'
+            canvas.SetCanvasSize(796,666)
             plotpad = ROOT.TPad("plotpad", "top pad", 0.0, 0.21, 1.0, 1.0)
             plotpad.SetLeftMargin(self.L)
             plotpad.SetRightMargin(self.R)
@@ -142,7 +145,8 @@ class Plotter(PlotterBase):
             plotpad.SetTickx(1)
             plotpad.SetTicky(1)
             plotpad.Draw()
-            self.plotpad = plotpad
+            plotpad = plotpad
+            #print savename, 'Ratiopad'
             ratiopad = ROOT.TPad("ratiopad", "bottom pad", 0.0, 0.0, 1.0, 0.21)
             ratiopad.SetTopMargin(0.06)
             ratiopad.SetBottomMargin(0.5)
@@ -158,21 +162,20 @@ class Plotter(PlotterBase):
             ratiopad.SetLogx(logx)
             curPad = plotpad
         else:
-            # print 3
-            self.canvas.SetLogy(logy)
-            self.canvas.SetLogx(logx)
-            curPad = self.canvas
+            canvas.SetLogy(logy)
+            canvas.SetLogx(logx)
+            curPad = canvas
 
         # hack to show both mc and data on same plot
         if plotdata:
-            # print 4
+            #print savename, 'getData'
             data = self.getData(variables, binning, cut, overflow=overflow, underflow=underflow, normalize=normalize)
             datamax = data.GetMaximum()
         
 
         # plot monte carlo
         if not nobg:
-            # print 5
+            #print savename, 'getMCStack'
             stack = self.getMCStack(variables,binning,cut,overflow=overflow,underflow=underflow,nostack=nostack,normalize=normalize,plotsig=not plotsig)
             stack.SetTitle("")
             stack.Draw("hist nostack") if nostack else stack.Draw("hist")
@@ -247,8 +250,8 @@ class Plotter(PlotterBase):
 
         # plot data
         if plotdata:
-            # print 6
-            data = self.getData(variables, binning, cut, overflow=overflow, underflow=underflow, normalize=normalize)
+            #data = self.getData(variables, binning, cut, overflow=overflow, underflow=underflow, normalize=normalize)
+            #print savename, 'getPoissonErrors'
             datapois = self.getPoissonErrors(data)
             data.SetMarkerStyle(20)
             data.SetMarkerSize(1.0)
@@ -284,29 +287,31 @@ class Plotter(PlotterBase):
                     box.DrawBox(b[0],0,b[1],467)
 
         # legend
-        # print 8
         if not plotdata: data = 0
         if not plotsig: sighists = 0
         if nobg: stack = 0
+        #print savename, 'getLegend'
         leg = self.getLegend(stack,data,sighists,plotdata=plotdata,plotsig=plotsig,plotratio=plotratio,legendpos=legendpos,numcol=numcol)
         leg.Draw()
 
         # draw cms lumi
-        self.setStyle(lumitext,plotdata,plotratio,isprelim)
+        pad = plotpad if plotratio else canvas
+        #print savename, 'setStyle'
+        self.setStyle(pad,lumitext,plotdata,isprelim)
 
 
         if plotratio:
-            # print 7
+            #print savename, 'plotratio'
             ratiopad.cd()
-            if plotsig:
-                mchist = stack.GetStack().Last().Clone("mchist%s" % savename)
-            else:
-                newstack = self.getMCStack(variables,binning,cut,overflow=overflow,underflow=underflow,nostack=nostack,normalize=normalize,plotsig=False,histname='newstack')
-                mchist = newstack.GetStack().Last().Clone("mchist%s" % savename)
+            #if plotsig:
+            #    mchist = stack.GetStack().Last().Clone("mchist%s" % savename)
+            #else:
+            #    newstack = self.getMCStack(variables,binning,cut,overflow=overflow,underflow=underflow,nostack=nostack,normalize=normalize,plotsig=False,histname='newstack')
+            mchist = stack.GetStack().Last().Clone("mchist%s" % savename)
             if plotdata:
                 ratio = self.get_ratio(data,mchist,"ratio%s" % savename)
                 ratiopois = self.getPoissonRatio(data,mchist,"ratiopois%s" % savename)
-                #ratiopois.GetXaxis().SetTitle(xaxis)
+                ratiopois.GetXaxis().SetTitle(xaxis)
                 if len(blinder)==2:
                     ratioblind = ratio.Clone("ratioblind")
                     start = ratioblind.FindBin(blinder[0])
@@ -321,7 +326,6 @@ class Plotter(PlotterBase):
                 ratiosig.SetLineWidth(1)
 
             ratiostaterr = self.get_ratio_stat_err(mchist,ratiomin=ratiomin,ratiomax=ratiomax)
-            #ratiostaterr.GetXaxis().SetTitle(xaxis)
             ratiostaterr.SetXTitle(xaxis)
             if len(xrange)==2:
                 ratiostaterr.GetXaxis().SetRangeUser(xrange[0],xrange[1])
@@ -336,7 +340,6 @@ class Plotter(PlotterBase):
             ratiopad.cd()
             ratiopad.SetGridy(0)
             ratiostaterr.Draw("e2")
-            #ratiostaterr.Draw("e2 same")
             ratiounity.Draw("same")
             if plotdata:
                 if len(blinder)==2:
@@ -357,24 +360,17 @@ class Plotter(PlotterBase):
         if plotratio:
             plotpad.cd()
         else:
-            self.canvas.cd()
+            canvas.cd()
 
 
-        # save everything
-        # print 9
-        self.canvas.cd()
-        self.save(savename)
-        #self.canvas.SetName(savename)
+        #print savename, 'save'
+        self.save(canvas,savename)
 
-
-        if plotratio:
-            # print 10
-            self.resetCanvas()
 
         if scalefactor:
             self.setScaleFactor(oldscalefactor)
 
-        # print 11
+        #print savename, 'finished'
 
     def plotMCDataSignalRatio2D(self, var1, var2, bin1, bin2, savename, **kwargs):
         cut = kwargs.pop('cut', '')
@@ -412,7 +408,10 @@ class Plotter(PlotterBase):
 
         ROOT.gDirectory.Delete('h*') # clear histogram memory
 
-        self.canvas.SetRightMargin(0.14)
+        canvas = ROOT.TCanvas(savename,savename,50,50,self.W,self.H)
+        canvas = self.setupCanvas(canvas)
+
+        canvas.SetRightMargin(0.14)
 
         # plot monte carlo
         if plotmc:
@@ -442,6 +441,6 @@ class Plotter(PlotterBase):
                 sig.GetYaxis().SetTitleOffset(1)
 
         # save everything
-        self.canvas.cd()
-        self.save(savename)
+        canvas.cd()
+        self.save(canvas,savename)
 

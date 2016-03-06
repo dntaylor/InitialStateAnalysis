@@ -3,6 +3,7 @@ import os
 import sys
 import errno
 import argparse
+from copy import deepcopy
 
 _3L_MASSES = [170, 200, 250, 300, 350, 400, 450, 500, 600, 700]
 _4L_MASSES = [130, 150, 170, 200, 250, 300, 350, 400, 450, 500, 600, 700]
@@ -218,7 +219,7 @@ def defineCutFlowMap(region,channels,mass):
         'mass' : 'finalstate.mass>100.',
         'zpt' : '(z1.Pt1>20. && z1.Pt2>10.)',
         'zmass' : 'fabs(z1.mass-{0})<15.'.format(ZMASS),
-        'bveto' : 'finalstate.bjetVeto30Tight==0',
+        'bveto' : 'finalstate.bjetVeto20Tight==0',
         'wdr' : 'w1.dR1_z1_1>0.1 && w1.dR1_z1_2>0.1',
         'wmll' : 'w1.mll_z1_1>4. && w1.mll_z1_2>4.',
         'wpt' : 'w1.Pt1>20.',
@@ -724,9 +725,12 @@ def getIntLumiMap():
         #13: 42, # 50ns
         #13: 1280, # 25ns, AN freeze
         # brilcalc lumi --normtag  ~lumipro/public/normtag_file/OfflineNormtagV2.json -i /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/Cert_246908-258750_13TeV_PromptReco_Collisions15_25ns_JSON.txt
-        13: 1341, # 25ns, updated lumicalc 
+        #13: 1341, # 25ns, updated lumicalc 
         # brilcalc lumi --normtag  ~lumipro/public/normtag_file/OfflineNormtagV2.json -i /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/Cert_246908-260627_13TeV_PromptReco_Collisions15_25ns_JSON_v2.txt
-        13: 2263, # fule 25ns
+        #13: 2263, # fule 25ns
+        # moriond update
+        # brilcalc lumi -i /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/Cert_246908-260627_13TeV_PromptReco_Collisions15_25ns_JSON_v2.txt --normtag /afs/cern.ch/user/l/lumipro/public/normtag_file/moriond16_normtag.json
+        13: 2318, 
     }
     return intLumiMap
 
@@ -1014,22 +1018,108 @@ def plotDistributions(plotMethod,myCut,nl,isControl,**kwargs):
             plotMethod('w1.dR1_z1_2',[60,0,6],savedir+'w1/dR_z1_2',yaxis='Events',xaxis='#DeltaR(W^{lepton},Z^{subleading lepton})',legendpos=43,logy=0,cut=myCut,**kwargs)
         plotMethod(['w1.dR1_z1_1','w1.dR1_z1_2'],[60,0,6],savedir+'w1/dR_z1_l',yaxis='Events',xaxis='#DeltaR(W^{lepton},Z^{lepton})',legendpos=43,logy=0,cut=myCut,**kwargs)
 
+def getLeptonParams(obj,**kwargs):
+    pre = kwargs.pop('pre','')
+    post = kwargs.pop('post','')
+    name = kwargs.pop('name','')
+    pretty = kwargs.pop('pretty','')
+    lepPlots = [
+        #( variable,                  binning,              name,                   plotArgs
+        ('%s.%sPt%s' %(obj,pre,post), [20,0,200],           '%s/Pt' %name, {'yaxis':'Events/10 GeV', 'xaxis':'p_{T}^{%s} (GeV)' %pretty,}),
+        ('%s.%sIso%s' %(obj,pre,post),[50,0,.5],            '%s/Iso' %name,{'yaxis':'Events',        'xaxis':'Relative Isolation (%s)' %pretty,}),
+        ('%s.%sEta%s' %(obj,pre,post),[30,-3.0,3.0],        '%s/Eta' %name,{'yaxis':'Events',        'xaxis':'\\eta^{%s}' %pretty,}),
+        ('%s.%sPhi%s' %(obj,pre,post),[30,-3.14159,3.14159],'%s/Phi' %name,{'yaxis':'Events',        'xaxis':'\\phi^{%s}' %pretty,}),
+    ]
+    return lepPlots
 
-def getFakeParams(analysis):
+
+def getPlotParams(plotMode,myCut,nl,plots,**kwargs):
+    savedir = kwargs.pop('savedir','')
+    analysis = kwargs.pop('analysis','')
+    region = kwargs.pop('region','')
+    mass = kwargs.pop('mass',500)
+    doDetailed = kwargs.pop('doDetailed',False)
+    doMinimal = kwargs.pop('doMinimal',False)
+    doPAS = kwargs.pop('doPAS',False)
+    if savedir: savedir += '/'
+
+    basePlot = {
+        'plotMode' : plotMode,
+        'variable' : '1',
+        'binning'  : [1,0,1],
+        'savename' : savedir,
+        'plotArgs' : {
+            'cut' : myCut,
+        },
+    }
+
+    # setup plot params
+    allPlots = [
+        #( variable,                                         binning,              name,                   plotArgs
+        ('finalstate.sT',                                    [40,0,1000],          'sT',                   {'yaxis':'Events/25 GeV', 'xaxis':'S_{T} (GeV)',}),
+        ('finalstate.elecVetoLoose',                         [4,0,4],              'numElectronsLoose',    {'yaxis':'Events',        'xaxis':'Number of Electrons (p_{T}>10 GeV)',}),
+        ('finalstate.muonVetoLoose',                         [4,0,4],              'numMuonsLoose',        {'yaxis':'Events',        'xaxis':'Number of Muons (p_{T}>10 GeV)',}),
+        ('finalstate.elecVetoLoose+finalstate.muonVetoLoose',[4,0,4],              'numLeptonsLoose',      {'yaxis':'Events',        'xaxis':'Number of Leptons (p_{T}>10 GeV)',}),
+        ('finalstate.jetVeto30',                             [4,0,4],              'numJets30',            {'yaxis':'Events',        'xaxis':'Number of Jets (p_{T}>30 GeV)',}),
+        ('finalstate.bjetVeto20Tight',                       [4,0,4],              'numBJets20Tight',      {'yaxis':'Events',        'xaxis':'Number of b Jets (p_{T}>20 GeV)',}),
+        ('finalstate.met',                                   [20,0,200],           'met',                  {'yaxis':'Events/10 GeV', 'xaxis':'E_{T}^{miss} (GeV)',}),
+        ('finalstate.mass',                                  [25,0,500],           'mass',                 {'yaxis':'Events/20 GeV', 'xaxis':'m_{3l}',}),
+        ('finalstate.mT',                                    [15,0,600],           'mT',                   {'yaxis':'Events/40 GeV', 'xaxis':'m_{T}^{3l+MET} (GeV)',}),
+        ('event.nvtx',                                       [50,0,50],            'puVertices',           {'yaxis':'Events',        'xaxis':'Number PU Vertices',}),
+        ('event.nvtx',                                       [50,0,50],            'puVertices_noreweight',{'yaxis':'Events',        'xaxis':'Number PU Vertices', 'scalefactor':'event.gen_weight*event.lep_scale*event.trig_scale',}),
+        ('finalstate.leadJetPt',                             [30,0,300],           'JetPt',                {'yaxis':'Events/10 GeV', 'xaxis':'p_{T}^{jet} (GeV)',}),
+        ('finalstate.leadJetEta',                            [50,-5.0,5.0],        'JetEta',               {'yaxis':'Events',        'xaxis':'#eta^{jet}',}),
+        ('finalstate.leadJetPhi',                            [30,-3.14159,3.14159],'JetPhi',               {'yaxis':'Events',        'xaxis':'#phi^{jet}',}),
+        ('z1.mass',                                          [30,60,120],          'z1/Mass',              {'yaxis':'Events/2.0 GeV','xaxis':'m_{l^{+}l^{-}} (GeV)',}),
+        ('abs(z1.mass-{0})'.format(ZMASS),                   [60,0,60],            'z1/mllMinusMZ',        {'yaxis':'Events/1.0 GeV','xaxis':'|m_{l^{+}l^{-}}-m_{Z}| (GeV)',}),
+        ('z1.Pt',                                            [20,0,400],           'z1/Pt',                {'yaxis':'Events/20 GeV', 'xaxis':'p_{T}^{Z} (GeV)',}),
+        ('w1.Pt',                                            [20,0,400],           'w1/Pt',                {'yaxis':'Events/20 GeV', 'xaxis':'p_{T}^{W} (GeV)',}),
+        ('w1.mass',                                          [20,0,200],           'w1/Mass',              {'yaxis':'Events/10 GeV', 'xaxis':'m_{T}^{W} (GeV)',}),
+        ('w1.dPhi',                                          [32,-3.2,3.2],        'w1/dPhi',              {'yaxis':'Events/0.2 rad','xaxis':'#Delta#phi(W lepton, E_{T}^{miss}) (rad)',}),
+    ]
+    # setup lepton params
+    allPlots += getLeptonParams('z1',post='1',name='z1/Leading',pretty='Z Leading Lepton')
+    allPlots += getLeptonParams('z1',post='2',name='z1/SubLeading',pretty='Z SubLeading Lepton')
+    allPlots += getLeptonParams('w1',post='1',name='w1/Lepton',pretty='W Lepton')
+
+    plotsMap = {}
+
+    for plot in allPlots:
+        variable, binning, name, plotArgs = plot
+        if name not in plots and 'all' not in plots: continue
+        plotsMap[name] = deepcopy(basePlot)
+        plotsMap[name]['variable'] = variable
+        plotsMap[name]['binning']  = binning
+        plotsMap[name]['savename'] = savedir+name
+        plotsMap[name]['plotArgs'].update(plotArgs)
+  
+    return plotsMap
+
+def getCutflowParams(analysis,finalStates,cut,savedir,**kwargs):
+    if savedir: savedir += '/'
+    params = {}
+    # channels on same plot
+    plotChannelStrings, plotChannelCuts = getChannelStringsCuts(analysis,finalStates)
+    params['individualChannels'] = {'args': [[cut] + ['{0} && {1}'.format(cut,c) for c in plotChannelCuts], '{0}individualChannels'.format(savedir)], 'kwargs': {'labels': ['Total'] + plotChannelStrings, 'nosum': True, 'numcol': 2, 'lumitext': 33}}
+
+    return params
+
+
+def getFakeParams(analysis,cut='1'):
     # define fake regions
     lepName = {'e': 'Elec', 'm': 'Muon', 't': 'Tau'}
     fakeRegions = {}
     fakeRegions[analysis] = {}
     for f in ['e', 'm']:
         #for p in ['Loose', 'Tight']:
-        for p in ['Tight','VeryTight']:
+        for p in ['Medium','Tight']:
             # select leading Z pt, Z window [60,120], tight (or loose) Z, low met, m3l>100, w1 mass < 30
             if analysis in ['WZ']:
                 #for z in ['Loose', 'Tight']:
                 for z in ['Tight']:
                     fakeRegion = 'Z{0}Probe{1}{2}'.format(z,lepName[f],p)
                     #denom = 'z1.Pass{0}1 && z1.Pass{0}2 && w1.dR1_z1_1>0.02 && w1.dR1_z1_2>0.02 && w1.mass<25. && w1Flv=="{1}"'.format(z,f)
-                    basecut = 'z1.Pass{0}1 && z1.Pass{0}2 && w1.dR1_z1_1>0.02 && w1.dR1_z1_2>0.02 && finalstate.met<25. && w1.mass<30. && w1Flv=="{1}"'.format(z,f)
+                    basecut = 'z1.Pass{0}1 && z1.Pass{0}2 && w1.dR1_z1_1>0.02 && w1.dR1_z1_2>0.02 && finalstate.met<25. && w1.mass<30. && w1Flv=="{1}" && {2}'.format(z,f,cut)
                     numer = '{0} && w1.Pass{1}1==1'.format(basecut,p)
                     denom = '{0} && w1.Pass{1}1==0'.format(basecut,p)
                     fakeRegions[analysis][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
@@ -1044,7 +1134,7 @@ def getFakeParams(analysis):
                 #for w in ['Loose','Tight']:
                 for w in ['Tight']:
                     fakeRegion = 'W{0}Probe{1}{2}'.format(w,lepName[f],p)
-                    basecut = 'w1.Pt1>20. && w1.mass>30. && finalstate.met>30. && (z1.mass<60. || z1.mass>120.) && l1.Chg==l2.Chg && z1.dR>0.1 && w1.Pass{0}1 && w2Flv=="{1}"'.format(w,f)
+                    basecut = 'w1.Pt1>20. && w1.mass>30. && finalstate.met>30. && (z1.mass<60. || z1.mass>120.) && l1.Chg==l2.Chg && z1.dR>0.1 && w1.Pass{0}1 && w2Flv=="{1}" && {2}'.format(w,f,cut)
                     numer = '{0} && w2.Pass{1}1==1'.format(basecut,p)
                     denom = '{0} && w2.Pass{1}1==0'.format(basecut,p)
                     fakeRegions[analysis][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w2.Pt1', 'etaVar': 'w2.Eta1'}
@@ -1056,10 +1146,13 @@ def getFakeParams(analysis):
             # ntuple cuts: zVeto 60-120, met vet 20, w veto 20, jet pt > 20, jet dr > 1.0
             if analysis in ['WZ_Dijet']:
                fakeRegion = 'FakeRateProbe{0}{1}'.format(lepName[f],p)
-               basecut = 'l1Flv=="{0}"'.format(f)
+               basecut = 'l1Flv=="{0}" && finalstate.leadJetPt>{1} && {2}'.format(f,20 if f=='m' else 35,cut)
                numer = '{0} && w1.Pass{1}1==1'.format(basecut,p)
-               denom = '{0} && w1.Pass{1}1==0'.format(basecut,p)
-               fakeRegions[analysis][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1'}
+               #denom = '{0} && w1.Pass{1}1==0'.format(basecut,p)
+               denom = basecut
+               numerScale = 'event.gen_weight*event.pu_weight*w1.LepScale{0}1*(1./event.trig_prescale)'.format(p)
+               denomScale = 'event.gen_weight*event.pu_weight*w1.LepScaleLoose1*(1./event.trig_prescale)'
+               fakeRegions[analysis][fakeRegion] = {'denom': denom, 'numer': numer, 'probe': f, 'ptVar': 'w1.Pt1', 'etaVar': 'w1.Eta1', 'numerScale': numerScale, 'denomScale': denomScale}
                #if p=='Tight' and channel not in ['HZZFakeRate']:
                #   fakeRegion += '_LooseProbe'
                #   denom += ' && w1.PassLoose1'
@@ -1070,8 +1163,8 @@ def getFakeParams(analysis):
 
     # setup selections
     ptBins = [1,10,20,30,1000]
-    #ptBins = [10,1000]
-    #if analysis in ['WZ_Dijet']: ptBins = [1,10,20,30,40,60,80,200,1000]
+    ptBins = [10,1000]
+    if analysis in ['WZ_Dijet']: ptBins = [1,10,15,20,25,30,40,50,200]
 
     etaBins = {
         'e': [0,1.479,2.5],
@@ -1127,7 +1220,8 @@ def getNtupleDirectory(analysis,region,period):
 
 def getPassTightDefinition(analysis,region,period):
     cutMap = {
-        ('WZ','WZ',13) : 'finalstate.mass>100. && (z1.Pt1>20.&&z1.Pt2>10.) && z1.mass>60. && z1.mass<120. && w1.mll_z1_1>4 && w1.mll_z1_2>4 && w1.Pt1>20. && finalstate.met>30.',
+        #('WZ','WZ',13) : 'finalstate.mass>100. && (z1.Pt1>20.&&z1.Pt2>10.) && z1.mass>60. && z1.mass<120. && w1.mll_z1_1>4 && w1.mll_z1_2>4 && w1.Pt1>20. && finalstate.met>30.',
+        ('WZ','WZ',13) : 'finalstate.mass>100. && (z1.Pt1>20.&&z1.Pt2>10.) && fabs(z1.mass-91.1876)<15.   && w1.mll_z1_1>4 && w1.mll_z1_2>4 && w1.Pt1>20. && finalstate.met>30. && finalstate.bjetVeto20Tight<1',
     }
     key = (analysis,region,period)
     if key in cutMap:

@@ -42,55 +42,283 @@ def getSignalOverBackground(analysis,region,period,cut,**kwargs):
 
     return sig/bg if bg else -1.
 
-def getPerChannelYields(analysis,region,period,cut,**kwargs):
-    doDataDriven = kwargs.pop('doDataDriven',True)
-    scalefactor = kwargs.pop('scalefactor','event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale')
-    unblind = kwargs.pop('unblind',False)
-    tightW = kwargs.pop('tightW',False)
+def getDataDrivenCompontents(analysis,region,period,cut,**kwargs):
+    baseScaleFactor = kwargs.pop('baseScaleFactor','event.gen_weight*event.pu_weight*event.trig_scale')
+    nameMap = {
+        0: 'z1.PassMedium1',
+        1: 'z1.PassMedium2',
+        2: 'w1.PassTight1',
+    }
+    scaleMap = {
+        0: 'z1.LepScaleMedium1',
+        1: 'z1.LepScaleMedium2',
+        2: 'w1.LepScaleTight1',
+    }
+    scaleLooseMap = {
+        0: 'z1.LepScaleLoose1',
+        1: 'z1.LepScaleLoose2',
+        2: 'w1.LepScaleLoose1',
+    }
+
+    lepScaleMap = {
+        'P' : scaleMap,
+        'F' : scaleLooseMap,
+    }
 
     nl = 3
+    fullScale = '{0}*{1}'.format(baseScaleFactor,'*'.join([scaleMap[i] for i in range(nl)]))
     sigMap = getSigMap(nl)
     intLumiMap = getIntLumiMap()
     mergeDict = getMergeDict(period)
     channelBackground = getChannelBackgrounds(period)
     channels, leptons = getChannels(nl)
+    if analysis=='WZ': channels = ['eee','eem','mme','mmm']
     saves = '%s_%s_%iTeV' % (analysis,region,period)
     ntuples = getNtupleDirectory(analysis,region,period)
 
-    bgs = channelBackground[region+'datadriven' if doDataDriven else region]
+    bgs = channelBackground[region+'datadriven']
 
-    plotter = Plotter(region,ntupleDir=ntuples,saveDir=saves,period=period,rootName='plots_statUnc',mergeDict=mergeDict,scaleFactor=scalefactor,datadriven=doDataDriven,tightW=tightW)
+    plotter = Plotter(region,ntupleDir=ntuples,saveDir=saves,period=period,rootName='plots_datadrivenComponents',mergeDict=mergeDict,scaleFactor=fullScale,datadriven=True,tightW=True)
     plotter.initializeBackgroundSamples([sigMap[period][x] for x in bgs])
     plotter.initializeDataSamples([sigMap[period]['data']])
     plotter.setIntLumi(intLumiMap[period])
 
     yields = {}
     errs = {}
+    modes = ['PPF','PFP','FPP','PFF','FPF','FFP','FFF']
+    for mode in modes:
+        yields[mode] = {}
+        errs[mode] = {}
+        for chan in channels:
+            yields[mode][chan] = {}
+            errs[mode][chan] = {}
+            selection = '{0} && channel=="{1}"'.format(cut,chan)
+            mcScale = '{0}*{1}*{2}*{3}'.format(baseScaleFactor,lepScaleMap[mode[0]][0],lepScaleMap[mode[1]][1],lepScaleMap[mode[2]][2])
+            for bg in bgs + ['data']:
+                if bg in ['datadriven']: continue
+                scale = '1' if bg=='data' else mcScale
+                singBack = 'data' if bg=='data' else sigMap[period][bg]
+                val, err = plotter.getNumEntries(selection,'datadriven',singleComponent=mode,singleBackground=singBack,customScale=scale,doError=True)
+                yields[mode][chan][bg] = val
+                errs[mode][chan][bg] = err
+
+    for m in modes:
+        yields[m]['wz'] = {}
+        errs[m]['wz'] = {}
+        for i in bgs + ['data']:
+            if i=='datadriven': continue
+            tot = sum([yields[m][chan][i] for chan in ['eee','eem','mme','mmm']])
+            totErr = sum([errs[m][chan][i]**2 for chan in ['eee','eem','mme','mmm']])**0.5
+            yields[m]['wz'][i] = tot
+            errs[m]['wz'][i] = totErr
+
+    return yields, errs
+
+
+def getPerChannelYields(analysis,region,period,cut,**kwargs):
+    doDataDriven = kwargs.pop('doDataDriven',True)
+    tightW = kwargs.pop('tightW',True)
+    fakeMode = kwargs.pop('fakeMode','fakerate')
+    baseScaleFactor = kwargs.pop('baseScaleFactor','event.gen_weight*event.pu_weight*event.trig_scale')
+    skipLepton = kwargs.pop('skipLepton',False)
+    skipDataDriven = kwargs.pop('skipDataDriven',False)
+
+    nameMap = {
+        0: 'z1.PassTight1',
+        1: 'z1.PassTight2',
+        2: 'w1.PassTight1',
+    }
+    scaleMap = {
+        0: 'z1.LepScaleTight1',
+        1: 'z1.LepScaleTight2',
+        2: 'w1.LepScaleTight1',
+    }
+    scaleLooseMap = {
+        0: 'z1.LepScaleLoose1',
+        1: 'z1.LepScaleLoose2',
+        2: 'w1.LepScaleLoose1',
+    }
+    promptMap = {
+        0: 'z1.GenIsPrompt1',
+        1: 'z1.GenIsPrompt2',
+        2: 'w1.GenIsPrompt1',
+    }
+    if tightW:
+        nameMap = {
+            0: 'z1.PassMedium1',
+            1: 'z1.PassMedium2',
+            2: 'w1.PassTight1',
+        }
+        scaleMap = {
+            0: 'z1.LepScaleMedium1',
+            1: 'z1.LepScaleMedium2',
+            2: 'w1.LepScaleTight1',
+        }
+        scaleLooseMap = {
+            0: 'z1.LepScaleLoose1',
+            1: 'z1.LepScaleLoose2',
+            2: 'w1.LepScaleLoose1',
+        }
+
+    lepScaleMap = {
+        'P' : scaleMap,
+        'F' : scaleLooseMap,
+    }
+
+    nl = 3
+    fullScale = '{0}*{1}'.format(baseScaleFactor,'*'.join([scaleMap[i] for i in range(nl)]))
+    if skipLepton: fullScale = baseScaleFactor
+    sigMap = getSigMap(nl)
+    intLumiMap = getIntLumiMap()
+    mergeDict = getMergeDict(period)
+    channelBackground = getChannelBackgrounds(period)
+    channels, leptons = getChannels(nl)
+    if analysis=='WZ': channels = ['eee','eem','mme','mmm']
+    saves = '%s_%s_%iTeV' % (analysis,region,period)
+    ntuples = getNtupleDirectory(analysis,region,period)
+
+    bgs = channelBackground[region+'datadriven' if doDataDriven else region]
+
+    plotter = Plotter(region,ntupleDir=ntuples,saveDir=saves,period=period,rootName='plots_statUnc',mergeDict=mergeDict,scaleFactor=fullScale,datadriven=doDataDriven,tightW=tightW,fakeMode=fakeMode)
+    plotter.initializeBackgroundSamples([sigMap[period][x] for x in bgs])
+    plotter.initializeDataSamples([sigMap[period]['data']])
+    plotter.setIntLumi(intLumiMap[period])
+
+    yields = {}
+    errs = {}
+    systs = {}
     for chan in channels:
         yields[chan] = {}
         errs[chan] = {}
+        systs[chan] = {}
         chanCut = '{0} && channel=="{1}"'.format(cut,chan)
         for b in bgs + ['datadriven']:
-            val, err = plotter.getNumEntries(chanCut,sigMap[period][b],doError=True)
+            if skipDataDriven and b=='datadriven':
+                val,err,syst = 0,0,0
+            else:
+                val, err, syst = plotter.getNumEntries(chanCut,sigMap[period][b],doError=True,doSyst=True,baseScaleFactor=baseScaleFactor)
             yields[chan][b] = val
             errs[chan][b] = err
+            systs[chan][b] = syst
 
         data, dataErr = plotter.getDataEntries(chanCut,doError=True)
         yields[chan]['data'] = data
         errs[chan]['data'] = dataErr
+        systs[chan]['data'] = 0.
 
     yields['wz'] = {}
     errs['wz'] = {}
+    systs['wz'] = {}
     for i in bgs + ['datadriven'] + ['data']:
         tot = sum([yields[chan][i] for chan in ['eee','eem','mme','mmm']])
         totErr = sum([errs[chan][i]**2 for chan in ['eee','eem','mme','mmm']])**0.5
+        totSyst = sum([systs[chan][i]**2 for chan in ['eee','eem','mme','mmm']])**0.5
         yields['wz'][i] = tot
         errs['wz'][i] = totErr
+        systs['wz'][i] = totSyst
 
-    if not unblind:
-        for c in channels + ['wz']:
-            yields[c]['data'] = 0.
-            errs[c]['data'] = 0.
+    return yields, errs, systs
+
+def getPerChannelControlYields(analysis,region,period,cut,**kwargs):
+    tightW = kwargs.pop('tightW',True)
+
+    baseScaleFactor = 'event.gen_weight*event.pu_weight*event.trig_scale'
+
+    nameMap = {
+        0: 'z1.PassTight1',
+        1: 'z1.PassTight2',
+        2: 'w1.PassTight1',
+    }
+    scaleMap = {
+        0: 'z1.LepScaleTight1',
+        1: 'z1.LepScaleTight2',
+        2: 'w1.LepScaleTight1',
+    }
+    scaleLooseMap = {
+        0: 'z1.LepScaleLoose1',
+        1: 'z1.LepScaleLoose2',
+        2: 'w1.LepScaleLoose1',
+    }
+    promptMap = {
+        0: 'z1.GenIsPrompt1',
+        1: 'z1.GenIsPrompt2',
+        2: 'w1.GenIsPrompt1',
+    }
+    if tightW:
+        nameMap = {
+            0: 'z1.PassMedium1',
+            1: 'z1.PassMedium2',
+            2: 'w1.PassTight1',
+        }
+        scaleMap = {
+            0: 'z1.LepScaleMedium1',
+            1: 'z1.LepScaleMedium2',
+            2: 'w1.LepScaleTight1',
+        }
+        scaleLooseMap = {
+            0: 'z1.LepScaleLoose1',
+            1: 'z1.LepScaleLoose2',
+            2: 'w1.LepScaleLoose1',
+        }
+
+    lepScaleMap = {
+        'P' : scaleMap,
+        'F' : scaleLooseMap,
+    }
+
+
+    nl = 3
+    fullScale = '{0}*{1}'.format(baseScaleFactor,'*'.join([scaleMap[i] for i in range(nl)]))
+    sigMap = getSigMap(nl)
+    intLumiMap = getIntLumiMap()
+    mergeDict = getMergeDict(period)
+    channelBackground = getChannelBackgrounds(period)
+    channels, leptons = getChannels(nl)
+    if analysis=='WZ': channels = ['eee','eem','mme','mmm']
+    saves = '%s_%s_%iTeV' % (analysis,region,period)
+    ntuples = getNtupleDirectory(analysis,region,period)
+
+    bgs = channelBackground[region+'datadriven']
+
+    plotter = Plotter(region,ntupleDir=ntuples,saveDir=saves,period=period,rootName='plots_perChannelYields',mergeDict=mergeDict,scaleFactor=fullScale,tightW=tightW)
+    plotter.initializeBackgroundSamples([sigMap[period][x] for x in bgs])
+    plotter.initializeDataSamples([sigMap[period]['data']])
+    plotter.setIntLumi(intLumiMap[period])
+
+    yields = {}
+    errs = {}
+    controls = ['PPP','PPF','PFP','FPP','PFF','FPF','FFP','FFF']
+    mcCut = ' && '.join(['fabs(l{0}.GenPatPdgId)<100'.format(l+1) for l in range(nl)])
+    for control in controls:
+        yields[control] = {}
+        errs[control] = {}
+        fakechan = 'fakeChannel_tightW' if tightW else 'fakeChannel'
+        scalefactor = '{0}*{1}*{2}*{3}'.format(baseScaleFactor,lepScaleMap[control[0]][0],lepScaleMap[control[1]][1],lepScaleMap[control[2]][2])
+        for chan in channels:
+            yields[control][chan] = {}
+            errs[control][chan] = {}
+            chanCut = '{0} && channel=="{1}"'.format(cut,chan)
+            controlCut = '{0} && {1}=="{2}"'.format(chanCut,fakechan,control)
+            mcFullCut = '{0} && {1}'.format(controlCut,mcCut)
+            for b in bgs:
+                val, err = plotter.getNumEntries(mcFullCut,sigMap[period][b],customScale=scalefactor,doError=True)
+                yields[control][chan][b] = val
+                errs[control][chan][b] = err
+            yields[control][chan]['datadriven'] = 0.
+            errs[control][chan]['datadriven'] = 0.
+
+            data, dataErr = plotter.getDataEntries(controlCut,doError=True)
+            yields[control][chan]['data'] = data
+            errs[control][chan]['data'] = dataErr
+
+    for control in controls:
+        yields[control]['wz'] = {}
+        errs[control]['wz'] = {}
+        for i in bgs + ['datadriven'] + ['data']:
+            tot = sum([yields[control][chan][i] for chan in ['eee','eem','mme','mmm']])
+            totErr = sum([errs[control][chan][i]**2 for chan in ['eee','eem','mme','mmm']])**0.5
+            yields[control]['wz'][i] = tot
+            errs[control]['wz'][i] = totErr
 
     return yields, errs
 

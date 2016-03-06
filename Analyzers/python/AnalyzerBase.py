@@ -440,6 +440,8 @@ class AnalyzerBase(object):
         ntupleRow["select.passDoubleEG"] = int(rtrow.doubleEPass if self.period==13 else rtrow.doubleETightPass)
         ntupleRow["select.passMuonEG"] = int(rtrow.singleMuSingleEPass if self.period==13 else rtrow.mu17ele8isoPass)
         ntupleRow["select.passEGMuon"] = int(rtrow.singleESingleMuPass if self.period==13 else rtrow.mu8ele17isoPass)
+        ntupleRow["select.passSingleMuon"] = int(rtrow.singleIsoMu20Pass or rtrow.singleIsoTkMu20Pass or rtrow.singleIsoMu27Pass) if self.period==13 else -1
+        ntupleRow["select.passSingleEG"] = int(rtrow.singleE23WPLoosePass) if self.period==13 else -1
         numObjs = len(self.final_states[0])
         finalStateObjects ='emtjgn'
         allowedObjects = ''
@@ -449,24 +451,17 @@ class AnalyzerBase(object):
                     allowedObjects += fsObj
                     break
         numObjTypes = len(allowedObjects)
-        #for prompts in list(product(range(numObjs+1),repeat=numObjTypes)):
-        #    if sum(prompts) > numObjs: continue
-        #    promptString = ''.join([str(x) for x in prompts])
-        #    promptDict = {}
-        #    for o in range(len(allowedObjects)):
-        #        promptDict[allowedObjects[o]] = prompts[o]
-        #    ntupleRow["select.pass_%s"%promptString] = int(self.npass(rtrow,promptDict,**self.getIdArgs('Tight')))
         for altId in self.alternateIds:
             ntupleRow["select.pass_%s"%altId] = int(self.ID(rtrow,*objects,**self.alternateIdMap[altId]))
 
-        scales = self.getScales(rtrow,objects,**self.lepargs)
+        scales = self.getScales(rtrow,objects)
         
         ntupleRow["event.evt"] = long(rtrow.evt)
         ntupleRow["event.lumi"] = int(rtrow.lumi)
         ntupleRow["event.run"] = int(rtrow.run)
         ntupleRow["event.nvtx"] = int(rtrow.nvtx)
         ntupleRow["event.GenNUP"] = -1 if self.isData else int(rtrow.NUP)
-        ntupleRow["event.trig_prescale"] = int(scales['trigger_prescale'])
+        ntupleRow["event.trig_prescale"] = float(scales['trigger_prescale'])
         ntupleRow["event.lep_scale"] = float(scales['lep'])
         ntupleRow["event.lep_scale_e"] = float(scales['lepe'])
         ntupleRow["event.lep_scale_m"] = float(scales['lepm'])
@@ -476,53 +471,34 @@ class AnalyzerBase(object):
         ntupleRow["event.lep_scale_down"] = float(scales['lepdown'])
         ntupleRow["event.lep_scale_e_down"] = float(scales['lepedown'])
         ntupleRow["event.lep_scale_m_down"] = float(scales['lepmdown'])
-        ntupleRow["event.lepeff"] = float(scales['lepeff'])
-        ntupleRow["event.lepeff_up"] = float(scales['lepeffup'])
-        ntupleRow["event.lepeff_down"] = float(scales['lepeffdown'])
         ntupleRow["event.trig_scale"] = float(scales['trig'])
         ntupleRow["event.trig_scale_up"] = float(scales['trigup'])
         ntupleRow["event.trig_scale_down"] = float(scales['trigdown'])
-        ntupleRow["event.pu_weight"] = float(scales['puweight'][0])
-        ntupleRow["event.pu_weight_up"] = float(scales['puweight'][1])
-        ntupleRow["event.pu_weight_down"] = float(scales['puweight'][2])
+        ntupleRow["event.pu_weight"] = float(scales['puweight'])
+        ntupleRow["event.pu_weight_up"] = float(scales['puweightup'])
+        ntupleRow["event.pu_weight_down"] = float(scales['puweightdown'])
         ntupleRow["event.fakerate"] = float(scales['lepfake'])
         ntupleRow["event.fakerate_up"] = float(scales['lepfakeup'])
         ntupleRow["event.fakerate_down"] = float(scales['lepfakedown'])
         ntupleRow["event.gen_weight"] = float(scales['genweight'])
         ntupleRow["event.charge_uncertainty"] = float(scales['chargeid'])
 
-        #if self.channel=='WZ':
-        #    scales = self.getScales(rtrow,objects,tightW=True,**self.lepargs)
-        #    ntupleRow["event.lep_scale_tightW"] = float(scales['lep'])
-        #    ntupleRow["event.lep_scale_tightW_e"] = float(scales['lepe'])
-        #    ntupleRow["event.lep_scale_tightW_m"] = float(scales['lepm'])
-        #    ntupleRow["event.lep_scale_tightW_up"] = float(scales['lepup'])
-        #    ntupleRow["event.lep_scale_tightW_e_up"] = float(scales['lepeup'])
-        #    ntupleRow["event.lep_scale_tightW_m_up"] = float(scales['lepmup'])
-        #    ntupleRow["event.lep_scale_tightW_down"] = float(scales['lepdown'])
-        #    ntupleRow["event.lep_scale_tightW_e_down"] = float(scales['lepedown'])
-        #    ntupleRow["event.lep_scale_tightW_m_down"] = float(scales['lepmdown'])
-        #    ntupleRow["event.lepeff_tightW"] = float(scales['lepeff'])
-        #    ntupleRow["event.lepeff_tightW_up"] = float(scales['lepeffup'])
-        #    ntupleRow["event.lepeff_tightW_down"] = float(scales['lepeffdown'])
-        #    ntupleRow["event.fakerate_tightW"] = float(scales['lepfake'])
-        #    ntupleRow["event.fakerate_tightW_up"] = float(scales['lepfakeup'])
-        #    ntupleRow["event.fakerate_tightW_down"] = float(scales['lepfakedown'])
 
         channelString = ''
         for x in objects: channelString += x[0]
         ntupleRow["channel.channel"] = channelString
         ntupleRow["genChannel.channel"] = self.getGenChannel(rtrow)
         ntupleRow["fakeChannel.channel"] = self.getFakeChannel(rtrow)
-        #if self.channel=='WZ':
-        #    ntupleRow["fakeChannel_tightW.channel"] = self.getFakeChannel(rtrow,tightW=True)
+        if self.channel=='WZ': ntupleRow["fakeChannel_tightW.channel"] = self.getFakeChannel(rtrow,tightW=True)
+        if self.channel=='WZ': ntupleRow["fakeChannel_allMedium.channel"] = self.getFakeChannel(rtrow,allMedium=True)
 
         ntupleRow["finalstate.mass"] = self.getObject(rtrow,'mass',*objects)
         ntupleRow["finalstate.eta"] = self.getObject(rtrow,'eta',*objects)
         ntupleRow["finalstate.phi"] = self.getObject(rtrow,'phi',*objects)
-        objMet = ['met']
+        objMet = []
         for i in objects:
             objMet += [i]
+        objMet += ['met']
         ntupleRow["finalstate.mT"] = self.getObject(rtrow,'mt',*objMet)
         ntupleRow["finalstate.sT"] = self.getObject(rtrow,'st',*objects)
         ntupleRow["finalstate.hT"] = float(rtrow.Ht) if hasattr(rtrow,'Ht') else float(-1)
@@ -620,50 +596,55 @@ class AnalyzerBase(object):
                         if theObjects and l[0] in 'emt':
                             ntupleRow["%s.JetBTag%i" % (i,objCount)] = float(getattr(rtrow, "%sJetCSVBtag" % l)) if period==8 else float(getattr(rtrow, "%sJetPFCISVBtag" % l))
                         if theObjects:
-                            looseScales = self.lepscaler.scale_factor(rtrow, l, loose=True, period=period)
-                            tightScales = self.lepscaler.scale_factor(rtrow, l, loose=False, period=period)
-                            veryTightScales = self.lepscaler.scale_factor(rtrow, l, veryTight=True, period=period)
-                            lepeff = self.lepeff.scale_factor(rtrow, l, loose=True, period=period)
-                            lepeffVeryTight = self.lepeff.scale_factor(rtrow, l, veryTight=True, period=period)
-                            tightFake = self.lepfake.scale_factor(rtrow, l, loose=False, period=period)
-                            veryTightFake = self.lepfake.scale_factor(rtrow, l, loose=False, veryTight=True, period=period)
+                            looseScales = self.lepscaler.scale_factor(rtrow, l, lepType='Loose', period=period)
+                            mediumScales = self.lepscaler.scale_factor(rtrow, l, lepType='Medium', period=period)
+                            tightScales = self.lepscaler.scale_factor(rtrow, l, lepType='Tight', period=period)
+                            mediumLepeff = self.lepeff.scale_factor(rtrow, l, denom='Loose', numer='Medium', period=period)
+                            tightLepeff = self.lepeff.scale_factor(rtrow, l, denom='Loose', numer='Tight', period=period)
+                            mediumFake = self.lepfake.scale_factor(rtrow, l, denom='Loose', numer='Medium', period=period)
+                            tightFake = self.lepfake.scale_factor(rtrow, l, denom='Loose', numer='Tight', period=period)
                         else:
                             looseScales = [-1,-1,-1]
+                            mediumScales = [-1,-1,-1]
                             tightScales = [-1,-1,-1]
-                            veryTightScales = [-1,-1,-1]
-                            lepeff = [-1,-1,-1]
-                            lepeffVeryTight = [-1,-1,-1]
+                            looseLepeff = [-1,-1,-1]
+                            mediumLepeff = [-1,-1,-1]
+                            tightLepeff = [-1,-1,-1]
+                            mediumFake = [-1,-1,-1]
                             tightFake = [-1,-1,-1]
-                            veryTightFake = [-1,-1,-1]
                         ntupleRow["%s.LepScaleLoose%i" % (i,objCount)] = float(looseScales[0])
+                        ntupleRow["%s.LepScaleMedium%i" % (i,objCount)] = float(mediumScales[0])
                         ntupleRow["%s.LepScaleTight%i" % (i,objCount)] = float(tightScales[0])
-                        ntupleRow["%s.LepScaleVeryTight%i" % (i,objCount)] = float(tightScales[0])
                         ntupleRow["%s.LepScaleLoose%i_up" % (i,objCount)] = float(looseScales[1])
+                        ntupleRow["%s.LepScaleMedium%i_up" % (i,objCount)] = float(mediumScales[1])
                         ntupleRow["%s.LepScaleTight%i_up" % (i,objCount)] = float(tightScales[1])
-                        ntupleRow["%s.LepScaleVeryTight%i_up" % (i,objCount)] = float(veryTightScales[1])
                         ntupleRow["%s.LepScaleLoose%i_down" % (i,objCount)] = float(looseScales[2])
+                        ntupleRow["%s.LepScaleMedium%i_down" % (i,objCount)] = float(mediumScales[2])
                         ntupleRow["%s.LepScaleTight%i_down" % (i,objCount)] = float(tightScales[2])
-                        ntupleRow["%s.LepScaleVeryTight%i_down" % (i,objCount)] = float(veryTightScales[2])
-                        ntupleRow["%s.LepEff%i" % (i,objCount)] = float(lepeff[0])
-                        ntupleRow["%s.LepEff_up%s" % (i,objCount)] = float(lepeff[1])
-                        ntupleRow["%s.LepEff_down%s" % (i,objCount)] = float(lepeff[2])
-                        ntupleRow["%s.LepEffVeryTight%i" % (i,objCount)] = float(lepeffVeryTight[0])
-                        ntupleRow["%s.LepEffVeryTight_up%s" % (i,objCount)] = float(lepeffVeryTight[1])
-                        ntupleRow["%s.LepEffVeryTight_down%s" % (i,objCount)] = float(lepeffVeryTight[2])
-                        ntupleRow["%s.LepFake%i" % (i,objCount)] = float(tightFake[0])
-                        ntupleRow["%s.LepFake_up%i" % (i,objCount)] = float(tightFake[1])
-                        ntupleRow["%s.LepFake_down%i" % (i,objCount)] = float(tightFake[2])
-                        ntupleRow["%s.LepFakeVeryTight%i" % (i,objCount)] = float(veryTightFake[0])
-                        ntupleRow["%s.LepFakeVeryTight_up%i" % (i,objCount)] = float(veryTightFake[1])
-                        ntupleRow["%s.LepFakeVeryTight_down%i" % (i,objCount)] = float(veryTightFake[2])
+                        ntupleRow["%s.LepEffMedium%i" % (i,objCount)] = float(mediumLepeff[0])
+                        ntupleRow["%s.LepEffMedium_up%s" % (i,objCount)] = float(mediumLepeff[1])
+                        ntupleRow["%s.LepEffMedium_down%s" % (i,objCount)] = float(mediumLepeff[2])
+                        ntupleRow["%s.LepEffTight%i" % (i,objCount)] = float(tightLepeff[0])
+                        ntupleRow["%s.LepEffTight_up%s" % (i,objCount)] = float(tightLepeff[1])
+                        ntupleRow["%s.LepEffTight_down%s" % (i,objCount)] = float(tightLepeff[2])
+                        ntupleRow["%s.LepFakeMedium%i" % (i,objCount)] = float(mediumFake[0])
+                        ntupleRow["%s.LepFakeMedium_up%i" % (i,objCount)] = float(mediumFake[1])
+                        ntupleRow["%s.LepFakeMedium_down%i" % (i,objCount)] = float(mediumFake[2])
+                        ntupleRow["%s.LepFakeTight%i" % (i,objCount)] = float(tightFake[0])
+                        ntupleRow["%s.LepFakeTight_up%i" % (i,objCount)] = float(tightFake[1])
+                        ntupleRow["%s.LepFakeTight_down%i" % (i,objCount)] = float(tightFake[2])
                         ntupleRow["%s.Chg%i" % (i,objCount)] = float(getattr(rtrow, "%sCharge" % l)) if theObjects else float(-9)
                         ntupleRow["%s.PassLoose%i" % (i,objCount)] = float(self.ID(rtrow,l,**self.getIdArgs('Loose'))) if theObjects else float(-9)
+                        ntupleRow["%s.PassMedium%i" % (i,objCount)] = float(self.ID(rtrow,l,**self.getIdArgs('Medium'))) if theObjects else float(-9)
                         ntupleRow["%s.PassTight%i" % (i,objCount)] = float(self.ID(rtrow,l,**self.getIdArgs('Tight'))) if theObjects else float(-9)
-                        ntupleRow["%s.PassVeryTight%i" % (i,objCount)] = float(self.ID(rtrow,l,**self.getIdArgs('VeryTight'))) if theObjects else float(-9)
+                        ntupleRow["%s.GenIsPrompt%i" % (i,objCount)] = -2000
                         ntupleRow["%s.GenPdgId%i" % (i,objCount)] = -2000
+                        ntupleRow["%s.GenPatPdgId%i" % (i,objCount)] = -2000
                         ntupleRow["%s.MotherGenPdgId%i" % (i,objCount)] = -2000
                         if not self.isData and theObjects:
+                            ntupleRow["%s.GenIsPrompt%i" % (i,objCount)] = float(getattr(rtrow, "%sGenPrompt" % l))
                             ntupleRow["%s.GenPdgId%i" % (i,objCount)] = float(getattr(rtrow, "%sGenPdgId" % l))
+                            ntupleRow["%s.GenPatPdgId%i" % (i,objCount)] = float(getattr(rtrow, "%sGenParticle" % l))
                             ntupleRow["%s.MotherGenPdgId%i" % (i,objCount)] = float(getattr(rtrow, "%sGenMotherPdgId" % l))
                         ntupleRow["%s.ChargeConsistent%i" % (i,objCount)] = -1
                         if theObjects and period==8:
@@ -747,43 +728,47 @@ class AnalyzerBase(object):
                 ntupleRow["%s%i.JetBTag" % (charName,objCount)] = float(getattr(rtrow, "%sJetCSVBtag" % obj)) if self.period==8 else float(getattr(rtrow, "%sJetPFCISVBtag" % obj))
                 ntupleRow["%s%i.Dxy" % (charName,objCount)] = float(getattr(rtrow, "%sPVDXY" % obj))
                 ntupleRow["%s%i.Dz" % (charName,objCount)] = float(getattr(rtrow, "%sPVDZ" % obj))
-            looseScales = self.lepscaler.scale_factor(rtrow, obj, loose=True, period=self.period)
-            tightScales = self.lepscaler.scale_factor(rtrow, obj, loose=False, period=self.period)
-            veryTightScales = self.lepscaler.scale_factor(rtrow, obj, veryTight=True, period=self.period)
-            lepeff = self.lepeff.scale_factor(rtrow, obj, period=self.period)
-            lepeffVeryTight = self.lepeff.scale_factor(rtrow, obj, veryTight=True, period=self.period)
-            tightFake = self.lepfake.scale_factor(rtrow, obj, loose=False, period=self.period)
-            veryTightFake = self.lepfake.scale_factor(rtrow, obj, loose=False, veryTight=True, period=self.period)
+            looseScales = self.lepscaler.scale_factor(rtrow, obj, lepType='Loose', period=self.period)
+            mediumScales = self.lepscaler.scale_factor(rtrow, obj, lepType='Medium', period=self.period)
+            tightScales = self.lepscaler.scale_factor(rtrow, obj, lepType='Tight', period=self.period)
+            mediumLepeff = self.lepeff.scale_factor(rtrow, obj, denom='Loose', numer='Medium', period=self.period)
+            tightLepeff = self.lepeff.scale_factor(rtrow, obj, denom='Loose', numer='Tight', period=self.period)
+            mediumFake = self.lepfake.scale_factor(rtrow, obj, denom='Loose', numer='Medium', period=self.period)
+            tightFake = self.lepfake.scale_factor(rtrow, obj, denom='Loose', numer='Tight', period=self.period)
             ntupleRow["%s%i.LepScaleLoose" % (charName,objCount)] = float(looseScales[0])
+            ntupleRow["%s%i.LepScaleMedium" % (charName,objCount)] = float(mediumScales[0])
             ntupleRow["%s%i.LepScaleTight" % (charName,objCount)] = float(tightScales[0])
-            ntupleRow["%s%i.LepScaleVeryTight" % (charName,objCount)] = float(veryTightScales[0])
             ntupleRow["%s%i.LepScaleLoose_up" % (charName,objCount)] = float(looseScales[1])
+            ntupleRow["%s%i.LepScaleMedium_up" % (charName,objCount)] = float(mediumScales[1])
             ntupleRow["%s%i.LepScaleTight_up" % (charName,objCount)] = float(tightScales[1])
-            ntupleRow["%s%i.LepScaleVeryTight_up" % (charName,objCount)] = float(veryTightScales[1])
             ntupleRow["%s%i.LepScaleLoose_down" % (charName,objCount)] = float(looseScales[2])
+            ntupleRow["%s%i.LepScaleMedium_down" % (charName,objCount)] = float(mediumScales[2])
             ntupleRow["%s%i.LepScaleTight_down" % (charName,objCount)] = float(tightScales[2])
-            ntupleRow["%s%i.LepScaleVeryTight_down" % (charName,objCount)] = float(veryTightScales[2])
-            ntupleRow["%s%i.LepEff" % (charName,objCount)] = float(lepeff[0])
-            ntupleRow["%s%i.LepEff_up" % (charName,objCount)] = float(lepeff[1])
-            ntupleRow["%s%i.LepEff_down" % (charName,objCount)] = float(lepeff[2])
-            ntupleRow["%s%i.LepEffVeryTight" % (charName,objCount)] = float(lepeffVeryTight[0])
-            ntupleRow["%s%i.LepEffVeryTight_up" % (charName,objCount)] = float(lepeffVeryTight[1])
-            ntupleRow["%s%i.LepEffVeryTight_down" % (charName,objCount)] = float(lepeffVeryTight[2])
-            ntupleRow["%s%i.LepFake" % (charName,objCount)] = float(tightFake[0])
-            ntupleRow["%s%i.LepFake_up" % (charName,objCount)] = float(tightFake[1])
-            ntupleRow["%s%i.LepFake_down" % (charName,objCount)] = float(tightFake[2])
-            ntupleRow["%s%i.LepFakeVeryTight" % (charName,objCount)] = float(veryTightFake[0])
-            ntupleRow["%s%i.LepFakeVeryTight_up" % (charName,objCount)] = float(veryTightFake[1])
-            ntupleRow["%s%i.LepFakeVeryTight_down" % (charName,objCount)] = float(veryTightFake[2])
+            ntupleRow["%s%i.LepEffMedium" % (charName,objCount)] = float(mediumLepeff[0])
+            ntupleRow["%s%i.LepEffMedium_up" % (charName,objCount)] = float(mediumLepeff[1])
+            ntupleRow["%s%i.LepEffMedium_down" % (charName,objCount)] = float(mediumLepeff[2])
+            ntupleRow["%s%i.LepEffTight" % (charName,objCount)] = float(tightLepeff[0])
+            ntupleRow["%s%i.LepEffTight_up" % (charName,objCount)] = float(tightLepeff[1])
+            ntupleRow["%s%i.LepEffTight_down" % (charName,objCount)] = float(tightLepeff[2])
+            ntupleRow["%s%i.LepFakeMedium" % (charName,objCount)] = float(mediumFake[0])
+            ntupleRow["%s%i.LepFakeMedium_up" % (charName,objCount)] = float(mediumFake[1])
+            ntupleRow["%s%i.LepFakeMedium_down" % (charName,objCount)] = float(mediumFake[2])
+            ntupleRow["%s%i.LepFakeTight" % (charName,objCount)] = float(tightFake[0])
+            ntupleRow["%s%i.LepFakeTight_up" % (charName,objCount)] = float(tightFake[1])
+            ntupleRow["%s%i.LepFakeTight_down" % (charName,objCount)] = float(tightFake[2])
             ntupleRow["%s%i.Chg" % (charName,objCount)] = float(getattr(rtrow, "%sCharge" % obj))
             ntupleRow["%s%i.PassLoose" % (charName,objCount)] = float(self.ID(rtrow,obj,**self.getIdArgs('Loose')))
+            ntupleRow["%s%i.PassMedium" % (charName,objCount)] = float(self.ID(rtrow,obj,**self.getIdArgs('Medium')))
             ntupleRow["%s%i.PassTight" % (charName,objCount)] = float(self.ID(rtrow,obj,**self.getIdArgs('Tight')))
-            ntupleRow["%s%i.PassVeryTight" % (charName,objCount)] = float(self.ID(rtrow,obj,**self.getIdArgs('VeryTight')))
             ntupleRow["%s%iFlv.Flv" % (charName,objCount)] = obj[0]
+            ntupleRow["%s%i.GenIsPrompt" % (charName,objCount)] = -2000
             ntupleRow["%s%i.GenPdgId" % (charName,objCount)] = -2000
+            ntupleRow["%s%i.GenPatPdgId" % (charName,objCount)] = -2000
             ntupleRow["%s%i.MotherGenPdgId" % (charName,objCount)] = -2000
             if not self.isData and obj[0] in 'emt':
+                ntupleRow["%s%i.GenIsPrompt" % (charName,objCount)] = float(getattr(rtrow, "%sGenPrompt" % obj))
                 ntupleRow["%s%i.GenPdgId" % (charName,objCount)] = float(getattr(rtrow, "%sGenPdgId" % obj))
+                ntupleRow["%s%i.GenPatPdgId" % (charName,objCount)] = float(getattr(rtrow, "%sGenParticle" % obj))
                 ntupleRow["%s%i.MotherGenPdgId" % (charName,objCount)] = float(getattr(rtrow, "%sGenMotherPdgId" % obj))
             ntupleRow["%s%i.ChargeConsistent" % (charName,objCount)] = int(getattr(rtrow,'%sChargeIdTight' %obj)) if obj[0]=='e' and self.period==8 else int(-1)
             ntupleRow["%s%i.ExpectedMissingInnerHits" % (charName,objCount)] = int(getattr(rtrow,'%sMissingHits' %obj)) if obj[0]=='e' else int(-1)
@@ -881,7 +866,7 @@ class AnalyzerBase(object):
                 if obj[0] == 'e':
                     isotype = "RelPFIsoRho"
                 if obj[0] == 'm':
-                    isotype = "RelPFIsoDBDefault"
+                    isotype = "RelPFIsoDBDefaultR04"
                 if obj[0] in 'tjgn': continue # no iso cut on tau
                 if getattr(rtrow, '%s%s' %(obj,isotype)) > isoCut[obj[0]]: return False
         return True
@@ -898,16 +883,15 @@ class AnalyzerBase(object):
             'lepdown'         : 1,
             'lepedown'        : 1,
             'lepmdown'        : 1,
-            'lepeff'          : 1,
-            'lepeffup'        : 1,
-            'lepeffdown'      : 1,
             'lepfake'         : 0,
             'lepfakeup'       : 0,
             'lepfakedown'     : 0,
             'trig'            : 1,
             'trigup'          : 1,
             'trigdown'        : 1,
-            'puweight'        : [1,1,1],
+            'puweight'        : 1,
+            'puweightup'      : 1,
+            'puweightdown'    : 1,
             'genweight'       : 1,
             'chargeid'        : 1,
             'trigger_prescale': 1,
@@ -928,15 +912,23 @@ class AnalyzerBase(object):
         scales['trigup']   = trigscaleup
         scales['trigdown'] = trigscaledown
         puweight  = self.pu_weights.weight(rtrow, period=self.period)
-        scales['puweight'] = puweight
+        scales['puweight'] = puweight[0]
+        scales['puweightup'] = puweight[1]
+        scales['puweightdown'] = puweight[2]
         # do different based on category
         lepscales = [1.,1.,1.]
         lepescales = [1.,1.,1.]
         lepmscales = [1.,1.,1.]
-        if self.tightW: wl = self.objCand[-1]
+        wl = self.objCand[-1]
         for obj in objects:
-            ls = self.lepscaler.scale_factor(rtrow, obj, period=self.period, metShift=self.metShift, loose=not self.ID(rtrow,obj,**self.getIdArgs('Tight')), **lepargs)
-            if self.tightW and obj==wl: ls = self.lepscaler.scale_factor(rtrow, obj, period=self.period, metShift=self.metShift, loose=not self.ID(rtrow,obj,**self.getIdArgs('Tight')), veryTight=self.ID(rtrow,obj,**self.getIdArgs('VeryTight')), **lepargs)
+            passLoose = self.ID(rtrow,obj,**self.getIdArgs('Loose'))
+            passMedium = self.ID(rtrow,obj,**self.getIdArgs('Medium'))
+            passTight = self.ID(rtrow,obj,**self.getIdArgs('Tight'))
+            if self.tightW: 
+                lepType = 'Medium' if passMedium else 'Loose'
+                if obj==wl and passTight: lepType = 'Tight'
+                ls = self.lepscaler.scale_factor(rtrow, obj, period=self.period, metShift=self.metShift, lepType=lepType **lepargs)
+            if not self.tightW: ls = self.lepscaler.scale_factor(rtrow, obj, period=self.period, metShift=self.metShift, lepType='Tight' if passTight else 'Loose', **lepargs)
             lepscales[0] *= ls[0]
             lepscales[1] *= ls[1]
             lepscales[2] *= ls[2]
@@ -967,21 +959,16 @@ class AnalyzerBase(object):
         scales['lepdown']  = lepscales[2]
         scales['lepedown'] = lepescales[2]
         scales['lepmdown'] = lepmscales[2]
-        if self.period==13:
-            lepeff = self.lepeff.scale_factor(rtrow, *objects, period=self.period, metShift=self.metShift, **lepargs)
-            scales['lepeff'] = lepeff[0]
-            scales['lepeffup'] = lepeff[1]
-            scales['lepeffdown'] = lepeff[2]
         passtight = []
         for obj in objects:
-            passtight += [1 if self.ID(rtrow,obj,**self.getIdArgs('VeryTight' if self.tightW and obj==wl else 'Tight')) else 0]
+            if self.tightW: passtight += [1 if self.ID(rtrow,obj,**self.getIdArgs('Tight' if obj==wl else 'Medium')) else 0]
+            if not self.tightW: passtight += [1 if self.ID(rtrow,obj,**self.getIdArgs('Tight')) else 0]
         totalfake = [1.,1.,1.]
         sign = 1. if sum(passtight) in [3,2,0] else -1.
-        for o in range(len(objects)):
-            lepfake = self.lepfake.scale_factor(rtrow, objects[o], period=self.period, metShift=self.metShift, **lepargs)
-            if self.tightW and objects[o]==wl:
-                lepfake = self.lepfake.scale_factor(rtrow, objects[o], period=self.period, metShift=self.metShift, veryTight=True, **lepargs)
-            if not passtight[o]:
+        for obj in objects:
+            if self.tightW: lepfake = self.lepfake.scale_factor(rtrow, obj, period=self.period, metShift=self.metShift, denom='Loose', numer='Tight' if obj==wl else 'Medium', **lepargs)
+            if not self.tightW: lepfake = self.lepfake.scale_factor(rtrow, obj, period=self.period, metShift=self.metShift, denom='Loose', numer='Tight', **lepargs)
+            if not passtight[objects.index(obj)]:
                 totalfake[0] *= lepfake[0]
                 totalfake[1] *= lepfake[1]
                 totalfake[2] *= lepfake[2]
@@ -1107,7 +1094,22 @@ class AnalyzerBase(object):
             if var=='mass' or var=='m':
                 val = vec.M()
             if var=='mt':
-                val = vec.Mt()
+                val = 0.
+                #if val < 20:
+                #    print '{0}: mt = {1}'.format(', '.join(objs),val)
+                #    print '    pts: {0}'.format(', '.join(['{0}: {1}'.format(o,p) for o,p in zip(objs,pts)]))
+                #    print '    etas: {0}'.format(', '.join(['{0}: {1}'.format(o,e) for o,e in zip(objs,etas)]))
+                #    print '    phis: {0}'.format(', '.join(['{0}: {1}'.format(o,p) for o,p in zip(objs,phis)]))
+                #    mt = math.sqrt(2*pts[0]*pts[1]*(1-math.cos(deltaPhi(phis[0],phis[1]))))
+                #    print '    mt by hand: {0}'.format(mt)
+                #    print '    mt from fsa: {0}'.format(getattr(rtrow,'{0}MtToPfMet_type1'.format(objs[0])))
+                if len(objs)>1 and objs[-1]=='met':
+                    #val = math.sqrt(2*pts[0]*pts[1]*(1-math.cos(deltaPhi(phis[0],phis[1]))))
+                    #val = getattr(rtrow,'{0}MtToPfMet_type1'.format(objs[0]))
+                    candVec = rt.TLorentzVector()
+                    for v in vecs[:-1]: candVec += v
+                    metVec = vecs[-1]
+                    val = math.sqrt(abs((candVec.Et()+metVec.Et())**2 - (vec.Pt())**2))
             if var=='eta':
                 val = vec.Eta()
             if var=='phi':
@@ -1134,11 +1136,11 @@ class AnalyzerBase(object):
         vetoMap = {
             'e' : {
                 'Tight': 'eVetoTight',
-                'Loose': 'eVetoTrigIso',
+                'Loose': 'eVetoLoose',
             },
             'm' : {
-                'Tight': 'muVetoTight',
-                'Loose': 'muVetoTightTrigIso',
+                'Tight': 'muVetoMedium',
+                'Loose': 'muVetoLoose',
             },
         }
         vetoString = vetoMap[flv][vetoType]
