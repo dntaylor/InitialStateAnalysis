@@ -109,12 +109,12 @@ class Plotter(PlotterBase):
         ratiomin = kwargs.pop('ratiomin',0.5)
         ratiomax = kwargs.pop('ratiomax',1.5)
         lumitext = kwargs.pop('lumitext', 11)
-        legendpos = kwargs.pop('legendpos', 33)
+        legendpos = kwargs.pop('legendpos', 43)
         numcol = kwargs.pop('numcol',1)
         signalscale = kwargs.pop('signalscale',1)
         isprelim = kwargs.pop('isprelim', 1)
         scalefactor = kwargs.pop('scalefactor','')
-        yscale = kwargs.pop('yscale',1.25)
+        yscale = kwargs.pop('yscale',1.35)
         if not xmin and len(xrange)==2: xmin = xrange[0]
         if not xmax and len(xrange)==2: xmax = xrange[1]
         if xmin or xmax: xrange = [xmin, xmax]

@@ -21,6 +21,7 @@ def makeFakes(analysis,channel,runPeriod,**kwargs):
     scaleFactor = kwargs.pop('scaleFactor','event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale')
     mass = kwargs.pop('mass',500)
     runTau = kwargs.pop('runTau',0)
+    useMC = kwargs.pop('mc',False)
     for key, value in kwargs.iteritems():
         print "Unrecognized parameter '" + key + "' = " + str(value)
         return 0
@@ -47,10 +48,11 @@ def makeFakes(analysis,channel,runPeriod,**kwargs):
     dataplot = runPeriod in [7,8]
     mergeDict = getMergeDict(runPeriod)
 
+    # mc to subtract from data
     subtractSamples = {
         'WZ'       : ['WZJets','ZZJets','TTVJets','VVVJets'],
         'WZ_W'     : ['WZJets','ZZJets','TTVJets','VVVJets', 'WWJets', 'TTJets','ZJets'],
-        'WZ_Dijet' : ['WZJets','ZZJets','TTVJets','VVVJets', 'WWJets', 'TTJets','ZJets', 'WJets'],
+        'WZ_Dijet' : ['WZJets','ZZJets','TTVJets','VVVJets', 'WWJets', 'TTJets','ZJets', 'WJets','SingleTop'],
     }
 
     tfile = ROOT.TFile('fakes.root','recreate')
@@ -75,7 +77,7 @@ def makeFakes(analysis,channel,runPeriod,**kwargs):
         plotter.initializeBackgroundSamples([sigMap[runPeriod][x] for x in channelBackground[channel]])
         plotter.initializeDataSamples([sigMap[runPeriod]['data']])
         plotter.setIntLumi(intLumiMap[runPeriod])
-        hist = plotter.getFakeRate(numer, denom, ptBins, etaBins[probe], ptvar, etavar, fakeRegion, dataDriven=True, subtractSamples=subtractSamples[analysis], numerScale=numerScale, denomScale=denomScale)
+        hist = plotter.getFakeRate(numer, denom, ptBins, etaBins[probe], ptvar, etavar, fakeRegion, dataDriven=not useMC, subtractSamples=subtractSamples[analysis], numerScale=numerScale, denomScale=denomScale)
         fakes[fakeRegion] = []
         tfile.cd()
         fakeHists[fakeRegion] = hist
@@ -108,6 +110,7 @@ def parse_command_line(argv):
 
     parser.add_argument('-c','--cut',type=str,default='1',help='Cut to be applied to plots.')
     parser.add_argument('-sf','--scaleFactor',type=str,default='event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale',help='Scale factor for plots.')
+    parser.add_argument('-mc',action='store_true',help='Get fake rate from MC rather than data')
     args = parser.parse_args(argv)
 
     return args
@@ -119,7 +122,7 @@ def main(argv=None):
 
     args = parse_command_line(argv)
 
-    makeFakes(args.analysis,args.channel,args.period,myCut=args.cut)
+    makeFakes(args.analysis,args.channel,args.period,myCut=args.cut,mc=args.mc)
 
     return 0
 

@@ -584,25 +584,32 @@ class LeptonFakeRate(object):
         self.eTightFakeHist = self.fakeTfile.Get('FakeRateProbeElecTight')
         self.eMediumFakeHist = self.fakeTfile.Get('FakeRateProbeElecMedium')
         self.mMediumFakeHist = self.fakeTfile.Get('FakeRateProbeMuonMedium')
+        filename = os.path.join(os.path.dirname(__file__),'fakes_dijet_13TeV_fromMC.root')
+        self.fakeTfile_mc = rt.TFile.Open(filename,'READ')
+        self.eTightFakeHist_mc = self.fakeTfile_mc.Get('FakeRateProbeElecTight')
+        self.eMediumFakeHist_mc = self.fakeTfile_mc.Get('FakeRateProbeElecMedium')
+        self.mMediumFakeHist_mc = self.fakeTfile_mc.Get('FakeRateProbeMuonMedium')
 
     def close(self):
         self.efrTfile.Close()
         self.mfrTfile.Close()
         self.fakeTfile.Close()
+        self.fakeTfile_mc.Close()
 
     def scale_factor(self, row, *lep_list, **kwargs):
         period = kwargs.pop('period',13)
         shift = kwargs.pop('metShift','')
         numer = kwargs.pop('numer','Tight')
         denom = kwargs.pop('denom','Loose')
+        mc = kwargs.pop('mc',False)
         out = []
         for l in lep_list:
             lep_type = l[0]
 
             if lep_type == 'm':
-                out += [self.m_wz_fake_veto(row,l,period,shift,numer,denom)]
+                out += [self.m_wz_fake_veto(row,l,period,shift,numer,denom,mc)]
             elif lep_type == 'e':
-                out += [self.e_wz_fake_veto(row,l,period,shift,numer,denom)]
+                out += [self.e_wz_fake_veto(row,l,period,shift,numer,denom,mc)]
             elif lep_type == 't':
                 out += [[0,0,0]] # TODO
             else:
@@ -615,18 +622,18 @@ class LeptonFakeRate(object):
             final[2] *= o[2]
         return final
 
-    def get_fake_err(self,row,l,pt,eta,numer,denom):
+    def get_fake_err(self,row,l,pt,eta,numer,denom,mc=False):
         # TODO: different numerator and denominator
         #if numer=='Medium' and denom=='Loose':
         #    if l[0]=='e': return 0.152, 0.010
         #hist = self.eFakeHist if l[0]=='e' else self.mFakeHist
         if l[0]=='m':
-            hist = self.mMediumFakeHist
+            hist = self.mMediumFakeHist_mc if mc else self.mMediumFakeHist
         if l[0]=='e':
             if numer=='Medium':
-                hist = self.eMediumFakeHist
+                hist = self.eMediumFakeHist_mc if mc else self.eMediumFakeHist
             if numer=='Tight':
-                hist = self.eTightFakeHist
+                hist = self.eTightFakeHist_mc if mc else self.eTightFakeHist
         fake = hist.GetBinContent(hist.FindBin(pt,eta))
         err = hist.GetBinError(hist.FindBin(pt,eta))
         return fake,err
@@ -642,27 +649,27 @@ class LeptonFakeRate(object):
         #        return fake, err
         #return 0.0, 0.0
 
-    def e_wz_fake_veto(self, row, l, period,shift,numer,denom):
+    def e_wz_fake_veto(self, row, l, period,shift,numer,denom,mc=False):
         #fake, err = self.get_fake_err(row,l,'ZTightProbeElecTight',period,shift)
         #fake, err = self.get_fake_err(row,l,"FakeRateProbeElecTight",period,shift)
         pt = getattr(row, "%sPt" % l)
         eta = abs(getattr(row, "%sSCEta" % l))
         if shift=='ees+': pt = getattr(row, "%sPt_ElectronEnUp" % l)
         if shift=='ees-': pt = getattr(row, "%sPt_ElectronEnDown" % l)
-        fake, err = self.get_fake_err(row,l,pt,eta,numer,denom)
+        fake, err = self.get_fake_err(row,l,pt,eta,numer,denom,mc)
         default = fake
         up = min([fake+err,1.])
         down = max([fake-err,0.])
         return [default, up, down]
 
-    def m_wz_fake_veto(self, row, l, period,shift,numer,denom):
+    def m_wz_fake_veto(self, row, l, period,shift,numer,denom,mc=False):
         #fake, err = self.get_fake_err(row,l,'ZTightProbeMuonTight',period,shift)
         #fake, err = self.get_fake_err(row,l,"FakeRateProbeMuonTight",period,shift)
         pt = getattr(row, "%sPt" % l)
         eta = abs(getattr(row, "%sEta" % l))
         if shift=='mes+': pt = getattr(row, "%sPt_MuonEnUp" % l)
         if shift=='mes-': pt = getattr(row, "%sPt_MuonEnDown" % l)
-        fake, err = self.get_fake_err(row,l,pt,eta,numer,denom)
+        fake, err = self.get_fake_err(row,l,pt,eta,numer,denom,mc)
         default = fake
         up = min([fake+err,1.])
         down = max([fake-err,0.])

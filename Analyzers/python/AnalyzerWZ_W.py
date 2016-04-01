@@ -92,6 +92,17 @@ class AnalyzerWZ_WFakeRate(AnalyzerBase):
 
             return bestLeptons
 
+    def getFakeChannel(self,rtrow,**kwargs):
+        tightW = kwargs.pop('tightW',False)
+        allMedium = kwargs.pop('allMedium',False)
+        chan = ''
+        for i,obj in enumerate(self.objCand):
+            if (tightW and i!=2) or allMedium:
+                chan += 'P' if self.ID(rtrow,obj,**self.getIdArgs('Medium')) else 'F'
+            else:
+                chan += 'P' if self.ID(rtrow,obj,**self.getIdArgs('Tight')) else 'F'
+        return chan
+
     ###########################
     ### Define preselection ###
     ###########################
@@ -101,8 +112,8 @@ class AnalyzerWZ_WFakeRate(AnalyzerBase):
         cuts.add(self.fiducial)
         #cuts.add(self.ID_tight)
         cuts.add(self.ID_loose)
-        cuts.add(self.zVeto)
-        cuts.add(self.wSelection)
+        #cuts.add(self.zVeto)
+        #cuts.add(self.wSelection)
         return cuts
 
     def selection(self,rtrow):
@@ -110,8 +121,8 @@ class AnalyzerWZ_WFakeRate(AnalyzerBase):
         if self.isData: cuts.add(self.trigger)
         cuts.add(self.fiducial)
         cuts.add(self.ID_tight)
-        cuts.add(self.zVeto)
-        cuts.add(self.wSelection)
+        #cuts.add(self.zVeto)
+        #cuts.add(self.wSelection)
         return cuts
 
     def getIdArgs(self,type):
@@ -173,7 +184,8 @@ class AnalyzerWZ_WFakeRate(AnalyzerBase):
                         "doubleETightPass", "doubleMuPass", "doubleMuTrkPass"]
 
         if self.period == 13:
-            triggers = ['singleMuSingleEPass', 'doubleMuPass', 'doubleEPass', 'singleESingleMuPass']
+            triggers = ['singleMuSingleEPass', 'doubleMuPass', 'doubleEPass', 'singleESingleMuPass',
+                        'singleIsoMu20Pass', 'singleIsoTkMu20Pass', 'singleIsoMu27Pass', 'singleE23WPLoosePass']
 
         for t in triggers:
             if getattr(rtrow,t)>0:

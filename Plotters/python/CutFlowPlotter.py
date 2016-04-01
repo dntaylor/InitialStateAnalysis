@@ -31,7 +31,7 @@ class CutFlowPlotter(PlotterBase):
         for bin in range(len(selections)):
             cutString = cut + ' && ' + selections[bin] if not sumEntries else\
                         cut + ' && ' + ' && '.join(selections[:bin+1])
-            val,err = self.getNumEntries(cutString,sample,doError=True)
+            val,err = self.getNumEntries(cutString,sample,doError=True,**kwargs)
             #val = self.getNumEntries(selections[:bin+1],sample)
             valList += [val]
             errList += [err]
@@ -307,12 +307,104 @@ class CutFlowPlotter(PlotterBase):
         #canvas.cd()
         self.save(canvas,savename)
 
-        # output s/sqrt(b)
-        if not nosum:
-            lines = []
-            with open(self.cutFlowFile,'r') as txtfile:
-                for line in txtfile:
-                    lines += [line]
-            bgNum = sum([float(x.split()[-1]) for x in lines[1:-1]])
-            sNum = float(lines[-2].split()[-1]) if plotdata else float(lines[-1].split()[-1])
-            sOverRootBG = sNum/math.sqrt(bgNum) if bgNum else 9999999.
+    def plotMCClosure(self, selections, savename, **kwargs):
+        '''A function to plot cut flow of selections. Selections is a list of cuts to apply in order.
+           Each subsequent cut is the logical and of the previous.
+           kwargs accepts:
+               labels      list (string)    bin labels for each cut
+               cut         string           applied with all selections
+               blinder     list (double)    range to blind (2 elements)
+               logy        bool             set logy plot
+               plotsig     bool             plot signal
+               plotdata    bool             plot data
+               plotratio   bool             make ratio plot
+               lumitext    int              location of lumitext (from CMS_lumi)
+               legendpos   int              location of legendtext AB (A=012=LCR, B=012=TMB)
+               signalscale int              factor to scale signal by
+               nosum       bool             Don't sum cut selections
+               isprecf     bool             Do the preselection cutflow
+               isprelim    bool             The plot is CMS preliminary'''
+        labels = kwargs.pop('labels',[])
+        cut = kwargs.pop('cut', '1')
+        blinder = kwargs.pop('blinder', [])
+        logy = kwargs.pop('logy', 0)
+        plotsig = kwargs.pop('plotsig', 1)
+        plotdata = kwargs.pop('plotdata', 1)
+        plotratio = kwargs.pop('plotratio', 1)
+        lumitext = kwargs.pop('lumitext', 11)
+        legendpos = kwargs.pop('legendpos', 33)
+        numcol = kwargs.pop('numcol',1)
+        signalscale = kwargs.pop('signalscale',1)
+        nosum = kwargs.pop('nosum',False)
+        isprecf = kwargs.pop('isprecf',False)
+        isprelim = kwargs.pop('isprelim', 1)
+        yscale = kwargs.pop('yscale',1.2)
+        for key, value in kwargs.iteritems():
+            self.logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
+
+        ROOT.gDirectory.Delete('h*') # clear histogram memory
+
+        self.cutFlowFile = self.plotDir+'/'+savename.replace('/','_')+'.txt'
+        cutString = '{0: <20}'.format(self.analysis)
+        for label in labels:
+            cutString += '{0: <20}'.format(label if len(label)<20 else label[0:18])
+        cutString += '\n'
+        with open(self.cutFlowFile,'w') as txtfile:
+            txtfile.write(cutString)
+
+        #print savename, 'Canvas'
+        canvas = ROOT.TCanvas(savename,savename,50,50,self.W,self.H)
+        canvas = self.setupCanvas(canvas)
+
+        canvas.SetLogy(logy)
+
+
+        numSelections = len(selections)
+        mcClosure = self.getSampleCutFlow(selections,cut,'mcClosure',sumEntries=False)
+        mcClosureUp = self.getSampleCutFlow(selections,cut,'mcClosure',sumEntries=False,shiftUp=True)
+        mcClosureDown = self.getSampleCutFlow(selections,cut,'mcClosure',sumEntries=False,shiftDown=True)
+        mc = self.getMCStackCutFlow(selections,cut,sumEntries=False)
+        mc.Draw('hist')
+        mc.GetYaxis().SetTitle('Events')
+        mc.GetYaxis().SetTitleOffset(1)
+        newymax = max(mc.GetMaximum(),mcClosure.GetMaximum(),mcClosureUp.GetMaximum(),mcClosureDown.GetMaximum())
+        mc.SetMaximum(1.2*newymax)
+        mc.SetMinimum(0.1) if logy else mc.SetMinimum(0)
+        if labels:
+            for bin in range(numSelections):
+                mc.GetHistogram().GetXaxis().SetBinLabel(bin+1,labels[bin])
+
+        staterr = self.get_stat_err(mc.GetStack().Last())
+        staterr.Draw("e2 same")
+
+        mcClosure.SetFillStyle(0)
+        mcClosure.SetLineWidth(2)
+        mcClosure.Draw('hist same')
+
+        mcClosureUp.SetFillStyle(0)
+        mcClosureUp.SetLineWidth(2)
+        mcClosureUp.SetLineStyle(2)
+        mcClosureUp.Draw('hist same')
+
+        mcClosureDown.SetFillStyle(0)
+        mcClosureDown.SetLineWidth(2)
+        mcClosureDown.SetLineStyle(3)
+        mcClosureDown.Draw('hist same')
+
+        # draw cms lumi
+        self.setStyle(canvas,lumitext,plotdata,isprelim)
+        #canvas.cd()
+        canvas.Update()
+        canvas.RedrawAxis()
+        frame = canvas.GetFrame()
+        frame.Draw()
+
+        # legend
+        dataHist = 0
+        sigHists = [mcClosure]
+        leg = self.getLegend(mc,dataHist,sigHists,plotdata=False,plotsig=plotsig,plotratio=plotratio,legendpos=legendpos,numcol=numcol)
+        leg.Draw()
+
+        # save everything
+        #canvas.cd()
+        self.save(canvas,savename)

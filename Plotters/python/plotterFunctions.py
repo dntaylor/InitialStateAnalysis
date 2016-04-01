@@ -222,7 +222,7 @@ def getPerChannelYields(analysis,region,period,cut,**kwargs):
 def getPerChannelControlYields(analysis,region,period,cut,**kwargs):
     tightW = kwargs.pop('tightW',True)
 
-    baseScaleFactor = 'event.gen_weight*event.pu_weight*event.trig_scale'
+    baseScaleFactor = kwargs.pop('baseScaleFactor','event.gen_weight*event.pu_weight*event.trig_scale')
 
     nameMap = {
         0: 'z1.PassTight1',

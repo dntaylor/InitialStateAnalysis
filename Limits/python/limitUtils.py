@@ -3,6 +3,7 @@ import numpy as np
 import logging
 import subprocess
 import glob
+import pickle
 from multiprocessing import Pool
 
 from InitialStateAnalysis.Plotters.plotUtils import getSigMap, getIntLumiMap, getChannels, getMergeDict, ZMASS, getChannelBackgrounds, getNtupleDirectory
@@ -160,6 +161,17 @@ def getChannelMap(bp,genLeps,recoLeps,**kwargs):
 
     return channelMap
 
+def getUnc(nominal,up,down):
+    errup = abs(nominal-up)/nominal if nominal else 0.
+    errdown = abs(nominal-down)/nominal if nominal else 0.
+    return errup, errdown
+
+def sumErr(*errs):
+    err2 = 0.
+    for err in errs:
+        err2 += err**2
+    return err2**0.5
+
 # WZ limit utils
 def wzlimit(analysis,region,period,chan,**kwargs):
     cut = kwargs.pop('cut','1')
@@ -168,6 +180,7 @@ def wzlimit(analysis,region,period,chan,**kwargs):
     datacardDir = kwargs.pop('datacardDir','./datacards')
     mode = kwargs.pop('mode','all') # all, none, theory, stat, lumi, experimental
     unblind = kwargs.pop('unblind',True)
+    outputDirectory = kwargs.pop('outputDirectory','')
     logging.info("Processing card name {0}".format(name))
 
     chanCut = '{0} && channel=="{1}"'.format(cut,chan)
@@ -175,14 +188,21 @@ def wzlimit(analysis,region,period,chan,**kwargs):
     #doStat = mode in ['all','experimental','stat']
     doStat = mode not in ['nostat']
     limits = WZLimits(analysis,region, period, chanCut,  getNtupleDirectory(analysis,region,period),
-                    '%s/%s_%itev_%s' % (datacardDir, analysis, period, region), scalefactor=scalefactor,
+                    '%s/%s_%itev_%s/%s' % (datacardDir, analysis, period, region,outputDirectory), scalefactor=scalefactor,
                      doStat=doStat, unblind=unblind)
 
     # add systematic
-    bgnames = ['datadriven_e','datadrive_m','ZZ','TTV','VVV','ZG']
+    bgnames = ['datadriven_e','datadriven_m','ZZ','TTV','VVV','ZG']
     signames = ['WZ']
     mcnames = ['WZ','ZZ','TTV','VVV','ZG']
 
+    # read from file
+    yields = {}
+    for y in ['default','eesUp','eesDown','mesUp','mesDown','jesUp','jesDown','puUp','puDown']:
+        fname = 'yields/{0}.pkl'.format(y)
+        with open(fname,'rb') as f:
+            yields[y] = pickle.load(f)
+    
     # lumi
     # current recommendation: 4.6%
     lumi = {}
@@ -248,9 +268,9 @@ def wzlimit(analysis,region,period,chan,**kwargs):
         #'mmm' : 1.016,
         # 1+.5 per leg, muon POG
         'eee' : 1.,
-        'eem' : 1.015,
-        'mme' : 1.021,
-        'mmm' : 1.026,
+        'eem' : 1.011,
+        'mme' : 1.016,
+        'mmm' : 1.019,
     }
     if 'm' in chan:
         mlep = {}
@@ -266,7 +286,13 @@ def wzlimit(analysis,region,period,chan,**kwargs):
         'mmm' : 1.0020,
     }
     pu = {}
-    for m in mcnames: pu[m] = puvals[chan]
+    #for m in mcnames: pu[m] = puvals[chan]
+    for sample in mcnames:
+        default = yields['default']['yields'][chan][sample]
+        puUp    = yields['puUp']['yields'][chan][sample]
+        puDown  = yields['puDown']['yields'][chan][sample]
+        puUnc = getUnc(default,puUp,puDown)
+        pu[sample] = 1.+max(puUnc)
     if mode in ['all','experimental','nostat']: limits.add_systematics('PU_unc','lnN',**pu)
 
     # met
@@ -278,7 +304,23 @@ def wzlimit(analysis,region,period,chan,**kwargs):
         'mmm' : 1.017,
     }
     met = {}
-    for m in mcnames: met[m] = metvals[chan]
+    #for m in mcnames: met[m] = metvals[chan]
+    for sample in mcnames:
+        default = yields['default']['yields'][chan][sample]
+        eesUp   = yields['eesUp']['yields'][chan][sample]
+        eesDown = yields['eesDown']['yields'][chan][sample]
+        mesUp   = yields['mesUp']['yields'][chan][sample]
+        mesDown = yields['mesDown']['yields'][chan][sample]
+        jesUp   = yields['jesUp']['yields'][chan][sample]
+        jesDown = yields['jesDown']['yields'][chan][sample]
+        eesUnc = getUnc(default,eesUp,eesDown)
+        mesUnc = getUnc(default,mesUp,mesDown)
+        jesUnc = getUnc(default,jesUp,jesDown)
+        totUncUp = sumErr(eesUnc[0],mesUnc[0],jesUnc[0])
+        totUncDown = sumErr(eesUnc[1],mesUnc[1],jesUnc[1])
+        totUncMax = sumErr(max(eesUnc),max(mesUnc),max(jesUnc))
+        met[sample] = 1.+totUncMax
+
     if mode in ['all','experimental','nostat']: limits.add_systematics('met_unc','lnN',**met)
 
     # btag
@@ -332,7 +374,8 @@ def wzLimitWrapper(args):
     datacardDir = args[7]
     mode = args[8]
     unblind = args[9]
-    wzlimit(analysis,region,period,chan,name=name,cut=cut,scalefactor=scalefactor,datacardDir=datacardDir,mode=mode,unblind=unblind)
+    outputDirectory = args[10]
+    wzlimit(analysis,region,period,chan,name=name,cut=cut,scalefactor=scalefactor,datacardDir=datacardDir,mode=mode,unblind=unblind,outputDirectory=outputDirectory)
     
 
 def wzlimits(analysis,region,period,**kwargs):
@@ -341,10 +384,11 @@ def wzlimits(analysis,region,period,**kwargs):
     datacardDir = kwargs.pop('datacardDir','./datacards')
     mode = kwargs.pop('mode','all')
     unblind = kwargs.pop('unblind',True)
+    outputDirectory = kwargs.pop('outputDirectory','')
 
     poolArgs = []
     for chan in ['eee','eem','mme','mmm']:
-        poolArgs += [(analysis,region,period,chan,chan,cut,scalefactor,datacardDir,mode,unblind)]
+        poolArgs += [(analysis,region,period,chan,chan,cut,scalefactor,datacardDir,mode,unblind,outputDirectory)]
 
     for args in poolArgs:
         wzLimitWrapper(args)

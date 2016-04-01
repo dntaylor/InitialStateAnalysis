@@ -42,6 +42,8 @@ Lime         = ROOT.TColor.GetColor('#9ED54C')
 LimeA        = ROOT.TColor.GetColor('#59A80F')
 Aqua         = ROOT.TColor.GetColor('#66FFFF')
 AquaA        = ROOT.TColor.GetColor('#52CCCC')
+Pink         = ROOT.TColor.GetColor('#FF99CC')
+PinkA        = ROOT.TColor.GetColor('#FFCCE6')
 
 dataStyles['data'] = {
     'legendstyle' : 'pe',
@@ -56,6 +58,25 @@ dataStyles['datadriven'] = {
     'fillcolor' : Gray,
     #'name' : "Data driven",
     'name' : "Non-Prompt",
+    'fillstyle': 1001,
+}
+
+dataStyles['mcClosure'] = {
+    'legendstyle' : 'f',
+    'drawstyle' : 'hist',
+    'linecolor' : RedA,
+    'fillcolor' : Red,
+    #'name' : "Data driven",
+    'name' : "Non-Prompt",
+    'fillstyle': 1001,
+}
+
+dataStyles['QCD'] = {
+    'legendstyle' : 'f',
+    'drawstyle' : 'hist',
+    'linecolor' : PinkA,
+    'fillcolor' : Pink,
+    'name' : "QCD",
     'fillstyle': 1001,
 }
 

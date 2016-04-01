@@ -81,6 +81,7 @@ def getMergedHist(histname,jobs):
     #    sys.exit(1)
     for h in results:
         if not h[1]: continue
+        #print '    ', h[0], h[1].Integral()
         hists.Add(h[1])
     if hists.IsEmpty():
         return histname, 0
@@ -208,6 +209,31 @@ class PlotterBase(object):
             1: 'z1.LepFakeTight2',
             2: 'w1.LepFakeTight1',
         }
+        self.fakeMapUp = {
+            0: 'z1.LepFakeTight_up1',
+            1: 'z1.LepFakeTight_up2',
+            2: 'w1.LepFakeTight_up1',
+        }
+        self.fakeMapDown = {
+            0: 'z1.LepFakeTight_down1',
+            1: 'z1.LepFakeTight_down2',
+            2: 'w1.LepFakeTight_down1',
+        }
+        self.fakeMapMC = {
+            0: 'z1.LepFakeMCTight1',
+            1: 'z1.LepFakeMCTight2',
+            2: 'w1.LepFakeMCTight1',
+        }
+        self.fakeMapMCUp = {
+            0: 'z1.LepFakeMCTight_up1',
+            1: 'z1.LepFakeMCTight_up2',
+            2: 'w1.LepFakeMCTight_up1',
+        }
+        self.fakeMapMCDown = {
+            0: 'z1.LepFakeMCTight_down1',
+            1: 'z1.LepFakeMCTight_down2',
+            2: 'w1.LepFakeMCTight_down1',
+        }
         self.promptMap = {
             0: 'z1.GenIsPrompt1',
             1: 'z1.GenIsPrompt2',
@@ -228,6 +254,11 @@ class PlotterBase(object):
                 0: 'h1.LepFake1',
                 1: 'h1.LepFake2',
                 2: 'h2.LepFake1',
+            }
+            self.fakeMapMC = {
+                0: 'h1.LepFakeMC1',
+                1: 'h1.LepFakeMC2',
+                2: 'h2.LepFakeMC1',
             }
         if self.tightW:
             self.nameMap = {
@@ -255,6 +286,31 @@ class PlotterBase(object):
                 1: 'z1.LepFakeMedium2',
                 2: 'w1.LepFakeTight1',
             }
+            self.fakeMapUp = {
+                0: 'z1.LepFakeMedium_up1',
+                1: 'z1.LepFakeMedium_up2',
+                2: 'w1.LepFakeTight_up1',
+            }
+            self.fakeMapDown = {
+                0: 'z1.LepFakeMedium_down1',
+                1: 'z1.LepFakeMedium_down2',
+                2: 'w1.LepFakeTight_down1',
+            }
+            self.fakeMapMC = {
+                0: 'z1.LepFakeMCMedium1',
+                1: 'z1.LepFakeMCMedium2',
+                2: 'w1.LepFakeMCTight1',
+            }
+            self.fakeMapMCUp = {
+                0: 'z1.LepFakeMCMedium_up1',
+                1: 'z1.LepFakeMCMedium_up2',
+                2: 'w1.LepFakeMCTight_up1',
+            }
+            self.fakeMapMCDown = {
+                0: 'z1.LepFakeMCMedium_down1',
+                1: 'z1.LepFakeMCMedium_down2',
+                2: 'w1.LepFakeMCTight_down1',
+            }
         if self.allMedium:
             self.nameMap = {
                 0: 'z1.PassMedium1',
@@ -280,6 +336,11 @@ class PlotterBase(object):
                 0: 'z1.LepFakeMedium1',
                 1: 'z1.LepFakeMedium2',
                 2: 'w1.LepFakeMedium1',
+            }
+            self.fakeMapMC = {
+                0: 'z1.LepFakeMCMedium1',
+                1: 'z1.LepFakeMCMedium2',
+                2: 'w1.LepFakeMCMedium1',
             }
 
 
@@ -467,6 +528,20 @@ class PlotterBase(object):
 
         return jobs
 
+    def __buildAsync_getDataDrivenNumEntriesJobs_mcClosure(self,cut,**kwargs):
+        getPrompt = kwargs.pop('getPrompt',False)
+        singleBackground = kwargs.pop('singleBackground','')
+        jobs = []
+
+        (cutLoose,promptCut,mcLooseCut,fakeScaleFactor,fullMCScale,nonPromptScale) = self.__getDataDrivenHistParameters(cut,getPrompt=getPrompt,mcFake=True,**kwargs)
+
+        # get contribution from control regions
+        for sample in self.backgrounds:
+            jobs += self.__buildAsync_getNumEntriesJobs(cutLoose,sample,customScale=fullMCScale+'*(-1.)',**kwargs)
+
+        return jobs
+
+
     def __buildAsync_getNumEntriesJobs(self,selection,sample,**kwargs):
         doError = kwargs.pop('doError',False)
         scaleup = kwargs.pop('scaleup',False)
@@ -486,6 +561,8 @@ class PlotterBase(object):
             thisCut = selection + ' && ' + self.mcCut if 'data' not in sample else selection
             if 'datadriven' in sample:
                 jobs += self.__buildAsync_getDataDrivenNumEntriesJobs(thisCut,**kwargs)
+            elif 'mcClosure' in sample:
+                jobs += self.__buildAsync_getDataDrivenNumEntriesJobs_mcClosure(thisCut,**kwargs)
             else:
                 jobs += [self.__buildAsync_getSingleNumEntriesJob(sample,thisCut,scalefactor,**kwargs)]
         return jobs
@@ -631,6 +708,9 @@ class PlotterBase(object):
         electronOnly = kwargs.pop('electronOnly',False)
         muonOnly = kwargs.pop('muonOnly',False)
         singleChannel = kwargs.pop('channel','')
+        mcFake = kwargs.pop('mcFake',False)
+        shiftUp = kwargs.pop('shiftUp',False)
+        shiftDown = kwargs.pop('shiftDown',False)
 
         # remove any passTight cuts, assumes these are there, since it only returns the all tight stuff
         allCuts = getPassTightDefinition(self.analysis,self.region,self.period)
@@ -639,13 +719,13 @@ class PlotterBase(object):
         cutLoose = cut
         if type(cut) is list:
             for c in range(len(cut)):
-                for l in range(3):
+                for l in range(self.numLeptons):
                     cutLoose[c] = cutLoose[c].replace(self.nameMap[l],'1')
                     cutLoose[c] = cutLoose[c].replace('l{0}.PassTight'.format(l),'1')
                     cutLoose[c] = cutLoose[c].replace('l{0}.PassMedium'.format(l),'1')
                 cutLoose[c] = cutLoose[c].replace('select.passTight',allCuts)
         else:
-            for l in range(3):
+            for l in range(self.numLeptons):
                 cutLoose = cutLoose.replace(self.nameMap[l],'1')
                 cutLoose = cutLoose.replace('l{0}.PassTight'.format(l),'1')
                 cutLoose = cutLoose.replace('l{0}.PassMedium'.format(l),'1')
@@ -656,29 +736,49 @@ class PlotterBase(object):
         if self.allMedium: fakechan = 'fakeChannel_allMedium'
 
         # exclude signal region
-        cutLoose += ' && {0}!="PPP"'.format(fakechan)
-
-        modes = ['PPP','PPF','PFP','FPP','PFF','FPF','FFP','FFF']
-        modeMap = {
-            'l': {
-                'eee': {'PPP': 1., 'PPF': 1., 'PFP': 1., 'FPP': 1., 'PFF': 1.,  'FPF': 1.,  'FFP': 1., 'FFF': 1.,},
-                'eem': {'PPP': 1., 'PPF': 1., 'PFP': 1., 'FPP': 1., 'PFF': 1.,  'FPF': 1.,  'FFP': 1., 'FFF': 1.,},
-                'mme': {'PPP': 1., 'PPF': 1., 'PFP': 1., 'FPP': 1., 'PFF': 1.,  'FPF': 1.,  'FFP': 1., 'FFF': 1.,},
-                'mmm': {'PPP': 1., 'PPF': 1., 'PFP': 1., 'FPP': 1., 'PFF': 1.,  'FPF': 0.,  'FFP': 1., 'FFF': 1.,},
-            },
-            'e': {
-                'eee': {'PPP': 1., 'PPF': 1., 'PFP': 1., 'FPP': 1., 'PFF': 1.,  'FPF': 1.,  'FFP': 1., 'FFF': 1.,},
-                'eem': {'PPP': 1., 'PPF': 0., 'PFP': 1., 'FPP': 1., 'PFF': 0.5, 'FPF': 0.5, 'FFP': 1., 'FFF': 2./3,},
-                'mme': {'PPP': 1., 'PPF': 1., 'PFP': 0., 'FPP': 0., 'PFF': 0.5, 'FPF': 0.5, 'FFP': 0., 'FFF': 1./3,},
-                'mmm': {'PPP': 1., 'PPF': 0., 'PFP': 0., 'FPP': 0., 'PFF': 0.,  'FPF': 0.,  'FFP': 0., 'FFF': 0.,},
-            },
-            'm':{
-                'eee': {'PPP': 1., 'PPF': 0., 'PFP': 0., 'FPP': 0., 'PFF': 0.,  'FPF': 0.,  'FFP': 0., 'FFF': 0.,},
-                'eem': {'PPP': 1., 'PPF': 1., 'PFP': 0., 'FPP': 0., 'PFF': 0.5, 'FPF': 0.5, 'FFP': 0., 'FFF': 1./3,},
-                'mme': {'PPP': 1., 'PPF': 0., 'PFP': 1., 'FPP': 1., 'PFF': 0.5, 'FPF': 0.5, 'FFP': 1., 'FFF': 2./3,},
-                'mmm': {'PPP': 1., 'PPF': 1., 'PFP': 1., 'FPP': 1., 'PFF': 1.,  'FPF': 1.,  'FFP': 1., 'FFF': 1.,},
-            },
-        }
+        if self.numLeptons==3:
+            cutLoose += ' && {0}!="PPP"'.format(fakechan)
+            modes = ['PPP','PPF','PFP','FPP','PFF','FPF','FFP','FFF']
+            modeMap = {
+                'l': {
+                    'eee': {'PPP': 1., 'PPF': 1., 'PFP': 1., 'FPP': 1., 'PFF': 1.,  'FPF': 1.,  'FFP': 1., 'FFF': 1.,},
+                    'eem': {'PPP': 1., 'PPF': 1., 'PFP': 1., 'FPP': 1., 'PFF': 1.,  'FPF': 1.,  'FFP': 1., 'FFF': 1.,},
+                    'mme': {'PPP': 1., 'PPF': 1., 'PFP': 1., 'FPP': 1., 'PFF': 1.,  'FPF': 1.,  'FFP': 1., 'FFF': 1.,},
+                    'mmm': {'PPP': 1., 'PPF': 1., 'PFP': 1., 'FPP': 1., 'PFF': 1.,  'FPF': 0.,  'FFP': 1., 'FFF': 1.,},
+                },
+                'e': {
+                    'eee': {'PPP': 1., 'PPF': 1., 'PFP': 1., 'FPP': 1., 'PFF': 1.,  'FPF': 1.,  'FFP': 1., 'FFF': 1.,},
+                    'eem': {'PPP': 1., 'PPF': 0., 'PFP': 1., 'FPP': 1., 'PFF': 0.5, 'FPF': 0.5, 'FFP': 1., 'FFF': 2./3,},
+                    'mme': {'PPP': 1., 'PPF': 1., 'PFP': 0., 'FPP': 0., 'PFF': 0.5, 'FPF': 0.5, 'FFP': 0., 'FFF': 1./3,},
+                    'mmm': {'PPP': 1., 'PPF': 0., 'PFP': 0., 'FPP': 0., 'PFF': 0.,  'FPF': 0.,  'FFP': 0., 'FFF': 0.,},
+                },
+                'm':{
+                    'eee': {'PPP': 1., 'PPF': 0., 'PFP': 0., 'FPP': 0., 'PFF': 0.,  'FPF': 0.,  'FFP': 0., 'FFF': 0.,},
+                    'eem': {'PPP': 1., 'PPF': 1., 'PFP': 0., 'FPP': 0., 'PFF': 0.5, 'FPF': 0.5, 'FFP': 0., 'FFF': 1./3,},
+                    'mme': {'PPP': 1., 'PPF': 0., 'PFP': 1., 'FPP': 1., 'PFF': 0.5, 'FPF': 0.5, 'FFP': 1., 'FFF': 2./3,},
+                    'mmm': {'PPP': 1., 'PPF': 1., 'PFP': 1., 'FPP': 1., 'PFF': 1.,  'FPF': 1.,  'FFP': 1., 'FFF': 1.,},
+                },
+            }
+        elif self.numLeptons==2:
+            cutLoose += ' && {0}!="PP"'.format(fakechan)
+            modes = ['PP','PF','FP','FF']
+            modeMap = {
+                'l': {
+                    'ee': {'PP': 1., 'PF': 1., 'FP': 1., 'FF': 1.,  },
+                    'em': {'PP': 1., 'PF': 1., 'FP': 1., 'FF': 1.,  },
+                    'mm': {'PP': 1., 'PF': 1., 'FP': 1., 'FF': 1.,  },
+                },
+                'e': {
+                    'ee': {'PP': 1., 'PF': 1., 'FP': 1., 'FF': 1.,  },
+                    'em': {'PP': 1., 'PF': 0., 'FP': 1., 'FF': 0.5, },
+                    'mm': {'PP': 1., 'PF': 0., 'FP': 0., 'FF': 0., },
+                },
+                'm':{
+                    'ee': {'PP': 1., 'PF': 0., 'FP': 0., 'FF': 0.,  },
+                    'em': {'PP': 1., 'PF': 1., 'FP': 0., 'FF': 0.5, },
+                    'mm': {'PP': 1., 'PF': 1., 'FP': 1., 'FF': 1., },
+                },
+            }
 
         modesToRun = modes[1:]
         if singleComponent: modesToRun = [singleComponent]
@@ -694,13 +794,18 @@ class PlotterBase(object):
             mcFactors[mode] = factor
         mcScaleFactor = '*'.join(['({0}=="{1}" ? ({2}) : (1.))'.format(fakechan,c,mcFactors[c]) for c in modes[1:]])
 
+        fakeMap = self.fakeMapMC if mcFake else self.fakeMap
+        if shiftUp: fakeMap = self.fakeMapMCUp if mcFake else self.fakeMapUp
+        if shiftDown: fakeMap = self.fakeMapMCDown if mcFake else self.fakeMapDown
+
         # matrix method
-        coeff = '1./(({0}-{1})*({2}-{3})*({4}-{5}))'.format(self.effMap[0],self.fakeMap[0],self.effMap[1],self.fakeMap[1],self.effMap[2],self.fakeMap[2])
+        #coeff = '1./(({0}-{1})*({2}-{3})*({4}-{5}))'.format(self.effMap[0],fakeMap[0],self.effMap[1],fakeMap[1],self.effMap[2],fakeMap[2])
+        coeff = '1./({0})'.format('*'.join(['({0}-{1})'.format(self.effMap[i],fakeMap[i]) for i in range(self.numLeptons)]))
         fakefactors = {}
         for mode in modes:
             factors = [coeff]
             for i,f in enumerate(mode):
-                factors += ['(1-{0})'.format(self.fakeMap[i]) if f=='P' else self.fakeMap[i]]
+                factors += ['(1-{0})'.format(fakeMap[i]) if f=='P' else fakeMap[i]]
             factor = '*'.join(factors)
             if mode.count('F') in [1,3]: factor += '*(-1.)'
             fakefactors[mode] = factor
@@ -716,7 +821,7 @@ class PlotterBase(object):
             factors = ['{0}'.format(modeMap[mapMode][singleChannel][mode] if singleChannel else 1.)]
             if mode not in modesToRun: factors = ['0']
             for i,f in enumerate(mode):
-                if f=='F': factors += ['({0}/(1-{0}))'.format(self.fakeMap[i])]
+                if f=='F': factors += ['({0}/(1-{0}))'.format(fakeMap[i])]
                 # my single bin fakerates
                 #if f=='F':
                 #    if i in [0,1]: # z1 medium
@@ -728,6 +833,13 @@ class PlotterBase(object):
             fakefactors[mode] = factor
         # prompt lepton scale factor
         fakerateMethodScaleFactor = '*'.join(['({0}=="{1}" ? ({2}) : (1.))'.format(fakechan,c,fakefactors[c]) for c in modes[1:]])
+
+        ## try it a different way:
+        #mapMode = 'l'
+        #if electronOnly: mapMode='e'
+        #if muonOnly: mapMode='m'
+        #for l in range(self.numLeptons):
+        #    factors = 
 
         fakeScaleFactor = '1'
         if self.fakeMode == 'matrix': fakeScaleFactor = matrixMethodScaleFactor
@@ -765,6 +877,18 @@ class PlotterBase(object):
 
         return jobs
 
+    def __buildAsync_getDataDrivenHistJobs_mcClosure(self,variables,binning,cut,**kwargs):
+        getPrompt = kwargs.pop('getPrompt',False)
+        jobs = []
+
+        (cutLoose,promptCut,mcLooseCut,fakeScaleFactor,fullMCScale,nonPromptScale) = self.__getDataDrivenHistParameters(cut,getPrompt=getPrompt,mcFake=True,**kwargs)
+
+        # get contribution from control regions
+        for sample in self.backgrounds:
+            jobs += self.__buildAsync_getMergedHistJobs(sample,variables,binning,cutLoose,customScale=fullMCScale+'*(-1.)',**kwargs)
+
+        return jobs
+
     def __buildAsync_getMergedHistJobs(self,sample,variables,binning,cut,**kwargs):
         jobs = []
         if isinstance(variables, basestring): variables = [variables]
@@ -785,6 +909,8 @@ class PlotterBase(object):
                     thisCut = '{0} && {1}'.format(cut[v],self.mcCut) if 'data' not in sample else cut[v]
                 if 'datadriven' in sample: 
                     jobs += self.__buildAsync_getDataDrivenHistJobs(variables[v],binning,thisCut,**kwargs) # need to do some special stuff
+                elif 'mcClosure' in sample: 
+                    jobs += self.__buildAsync_getDataDrivenHistJobs_mcClosure(variables[v],binning,thisCut,**kwargs) # for the closure test
                 else:
                     jobs += [self.__buildAsync_getHistJob(sample,variables[v],binning,thisCut,**kwargs)]
         return jobs
@@ -804,12 +930,14 @@ class PlotterBase(object):
 
     def __getHist_async(self,sample,variables,binning,cut,noFormat=False,**kwargs):
         normalize = kwargs.pop('normalize',False)
+        #print sample
         jobs = self.__buildAsync_getMergedHistJobs(sample,variables,binning,cut,**kwargs)
         self.j += 1
         histname = 'h_{0}_getHist_{1}'.format(sample,self.j)
         result = getMergedHist(histname, jobs)
         hist = result[1]
         if not hist: return 0
+        #print '    ', histname, hist.Integral()
         hist.SetTitle(self.dataStyles[sample]['name'])
         if sample in self.data: return hist
         hist.SetFillColor(self.dataStyles[sample]['fillcolor'])
@@ -842,6 +970,9 @@ class PlotterBase(object):
         hist.Merge(hists)
         #hist = self.getPoissonErrors(hist)
         return hist
+
+    def getHist(self, sample, variables, binning, cut, noFormat=False, **kwargs):
+        return self.__getHist_async(sample,variables,binning,cut,**kwargs)
 
     def getPoissonErrors(self,hist):
         #return hist
@@ -1024,7 +1155,7 @@ class PlotterBase(object):
         CMS_lumi.CMS_lumi(pad,self.period_int,position)
 
     def getLegend(self,mchist,datahist,sighists,**kwargs):
-        legendpos = kwargs.pop('legendpos',33)
+        legendpos = kwargs.pop('legendpos',43)
         plotdata = kwargs.pop('plotdata',True)
         plotsig = kwargs.pop('plotsig',True)
         plotmc = kwargs.pop('plotmc',True)
@@ -1065,8 +1196,8 @@ class PlotterBase(object):
             for hist in reversed(mchist.GetHists()):
                 leg.AddEntry(hist,hist.GetTitle(),'f')
         if plotsig:
-            for s in self.signal:
-                leg.AddEntry(sighists[s],sighists[s].GetTitle(),'f')
+            for s in sighists:
+                leg.AddEntry(s,s.GetTitle(),'f')
         return leg
 
     def save(self, canvas, savename):

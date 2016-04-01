@@ -603,6 +603,8 @@ class AnalyzerBase(object):
                             tightLepeff = self.lepeff.scale_factor(rtrow, l, denom='Loose', numer='Tight', period=period)
                             mediumFake = self.lepfake.scale_factor(rtrow, l, denom='Loose', numer='Medium', period=period)
                             tightFake = self.lepfake.scale_factor(rtrow, l, denom='Loose', numer='Tight', period=period)
+                            mediumFakeMC = self.lepfake.scale_factor(rtrow, l, denom='Loose', numer='Medium', period=period,mc=True)
+                            tightFakeMC = self.lepfake.scale_factor(rtrow, l, denom='Loose', numer='Tight', period=period,mc=True)
                         else:
                             looseScales = [-1,-1,-1]
                             mediumScales = [-1,-1,-1]
@@ -612,6 +614,8 @@ class AnalyzerBase(object):
                             tightLepeff = [-1,-1,-1]
                             mediumFake = [-1,-1,-1]
                             tightFake = [-1,-1,-1]
+                            mediumFakeMC = [-1,-1,-1]
+                            tightFakeMC = [-1,-1,-1]
                         ntupleRow["%s.LepScaleLoose%i" % (i,objCount)] = float(looseScales[0])
                         ntupleRow["%s.LepScaleMedium%i" % (i,objCount)] = float(mediumScales[0])
                         ntupleRow["%s.LepScaleTight%i" % (i,objCount)] = float(tightScales[0])
@@ -633,6 +637,12 @@ class AnalyzerBase(object):
                         ntupleRow["%s.LepFakeTight%i" % (i,objCount)] = float(tightFake[0])
                         ntupleRow["%s.LepFakeTight_up%i" % (i,objCount)] = float(tightFake[1])
                         ntupleRow["%s.LepFakeTight_down%i" % (i,objCount)] = float(tightFake[2])
+                        ntupleRow["%s.LepFakeMCMedium%i" % (i,objCount)] = float(mediumFakeMC[0])
+                        ntupleRow["%s.LepFakeMCMedium_up%i" % (i,objCount)] = float(mediumFakeMC[1])
+                        ntupleRow["%s.LepFakeMCMedium_down%i" % (i,objCount)] = float(mediumFakeMC[2])
+                        ntupleRow["%s.LepFakeMCTight%i" % (i,objCount)] = float(tightFakeMC[0])
+                        ntupleRow["%s.LepFakeMCTight_up%i" % (i,objCount)] = float(tightFakeMC[1])
+                        ntupleRow["%s.LepFakeMCTight_down%i" % (i,objCount)] = float(tightFakeMC[2])
                         ntupleRow["%s.Chg%i" % (i,objCount)] = float(getattr(rtrow, "%sCharge" % l)) if theObjects else float(-9)
                         ntupleRow["%s.PassLoose%i" % (i,objCount)] = float(self.ID(rtrow,l,**self.getIdArgs('Loose'))) if theObjects else float(-9)
                         ntupleRow["%s.PassMedium%i" % (i,objCount)] = float(self.ID(rtrow,l,**self.getIdArgs('Medium'))) if theObjects else float(-9)
@@ -735,6 +745,8 @@ class AnalyzerBase(object):
             tightLepeff = self.lepeff.scale_factor(rtrow, obj, denom='Loose', numer='Tight', period=self.period)
             mediumFake = self.lepfake.scale_factor(rtrow, obj, denom='Loose', numer='Medium', period=self.period)
             tightFake = self.lepfake.scale_factor(rtrow, obj, denom='Loose', numer='Tight', period=self.period)
+            mediumFakeMC = self.lepfake.scale_factor(rtrow, obj, denom='Loose', numer='Medium', period=self.period, mc=True)
+            tightFakeMC = self.lepfake.scale_factor(rtrow, obj, denom='Loose', numer='Tight', period=self.period, mc=True)
             ntupleRow["%s%i.LepScaleLoose" % (charName,objCount)] = float(looseScales[0])
             ntupleRow["%s%i.LepScaleMedium" % (charName,objCount)] = float(mediumScales[0])
             ntupleRow["%s%i.LepScaleTight" % (charName,objCount)] = float(tightScales[0])
@@ -756,6 +768,12 @@ class AnalyzerBase(object):
             ntupleRow["%s%i.LepFakeTight" % (charName,objCount)] = float(tightFake[0])
             ntupleRow["%s%i.LepFakeTight_up" % (charName,objCount)] = float(tightFake[1])
             ntupleRow["%s%i.LepFakeTight_down" % (charName,objCount)] = float(tightFake[2])
+            ntupleRow["%s%i.LepFakeMCMedium" % (charName,objCount)] = float(mediumFakeMC[0])
+            ntupleRow["%s%i.LepFakeMCMedium_up" % (charName,objCount)] = float(mediumFakeMC[1])
+            ntupleRow["%s%i.LepFakeMCMedium_down" % (charName,objCount)] = float(mediumFakeMC[2])
+            ntupleRow["%s%i.LepFakeMCTight" % (charName,objCount)] = float(tightFakeMC[0])
+            ntupleRow["%s%i.LepFakeMCTight_up" % (charName,objCount)] = float(tightFakeMC[1])
+            ntupleRow["%s%i.LepFakeMCTight_down" % (charName,objCount)] = float(tightFakeMC[2])
             ntupleRow["%s%i.Chg" % (charName,objCount)] = float(getattr(rtrow, "%sCharge" % obj))
             ntupleRow["%s%i.PassLoose" % (charName,objCount)] = float(self.ID(rtrow,obj,**self.getIdArgs('Loose')))
             ntupleRow["%s%i.PassMedium" % (charName,objCount)] = float(self.ID(rtrow,obj,**self.getIdArgs('Medium')))

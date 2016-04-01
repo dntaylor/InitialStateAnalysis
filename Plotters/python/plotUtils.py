@@ -793,10 +793,12 @@ def getChannelBackgrounds(runPeriod):
     if runPeriod==13:
         channelBackground = {
             'WZ'      : ['T', 'TT', 'TTV', 'Zfiltered', 'ZGfiltered', 'VVV', 'WW', 'ZZ', 'WZ'],
+            #'WZMCClosure'  : ['TT','Z'],
+            'WZMCClosure'  : ['QCD','T','TT','W','WW','Z'],
             'WZdatadriven' : ['TTV', 'ZG', 'VVV', 'ZZ', 'WZ'],
             'NoVeto'  : ['T', 'TT', 'TTV', 'Z', 'VVV', 'WW', 'ZZ', 'WZ'],
             'W'       : ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'ZZ', 'WZ'],
-            'FakeRate': ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'VVV', 'ZZ', 'WZ'],
+            'FakeRate': ['QCD','T', 'TT', 'TTV', 'W', 'Z', 'WW', 'VVV', 'ZZ', 'WZ'],
             'TTFakeRate': ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'VVV', 'ZZ', 'WZ'],
             'HZZFakeRate': ['T', 'TT', 'TTV', 'W', 'Z', 'WW', 'ZZ', 'WZ'],
             'Z'       : ['T', 'TT', 'TTV', 'Z', 'WW', 'ZZ', 'WZ'],
@@ -1162,15 +1164,14 @@ def getFakeParams(analysis,cut='1'):
 
 
     # setup selections
-    ptBins = [1,10,20,30,1000]
     ptBins = [10,1000]
-    if analysis in ['WZ_Dijet']: ptBins = [1,10,15,20,25,30,40,50,200]
+    #if analysis in ['WZ_Dijet']: ptBins = [1,10,15,20,25,30,40,50,200]
 
     etaBins = {
-        'e': [0,1.479,2.5],
-        'm': [0,1.2,2.4],
-        #'e': [0,2.5],
-        #'m': [0,2.4],
+        #'e': [0,1.479,2.5],
+        #'m': [0,1.2,2.4],
+        'e': [0,2.5],
+        'm': [0,2.4],
     }
 
     return fakeRegions, ptBins, etaBins
