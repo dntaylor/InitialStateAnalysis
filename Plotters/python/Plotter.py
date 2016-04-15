@@ -340,6 +340,7 @@ class Plotter(PlotterBase):
             ratiopad.cd()
             ratiopad.SetGridy(0)
             ratiostaterr.Draw("e2")
+            ratiostaterr.GetXaxis().SetLabelOffset(0.05)
             ratiounity.Draw("same")
             if plotdata:
                 if len(blinder)==2:

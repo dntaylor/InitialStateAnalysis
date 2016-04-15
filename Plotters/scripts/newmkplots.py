@@ -43,6 +43,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     useSignal = analysis in ['Hpp3l','Hpp4l']
     allowedPlots = kwargs.pop('allowedPlots',['all'])
     tightW = kwargs.pop('tightW',False)
+    final = kwargs.pop('final',False)
     loglevel = kwargs.pop('loglevel','INFO')
     for key, value in kwargs.iteritems():
         logger.warning("Unrecognized parameter '" + key + "' = " + str(value))
@@ -65,6 +66,7 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
     saves = '%s_%s_%sTeV' % (analysis,channel,runPeriod)
     if directory: saves = '{0}/{1}'.format(saves,directory)
     if outputDir: saves = '{0}/{1}'.format(saves,outputDir)
+    if final: saves = '{0}/final'.format(saves)
     sigMap = getSigMap(nl,mass)
     intLumiMap = getIntLumiMap()
     channelBackground = getChannelBackgrounds(runPeriod)
@@ -177,6 +179,8 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
             logger.info('%s:%s:%iTeV: %s - %s' % (analysis, channel, runPeriod, param, plot))
             args   = cutflowParams[param]['allPlots'][plot]['args']
             kwargs = cutflowParams[param]['allPlots'][plot]['kwargs']
+            if final:
+                kwargs['isprelim'] = 0
             plotMethod(*args,**kwargs)
 
 
@@ -463,6 +467,8 @@ def plotRegion(analysis,channel,runPeriod,**kwargs):
             binning  = plotParams[param]['allPlots'][plot]['binning']
             savename = plotParams[param]['allPlots'][plot]['savename']
             plotArgs = plotParams[param]['allPlots'][plot]['plotArgs']
+            if final:
+                plotArgs['isprelim'] = 0
             plotMethod = getattr(plotter,plotMode)
             plotMethod(variable,binning,savename,**plotArgs)
 
@@ -485,6 +491,7 @@ def parse_command_line(argv):
     parser.add_argument('-ub','--unblind',action='store_false',help='Unblind signal channel')
     parser.add_argument('-m','--mass',nargs='?',type=int,const=500,default=500)
     parser.add_argument('--detailed',action='store_true',help='Do detailed lepton plots')
+    parser.add_argument('--final',action='store_true',help='Remove "Preliminary"')
     parser.add_argument('-fs','--finalStates',type=str,default='all',help='Only run given channels (ie: "eee,emm")')
     parser.add_argument('-c','--cut',type=str,default='1',help='Cut to be applied to plots.')
     parser.add_argument('-sf','--scaleFactor',type=str,default='event.gen_weight*event.pu_weight*event.lep_scale*event.trig_scale',help='Scale factor for plots.')
@@ -548,6 +555,7 @@ def main(argv=None):
                    allowedPlots=args.plots,
                    directory=args.directory,
                    skipCutflow=args.skipCutFlowPlotter,
+                   final=args.final,
                    outputDir=args.outputDirectory)
 
     return 0

@@ -28,25 +28,38 @@ def getHpp4lUncertainty(mode):
     return unc
 
 def getWZUncertainty(mode,chan):
-    unc = {}
-    if mode=='datadriven':
-        unc['fake_rate_unc'] = 0.3
-    if mode=='ZZJets':
-        unc['zz_xsec'] = 0.16
-    if mode=='ZG':
-        unc['zg_xsec_theory'] = 0.06
-    if mode=='TTVJets':
-        unc['ttv_xsec_theory'] = 0.15
-        unc['btag'] = 0.07
-    if mode=='VVVJets':
-        unc['vvv_xsec_theory'] = 0.06
-    if mode in ['WZJets','ZZJets','ZG','TTVJets','VVVJets']:
-        unc['lumi'] = 0.027
-        unc['lep_eff'] = 0.03 # total uncertainty, maybe break into electron muon and channels later
-        unc['pu_unc'] = 0.01
-        unc['met_unc'] = 0.02
-    if mode=='WZJets':
-        unc['scale_unc'] = 0.043
-        unc['pdf_unc'] = 0.014
-        unc['btag'] = 0.01
+    # add on flat uncertainty
+    unc = {
+        'dd_e'  : 0.054,
+        'dd_m'  : 0.039,
+        'btag'  : 0.021,
+        'met'   : 0.02,
+        'eff_e' : 0.019,
+        'eff_m' : 0.015,
+        'pileup': 0.008,
+        'zz'    : 0.004,
+        'pdf'   : 0.01,
+        'lumi'  : 0.027,
+    }
+    # old way
+    #unc = {}
+    #if mode=='datadriven':
+    #    unc['fake_rate_unc'] = 0.3
+    #if mode=='ZZJets':
+    #    unc['zz_xsec'] = 0.16
+    #if mode=='ZG':
+    #    unc['zg_xsec_theory'] = 0.06
+    #if mode=='TTVJets':
+    #    unc['ttv_xsec_theory'] = 0.15
+    #    unc['btag'] = 0.07
+    #if mode=='VVVJets':
+    #    unc['vvv_xsec_theory'] = 0.06
+    #if mode in ['WZJets','ZZJets','ZG','TTVJets','VVVJets']:
+    #    unc['lumi'] = 0.027
+    #    unc['lep_eff'] = 0.03 # total uncertainty, maybe break into electron muon and channels later
+    #    unc['pu_unc'] = 0.01
+    #    unc['met_unc'] = 0.02
+    #if mode=='WZJets':
+    #    unc['pdf_unc'] = 0.01
+    #    unc['btag'] = 0.01
     return unc

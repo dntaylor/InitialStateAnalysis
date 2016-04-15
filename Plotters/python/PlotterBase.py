@@ -1050,9 +1050,9 @@ class PlotterBase(object):
             if nostack:
                 hist.SetFillStyle(0)
                 hist.SetLineWidth(2)
-            #histsyst = self.addSystematicUncertainty(hist,sample)
-            #mcstack.Add(histsyst)
-            mcstack.Add(hist)
+            histsyst = self.addSystematicUncertainty(hist,sample)
+            mcstack.Add(histsyst)
+            #mcstack.Add(hist)
         self.logger.debug('And the full stack integral is %f.' % mcstack.GetStack().Last().Integral())
         return mcstack
 
@@ -1110,7 +1110,7 @@ class PlotterBase(object):
         ratiostaterr.Sumw2()
         ratiostaterr.SetStats(0)
         ratiostaterr.SetTitle("")
-        ratiostaterr.GetYaxis().SetTitle("Data/MC")
+        ratiostaterr.GetYaxis().SetTitle("Data / MC")
         ratiostaterr.SetMaximum(ratiomax)
         ratiostaterr.SetMinimum(ratiomin)
         ratiostaterr.SetMarkerSize(0)
@@ -1143,7 +1143,7 @@ class PlotterBase(object):
         # period : sqrts
         # 1 : 7, 2 : 8, 3 : 7+8, 4 : 13, ... 7 : 7+8+13
         self.period_int = 1*self.plot7TeV + 2*self.plot8TeV + 4*self.plot13TeV
-        CMS_lumi.wrtieExtraText = preliminary
+        CMS_lumi.writeExtraText = preliminary
         CMS_lumi.extraText = "Preliminary" if plotdata else "Simulation Preliminary"
         CMS_lumi.lumi_7TeV = "%0.1f fb^{-1}" % (float(self.intLumi)/1000.)
         CMS_lumi.lumi_8TeV = "%0.1f fb^{-1}" % (float(self.intLumi)/1000.)

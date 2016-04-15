@@ -1027,7 +1027,7 @@ def getLeptonParams(obj,**kwargs):
     pretty = kwargs.pop('pretty','')
     lepPlots = [
         #( variable,                  binning,              name,                   plotArgs
-        ('%s.%sPt%s' %(obj,pre,post), [20,0,200],           '%s/Pt' %name, {'yaxis':'Events/10 GeV', 'xaxis':'p_{T}^{%s} (GeV)' %pretty,}),
+        ('%s.%sPt%s' %(obj,pre,post), [20,0,200],           '%s/Pt' %name, {'yaxis':'Events / 10 GeV', 'xaxis':'p_{T}^{%s} (GeV)' %pretty,}),
         ('%s.%sIso%s' %(obj,pre,post),[50,0,.5],            '%s/Iso' %name,{'yaxis':'Events',        'xaxis':'Relative Isolation (%s)' %pretty,}),
         ('%s.%sEta%s' %(obj,pre,post),[30,-3.0,3.0],        '%s/Eta' %name,{'yaxis':'Events',        'xaxis':'\\eta^{%s}' %pretty,}),
         ('%s.%sPhi%s' %(obj,pre,post),[30,-3.14159,3.14159],'%s/Phi' %name,{'yaxis':'Events',        'xaxis':'\\phi^{%s}' %pretty,}),
@@ -1058,26 +1058,26 @@ def getPlotParams(plotMode,myCut,nl,plots,**kwargs):
     # setup plot params
     allPlots = [
         #( variable,                                         binning,              name,                   plotArgs
-        ('finalstate.sT',                                    [40,0,1000],          'sT',                   {'yaxis':'Events/25 GeV', 'xaxis':'S_{T} (GeV)',}),
+        ('finalstate.sT',                                    [40,0,1000],          'sT',                   {'yaxis':'Events / 25 GeV', 'xaxis':'S_{T} (GeV)',}),
         ('finalstate.elecVetoLoose',                         [4,0,4],              'numElectronsLoose',    {'yaxis':'Events',        'xaxis':'Number of Electrons (p_{T}>10 GeV)',}),
         ('finalstate.muonVetoLoose',                         [4,0,4],              'numMuonsLoose',        {'yaxis':'Events',        'xaxis':'Number of Muons (p_{T}>10 GeV)',}),
         ('finalstate.elecVetoLoose+finalstate.muonVetoLoose',[4,0,4],              'numLeptonsLoose',      {'yaxis':'Events',        'xaxis':'Number of Leptons (p_{T}>10 GeV)',}),
         ('finalstate.jetVeto30',                             [4,0,4],              'numJets30',            {'yaxis':'Events',        'xaxis':'Number of Jets (p_{T}>30 GeV)',}),
         ('finalstate.bjetVeto20Tight',                       [4,0,4],              'numBJets20Tight',      {'yaxis':'Events',        'xaxis':'Number of b Jets (p_{T}>20 GeV)',}),
-        ('finalstate.met',                                   [20,0,200],           'met',                  {'yaxis':'Events/10 GeV', 'xaxis':'E_{T}^{miss} (GeV)',}),
-        ('finalstate.mass',                                  [25,0,500],           'mass',                 {'yaxis':'Events/20 GeV', 'xaxis':'m_{3l}',}),
-        ('finalstate.mT',                                    [15,0,600],           'mT',                   {'yaxis':'Events/40 GeV', 'xaxis':'m_{T}^{3l+MET} (GeV)',}),
+        ('finalstate.met',                                   [20,0,200],           'met',                  {'yaxis':'Events / 10 GeV', 'xaxis':'E_{T}^{miss} (GeV)',}),
+        ('finalstate.mass',                                  [25,0,500],           'mass',                 {'yaxis':'Events / 20 GeV', 'xaxis':'m_{3l} (GeV)',}),
+        ('finalstate.mT',                                    [15,0,600],           'mT',                   {'yaxis':'Events / 40 GeV', 'xaxis':'m_{T}^{3l+MET} (GeV)',}),
         ('event.nvtx',                                       [50,0,50],            'puVertices',           {'yaxis':'Events',        'xaxis':'Number PU Vertices',}),
         ('event.nvtx',                                       [50,0,50],            'puVertices_noreweight',{'yaxis':'Events',        'xaxis':'Number PU Vertices', 'scalefactor':'event.gen_weight*event.lep_scale*event.trig_scale',}),
-        ('finalstate.leadJetPt',                             [30,0,300],           'JetPt',                {'yaxis':'Events/10 GeV', 'xaxis':'p_{T}^{jet} (GeV)',}),
+        ('finalstate.leadJetPt',                             [30,0,300],           'JetPt',                {'yaxis':'Events / 10 GeV', 'xaxis':'p_{T}^{jet} (GeV)',}),
         ('finalstate.leadJetEta',                            [50,-5.0,5.0],        'JetEta',               {'yaxis':'Events',        'xaxis':'#eta^{jet}',}),
         ('finalstate.leadJetPhi',                            [30,-3.14159,3.14159],'JetPhi',               {'yaxis':'Events',        'xaxis':'#phi^{jet}',}),
-        ('z1.mass',                                          [30,60,120],          'z1/Mass',              {'yaxis':'Events/2.0 GeV','xaxis':'m_{l^{+}l^{-}} (GeV)',}),
-        ('abs(z1.mass-{0})'.format(ZMASS),                   [60,0,60],            'z1/mllMinusMZ',        {'yaxis':'Events/1.0 GeV','xaxis':'|m_{l^{+}l^{-}}-m_{Z}| (GeV)',}),
-        ('z1.Pt',                                            [20,0,400],           'z1/Pt',                {'yaxis':'Events/20 GeV', 'xaxis':'p_{T}^{Z} (GeV)',}),
-        ('w1.Pt',                                            [20,0,400],           'w1/Pt',                {'yaxis':'Events/20 GeV', 'xaxis':'p_{T}^{W} (GeV)',}),
-        ('w1.mass',                                          [20,0,200],           'w1/Mass',              {'yaxis':'Events/10 GeV', 'xaxis':'m_{T}^{W} (GeV)',}),
-        ('w1.dPhi',                                          [32,-3.2,3.2],        'w1/dPhi',              {'yaxis':'Events/0.2 rad','xaxis':'#Delta#phi(W lepton, E_{T}^{miss}) (rad)',}),
+        ('z1.mass',                                          [30,60,120],          'z1/Mass',              {'yaxis':'Events / 2 GeV','xaxis':'m_{l^{+}l^{-}} (GeV)',}),
+        ('abs(z1.mass-{0})'.format(ZMASS),                   [60,0,60],            'z1/mllMinusMZ',        {'yaxis':'Events / 1 GeV','xaxis':'|m_{l^{+}l^{-}}-m_{Z}| (GeV)',}),
+        ('z1.Pt',                                            [20,0,400],           'z1/Pt',                {'yaxis':'Events / 20 GeV', 'xaxis':'p_{T}^{Z} (GeV)',}),
+        ('w1.Pt',                                            [20,0,400],           'w1/Pt',                {'yaxis':'Events / 20 GeV', 'xaxis':'p_{T}^{W} (GeV)',}),
+        ('w1.mass',                                          [20,0,200],           'w1/Mass',              {'yaxis':'Events / 10 GeV', 'xaxis':'m_{T}^{W} (GeV)',}),
+        ('w1.dPhi',                                          [32,-3.2,3.2],        'w1/dPhi',              {'yaxis':'Events / 0.2 rad','xaxis':'#Delta#phi(W lepton, E_{T}^{miss}) (rad)',}),
     ]
     # setup lepton params
     allPlots += getLeptonParams('z1',post='1',name='z1/Leading',pretty='Z Leading Lepton')

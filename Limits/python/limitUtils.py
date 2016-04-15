@@ -220,8 +220,9 @@ def wzlimit(analysis,region,period,chan,**kwargs):
         limits.add_systematics('fake_rate_unc_m','lnN',**fake_m)
 
     # ZZ cross section
-    zzxsec = {'ZZ':1.16}
-    if mode in ['all','experimental','nostat']: limits.add_systematics('zz_xsec','lnN',**zzxsec)
+    #zzxsec = {'ZZ':1.16}
+    zzxsec = {'ZZ':1.039}
+    if mode in ['all','experimental','nostat']: limits.add_systematics('zz_xsec_theory','lnN',**zzxsec)
 
     # ZG cross section theory
     zgxsec = {'ZG':1.06}
