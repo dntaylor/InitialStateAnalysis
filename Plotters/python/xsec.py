@@ -113,6 +113,7 @@ xsecs[13] = {
     'TTZToQQ_TuneCUETP8M1_13TeV-amcatnlo-pythia8'                  : 0.5297 * PB,
     'TTWJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-madspin-pythia8' : 0.2043 * PB,
     'TTWJetsToQQ_TuneCUETP8M1_13TeV-amcatnloFXFX-madspin-pythia8'  : 0.4062 * PB,
+    'tZq_ll_4f_13TeV-amcatnlo-pythia8_TuneCUETP8M1'                : 0.0758 * PB,
 
     'WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8' : 61526.7 * PB,
 
@@ -129,7 +130,7 @@ xsecs[13] = {
     'WZTo1L3Nu_13TeV_amcatnloFXFX_madspin_pythia8'   :  3.05    * PB,
     'WZTo2L2Q_13TeV_amcatnloFXFX_madspin_pythia8'    :  5.60    * PB,
     'WZTo3LNu_TuneCUETP8M1_13TeV-powheg-pythia8'     :  4.42965 * PB,
-    'WZJets TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8' :  5.29    * PB,
+    'WZJets_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8' :  4.71    * PB,
     'WZ_TuneCUETP8M1_13TeV-pythia8'                  : 47.13    * PB,
 
     'ZZTo4Q_13TeV_amcatnloFXFX_madspin_pythia8'   :  6.842 * PB,

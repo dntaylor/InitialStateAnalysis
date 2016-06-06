@@ -11,11 +11,11 @@ dataStyles = {}
 
 # Some colors
 Gray         = ROOT.TColor.GetColor('#B8B8B8')
-GrayA        = ROOT.TColor.GetColor('#C8C8C8')
+GrayA        = ROOT.TColor.GetColor('#A6A6A6')
 Purple       = ROOT.TColor.GetColor('#AD33FF')
 PurpleA      = ROOT.TColor.GetColor('#7924B2')
-Yellow       = ROOT.TColor.GetColor('#FFFF00')
-YellowA      = ROOT.TColor.GetColor('#FFCC26')
+Yellow       = ROOT.TColor.GetColor('#FFCC00')
+YellowA      = ROOT.TColor.GetColor('#FFD633')
 Gold         = ROOT.TColor.GetColor('#CCCC00')
 GoldA        = ROOT.TColor.GetColor('#D1D119')
 DarkYellow   = ROOT.TColor.GetColor('#FFCC00')
@@ -24,6 +24,8 @@ Orange       = ROOT.TColor.GetColor('#DC7612')
 OrangeA      = ROOT.TColor.GetColor('#BD3200')
 Blue         = ROOT.TColor.GetColor('#107FC9')
 BlueA        = ROOT.TColor.GetColor('#0E4EAD')
+LightBlue    = ROOT.TColor.GetColor('#66CCFF')
+LightBlueA   = ROOT.TColor.GetColor('#33BBFF')
 Navy         = ROOT.TColor.GetColor('#003399')
 NavyA        = ROOT.TColor.GetColor('#00297A')
 Steel        = ROOT.TColor.GetColor('#9999FF')
@@ -57,7 +59,7 @@ dataStyles['datadriven'] = {
     'linecolor' : GrayA,
     'fillcolor' : Gray,
     #'name' : "Data driven",
-    'name' : "Non-Prompt",
+    'name' : "Non-prompt",
     'fillstyle': 1001,
 }
 
@@ -67,7 +69,7 @@ dataStyles['mcClosure'] = {
     'linecolor' : RedA,
     'fillcolor' : Red,
     #'name' : "Data driven",
-    'name' : "Non-Prompt",
+    'name' : "Non-prompt",
     'fillstyle': 1001,
 }
 
@@ -83,8 +85,8 @@ dataStyles['QCD'] = {
 dataStyles['ZZJets'] = {
     'legendstyle' : 'f',
     'drawstyle' : 'hist',
-    'linecolor' : BlueA,
-    'fillcolor' : Blue,
+    'linecolor' : PurpleA,
+    'fillcolor' : Purple,
     'name' : "ZZ",
     'fillstyle': 1001,
 }
@@ -124,8 +126,10 @@ dataStyles['WG']['linecolor'] = DarkYellowA
 dataStyles['WZJets'] = {
     'legendstyle' : 'f',
     'drawstyle' : 'hist',
-    'linecolor' : PurpleA,
-    'fillcolor' : Purple,
+    #'linecolor' : PurpleA,
+    #'fillcolor' : Purple,
+    'linecolor' : LightBlueA,
+    'fillcolor' : LightBlue,
     'name' : "WZ",
     'fillstyle': 1001,
 }

@@ -1050,9 +1050,9 @@ class PlotterBase(object):
             if nostack:
                 hist.SetFillStyle(0)
                 hist.SetLineWidth(2)
-            histsyst = self.addSystematicUncertainty(hist,sample)
-            mcstack.Add(histsyst)
-            #mcstack.Add(hist)
+            #histsyst = self.addSystematicUncertainty(hist,sample)
+            #mcstack.Add(histsyst)
+            mcstack.Add(hist)
         self.logger.debug('And the full stack integral is %f.' % mcstack.GetStack().Last().Integral())
         return mcstack
 
@@ -1086,17 +1086,24 @@ class PlotterBase(object):
             denomentries = denom.GetBinContent(bin+1)
             if entries <= 0:
                 entries = 0
-            if denomentries <= 0:
-                continue
+            #if denomentries <= 0:
+            #    continue
             ey_low = entries - 0.5 * chisqr(0.1586555, 2. * entries)
             ey_high = 0.5 * chisqr(
                 1. - 0.1586555, 2. * (entries + 1)) - entries
             ex = num.GetBinWidth(bin+1) / 2.
-            graph.SetPoint(npoints, num.GetBinCenter(bin+1), num.GetBinContent(bin+1)/denomentries)
-            graph.SetPointEXlow(npoints, 0)
-            graph.SetPointEXhigh(npoints, 0)
-            graph.SetPointEYlow(npoints, ey_low/denomentries)
-            graph.SetPointEYhigh(npoints, ey_high/denomentries)
+            if denomentries > 0:
+                graph.SetPoint(npoints, num.GetBinCenter(bin+1), num.GetBinContent(bin+1)/denomentries)
+                graph.SetPointEXlow(npoints, 0)
+                graph.SetPointEXhigh(npoints, 0)
+                graph.SetPointEYlow(npoints, ey_low/denomentries)
+                graph.SetPointEYhigh(npoints, ey_high/denomentries)
+            else:
+                graph.SetPoint(npoints, num.GetBinCenter(bin+1), 1)
+                graph.SetPointEXlow(npoints, 0)
+                graph.SetPointEXhigh(npoints, 0)
+                graph.SetPointEYlow(npoints, 0)
+                graph.SetPointEYhigh(npoints, 0)
             npoints += 1
         graph.Set(npoints)
         return graph
@@ -1131,7 +1138,7 @@ class PlotterBase(object):
                 binerror = hist.GetBinError(i) / hist.GetBinContent(i)
                 ratiostaterr.SetBinError(i, binerror)
             else:
-                ratiostaterr.SetBinError(i, 999.)
+                ratiostaterr.SetBinError(i, 0.)
 
         return ratiostaterr
 
@@ -1181,8 +1188,8 @@ class PlotterBase(object):
             yend = 0.85
         else:                     # default, top, just below CMS label
             yend = 0.77
-        xstart = xend-0.15*numcol-0.1
-        ystart = yend-math.ceil(float(numEntries)/numcol)*0.06
+        xstart = xend-0.17*numcol-0.1
+        ystart = yend-math.ceil(float(numEntries)/numcol)*0.07
         if plotratio: yend *= 0.95
         # create and draw legend
         leg = ROOT.TLegend(xstart,ystart,xend,yend,'','NDC')

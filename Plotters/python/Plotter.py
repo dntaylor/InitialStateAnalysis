@@ -115,6 +115,7 @@ class Plotter(PlotterBase):
         isprelim = kwargs.pop('isprelim', 1)
         scalefactor = kwargs.pop('scalefactor','')
         yscale = kwargs.pop('yscale',1.35)
+        binlabels = kwargs.pop('binlabels',[])
         if not xmin and len(xrange)==2: xmin = xrange[0]
         if not xmax and len(xrange)==2: xmax = xrange[1]
         if xmin or xmax: xrange = [xmin, xmax]
@@ -148,8 +149,8 @@ class Plotter(PlotterBase):
             plotpad = plotpad
             #print savename, 'Ratiopad'
             ratiopad = ROOT.TPad("ratiopad", "bottom pad", 0.0, 0.0, 1.0, 0.21)
-            ratiopad.SetTopMargin(0.06)
-            ratiopad.SetBottomMargin(0.5)
+            ratiopad.SetTopMargin(0.07)
+            ratiopad.SetBottomMargin(0.6)
             ratiopad.SetLeftMargin(self.L)
             ratiopad.SetRightMargin(self.R)
             ratiopad.SetFillColor(0)
@@ -192,13 +193,17 @@ class Plotter(PlotterBase):
                 newymax = max(datamax,stack.GetMaximum()) if plotdata else stack.GetMaximum()
                 y2 = yscale*newymax
                 if not nostack: stack.SetMaximum(yscale*newymax)
+            if binlabels:
+               for b,label in enumerate(binlabels):
+                   stack.GetXaxis().SetBinLabel(b+1,label)
             if plotratio:
                 stack.GetHistogram().GetXaxis().SetLabelOffset(999)
 
             # add errors
             if not nostack:
                 staterr = self.get_stat_err(stack.GetStack().Last())
-                staterr.Draw("e2 same")
+                allerr = self.addSystematicUncertainty(staterr,'all')
+                allerr = staterr.Draw("e2 same")
 
         # plot signal
         if plotsig:
@@ -307,7 +312,8 @@ class Plotter(PlotterBase):
             #    mchist = stack.GetStack().Last().Clone("mchist%s" % savename)
             #else:
             #    newstack = self.getMCStack(variables,binning,cut,overflow=overflow,underflow=underflow,nostack=nostack,normalize=normalize,plotsig=False,histname='newstack')
-            mchist = stack.GetStack().Last().Clone("mchist%s" % savename)
+            statmchist = stack.GetStack().Last().Clone("mchist%s" % savename)
+            mchist = self.addSystematicUncertainty(statmchist,'all')
             if plotdata:
                 ratio = self.get_ratio(data,mchist,"ratio%s" % savename)
                 ratiopois = self.getPoissonRatio(data,mchist,"ratiopois%s" % savename)
@@ -327,6 +333,9 @@ class Plotter(PlotterBase):
 
             ratiostaterr = self.get_ratio_stat_err(mchist,ratiomin=ratiomin,ratiomax=ratiomax)
             ratiostaterr.SetXTitle(xaxis)
+            if binlabels:
+               for b,label in enumerate(binlabels):
+                   ratiostaterr.GetXaxis().SetBinLabel(b+1,label)
             if len(xrange)==2:
                 ratiostaterr.GetXaxis().SetRangeUser(xrange[0],xrange[1])
 
@@ -340,7 +349,9 @@ class Plotter(PlotterBase):
             ratiopad.cd()
             ratiopad.SetGridy(0)
             ratiostaterr.Draw("e2")
+            if binlabels: ratiostaterr.GetXaxis().SetLabelSize(0.28)
             ratiostaterr.GetXaxis().SetLabelOffset(0.05)
+            ratiostaterr.GetXaxis().SetTitleOffset(1.15)
             ratiounity.Draw("same")
             if plotdata:
                 if len(blinder)==2:
