@@ -59,7 +59,7 @@ dataStyles['datadriven'] = {
     'linecolor' : GrayA,
     'fillcolor' : Gray,
     #'name' : "Data driven",
-    'name' : "Non-prompt",
+    'name' : "Nonprompt",
     'fillstyle': 1001,
 }
 
@@ -69,7 +69,7 @@ dataStyles['mcClosure'] = {
     'linecolor' : RedA,
     'fillcolor' : Red,
     #'name' : "Data driven",
-    'name' : "Non-prompt",
+    'name' : "Nonprompt",
     'fillstyle': 1001,
 }
 
@@ -226,7 +226,7 @@ dataStyles['TTWWJets']['name'] = "t#bar{t}WW+Jets"
 dataStyles['TTGJets'] = copy.deepcopy(dataStyles['TTZJets'])
 dataStyles['TTGJets']['name'] = "t#bar{t}#gamma+Jets"
 dataStyles['TTVJets'] = copy.deepcopy(dataStyles['TTZJets'])
-dataStyles['TTVJets']['name'] = "t#bar{t}V"
+dataStyles['TTVJets']['name'] = "t#bar{t}V+tZ"
 
 dataStyles['TToLeptons_s-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola'] = {
     'legendstyle' : 'f',

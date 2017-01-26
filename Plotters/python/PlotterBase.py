@@ -622,7 +622,7 @@ class PlotterBase(object):
         '''Get the plot with overflow and underflow bins'''
         under = kwargs.pop('underflow',False)
         over = kwargs.pop('overflow',False)
-        return hist # TODO fix
+        #return hist # TODO fix
         if not under and not over: return hist
         nx = hist.GetNbinsX()
         if under: nx += 1
@@ -937,6 +937,7 @@ class PlotterBase(object):
         result = getMergedHist(histname, jobs)
         hist = result[1]
         if not hist: return 0
+        hist = self.getOverflowUnderflow(hist,**kwargs)
         #print '    ', histname, hist.Integral()
         hist.SetTitle(self.dataStyles[sample]['name'])
         if sample in self.data: return hist
@@ -1117,7 +1118,9 @@ class PlotterBase(object):
         ratiostaterr.Sumw2()
         ratiostaterr.SetStats(0)
         ratiostaterr.SetTitle("")
-        ratiostaterr.GetYaxis().SetTitle("Data / MC")
+        #ratiostaterr.GetYaxis().SetTitle("Data / MC")
+        ratiostaterr.GetYaxis().SetTitle("Obs / Exp")
+        #ratiostaterr.GetYaxis().SetTitle("Data / SM")
         ratiostaterr.SetMaximum(ratiomax)
         ratiostaterr.SetMinimum(ratiomin)
         ratiostaterr.SetMarkerSize(0)

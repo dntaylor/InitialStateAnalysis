@@ -1067,7 +1067,7 @@ def getPlotParams(plotMode,myCut,nl,plots,**kwargs):
         ('finalstate.elecVetoLoose',                         [4,0,4],              'numElectronsLoose',    {'yaxis':'Events',        'xaxis':'Number of electrons (p_{T}>10 GeV)',}),
         ('finalstate.muonVetoLoose',                         [4,0,4],              'numMuonsLoose',        {'yaxis':'Events',        'xaxis':'Number of muons (p_{T}>10 GeV)',}),
         ('finalstate.elecVetoLoose+finalstate.muonVetoLoose',[4,0,4],              'numLeptonsLoose',      {'yaxis':'Events',        'xaxis':'Number of leptons (p_{T}>10 GeV)',}),
-        ('finalstate.jetVeto30',                             [4,0,4],              'numJets30',            {'yaxis':'Events',        'xaxis':'Number of jets (p_{T}>30 GeV)', 'binlabels': ['0','1','2','3']}),
+        ('finalstate.jetVeto30',                             [4,0,4],              'numJets30',            {'yaxis':'Events',        'xaxis':'Number of jets (p_{T}>30 GeV)', 'binlabels': ['0','1','2','3','#geq4'], 'overflow': True,}),
         ('finalstate.bjetVeto20Tight',                       [4,0,4],              'numBJets20Tight',      {'yaxis':'Events',        'xaxis':'Number of b jets (p_{T}>20 GeV)',}),
         ('finalstate.met',                                   [20,0,200],           'met',                  {'yaxis':'Events / 10 GeV', 'xaxis':'E_{T}^{miss} (GeV)',}),
         ('finalstate.mass',                                  [25,0,500],           'mass',                 {'yaxis':'Events / 20 GeV', 'xaxis':'m_{3l} (GeV)',}),
